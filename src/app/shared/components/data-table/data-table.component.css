@@ -1,0 +1,378 @@
+.data-table-container {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--divider-color);
+  background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.table-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.entries-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.entries-select {
+  min-width: 100px;
+  font-size: 14px;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.view-toggle button {
+  border-radius: 0;
+}
+
+.view-toggle button.active {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+/* ========================================
+   SEARCH SECTION (IN HEADER)
+   ======================================== */
+
+.search-section {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-field {
+  width: 100%;
+}
+
+/* Override Material form field styles for compact search */
+::ng-deep .search-field.mat-mdc-form-field {
+  margin: 0;
+}
+
+::ng-deep .search-field .mat-mdc-text-field-wrapper {
+  padding: 0;
+}
+
+::ng-deep .search-field .mat-mdc-form-field-infix {
+  min-height: 40px;
+  padding: 8px 0;
+}
+
+::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* ========================================
+   TABLE WRAPPER
+   ======================================== */
+
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+}
+
+/* Table Header */
+.data-table thead {
+  background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.data-table th {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+  white-space: nowrap;
+  background: transparent;
+  padding: var(--spacing-md);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* Table Rows */
+.table-row {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.table-row:hover {
+  background-color: var(--gray-50);
+}
+
+.data-table td {
+  padding: var(--spacing-md);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+/* Special Columns */
+.checkbox-column {
+  width: 60px;
+  text-align: center;
+  padding: var(--spacing-sm) !important;
+}
+
+.actions-column {
+  width: 120px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: center;
+  align-items: center;
+}
+
+.action-buttons button {
+  width: 32px;
+  height: 32px;
+}
+
+/* Cell Types */
+.badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background-color: var(--primary-color);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+/* ========================================
+   CARD VIEW (MOBILE)
+   ======================================== */
+
+.card-view {
+  padding: var(--spacing-md);
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.data-card {
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.data-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-field {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.card-field:last-child {
+  border-bottom: none;
+}
+
+.field-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.field-value {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+::ng-deep .mat-mdc-paginator {
+  border-top: 1px solid var(--divider-color);
+  background-color: var(--white);
+}
+
+/* ========================================
+   LOADING OVERLAY
+   ======================================== */
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ========================================
+   FORM FIELD STYLING
+   ======================================== */
+
+::ng-deep .entries-select .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .header-left {
+    width: 100%;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .search-section {
+    max-width: 100%;
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-header {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+  
+  .header-right {
+    gap: var(--spacing-sm);
+  }
+  
+  .search-section {
+    max-width: 100%;
+    width: 100%;
+    order: -1;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .search-field {
+    max-width: 100%;
+  }
+  
+  .button-text {
+    display: none;
+  }
+  
+  /* Compact buttons on mobile */
+  .header-right button {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    min-width: 900px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: var(--spacing-sm);
+    font-size: 13px;
+  }
+  
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-title {
+    font-size: 18px;
+  }
+  
+  .entries-control {
+    font-size: 12px;
+  }
+  
+  .entries-select {
+    min-width: 80px;
+    font-size: 12px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+  
+  .avatar {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .action-buttons button {
+    width: 28px;
+    height: 28px;
+  }
+}
+

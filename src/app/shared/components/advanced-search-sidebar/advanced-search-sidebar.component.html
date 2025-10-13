@@ -1,0 +1,162 @@
+<!-- Backdrop Overlay -->
+<div class="sidebar-backdrop" 
+  *ngIf="isOpen" 
+  @fadeIn
+  (click)="close()">
+</div>
+
+<!-- Sidebar -->
+<div class="advanced-search-sidebar" 
+  [@slideIn]="isOpen ? 'open' : 'closed'"
+  [style.width]="config?.width || '400px'">
+  
+  <!-- Header -->
+  <div class="sidebar-header">
+    <div class="header-content">
+      <mat-icon class="header-icon">filter_list</mat-icon>
+      <h2 class="sidebar-title">{{ config?.title || 'Advanced Search' }}</h2>
+    </div>
+    <button mat-icon-button (click)="close()" class="close-btn">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  
+  <!-- Search Form -->
+  <div class="sidebar-content" *ngIf="searchForm">
+    <form [formGroup]="searchForm" class="search-form">
+      
+      <!-- Grouped Fields -->
+      <div *ngFor="let group of getGroupKeys()" class="field-group">
+        <h3 class="group-title" *ngIf="getGroupKeys().length > 1">{{ group }}</h3>
+        
+        <div *ngFor="let field of groupedFields[group]" 
+          class="form-field"
+          [hidden]="!isFieldVisible(field)">
+          
+          <!-- Text Input -->
+          <mat-form-field appearance="outline" *ngIf="field.type === 'text'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput 
+              [formControlName]="field.key"
+              [placeholder]="field.placeholder || ''"
+              [required]="field.required || false">
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="getFormControl(field.key)?.hasError('required')">
+              {{ field.label }} is required
+            </mat-error>
+          </mat-form-field>
+          
+          <!-- Number Input -->
+          <mat-form-field appearance="outline" *ngIf="field.type === 'number'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput 
+              type="number"
+              [formControlName]="field.key"
+              [placeholder]="field.placeholder || ''"
+              [required]="field.required || false">
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+          </mat-form-field>
+          
+          <!-- Date Picker -->
+          <mat-form-field appearance="outline" *ngIf="field.type === 'date'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput 
+              [matDatepicker]="picker"
+              [formControlName]="field.key"
+              [required]="field.required || false">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+          </mat-form-field>
+          
+          <!-- Select Dropdown -->
+          <mat-form-field appearance="outline" *ngIf="field.type === 'select'">
+            <mat-label>{{ field.label }}</mat-label>
+            <mat-select 
+              [formControlName]="field.key"
+              [required]="field.required || false"
+              [multiple]="field.multiple || false">
+              <mat-option *ngFor="let option of getFieldOptions(field)" 
+                [value]="option.value"
+                [disabled]="option.disabled">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+          </mat-form-field>
+          
+          <!-- Multi-Select -->
+          <mat-form-field appearance="outline" *ngIf="field.type === 'multiselect'">
+            <mat-label>{{ field.label }}</mat-label>
+            <mat-select 
+              [formControlName]="field.key"
+              [required]="field.required || false"
+              multiple>
+              <mat-option *ngFor="let option of getFieldOptions(field)" 
+                [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+          </mat-form-field>
+          
+          <!-- Autocomplete -->
+          <mat-form-field appearance="outline" *ngIf="field.type === 'autocomplete'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput 
+              [formControlName]="field.key"
+              [matAutocomplete]="auto">
+            <mat-autocomplete #auto="matAutocomplete">
+              <mat-option *ngFor="let option of getFieldOptions(field)" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-autocomplete>
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
+          </mat-form-field>
+          
+          <!-- Radio Group -->
+          <div class="radio-group" *ngIf="field.type === 'radio'">
+            <label class="field-label">{{ field.label }}</label>
+            <mat-radio-group [formControlName]="field.key" class="radio-options">
+              <mat-radio-button 
+                *ngFor="let option of getFieldOptions(field)"
+                [value]="option.value"
+                class="radio-option">
+                {{ option.label }}
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+          
+        </div>
+      </div>
+      
+    </form>
+  </div>
+  
+  <!-- Footer Actions -->
+  <div class="sidebar-footer">
+    <div class="footer-actions">
+      <button mat-stroked-button 
+        (click)="onReset()" 
+        *ngIf="config?.showReset !== false"
+        class="reset-btn">
+        <mat-icon>refresh</mat-icon>
+        Reset
+      </button>
+      
+      <button mat-raised-button 
+        color="primary" 
+        (click)="onSearch()"
+        class="search-btn">
+        <mat-icon>search</mat-icon>
+        Search
+      </button>
+    </div>
+  </div>
+  
+</div>
+

@@ -1,0 +1,198 @@
+<div class="data-table-container">
+  <!-- Header Section -->
+  <div class="table-header">
+    <div class="header-left">
+      <h2 class="table-title" *ngIf="title">{{ title }}</h2>
+      <!-- <div class="entries-control" *ngIf="config.pagination !== false">
+        <span>Show</span>
+        <mat-select [(ngModel)]="pageSize" (selectionChange)="onPageSizeChange()" class="entries-select">
+          <mat-option *ngFor="let size of pageSizeOptions" [value]="size">
+            {{ size }} entries
+          </mat-option>
+        </mat-select>
+      </div> -->
+    </div>
+    
+    <div class="header-right">
+      <!-- View Toggle (Mobile) -->
+      <div class="view-toggle" *ngIf="isMobile && config.responsive">
+        <button mat-icon-button 
+          [class.active]="viewMode === 'list'"
+          (click)="viewMode = 'list'"
+          matTooltip="List View">
+          <mat-icon>list</mat-icon>
+        </button>
+        <button mat-icon-button 
+          [class.active]="viewMode === 'card'"
+          (click)="viewMode = 'card'"
+          matTooltip="Card View">
+          <mat-icon>grid_view</mat-icon>
+        </button>
+      </div>
+
+
+       <!-- Search Section -->
+  <div class="search-section" *ngIf="config.searchable">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search</mat-label>
+      <input matInput placeholder="Search..." (keyup)="applySearch($event)">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+  </div>
+      
+      <!-- Advanced Search Button -->
+      <button mat-raised-button 
+        color="primary" 
+        *ngIf="advancedSearchConfig"
+        (click)="openAdvancedSearch()">
+        <mat-icon>filter_list</mat-icon>
+        <span class="button-text">Advanced Search</span>
+      </button>
+      
+      <!-- Export Buttons -->
+      <button mat-icon-button 
+        *ngIf="config.exportable"
+        matTooltip="Export to CSV" 
+        (click)="onExport('csv')">
+        <mat-icon>download</mat-icon>
+      </button>
+    </div>
+  </div>
+  
+ 
+  
+  <!-- Table View (Desktop/Tablet) -->
+  <div class="table-wrapper" *ngIf="viewMode === 'list'">
+    <table mat-table [dataSource]="dataSource" matSort class="data-table">
+      
+      <!-- Selection Column -->
+      <ng-container matColumnDef="select" *ngIf="config.selectable">
+        <th mat-header-cell *matHeaderCellDef class="checkbox-column">
+          <mat-checkbox
+            (change)="$event ? toggleAllRows() : null"
+            [checked]="selection.hasValue() && isAllSelected()"
+            [indeterminate]="isIndeterminate()">
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row" class="checkbox-column">
+          <mat-checkbox
+            (click)="$event.stopPropagation()"
+            (change)="$event ? toggleRow(row) : null"
+            [checked]="isSelected(row)">
+          </mat-checkbox>
+        </td>
+      </ng-container>
+      
+      <!-- Dynamic Columns -->
+      <ng-container *ngFor="let column of config.columns" [matColumnDef]="column.key">
+        <th mat-header-cell 
+          *matHeaderCellDef 
+          [mat-sort-header]="column.sortable ? column.key : ''"
+          [style.width]="column.width"
+          [style.text-align]="column.align || 'left'">
+          <div class="header-content">
+            {{ column.header }}
+          </div>
+        </th>
+        <td mat-cell 
+          *matCellDef="let row" 
+          [style.text-align]="column.align || 'left'"
+          [ngClass]="getCellClass(row, column)">
+          
+          <!-- Custom Template -->
+          <ng-container *ngIf="column.customTemplate">
+            <ng-container *ngTemplateOutlet="column.customTemplate; context: {$implicit: row}">
+            </ng-container>
+          </ng-container>
+          
+          <!-- Default Rendering -->
+          <ng-container *ngIf="!column.customTemplate">
+            <span *ngIf="column.type === 'text' || !column.type">
+              {{ getCellValue(row, column) }}
+            </span>
+            
+            <span *ngIf="column.type === 'badge'" class="badge">
+              {{ getCellValue(row, column) }}
+            </span>
+            
+            <img *ngIf="column.type === 'avatar'" 
+              [src]="getCellValue(row, column)" 
+              class="avatar"
+              [alt]="row.name || 'Avatar'">
+          </ng-container>
+        </td>
+      </ng-container>
+      
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions" *ngIf="config.actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-column">Actions</th>
+        <td mat-cell *matCellDef="let row" class="actions-column">
+          <div class="action-buttons">
+            <button mat-icon-button 
+              *ngFor="let action of config.actions"
+              [matTooltip]="action.label"
+              [color]="action.color"
+              (click)="onActionClick(action, row); $event.stopPropagation()"
+              [hidden]="action.show && !action.show(row)">
+              <mat-icon>{{ action.icon }}</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+      
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row 
+        *matRowDef="let row; columns: displayedColumns;"
+        (click)="onRowClick(row)"
+        class="table-row">
+      </tr>
+    </table>
+  </div>
+  
+  <!-- Card View (Mobile) -->
+  <div class="card-view" *ngIf="viewMode === 'card'">
+    <mat-card *ngFor="let row of dataSource.data" class="data-card" (click)="onRowClick(row)">
+      <mat-card-content>
+        <div class="card-field" *ngFor="let column of config.columns">
+          <span class="field-label">{{ column.header }}:</span>
+          <span class="field-value">{{ getCellValue(row, column) }}</span>
+        </div>
+      </mat-card-content>
+      <mat-card-actions *ngIf="config.actions">
+        <button mat-button 
+          *ngFor="let action of config.actions"
+          (click)="onActionClick(action, row); $event.stopPropagation()">
+          <mat-icon>{{ action.icon }}</mat-icon>
+          {{ action.label }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+  
+  <!-- Pagination -->
+  <mat-paginator 
+    *ngIf="config.pagination !== false"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="pageSizeOptions"
+    [length]="dataSource?.data?.length || 0"
+    showFirstLastButtons>
+  </mat-paginator>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+  </div>
+  
+  <!-- Advanced Search Sidebar -->
+  <app-advanced-search-sidebar
+    *ngIf="advancedSearchConfig"
+    [isOpen]="showAdvancedSearch"
+    [config]="advancedSearchConfig"
+    [savedSearches]="savedSearches"
+    (searchApplied)="onAdvancedSearchApplied($event)"
+    (searchReset)="onSearchReset()"
+    (searchSaved)="onSearchSaved($event)"
+    (closed)="closeAdvancedSearch()">
+  </app-advanced-search-sidebar>
+</div>
+
