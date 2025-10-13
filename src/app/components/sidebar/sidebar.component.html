@@ -1,0 +1,101 @@
+<div class="sidebar" [class.collapsed]="isCollapsed && !isMobile" [class.mobile-open]="isMobileOpen">
+  <!-- Logo Section -->
+  <div class="sidebar-header">
+    <div class="logo">
+      <mat-icon class="logo-icon">school</mat-icon>
+      <span class="logo-text" *ngIf="!isCollapsed || isMobile">EduManage</span>
+    </div>
+    <button 
+      mat-icon-button 
+      class="toggle-btn" 
+      (click)="toggleSidebar()"
+      [matTooltip]="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      matTooltipPosition="right">
+      <mat-icon>{{ isCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Main Menu -->
+  <div class="main-menu">
+    <h3 class="menu-section-title" *ngIf="!isCollapsed || isMobile">Main Menu</h3>
+    
+    <mat-nav-list class="nav-list">
+      <ng-container *ngFor="let item of menuItems">
+        <!-- Menu item with children -->
+        <div *ngIf="hasChildren(item)" class="menu-group">
+          <mat-list-item 
+            class="menu-item parent-item"
+            (click)="toggleSubmenu(item)"
+            [matTooltip]="isCollapsed ? item.name : ''"
+            matTooltipPosition="right">
+            <mat-icon matListItemIcon class="menu-icon">{{ item.icon }}</mat-icon>
+            <span matListItemTitle class="menu-text" *ngIf="!isCollapsed || isMobile">{{ item.name }}</span>
+            <mat-icon 
+              class="expand-icon" 
+              *ngIf="!isCollapsed || isMobile"
+              [class.rotated]="item.expanded">
+              chevron_right
+            </mat-icon>
+          </mat-list-item>
+
+          <!-- Submenu -->
+          <div class="submenu" *ngIf="item.expanded && (!isCollapsed || isMobile)">
+            <mat-list-item 
+              *ngFor="let child of item.children" 
+              class="menu-item child-item"
+              [routerLink]="child.route"
+              routerLinkActive="active"
+              (click)="onMenuItemClick()">
+              <mat-icon matListItemIcon class="menu-icon">{{ child.icon }}</mat-icon>
+              <span matListItemTitle class="menu-text">{{ child.name }}</span>
+            </mat-list-item>
+          </div>
+        </div>
+
+        <!-- Simple menu item -->
+        <mat-list-item 
+          *ngIf="!hasChildren(item)" 
+          class="menu-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [matTooltip]="isCollapsed ? item.name : ''"
+          matTooltipPosition="right"
+          (click)="onMenuItemClick()">
+          <mat-icon matListItemIcon class="menu-icon">{{ item.icon }}</mat-icon>
+          <span matListItemTitle class="menu-text" *ngIf="!isCollapsed || isMobile">{{ item.name }}</span>
+        </mat-list-item>
+      </ng-container>
+    </mat-nav-list>
+  </div>
+
+  <!-- Management Section -->
+  <div class="management-menu" *ngIf="!isCollapsed || isMobile">
+    <h3 class="menu-section-title">Management</h3>
+    <mat-nav-list class="nav-list">
+      <mat-list-item 
+        class="menu-item"
+        [routerLink]="'/accounts'"
+        routerLinkActive="active"
+        (click)="onMenuItemClick()">
+        <mat-icon matListItemIcon class="menu-icon">account_balance</mat-icon>
+        <span matListItemTitle class="menu-text">Accounts</span>
+      </mat-list-item>
+      <mat-list-item 
+        class="menu-item"
+        [routerLink]="'/holidays'"
+        routerLinkActive="active"
+        (click)="onMenuItemClick()">
+        <mat-icon matListItemIcon class="menu-icon">event</mat-icon>
+        <span matListItemTitle class="menu-text">Holiday</span>
+      </mat-list-item>
+      <mat-list-item 
+        class="menu-item"
+        [routerLink]="'/fees'"
+        routerLinkActive="active"
+        (click)="onMenuItemClick()">
+        <mat-icon matListItemIcon class="menu-icon">payments</mat-icon>
+        <span matListItemTitle class="menu-text">Fees</span>
+      </mat-list-item>
+    </mat-nav-list>
+  </div>
+</div>

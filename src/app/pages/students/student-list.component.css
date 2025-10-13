@@ -1,0 +1,553 @@
+/* ========================================
+   STUDENT LIST COMPONENT STYLES
+   ======================================== */
+
+/* ========================================
+   PROFESSIONAL ENHANCEMENTS
+   ======================================== */
+
+.page-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: var(--white);
+  padding: var(--spacing-xl);
+  margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-xl);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.breadcrumb {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: var(--spacing-xs);
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.breadcrumb {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ========================================
+   SEARCH SECTION
+   ======================================== */
+
+.search-section {
+  margin-bottom: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.search-controls {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+}
+
+.search-inputs {
+  display: flex;
+  gap: var(--spacing-md);
+  flex: 1;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-btn {
+  height: 56px;
+  padding: 0 var(--spacing-lg);
+  font-weight: 600;
+}
+
+/* ========================================
+   STUDENTS SECTION
+   ======================================== */
+
+.students-section {
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--divider-color);
+  background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.entries-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.entries-select {
+  min-width: 100px;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.view-toggle button {
+  border-radius: 0;
+  border-right: 1px solid var(--border-color);
+}
+
+.view-toggle button:last-child {
+  border-right: none;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.add-btn {
+  width: 48px;
+  height: 48px;
+}
+
+/* ========================================
+   TABLE STYLES
+   ======================================== */
+
+.table-container {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background-color: var(--white);
+}
+
+.table th {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--divider-color);
+  font-size: 14px;
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: color var(--transition-fast);
+}
+
+.sortable-header:hover {
+  color: var(--primary-color);
+}
+
+.sort-icon {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.table-row {
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.table-row:hover {
+  background-color: var(--gray-50);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table td {
+  padding: var(--spacing-md);
+  vertical-align: middle;
+}
+
+.checkbox-column {
+  width: 50px;
+  text-align: center;
+}
+
+.student-id {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.student-info {
+  min-width: 150px;
+}
+
+.student-avatar-name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.student-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+.student-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.student-class {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.student-dob {
+  color: var(--text-secondary);
+}
+
+.parent-name {
+  color: var(--text-primary);
+}
+
+.mobile-number {
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.student-address {
+  color: var(--text-secondary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions-column {
+  width: 120px;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: center;
+}
+
+.action-buttons button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+.action-buttons mat-icon {
+  font-size: 18px;
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--divider-color);
+  background-color: var(--white);
+}
+
+.pagination-info {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.page-number {
+  min-width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.page-number.active {
+  background-color: var(--primary-color);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .search-inputs {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .search-field {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin: calc(-1 * var(--spacing-md)) calc(-1 * var(--spacing-md)) var(--spacing-lg);
+    padding: var(--spacing-lg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .search-inputs {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+
+  .section-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-md);
+  }
+
+  .table {
+    min-width: 900px;
+  }
+
+  .table-pagination {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    text-align: center;
+    padding: var(--spacing-md);
+  }
+
+  /* Mobile table improvements */
+  .table th,
+  .table td {
+    padding: var(--spacing-sm);
+    font-size: 13px;
+  }
+
+  .student-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .action-buttons button {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    padding: var(--spacing-md);
+    margin: calc(-1 * var(--spacing-sm)) calc(-1 * var(--spacing-sm)) var(--spacing-md);
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .breadcrumb {
+    font-size: 12px;
+  }
+
+  .search-section {
+    padding: var(--spacing-md);
+  }
+
+  .section-header {
+    padding: var(--spacing-sm);
+  }
+
+  .section-actions {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .view-toggle {
+    order: 2;
+  }
+
+  .action-btn {
+    order: 1;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 12px;
+  }
+
+  .add-btn {
+    order: 3;
+    width: 40px;
+    height: 40px;
+  }
+
+  .entries-control {
+    font-size: 12px;
+  }
+
+  .entries-select {
+    min-width: 80px;
+  }
+
+  /* Ultra mobile table */
+  .table th,
+  .table td {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+
+  .student-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .student-name {
+    font-size: 12px;
+  }
+
+  .action-buttons button {
+    width: 24px;
+    height: 24px;
+  }
+
+  .action-buttons mat-icon {
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+   FORM FIELD STYLING
+   ======================================== */
+
+::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+::ng-deep .entries-select .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* ========================================
+   CHECKBOX STYLING
+   ======================================== */
+
+::ng-deep .mat-mdc-checkbox {
+  margin: 0;
+}
+
+/* ========================================
+   ICON BUTTON STYLING
+   ======================================== */
+
+::ng-deep .action-buttons .mat-mdc-icon-button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+::ng-deep .action-buttons .mat-mdc-icon-button .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

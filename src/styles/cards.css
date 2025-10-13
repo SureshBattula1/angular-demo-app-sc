@@ -1,0 +1,351 @@
+/* ========================================
+   CARD STYLES MODULE
+   ======================================== */
+
+/* ========================================
+   BASE CARD
+   ======================================== */
+
+.card {
+  background-color: var(--card-background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   CARD SECTIONS
+   ======================================== */
+
+.card-header {
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.card-header h3,
+.card-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.card-body {
+  margin-bottom: var(--spacing-md);
+}
+
+.card-content {
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.card-footer {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--divider-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ========================================
+   CARD IMAGE
+   ======================================== */
+
+.card-image {
+  width: calc(100% + var(--spacing-lg) * 2);
+  margin: calc(-1 * var(--spacing-lg));
+  margin-bottom: var(--spacing-md);
+  height: 200px;
+  object-fit: cover;
+}
+
+.card-image-top {
+  width: calc(100% + var(--spacing-lg) * 2);
+  margin: calc(-1 * var(--spacing-lg));
+  margin-bottom: var(--spacing-md);
+  height: auto;
+  max-height: 300px;
+  object-fit: cover;
+}
+
+.card-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  margin-bottom: var(--spacing-md);
+}
+
+/* ========================================
+   CARD VARIANTS
+   ======================================== */
+
+/* Outlined Card */
+.card-outlined {
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.card-outlined:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary-color);
+}
+
+/* Elevated Card */
+.card-elevated {
+  box-shadow: var(--shadow-lg);
+}
+
+.card-elevated:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+/* Flat Card */
+.card-flat {
+  box-shadow: none;
+  background-color: var(--gray-50);
+}
+
+/* Colored Cards */
+.card-primary {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.card-primary .card-title,
+.card-primary .card-content {
+  color: var(--white);
+}
+
+.card-accent {
+  background-color: var(--accent-color);
+  color: var(--white);
+}
+
+.card-accent .card-title,
+.card-accent .card-content {
+  color: var(--white);
+}
+
+.card-success {
+  background-color: var(--success-light);
+  color: var(--white);
+}
+
+.card-warning {
+  background-color: var(--warning-light);
+  color: var(--white);
+}
+
+.card-error {
+  background-color: var(--error-light);
+  color: var(--white);
+}
+
+/* ========================================
+   CARD LAYOUTS
+   ======================================== */
+
+/* Horizontal Card */
+.card-horizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.card-horizontal .card-image {
+  width: 200px;
+  height: auto;
+  margin: 0;
+  margin-right: var(--spacing-md);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+.card-horizontal .card-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Interactive Card */
+.card-interactive {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.card-interactive:active {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ========================================
+   CARD ACTIONS
+   ======================================== */
+
+.card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+}
+
+.card-actions button {
+  margin: 0;
+}
+
+/* ========================================
+   SPECIAL CARDS
+   ======================================== */
+
+/* Pricing Card */
+.card-pricing {
+  text-align: center;
+  border: 2px solid var(--border-color);
+}
+
+.card-pricing-header {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: var(--spacing-lg);
+  margin: calc(-1 * var(--spacing-lg));
+  margin-bottom: var(--spacing-lg);
+}
+
+.card-pricing-price {
+  font-size: 48px;
+  font-weight: 700;
+  margin: var(--spacing-md) 0;
+}
+
+.card-pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: var(--spacing-lg) 0;
+}
+
+.card-pricing-features li {
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+/* Stats Card */
+.card-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.card-stats-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-light);
+  border-radius: var(--radius-lg);
+  color: var(--primary-color);
+  font-size: 28px;
+}
+
+.card-stats-content {
+  flex: 1;
+}
+
+.card-stats-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-stats-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Profile Card */
+.card-profile {
+  text-align: center;
+}
+
+.card-profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--spacing-md);
+  border: 4px solid var(--primary-color);
+}
+
+.card-profile-name {
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.card-profile-role {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ========================================
+   CARD GRID
+   ======================================== */
+
+.card-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   CARD WITH BADGE
+   ======================================== */
+
+.card-badge {
+  position: relative;
+}
+
+.card-badge-content {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background-color: var(--accent-color);
+  color: var(--white);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+

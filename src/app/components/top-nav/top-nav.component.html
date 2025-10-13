@@ -1,0 +1,66 @@
+<div class="top-nav">
+  <!-- Left Section: Mobile Menu + Search -->
+  <div class="search-section">
+    <!-- Mobile Menu Button -->
+    <button mat-icon-button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+      <mat-icon>menu</mat-icon>
+    </button>
+    
+    <!-- <mat-form-field appearance="outline" class="search-field" [class.mobile-hidden]="isMobile">
+      <mat-label>Search here</mat-label>
+      <input matInput placeholder="Search here" [(ngModel)]="searchQuery">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field> -->
+  </div>
+
+  <!-- Right Section: Actions and Profile -->
+  <div class="actions-section">
+    <!-- Language Selector -->
+    <!-- <button mat-icon-button [matMenuTriggerFor]="languageMenu" matTooltip="Language" class="action-btn">
+      <span class="flag-icon">🇺🇸</span>
+    </button>
+    <mat-menu #languageMenu="matMenu">
+      <button mat-menu-item *ngFor="let lang of languages" (click)="onLanguageChange(lang)">
+        <span class="flag-icon">{{ lang.flag }}</span>
+        <span>{{ lang.name }}</span>
+      </button>
+    </mat-menu> -->
+
+    <!-- Notifications -->
+    <!-- <button mat-icon-button (click)="openNotifications()" matTooltip="Notifications" class="action-btn notification-btn">
+      <mat-icon [matBadge]="3" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+    </button> -->
+
+    <!-- Fullscreen Toggle -->
+    <button mat-icon-button (click)="openFullscreen()" matTooltip="Toggle Fullscreen" class="action-btn">
+      <mat-icon>fullscreen</mat-icon>
+    </button>
+
+    <!-- Profile Menu -->
+    <button mat-button [matMenuTriggerFor]="profileMenu" class="profile-button">
+      <div class="profile-info">
+        <img src="https://placehold.co/40x40" alt="Profile" class="profile-avatar">
+        <div class="profile-details">
+          <span class="profile-name">Soeng Souy</span>
+          <span class="profile-role">Administrator</span>
+        </div>
+        <mat-icon class="dropdown-icon">keyboard_arrow_down</mat-icon>
+      </div>
+    </button>
+    <mat-menu #profileMenu="matMenu">
+      <button mat-menu-item (click)="onProfileMenuClick('profile')">
+        <mat-icon>person</mat-icon>
+        <span>Profile</span>
+      </button>
+      <button mat-menu-item (click)="onProfileMenuClick('settings')">
+        <mat-icon>settings</mat-icon>
+        <span>Settings</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="onProfileMenuClick('logout')">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+  </div>
+</div>

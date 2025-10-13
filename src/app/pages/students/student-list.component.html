@@ -1,0 +1,167 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-title-section">
+    <h1 class="page-title">Students</h1>
+  </div>
+  <div class="breadcrumb">
+    <span>Student / All Students</span>
+  </div>
+</div>
+
+<!-- Search Section -->
+<div class="card search-section">
+  <div class="search-controls">
+    <div class="search-inputs">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search by ID</mat-label>
+        <input matInput placeholder="Search by ID..." [(ngModel)]="searchById">
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search by Name</mat-label>
+        <input matInput placeholder="Search by Name..." [(ngModel)]="searchByName">
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search by Phone</mat-label>
+        <input matInput placeholder="Search by Phone..." [(ngModel)]="searchByPhone">
+      </mat-form-field>
+    </div>
+    
+    <button mat-raised-button color="primary" class="search-btn" (click)="onSearch()">
+      SEARCH
+    </button>
+  </div>
+</div>
+
+<!-- Students List Section -->
+<div class="students-section">
+  <div class="section-header">
+    <div class="section-info">
+      <h2 class="section-title">Students</h2>
+      <div class="entries-control">
+        <span>Show</span>
+        <mat-select [(ngModel)]="pageSize" (selectionChange)="onPageSizeChange()" class="entries-select">
+          <mat-option [value]="5">5 entries</mat-option>
+          <mat-option [value]="10">10 entries</mat-option>
+          <mat-option [value]="25">25 entries</mat-option>
+          <mat-option [value]="50">50 entries</mat-option>
+        </mat-select>
+      </div>
+    </div>
+    
+    <div class="section-actions">
+      <div class="view-toggle">
+        <button mat-icon-button matTooltip="List View">
+          <mat-icon>list</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Grid View">
+          <mat-icon>grid_view</mat-icon>
+        </button>
+      </div>
+      
+      <button mat-raised-button color="primary" class="action-btn" (click)="onDownload()">
+        <mat-icon>download</mat-icon>
+        Download
+      </button>
+      
+      <button mat-fab color="primary" class="add-btn" (click)="onAddStudent()">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Students Table -->
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="checkbox-column">
+            <mat-checkbox 
+              [checked]="isAllSelected()"
+              [indeterminate]="isIndeterminate()"
+              (change)="onSelectAll()">
+            </mat-checkbox>
+          </th>
+          <th class="sortable-header">
+            ID
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="sortable-header">
+            Name
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="sortable-header">
+            Class
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="sortable-header">
+            DOB
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="sortable-header">
+            Parent Name
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="sortable-header">
+            Mobile Number
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="sortable-header">
+            Address
+            <mat-icon class="sort-icon">unfold_more</mat-icon>
+          </th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let student of students" class="table-row">
+          <td class="checkbox-column">
+            <mat-checkbox 
+              [checked]="isSelected(student.id)"
+              (change)="onSelectStudent(student.id)">
+            </mat-checkbox>
+          </td>
+          <td class="student-id">{{ student.id }}</td>
+          <td class="student-info">
+            <div class="student-avatar-name">
+              <img [src]="student.avatar" [alt]="student.name" class="student-avatar">
+              <span class="student-name">{{ student.name }}</span>
+            </div>
+          </td>
+          <td class="student-class">{{ student.class }}</td>
+          <td class="student-dob">{{ student.dob }}</td>
+          <td class="parent-name">{{ student.parentName }}</td>
+          <td class="mobile-number">{{ student.mobile }}</td>
+          <td class="student-address">{{ student.address }}</td>
+          <td class="actions-column">
+            <div class="action-buttons">
+              <button mat-icon-button matTooltip="Edit" (click)="onEditStudent(student)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Delete" (click)="onDeleteStudent(student)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="table-pagination">
+    <div class="pagination-info">
+      Showing {{ ((currentPage - 1) * pageSize) + 1 }} to {{ Math.min(currentPage * pageSize, students.length) }} of {{ students.length }} entries
+    </div>
+    <div class="pagination-controls">
+      <button mat-icon-button [disabled]="currentPage === 1">
+        <mat-icon>keyboard_arrow_left</mat-icon>
+      </button>
+      <button mat-icon-button class="page-number active">{{ currentPage }}</button>
+      <button mat-icon-button [disabled]="currentPage * pageSize >= students.length">
+        <mat-icon>keyboard_arrow_right</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<div class="main-layout">
+  <!-- Sidebar -->
+  <app-sidebar 
+    class="sidebar-container"
+    [isMobile]="isMobile"
+    [isMobileOpen]="!sidebarCollapsed && isMobile"
+    (sidebarToggle)="onSidebarToggle($event)">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed && !isMobile">
+    <!-- Top Navigation -->
+    <app-top-nav class="top-nav-container" (mobileMenuToggle)="onMobileMenuToggle()"></app-top-nav>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div 
+    class="mobile-overlay" 
+    *ngIf="isMobile && !sidebarCollapsed"
+    (click)="onSidebarToggle(true)">
+  </div>
+</div>

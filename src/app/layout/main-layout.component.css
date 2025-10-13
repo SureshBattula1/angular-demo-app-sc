@@ -1,0 +1,172 @@
+/* ========================================
+   MAIN LAYOUT COMPONENT STYLES
+   ======================================== */
+
+.main-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ========================================
+   SIDEBAR CONTAINER
+   ======================================== */
+
+.sidebar-container {
+  flex-shrink: 0;
+  transition: transform var(--transition-normal);
+}
+
+/* ========================================
+   MAIN CONTENT AREA
+   ======================================== */
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--transition-normal);
+  margin-left: 280px;
+  min-height: 100vh;
+  background-color: var(--background-color);
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 70px;
+}
+
+/* ========================================
+   TOP NAVIGATION
+   ======================================== */
+
+.top-nav-container {
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+/* ========================================
+   PAGE CONTENT
+   ======================================== */
+
+.page-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  background-color: var(--background-color);
+}
+
+/* ========================================
+   MOBILE OVERLAY
+   ======================================== */
+
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  z-index: 998;
+  cursor: pointer;
+  display: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  /* Tablet specific styles */
+  .main-content {
+    margin-left: 260px;
+  }
+
+  .main-content.sidebar-collapsed {
+    margin-left: 70px;
+  }
+
+  .page-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .main-content.sidebar-collapsed {
+    margin-left: 0 !important;
+  }
+
+  .page-content {
+    padding: var(--spacing-md);
+  }
+
+  /* Mobile sidebar - z-index handled in sidebar component */
+  .sidebar-container {
+    z-index: 1000;
+  }
+
+  .mobile-overlay {
+    display: block !important;
+    opacity: 1;
+    transition: opacity var(--transition-normal);
+    z-index: 998;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: var(--spacing-sm);
+  }
+
+  /* Ultra mobile optimizations */
+  .top-nav-container {
+    height: 60px;
+  }
+
+  .main-content {
+    margin-top: 0;
+  }
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+
+.page-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.page-content::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+.page-content::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: var(--radius-sm);
+}
+
+.page-content::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-content {
+  animation: fadeIn var(--transition-normal) ease-out;
+}
