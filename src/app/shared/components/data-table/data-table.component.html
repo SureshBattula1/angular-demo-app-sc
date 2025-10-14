@@ -1,61 +1,55 @@
 <div class="data-table-container">
   <!-- Header Section -->
   <div class="table-header">
-    <div class="header-left">
-      <h2 class="table-title" *ngIf="title">{{ title }}</h2>
-      <!-- <div class="entries-control" *ngIf="config.pagination !== false">
-        <span>Show</span>
-        <mat-select [(ngModel)]="pageSize" (selectionChange)="onPageSizeChange()" class="entries-select">
-          <mat-option *ngFor="let size of pageSizeOptions" [value]="size">
-            {{ size }} entries
-          </mat-option>
-        </mat-select>
-      </div> -->
-    </div>
-    
-    <div class="header-right">
-      <!-- View Toggle (Mobile) -->
-      <div class="view-toggle" *ngIf="isMobile && config.responsive">
-        <button mat-icon-button 
-          [class.active]="viewMode === 'list'"
-          (click)="viewMode = 'list'"
-          matTooltip="List View">
-          <mat-icon>list</mat-icon>
+    <div class="header-top">
+      <div class="header-left">
+        <h2 class="table-title" *ngIf="title">{{ title }}</h2>
+      </div>
+      
+      <div class="header-actions">
+        <!-- View Toggle (Mobile) -->
+        <div class="view-toggle" *ngIf="isMobile && config.responsive">
+          <button mat-icon-button 
+            [class.active]="viewMode === 'list'"
+            (click)="viewMode = 'list'"
+            matTooltip="List View">
+            <mat-icon>list</mat-icon>
+          </button>
+          <button mat-icon-button 
+            [class.active]="viewMode === 'card'"
+            (click)="viewMode = 'card'"
+            matTooltip="Card View">
+            <mat-icon>grid_view</mat-icon>
+          </button>
+        </div>
+        
+        <!-- Advanced Search Button -->
+        <button mat-raised-button 
+          color="primary" 
+          *ngIf="advancedSearchConfig"
+          (click)="openAdvancedSearch()"
+          class="advanced-search-btn">
+          <mat-icon>filter_list</mat-icon>
+          <span class="button-text">Advanced Search</span>
         </button>
+        
+        <!-- Export Buttons -->
         <button mat-icon-button 
-          [class.active]="viewMode === 'card'"
-          (click)="viewMode = 'card'"
-          matTooltip="Card View">
-          <mat-icon>grid_view</mat-icon>
+          *ngIf="config.exportable"
+          matTooltip="Export to CSV" 
+          (click)="onExport('csv')">
+          <mat-icon>download</mat-icon>
         </button>
       </div>
+    </div>
 
-
-       <!-- Search Section -->
-  <div class="search-section" *ngIf="config.searchable">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search</mat-label>
-      <input matInput placeholder="Search..." (keyup)="applySearch($event)">
-      <mat-icon matPrefix>search</mat-icon>
-    </mat-form-field>
-  </div>
-      
-      <!-- Advanced Search Button -->
-      <button mat-raised-button 
-        color="primary" 
-        *ngIf="advancedSearchConfig"
-        (click)="openAdvancedSearch()">
-        <mat-icon>filter_list</mat-icon>
-        <span class="button-text">Advanced Search</span>
-      </button>
-      
-      <!-- Export Buttons -->
-      <button mat-icon-button 
-        *ngIf="config.exportable"
-        matTooltip="Export to CSV" 
-        (click)="onExport('csv')">
-        <mat-icon>download</mat-icon>
-      </button>
+    <!-- Search Section - Full Width Row -->
+    <div class="search-row" *ngIf="config.searchable">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search</mat-label>
+        <input matInput placeholder="Search..." (keyup)="applySearch($event)">
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
     </div>
   </div>
   
