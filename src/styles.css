@@ -13,16 +13,16 @@
    CSS VARIABLES - COLOR PALETTE
    ======================================== */
 :root {
-  /* Primary Colors */
-  --primary-color: #3f51b5;
-  --primary-light: #7986cb;
-  --primary-dark: #303f9f;
+  /* Primary Colors - Green & Teal Theme */
+  --primary-color: #00897b;
+  --primary-light: #4db6ac;
+  --primary-dark: #00695c;
   --primary-contrast: #ffffff;
 
   /* Accent Colors */
-  --accent-color: #ff4081;
-  --accent-light: #ff79b0;
-  --accent-dark: #c60055;
+  --accent-color: #4caf50;
+  --accent-light: #81c784;
+  --accent-dark: #388e3c;
   --accent-contrast: #ffffff;
 
   /* Neutral Colors */
@@ -96,6 +96,16 @@
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 250ms ease-in-out;
   --transition-slow: 350ms ease-in-out;
+
+  /* Line Heights */
+  --line-height-tight: 1.1;
+  --line-height-compact: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Touch Targets */
+  --min-touch-target: 44px;
+  --optimal-touch-target: 48px;
 }
 
 /* ========================================
@@ -111,7 +121,7 @@ html, body {
   height: 100%;
   font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   font-size: 16px;
-  line-height: 1.6;
+  line-height: var(--line-height-normal);
   color: var(--text-primary);
   background-color: var(--background-color);
   -webkit-font-smoothing: antialiased;
@@ -138,8 +148,8 @@ button,
 [role="button"], 
 input[type="submit"], 
 input[type="button"] {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--min-touch-target);
+  min-width: var(--min-touch-target);
 }
 
 /* Better focus indicators */
@@ -513,4 +523,43 @@ html {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ========================================
+   GLOBAL MATERIAL FORM FIELD OVERRIDES
+   ======================================== */
+
+/* Decrease line-height globally for all mat-form-fields */
+.mat-mdc-form-field {
+  line-height: var(--line-height-compact, 1.2) !important;
+}
+
+.mat-mdc-form-field-infix {
+  min-height: var(--min-touch-target, 44px);
+  line-height: var(--line-height-compact, 1.2);
+  padding: var(--spacing-sm) 0;
+}
+
+.mat-mdc-text-field-wrapper {
+  padding-bottom: 0;
+}
+
+.mat-mdc-form-field-subscript-wrapper {
+  min-height: 0;
+  margin-top: 0;
+}
+
+.mat-mdc-form-field-label {
+  line-height: var(--line-height-compact, 1.2);
+}
+
+.mat-mdc-text-field-wrapper .mat-mdc-form-field-flex {
+  line-height: var(--line-height-compact, 1.2);
+}
+
+/* Input elements inside form fields */
+.mat-mdc-form-field input,
+.mat-mdc-form-field textarea,
+.mat-mdc-form-field select {
+  line-height: var(--line-height-compact, 1.2);
 }

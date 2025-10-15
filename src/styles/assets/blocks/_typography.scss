@@ -1,0 +1,147 @@
+// ========================================
+// TYPOGRAPHY
+// ========================================
+
+// Base font size responsive
+html {
+  font-size: $font-size-desktop;
+  
+  @include mobile-only {
+    font-size: $font-size-mobile;
+  }
+  
+  @include tablet-only {
+    font-size: $font-size-tablet;
+  }
+}
+
+body {
+  font-family: $font-family;
+  line-height: 1.6;
+  color: $text-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Headings
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  font-weight: $font-weight-medium;
+  line-height: 1.2;
+}
+
+h1, .h1 {
+  font-size: 2.5rem;
+  @include mobile-only { font-size: 2rem; }
+}
+
+h2, .h2 {
+  font-size: 2rem;
+  @include mobile-only { font-size: 1.75rem; }
+}
+
+h3, .h3 {
+  font-size: 1.75rem;
+  @include mobile-only { font-size: 1.5rem; }
+}
+
+h4, .h4 {
+  font-size: 1.5rem;
+  @include mobile-only { font-size: 1.25rem; }
+}
+
+h5, .h5 {
+  font-size: 1.25rem;
+  @include mobile-only { font-size: 1.125rem; }
+}
+
+h6, .h6 {
+  font-size: 1rem;
+}
+
+// Paragraphs
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+// Display text
+.display-1 {
+  font-size: 6rem;
+  font-weight: $font-weight-light;
+  line-height: 1.2;
+  @include mobile-only { font-size: 4rem; }
+}
+
+.display-2 {
+  font-size: 5.5rem;
+  font-weight: $font-weight-light;
+  line-height: 1.2;
+  @include mobile-only { font-size: 3.5rem; }
+}
+
+.display-3 {
+  font-size: 4.5rem;
+  font-weight: $font-weight-light;
+  line-height: 1.2;
+  @include mobile-only { font-size: 3rem; }
+}
+
+.display-4 {
+  font-size: 3.5rem;
+  font-weight: $font-weight-light;
+  line-height: 1.2;
+  @include mobile-only { font-size: 2.5rem; }
+}
+
+// Lead text
+.lead {
+  font-size: 1.25rem;
+  font-weight: $font-weight-light;
+}
+
+// Text utilities
+.text-small { font-size: 0.875rem; }
+.text-large { font-size: 1.25rem; }
+.text-muted { color: $text-secondary; }
+.text-disabled { color: $text-disabled; }
+
+// Font weights
+.font-light { font-weight: $font-weight-light; }
+.font-regular { font-weight: $font-weight-regular; }
+.font-medium { font-weight: $font-weight-medium; }
+.font-bold { font-weight: $font-weight-bold; }
+
+// Text transform
+.text-lowercase { text-transform: lowercase; }
+.text-uppercase { text-transform: uppercase; }
+.text-capitalize { text-transform: capitalize; }
+
+// Text alignment
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+
+// Text decoration
+.text-underline { text-decoration: underline; }
+.text-line-through { text-decoration: line-through; }
+.text-no-decoration { text-decoration: none; }
+
+// Text wrapping
+.text-nowrap { white-space: nowrap; }
+.text-wrap { white-space: normal; }
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Line height
+.lh-1 { line-height: 1; }
+.lh-sm { line-height: 1.25; }
+.lh-base { line-height: 1.5; }
+.lh-lg { line-height: 2; }
+

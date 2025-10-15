@@ -1,0 +1,47 @@
+// ========================================
+// RESPONSIVE SPACING UTILITIES
+// ========================================
+
+@use '../variables' as *;
+@use '../mixins/responsive';
+
+// Mobile spacing
+@include responsive.respond-below($breakpoint-md) {
+  $margin-mobile: $base-spacing-mobile;
+  $padding-mobile: $base-spacing-mobile;
+  
+  .m-mobile { margin: $margin-mobile !important; }
+  .mt-mobile { margin-top: $margin-mobile !important; }
+  .mr-mobile { margin-right: $margin-mobile !important; }
+  .mb-mobile { margin-bottom: $margin-mobile !important; }
+  .ml-mobile { margin-left: $margin-mobile !important; }
+  
+  .p-mobile { padding: $padding-mobile !important; }
+  .pt-mobile { padding-top: $padding-mobile !important; }
+  .pr-mobile { padding-right: $padding-mobile !important; }
+  .pb-mobile { padding-bottom: $padding-mobile !important; }
+  .pl-mobile { padding-left: $padding-mobile !important; }
+  
+  @for $i from 2 through 5 {
+    .m#{$i}-mobile { margin: $margin-mobile * $i !important; }
+    .p#{$i}-mobile { padding: $padding-mobile * $i !important; }
+  }
+}
+
+// Tablet spacing
+@include responsive.respond-between($breakpoint-md, $breakpoint-lg) {
+  $margin-tablet: $base-spacing-tablet;
+  $padding-tablet: $base-spacing-tablet;
+  
+  .m-tablet { margin: $margin-tablet !important; }
+  .mt-tablet { margin-top: $margin-tablet !important; }
+  .p-tablet { padding: $padding-tablet !important; }
+  .pt-tablet { padding-top: $padding-tablet !important; }
+}
+
+// Desktop spacing
+@include responsive.respond-above($breakpoint-lg) {
+  .m-desktop { margin: $base-spacing-desktop !important; }
+  .p-desktop { padding: $base-spacing-desktop !important; }
+}
+

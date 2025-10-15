@@ -67,24 +67,24 @@
 .search-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .field-group {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .group-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 var(--spacing-md) 0;
-  padding-bottom: var(--spacing-sm);
+  margin: 0 0 var(--spacing-sm) 0;
+  padding-bottom: var(--spacing-xs);
   border-bottom: 2px solid var(--primary-color);
 }
 
 .form-field {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .form-field mat-form-field {
@@ -95,7 +95,40 @@
   display: block;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  font-size: 14px;
+}
+
+/* Compact form fields */
+::ng-deep .form-field .mat-mdc-form-field {
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+::ng-deep .form-field .mat-mdc-form-field-infix {
+  min-height: 40px;
+  padding: 8px 0;
+}
+
+::ng-deep .form-field .mat-mdc-text-field-wrapper {
+  padding-bottom: 0;
+}
+
+::ng-deep .form-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+::ng-deep .form-field .mat-mdc-form-field-label {
+  font-size: 14px;
+}
+
+::ng-deep .form-field input,
+::ng-deep .form-field .mat-mdc-select {
+  font-size: 14px;
+}
+
+::ng-deep .form-field .mat-mdc-select-trigger {
+  height: 40px;
 }
 
 .radio-group {
@@ -159,10 +192,60 @@
   
   .sidebar-header {
     padding: var(--spacing-md);
+    min-height: 60px;
+  }
+  
+  .sidebar-title {
+    font-size: 18px;
   }
   
   .sidebar-content {
-    padding: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+  
+  .search-form {
+    gap: var(--spacing-xs);
+  }
+  
+  .field-group {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .group-title {
+    font-size: 14px;
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: 4px;
+  }
+  
+  .form-field {
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .field-label {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  
+  ::ng-deep .form-field .mat-mdc-form-field {
+    font-size: 13px;
+  }
+  
+  ::ng-deep .form-field .mat-mdc-form-field-infix {
+    min-height: 36px;
+    padding: 6px 0;
+  }
+  
+  ::ng-deep .form-field .mat-mdc-form-field-label {
+    font-size: 13px;
+  }
+  
+  ::ng-deep .form-field input,
+  ::ng-deep .form-field .mat-mdc-select {
+    font-size: 13px;
+  }
+  
+  ::ng-deep .form-field .mat-mdc-select-trigger {
+    height: 36px;
   }
   
   .footer-actions {

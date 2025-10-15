@@ -1,0 +1,187 @@
+<div class="app-container">
+  <!-- Header Toolbar -->
+  <mat-toolbar class="app-header" color="primary">
+    <!-- Toggle Button - Always visible on desktop -->
+    <button mat-icon-button 
+            (click)="toggleSidebar()" 
+            class="sidebar-toggle"
+            aria-label="Toggle sidebar">
+      <mat-icon>{{ isSidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+    </button>
+    
+    <span class="app-title">School Management System</span>
+    <span class="spacer"></span>
+    
+    <!-- Header Actions -->
+    <!-- Theme Selector -->
+    <mat-form-field appearance="outline" class="theme-selector">
+      <mat-label>Theme</mat-label>
+      <mat-select [(value)]="selectedTheme" (selectionChange)="onThemeChange($event.value)">
+        <mat-option value="teal-green">
+          <mat-icon>palette</mat-icon>
+          Teal & Green
+        </mat-option>
+        <mat-option value="indigo-pink">
+          <mat-icon>palette</mat-icon>
+          Indigo & Pink
+        </mat-option>
+        <mat-option value="blue-orange">
+          <mat-icon>palette</mat-icon>
+          Blue & Orange
+        </mat-option>
+        <mat-option value="purple-pink">
+          <mat-icon>palette</mat-icon>
+          Purple & Pink
+        </mat-option>
+        <mat-option value="red-gray">
+          <mat-icon>palette</mat-icon>
+          Red & Gray
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    
+    <button mat-icon-button aria-label="Notifications">
+      <mat-icon matBadge="3" matBadgeColor="warn">notifications</mat-icon>
+    </button>
+    
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Sidenav Container -->
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed && !(isHandset$ | async)">
+    <!-- Sidenav -->
+    <mat-sidenav
+      #drawer
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="!(isHandset$ | async) || !isSidebarCollapsed"
+      [class.collapsed]="isSidebarCollapsed && !(isHandset$ | async)"
+      class="app-sidenav">
+      
+      <mat-nav-list>
+        <!-- Dashboard -->
+        <a mat-list-item 
+           routerLink="/dashboard" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Dashboard' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>dashboard</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Dashboard</span>
+        </a>
+
+        <!-- Students -->
+        <a mat-list-item 
+           routerLink="/students" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Students' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>school</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Students</span>
+        </a>
+
+        <!-- Teachers -->
+        <a mat-list-item 
+           routerLink="/teachers" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Teachers' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>person</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Teachers</span>
+        </a>
+
+        <!-- Departments -->
+        <a mat-list-item 
+           routerLink="/departments" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Departments' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>business</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Departments</span>
+        </a>
+
+        <!-- Subjects -->
+        <a mat-list-item 
+           routerLink="/subjects" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Subjects' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>subject</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
+        </a>
+
+        <!-- Fees -->
+        <a mat-list-item 
+           routerLink="/fees" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Fees' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>payment</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Fees</span>
+        </a>
+
+        <!-- Accounts -->
+        <a mat-list-item 
+           routerLink="/accounts" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Accounts' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>account_balance</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Accounts</span>
+        </a>
+
+        <!-- Invoices -->
+        <a mat-list-item 
+           routerLink="/invoices" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Invoices' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>receipt</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Invoices</span>
+        </a>
+
+        <!-- Holidays -->
+        <a mat-list-item 
+           routerLink="/holidays" 
+           routerLinkActive="active"
+           [matTooltip]="isSidebarCollapsed ? 'Holidays' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+          <mat-icon matListItemIcon>event</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Holidays</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content class="app-content">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
+
+<!-- User Menu -->
+<mat-menu #userMenu="matMenu">
+  <button mat-menu-item>
+    <mat-icon>person</mat-icon>
+    <span>Profile</span>
+  </button>
+  <button mat-menu-item>
+    <mat-icon>settings</mat-icon>
+    <span>Settings</span>
+  </button>
+  <mat-divider></mat-divider>
+  <button mat-menu-item>
+    <mat-icon>logout</mat-icon>
+    <span>Logout</span>
+  </button>
+</mat-menu>
+

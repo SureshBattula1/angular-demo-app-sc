@@ -1,0 +1,58 @@
+// ========================================
+// RESPONSIVE MIXINS
+// ========================================
+
+@use '../variables' as *;
+
+// Usage: @include respond-above($breakpoint-md) { ... }
+@mixin respond-above($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+// Usage: @include respond-below($breakpoint-md) { ... }
+@mixin respond-below($breakpoint) {
+  @media (max-width: ($breakpoint - 1px)) {
+    @content;
+  }
+}
+
+// Usage: @include respond-between($breakpoint-sm, $breakpoint-lg) { ... }
+@mixin respond-between($min, $max) {
+  @media (min-width: $min) and (max-width: ($max - 1px)) {
+    @content;
+  }
+}
+
+// Specific breakpoint mixins
+@mixin mobile-only {
+  @include respond-below($breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin tablet-only {
+  @include respond-between($breakpoint-md, $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin desktop-only {
+  @include respond-above($breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin tablet-and-up {
+  @include respond-above($breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin desktop-and-up {
+  @include respond-above($breakpoint-lg) {
+    @content;
+  }
+}
+

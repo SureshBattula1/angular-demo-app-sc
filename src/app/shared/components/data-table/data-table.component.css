@@ -14,15 +14,16 @@
    ======================================== */
 
 .table-header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md); /* Reduced from var(--spacing-lg) */
   border-bottom: 1px solid var(--divider-color);
   background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm); /* Reduced gap */
 }
 
-.header-top {
+/* Row 1: Title and Add Button */
+.header-row-1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,15 +31,108 @@
   flex-wrap: wrap;
 }
 
+/* Row 2: Filter Block and Search/Actions */
+.header-row-2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm); /* Reduced gap */
+  flex-wrap: wrap;
+  padding-top: var(--spacing-xs); /* Reduced padding */
+  border-top: 1px solid var(--divider-color);
+}
+
 .header-left {
   flex: 1;
 }
 
-.header-actions {
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs); /* Reduced gap */
+}
+
+.filter-block {
+  flex: 1;
+}
+
+.filter-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.add-filter-btn {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.member-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.search-actions-block {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.search-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1 1 auto;
+  min-width: 250px;
+  max-width: 600px;
+}
+
+.action-buttons {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.export-btn {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 8px 16px;
+}
+
+.export-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.export-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.primary-action-btn {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .table-title {
@@ -83,17 +177,41 @@
 
 .search-row {
   display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .search-field {
-  width: 100%;
-  max-width: 500px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.advanced-search-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.advanced-search-btn mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.button-text {
+  margin-left: var(--spacing-xs);
 }
 
 /* Override Material form field styles for compact search */
 ::ng-deep .search-field.mat-mdc-form-field {
   margin: 0;
+  font-size: 14px;
 }
 
 ::ng-deep .search-field .mat-mdc-text-field-wrapper {
@@ -101,12 +219,21 @@
 }
 
 ::ng-deep .search-field .mat-mdc-form-field-infix {
-  min-height: 44px;
-  padding: 10px 0;
+  min-height: 40px;
+  padding: 6px 0;
 }
 
 ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
   display: none;
+}
+
+::ng-deep .search-field .mat-mdc-form-field-label {
+  font-size: 14px;
+}
+
+::ng-deep .search-field input {
+  font-size: 14px;
+  padding: 8px 0;
 }
 
 /* ========================================
@@ -297,68 +424,177 @@
 
 @media (max-width: 1024px) {
   .table-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
   }
   
-  .header-top {
+  .header-row-1 {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
+  }
+  
+  .header-row-2 {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
   }
   
   .header-left {
     width: 100%;
   }
   
-  .header-actions {
+  .header-right {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: space-between;
   }
   
-  .search-row {
+  .filter-block {
     width: 100%;
+  }
+  
+  .search-actions-block {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+  
+  .search-section {
+    flex: 1 1 auto;
+    min-width: 250px;
+    max-width: 100%;
+  }
+  
+  .action-buttons {
+    flex-shrink: 0;
   }
   
   .search-field {
     max-width: 100%;
+    flex: 1;
+  }
+  
+  .export-btn,
+  .primary-action-btn {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .advanced-search-btn {
+    width: 40px;
+    height: 40px;
   }
 }
 
 @media (max-width: 768px) {
   .table-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
+    gap: var(--spacing-xs); /* Reduced gap */
+  }
+  
+  .header-row-1 {
     gap: var(--spacing-sm);
   }
   
-  .header-top {
+  .header-row-2 {
     gap: var(--spacing-sm);
   }
   
-  .header-actions {
-    gap: var(--spacing-xs);
+  .header-right {
+    gap: var(--spacing-sm);
     justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
   }
   
-  .search-row {
+  .filter-info {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  
+  .member-count {
+    font-size: 12px;
+  }
+  
+  .search-actions-block {
+    gap: var(--spacing-md);
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-section {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  
+  .action-buttons {
+    width: 100%;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
   }
   
   .search-field {
-    max-width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .export-btn,
+  .primary-action-btn {
+    flex: 1;
+    font-size: 11px;
+    white-space: nowrap;
+    padding: 8px 12px;
+  }
+  
+  .export-btn mat-icon,
+  .primary-action-btn mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
   }
   
   .button-text {
-    display: none;
+    display: inline;
+  }
+
+  .advanced-search-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Compact form fields on mobile */
+  ::ng-deep .search-field.mat-mdc-form-field {
+    font-size: 13px;
+  }
+  
+  ::ng-deep .search-field .mat-mdc-form-field-infix {
+    min-height: 36px;
+    padding: 5px 0;
+  }
+  
+  ::ng-deep .search-field .mat-mdc-form-field-label {
+    font-size: 13px;
+  }
+  
+  ::ng-deep .search-field input {
+    font-size: 13px;
+    padding: 6px 0;
   }
   
   /* Compact buttons on mobile */
   .header-actions button {
     padding: 0 var(--spacing-xs);
-    min-width: 40px;
+    min-width: 44px;
+    height: 44px;
   }
   
   .advanced-search-btn {
     padding: 0 var(--spacing-sm) !important;
+    min-width: 44px !important;
+  }
+  
+  mat-icon {
+    margin: 0 !important;
   }
   
   /* Enhanced table scrolling on mobile */
@@ -427,6 +663,10 @@
 }
 
 @media (max-width: 480px) {
+  .table-header {
+    padding: var(--spacing-sm);
+  }
+  
   .table-title {
     font-size: 18px;
   }
@@ -438,6 +678,66 @@
   .entries-select {
     min-width: 80px;
     font-size: 12px;
+  }
+  
+  .search-row {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  
+  .search-field {
+    min-width: 0;
+    flex: 1;
+  }
+  
+  /* Ultra compact form fields */
+  ::ng-deep .search-field.mat-mdc-form-field {
+    font-size: 12px;
+  }
+  
+  ::ng-deep .search-field .mat-mdc-form-field-infix {
+    min-height: 32px;
+    padding: 4px 0;
+  }
+  
+  ::ng-deep .search-field .mat-mdc-form-field-label {
+    font-size: 12px;
+  }
+  
+  ::ng-deep .search-field input {
+    font-size: 12px;
+    padding: 5px 0;
+  }
+  
+  .advanced-search-btn {
+    min-width: 36px !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 6px !important;
+  }
+
+  .advanced-search-btn mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .header-actions button[matTooltip] {
+    min-width: 40px !important;
+    width: 40px;
+    height: 40px;
+    padding: 8px !important;
+  }
+  
+  .export-btn mat-icon,
+  .primary-action-btn mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .button-text {
+    display: none;
   }
   
   /* Ensure smooth horizontal scrolling on ultra mobile */
@@ -480,4 +780,5 @@
     height: 30px;
   }
 }
+
 

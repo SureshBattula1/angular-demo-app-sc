@@ -1,4 +1,5 @@
 import { TemplateRef } from '@angular/core';
+import { ServerTableRequest, TableState } from '../../interfaces/api.interface';
 
 export interface TableColumn {
   key: string;                    // Property key from data object
@@ -30,11 +31,39 @@ export interface TableConfig {
   pageSizeOptions?: number[];     // Page size options
   defaultPageSize?: number;
   searchable?: boolean;           // Enable basic search
+  advancedSearch?: boolean;       // Enable advanced search
+  filterable?: boolean;           // Enable filter functionality
   exportable?: boolean;           // Enable export functionality
   responsive?: boolean;           // Mobile/tablet responsive
+  serverSide?: boolean;           // Enable server-side operations
+  totalCount?: number;            // Total count for server-side pagination
 }
 
 export interface SearchCriteria {
   [key: string]: any;             // Dynamic search values
+}
+
+// Server-side table events
+export interface TableEvent {
+  type: 'sort' | 'page' | 'search' | 'filter';
+  data: any;
+}
+
+// Server-side pagination event
+export interface PaginationEvent {
+  page: number;
+  pageSize: number;
+}
+
+// Server-side sort event
+export interface SortEvent {
+  field: string;
+  direction: 'asc' | 'desc';
+}
+
+// Server-side search event
+export interface SearchEvent {
+  query: string;
+  filters?: { [key: string]: any };
 }
 

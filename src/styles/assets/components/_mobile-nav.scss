@@ -1,0 +1,175 @@
+// ========================================
+// MOBILE NAVIGATION
+// ========================================
+
+.mobile-nav {
+  @include mobile-only {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: $white;
+    border-top: 1px solid $divider-color;
+    padding: 8px 0;
+    z-index: $z-sticky;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: $shadow-lg;
+    
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px;
+      text-decoration: none;
+      color: $text-secondary;
+      transition: color $transition-fast;
+      
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        margin-bottom: 4px;
+      }
+      
+      .nav-label {
+        font-size: 12px;
+        margin: 0;
+      }
+      
+      &.active,
+      &:active {
+        color: $primary-color;
+      }
+    }
+  }
+  
+  @include tablet-and-up {
+    display: none;
+  }
+}
+
+// Adjust content padding when mobile nav is present
+.content-with-mobile-nav {
+  @include mobile-only {
+    padding-bottom: 72px;
+  }
+}
+
+// Mobile menu overlay
+.mobile-menu-overlay {
+  @include mobile-only {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: $z-modal-backdrop;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity $transition-normal, visibility $transition-normal;
+    
+    &.active {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+// Mobile menu drawer
+.mobile-menu-drawer {
+  @include mobile-only {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: $white;
+    z-index: $z-modal;
+    transform: translateX(-100%);
+    transition: transform $transition-normal;
+    overflow-y: auto;
+    box-shadow: $shadow-xl;
+    
+    &.active {
+      transform: translateX(0);
+    }
+    
+    .drawer-header {
+      padding: 16px;
+      background: $primary-color;
+      color: $white;
+      
+      .drawer-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: $font-weight-medium;
+      }
+    }
+    
+    .drawer-content {
+      padding: 16px 0;
+      
+      .menu-item {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: $text-primary;
+        transition: background $transition-fast;
+        
+        mat-icon {
+          margin-right: 16px;
+          color: $text-secondary;
+        }
+        
+        &:active,
+        &.active {
+          background: $gray-100;
+          
+          mat-icon {
+            color: $primary-color;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Hamburger menu icon
+.hamburger-icon {
+  @include mobile-only {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    
+    span {
+      display: block;
+      height: 3px;
+      background: currentColor;
+      border-radius: 2px;
+      transition: transform $transition-fast, opacity $transition-fast;
+    }
+    
+    &.active {
+      span:nth-child(1) {
+        transform: translateY(10.5px) rotate(45deg);
+      }
+      
+      span:nth-child(2) {
+        opacity: 0;
+      }
+      
+      span:nth-child(3) {
+        transform: translateY(-10.5px) rotate(-45deg);
+      }
+    }
+  }
+}
+

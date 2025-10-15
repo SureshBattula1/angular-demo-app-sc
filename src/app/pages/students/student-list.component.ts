@@ -1,19 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { TableConfig, TableColumn, TableAction } from '../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../shared/components/advanced-search-sidebar/search-field.interface';
 import { Router } from '@angular/router';
+import { StudentService } from './student.service';
+import { Student, StudentListRequest, StudentListResponse } from '../../shared/interfaces/api.interface';
+import { PaginationEvent, SortEvent, SearchEvent } from '../../shared/components/data-table/data-table.interface';
 
-interface Student {
-  id: string;
-  name: string;
-  avatar: string;
-  class: string;
-  dob: string;
-  parentName: string;
-  mobile: string;
-  address: string;
-}
+// Remove the duplicate Student interface since it's imported from api.interface
 
 @Component({
   selector: 'app-student-list',
@@ -21,6 +15,7 @@ interface Student {
   imports: [DataTableComponent],
   template: `
     <app-data-table
+      #dataTable
       [data]="students"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
@@ -29,13 +24,16 @@ interface Student {
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
-      (exportClicked)="onExport($event)">
+      (exportClicked)="onExport($event)"
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
+      (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
   styles: [`
     :host {
       display: block;
-    //   padding: var(--spacing-lg);
+      /* padding: var(--spacing-lg); */
     }
     
     @media (max-width: 768px) {
@@ -46,89 +44,17 @@ interface Student {
   `]
 })
 export class StudentListComponent implements OnInit {
+  @ViewChild('dataTable') dataTable!: DataTableComponent;
+  
   loading = false;
-  students: Student[] = [
-    {
-      id: 'PRE2209',
-      name: 'Aaliyah',
-      avatar: 'https://placehold.co/40x40/4caf50/ffffff?text=A',
-      class: '10 A',
-      dob: '2 Feb 2002',
-      parentName: 'Jeffrey Wong',
-      mobile: '097 3584 5870',
-      address: '911 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2210',
-      name: 'Malynne',
-      avatar: 'https://placehold.co/40x40/2196f3/ffffff?text=M',
-      class: '10 A',
-      dob: '3 Feb 2002',
-      parentName: 'John Doe',
-      mobile: '097 3584 5871',
-      address: '912 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2211',
-      name: 'Sarah',
-      avatar: 'https://placehold.co/40x40/ff9800/ffffff?text=S',
-      class: '9 B',
-      dob: '4 Feb 2002',
-      parentName: 'Jane Smith',
-      mobile: '097 3584 5872',
-      address: '913 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2212',
-      name: 'Michael',
-      avatar: 'https://placehold.co/40x40/f44336/ffffff?text=M',
-      class: '11 C',
-      dob: '5 Feb 2002',
-      parentName: 'Robert Johnson',
-      mobile: '097 3584 5873',
-      address: '914 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2213',
-      name: 'Emily',
-      avatar: 'https://placehold.co/40x40/9c27b0/ffffff?text=E',
-      class: '10 A',
-      dob: '6 Feb 2002',
-      parentName: 'David Wilson',
-      mobile: '097 3584 5874',
-      address: '915 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2214',
-      name: 'James',
-      avatar: 'https://placehold.co/40x40/00bcd4/ffffff?text=J',
-      class: '9 A',
-      dob: '7 Feb 2002',
-      parentName: 'William Brown',
-      mobile: '097 3584 5875',
-      address: '916 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2215',
-      name: 'Sophia',
-      avatar: 'https://placehold.co/40x40/8bc34a/ffffff?text=S',
-      class: '10 B',
-      dob: '8 Feb 2002',
-      parentName: 'Thomas Davis',
-      mobile: '097 3584 5876',
-      address: '917 Deer Ridge Drive, USA'
-    },
-    {
-      id: 'PRE2216',
-      name: 'Daniel',
-      avatar: 'https://placehold.co/40x40/ffc107/ffffff?text=D',
-      class: '11 A',
-      dob: '9 Feb 2002',
-      parentName: 'Charles Miller',
-      mobile: '097 3584 5877',
-      address: '918 Deer Ridge Drive, USA'
-    }
-  ];
+  students: Student[] = [];
+  
+  // Server-side state
+  currentRequest: StudentListRequest = {
+    pagination: { page: 0, pageSize: 10 },
+    sort: undefined,
+    search: undefined
+  };
   
   // Table Configuration
   tableConfig: TableConfig = {
@@ -203,8 +129,11 @@ export class StudentListComponent implements OnInit {
     selectable: true,
     pagination: true,
     searchable: true,
+    advancedSearch: true,
     exportable: true,
     responsive: true,
+    serverSide: true,
+    totalCount: 0,
     pageSizeOptions: [5, 10, 25, 50],
     defaultPageSize: 10
   };
@@ -275,10 +204,76 @@ export class StudentListComponent implements OnInit {
     ]
   };
   
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private studentService: StudentService
+  ) {}
   
   ngOnInit(): void {
-    // Initialize component
+    // Load initial data
+    this.loadStudents();
+  }
+  
+  /**
+   * Load students from server with current request parameters
+   */
+  loadStudents(): void {
+    this.loading = true;
+    
+    this.studentService.getStudents(this.currentRequest).subscribe({
+      next: (response: StudentListResponse) => {
+        this.students = response.data;
+        this.tableConfig.totalCount = response.total;
+        
+        // Update data table with server response
+        if (this.dataTable) {
+          this.dataTable.updateServerData(response.data, response.total);
+        }
+        
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading students:', error);
+        this.loading = false;
+      }
+    });
+  }
+  
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentRequest.pagination = {
+      page: event.page,
+      pageSize: event.pageSize
+    };
+    this.loadStudents();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    this.currentRequest.sort = {
+      field: event.field,
+      direction: event.direction
+    };
+    // Reset to first page when sorting
+    this.currentRequest.pagination.page = 0;
+    this.loadStudents();
+  }
+  
+  /**
+   * Handle advanced search changes
+   */
+  onAdvancedSearchChange(event: SearchEvent): void {
+    this.currentRequest.search = {
+      query: event.query,
+      filters: event.filters
+    };
+    // Reset to first page when searching
+    this.currentRequest.pagination.page = 0;
+    this.loadStudents();
   }
   
   onAction(event: { action: string, row: any }): void {
@@ -316,38 +311,23 @@ export class StudentListComponent implements OnInit {
   
   onExport(format: string): void {
     console.log('Export as:', format);
-    // Implement export functionality
-    if (format === 'csv') {
-      this.exportToCSV();
-    }
-  }
-  
-  exportToCSV(): void {
-    const csvContent = this.convertToCSV(this.students);
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'students.csv';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-  
-  convertToCSV(data: Student[]): string {
-    const headers = ['ID', 'Name', 'Class', 'DOB', 'Parent Name', 'Mobile', 'Address'];
-    const rows = data.map(student => [
-      student.id,
-      student.name,
-      student.class,
-      student.dob,
-      student.parentName,
-      student.mobile,
-      student.address
-    ]);
+    this.loading = true;
     
-    return [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
+    // Use current search criteria for export
+    this.studentService.exportStudents(format, this.currentRequest.search?.filters).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `students.${format}`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Export error:', error);
+        this.loading = false;
+      }
+    });
   }
 }

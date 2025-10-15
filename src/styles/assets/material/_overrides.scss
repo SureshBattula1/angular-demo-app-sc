@@ -1,0 +1,180 @@
+// ========================================
+// ANGULAR MATERIAL OVERRIDES
+// ========================================
+
+@use '../variables' as *;
+@use '../mixins/responsive';
+
+// Material toolbar
+.mat-toolbar {
+  &.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: $z-fixed;
+    
+    @include responsive.mobile-only {
+      height: $header-height-mobile;
+    }
+  }
+}
+
+// Material sidenav
+.mat-sidenav-container {
+  &.app-sidenav-container {
+    flex: 1;
+    margin-top: $header-height;
+    
+    @include responsive.mobile-only {
+      margin-top: $header-height-mobile;
+    }
+  }
+}
+
+.mat-sidenav {
+  &.app-sidenav {
+    width: $sidebar-width;
+    
+    @include responsive.mobile-only {
+      width: 280px;
+    }
+  }
+}
+
+// Material form field
+.mat-mdc-form-field {
+  width: 100%;
+  
+  @include responsive.mobile-only {
+    .mat-mdc-text-field-wrapper {
+      padding-bottom: 0;
+    }
+  }
+}
+
+// Material button
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-flat-button,
+.mat-mdc-stroked-button {
+  min-height: $min-touch-target;
+  
+  @include responsive.mobile-only {
+    padding: 0 24px;
+    font-size: 16px;
+  }
+}
+
+// Material icon button
+.mat-mdc-icon-button {
+  @include responsive.mobile-only {
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+  }
+}
+
+// Material card
+.mat-mdc-card {
+  @include responsive.mobile-only {
+    margin: 8px;
+    border-radius: $radius-sm;
+  }
+}
+
+// Material table
+.mat-mdc-table {
+  @include responsive.mobile-only {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 12px 8px;
+      font-size: 14px;
+    }
+  }
+}
+
+// Material dialog
+.mat-mdc-dialog-container {
+  @include responsive.mobile-only {
+    max-width: 100vw !important;
+    border-radius: 0;
+  }
+}
+
+// Material list
+.mat-mdc-list-item {
+  @include responsive.mobile-only {
+    min-height: 48px;
+    padding: 0 16px;
+  }
+}
+
+// Material menu
+.mat-mdc-menu-panel {
+  @include responsive.mobile-only {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+// Material tabs
+.mat-mdc-tab {
+  @include responsive.mobile-only {
+    min-width: 90px;
+    padding: 0 12px;
+  }
+}
+
+// Material expansion panel
+.mat-expansion-panel {
+  @include responsive.mobile-only {
+    margin: 8px 0;
+  }
+}
+
+// Material select
+.mat-mdc-select {
+  @include responsive.mobile-only {
+    font-size: 16px;
+  }
+}
+
+// Material checkbox and radio
+.mat-mdc-checkbox,
+.mat-mdc-radio-button {
+  @include responsive.mobile-only {
+    .mdc-checkbox,
+    .mdc-radio {
+      padding: 12px;
+    }
+  }
+}
+
+// Material paginator
+.mat-mdc-paginator {
+  @include responsive.mobile-only {
+    .mat-mdc-paginator-page-size {
+      display: none;
+    }
+    
+    .mat-mdc-paginator-range-label {
+      margin: 0 8px;
+    }
+  }
+}
+
+// Material progress bar
+.mat-mdc-progress-bar {
+  @include responsive.mobile-only {
+    height: 8px;
+  }
+}
+
+// Material snackbar
+.mat-mdc-snack-bar-container {
+  @include responsive.mobile-only {
+    margin: 8px;
+    max-width: calc(100vw - 16px);
+  }
+}
+

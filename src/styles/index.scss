@@ -1,0 +1,105 @@
+// ========================================
+// MAIN STYLE INDEX
+// Import order is important!
+// ========================================
+
+// 1. Custom variables (before everything)
+@use './assets/variables' as *;
+
+// 2. Responsive mixins
+@use './assets/mixins/responsive';
+
+// 3. Material customizations
+@use './assets/material/overrides';
+@use './assets/integrations/material-bootstrap';
+
+// 4. Helpers & Utilities
+@use './assets/helpers/spacing';
+@use './assets/helpers/spacing-responsive';
+@use './assets/helpers/display';
+
+// 5. Layout Blocks
+@use './assets/blocks/flex-grid';
+@use './assets/blocks/flex-grid-advanced';
+@use './assets/blocks/typography';
+@use './assets/blocks/touch-friendly';
+@use './assets/blocks/modal-dialog-responsive';
+
+// 6. Components
+@use './assets/components/mobile-nav';
+
+// 7. Global resets and base styles
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow-x: hidden;
+  position: relative;
+}
+
+// 8. Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}
+
+// 9. Better text selection
+::selection {
+  background-color: $primary-color;
+  color: $white;
+}
+
+// 10. Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $gray-400;
+  border-radius: $radius-sm;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $gray-500;
+}
+
+// 11. Focus styles
+*:focus-visible {
+  outline: 2px solid $primary-color;
+  outline-offset: 2px;
+}
+
+// 12. Better focus indicators for keyboard navigation
+.focus-visible:focus {
+  outline: 2px solid $primary-color;
+  outline-offset: 2px;
+}
+
+// 13. Print styles
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: $white;
+  }
+  
+  .mat-toolbar,
+  .mat-sidenav {
+    display: none !important;
+  }
+}
+

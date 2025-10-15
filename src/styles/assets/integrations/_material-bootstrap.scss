@@ -1,0 +1,130 @@
+// ========================================
+// MATERIAL + BOOTSTRAP INTEGRATION
+// ========================================
+
+// Ensure Material components work well with Bootstrap utilities
+// Fix z-index conflicts
+.mat-mdc-dialog-container {
+  z-index: $z-modal !important;
+}
+
+.mat-mdc-menu-panel {
+  z-index: $z-dropdown !important;
+}
+
+.mat-mdc-tooltip {
+  z-index: $z-tooltip !important;
+}
+
+.mat-mdc-snack-bar-container {
+  z-index: $z-modal + 10 !important;
+}
+
+// Ensure Material form fields work with Bootstrap grid
+.row {
+  .mat-mdc-form-field {
+    margin-bottom: 16px;
+  }
+}
+
+// Bootstrap button + Material icon alignment
+.btn {
+  mat-icon {
+    vertical-align: middle;
+    margin-right: 8px;
+    
+    &:last-child {
+      margin-right: 0;
+      margin-left: 8px;
+    }
+    
+    &:only-child {
+      margin: 0;
+    }
+  }
+}
+
+// Material card + Bootstrap utilities
+.mat-mdc-card {
+  &.shadow-sm { box-shadow: $shadow-sm !important; }
+  &.shadow-md { box-shadow: $shadow-md !important; }
+  &.shadow-lg { box-shadow: $shadow-lg !important; }
+}
+
+// Bootstrap container + Material components
+.container,
+.container-fluid {
+  .mat-mdc-table {
+    @include mobile-only {
+      overflow-x: auto;
+      display: block;
+      width: 100%;
+    }
+  }
+}
+
+// Ensure Material elevation works with Bootstrap
+.elevation-0 { box-shadow: none !important; }
+.elevation-1 { box-shadow: $shadow-sm !important; }
+.elevation-2 { box-shadow: $shadow-md !important; }
+.elevation-3 { box-shadow: $shadow-lg !important; }
+.elevation-4 { box-shadow: $shadow-xl !important; }
+
+// Material toolbar + Bootstrap navbar compatibility
+.mat-toolbar {
+  &.navbar {
+    padding: 0 16px;
+    
+    @include mobile-only {
+      padding: 0 12px;
+    }
+  }
+}
+
+// Bootstrap modal + Material dialog compatibility
+.modal {
+  &.mat-dialog-modal {
+    .modal-dialog {
+      box-shadow: $shadow-xl;
+    }
+  }
+}
+
+// Material list + Bootstrap list-group
+.mat-mdc-list {
+  &.list-group {
+    .mat-mdc-list-item {
+      border-bottom: 1px solid $divider-color;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+// Spacing consistency
+.mat-mdc-card-content,
+.mat-mdc-dialog-content,
+.mat-mdc-tab-body-content {
+  padding: 16px;
+  
+  @include mobile-only {
+    padding: 12px;
+  }
+}
+
+// Form consistency
+.mat-mdc-form-field {
+  + .mat-mdc-form-field {
+    margin-top: 8px;
+  }
+}
+
+// Responsive table wrapper
+.table-responsive {
+  .mat-mdc-table {
+    min-width: 600px;
+  }
+}
+

@@ -1,0 +1,114 @@
+// ========================================
+// FLEXBOX GRID SYSTEM
+// ========================================
+
+// Container
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@include respond-above($breakpoint-sm) {
+  .container { max-width: 540px; }
+}
+
+@include respond-above($breakpoint-md) {
+  .container { max-width: 720px; }
+}
+
+@include respond-above($breakpoint-lg) {
+  .container { max-width: 960px; }
+}
+
+@include respond-above($breakpoint-xl) {
+  .container { max-width: 1140px; }
+}
+
+@include respond-above($breakpoint-xxl) {
+  .container { max-width: 1320px; }
+}
+
+.container-fluid {
+  width: 100%;
+  padding: 0 16px;
+}
+
+// Row
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.row-no-gutters {
+  margin-left: 0;
+  margin-right: 0;
+  
+  > .col,
+  > [class*="col-"] {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+// Columns
+.col {
+  flex: 1 0 0%;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+@for $i from 1 through 12 {
+  .col-#{$i} {
+    flex: 0 0 auto;
+    width: calc($i / 12 * 100%);
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+// Responsive columns
+@include respond-above($breakpoint-sm) {
+  @for $i from 1 through 12 {
+    .col-sm-#{$i} {
+      flex: 0 0 auto;
+      width: calc($i / 12 * 100%);
+    }
+  }
+}
+
+@include respond-above($breakpoint-md) {
+  @for $i from 1 through 12 {
+    .col-md-#{$i} {
+      flex: 0 0 auto;
+      width: calc($i / 12 * 100%);
+    }
+  }
+}
+
+@include respond-above($breakpoint-lg) {
+  @for $i from 1 through 12 {
+    .col-lg-#{$i} {
+      flex: 0 0 auto;
+      width: calc($i / 12 * 100%);
+    }
+  }
+}
+
+@include respond-above($breakpoint-xl) {
+  @for $i from 1 through 12 {
+    .col-xl-#{$i} {
+      flex: 0 0 auto;
+      width: calc($i / 12 * 100%);
+    }
+  }
+}
+
+// Column auto
+.col-auto {
+  flex: 0 0 auto;
+  width: auto;
+}
+

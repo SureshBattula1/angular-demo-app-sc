@@ -8,13 +8,13 @@
 <!-- Sidebar -->
 <div class="advanced-search-sidebar" 
   [@slideIn]="isOpen ? 'open' : 'closed'"
-  [style.width]="config?.width || '400px'">
+  [style.width]="(config.width ?? '400px')">
   
   <!-- Header -->
   <div class="sidebar-header">
     <div class="header-content">
       <mat-icon class="header-icon">filter_list</mat-icon>
-      <h2 class="sidebar-title">{{ config?.title || 'Advanced Search' }}</h2>
+      <h2 class="sidebar-title">{{ config.title ?? 'Advanced Search' }}</h2>
     </div>
     <button mat-icon-button (click)="close()" class="close-btn">
       <mat-icon>close</mat-icon>

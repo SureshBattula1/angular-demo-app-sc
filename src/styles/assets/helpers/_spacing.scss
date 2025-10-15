@@ -1,0 +1,65 @@
+// ========================================
+// SPACING UTILITIES
+// ========================================
+
+@use '../variables' as *;
+
+$margin: $base-spacing-desktop !default;
+$padding: $base-spacing-desktop !default;
+
+// Margin utilities
+.m { margin: $margin !important; }
+.mt { margin-top: $margin !important; }
+.mr { margin-right: $margin !important; }
+.mb { margin-bottom: $margin !important; }
+.ml { margin-left: $margin !important; }
+.mx { margin-left: $margin !important; margin-right: $margin !important; }
+.my { margin-top: $margin !important; margin-bottom: $margin !important; }
+
+// Margin 0
+.m0 { margin: 0 !important; }
+.mt0 { margin-top: 0 !important; }
+.mr0 { margin-right: 0 !important; }
+.mb0 { margin-bottom: 0 !important; }
+.ml0 { margin-left: 0 !important; }
+
+// Margin auto
+.m-auto { margin: auto !important; }
+.mt-auto { margin-top: auto !important; }
+.mr-auto { margin-right: auto !important; }
+.mb-auto { margin-bottom: auto !important; }
+.ml-auto { margin-left: auto !important; }
+.mx-auto { margin-left: auto !important; margin-right: auto !important; }
+.my-auto { margin-top: auto !important; margin-bottom: auto !important; }
+
+// Padding utilities
+.p { padding: $padding !important; }
+.pt { padding-top: $padding !important; }
+.pr { padding-right: $padding !important; }
+.pb { padding-bottom: $padding !important; }
+.pl { padding-left: $padding !important; }
+.px { padding-left: $padding !important; padding-right: $padding !important; }
+.py { padding-top: $padding !important; padding-bottom: $padding !important; }
+
+// Padding 0
+.p0 { padding: 0 !important; }
+.pt0 { padding-top: 0 !important; }
+.pr0 { padding-right: 0 !important; }
+.pb0 { padding-bottom: 0 !important; }
+.pl0 { padding-left: 0 !important; }
+
+// Multiplier classes (2x, 3x, 4x, 5x)
+@for $i from 2 through 5 {
+  .m#{$i} { margin: $margin * $i !important; }
+  .mt#{$i} { margin-top: $margin * $i !important; }
+  .mr#{$i} { margin-right: $margin * $i !important; }
+  .mb#{$i} { margin-bottom: $margin * $i !important; }
+  .ml#{$i} { margin-left: $margin * $i !important; }
+  
+  .p#{$i} { padding: $padding * $i !important; }
+  .pt#{$i} { padding-top: $padding * $i !important; }
+  .pr#{$i} { padding-right: $padding * $i !important; }
+  .pb#{$i} { padding-bottom: $padding * $i !important; }
+  .pl#{$i} { padding-left: $padding * $i !important; }
+}
+

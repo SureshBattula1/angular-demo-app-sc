@@ -3,65 +3,53 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/students',
+    redirectTo: '/dashboard',
     pathMatch: 'full'
   },
   {
     path: '',
-    loadComponent: () => import('./layout/main-layout.component').then(m => m.MainLayoutComponent),
+    loadComponent: () => import('./layouts/main-shell/main-shell.component').then(m => m.MainShellComponent),
     children: [
       {
         path: 'dashboard',
-        loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent)
+        loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES)
       },
       {
         path: 'students',
-        loadComponent: () => import('./pages/students/student-list.component').then(m => m.StudentListComponent)
-      },
-      {
-        path: 'students/view',
-        loadComponent: () => import('./pages/students/student-view.component').then(m => m.StudentViewComponent)
-      },
-      {
-        path: 'students/add',
-        loadComponent: () => import('./pages/students/student-add.component').then(m => m.StudentAddComponent)
-      },
-      {
-        path: 'students/edit',
-        loadComponent: () => import('./pages/students/student-edit.component').then(m => m.StudentEditComponent)
+        loadChildren: () => import('./features/students/students.routes').then(m => m.STUDENTS_ROUTES)
       },
       {
         path: 'teachers',
-        loadComponent: () => import('./pages/teachers/teacher-list.component').then(m => m.TeacherListComponent)
+        loadChildren: () => import('./features/teachers/teachers.routes').then(m => m.TEACHERS_ROUTES)
       },
       {
         path: 'departments',
-        loadComponent: () => import('./pages/departments/department-list.component').then(m => m.DepartmentListComponent)
+        loadChildren: () => import('./features/departments/departments.routes').then(m => m.DEPARTMENTS_ROUTES)
       },
       {
         path: 'subjects',
-        loadComponent: () => import('./pages/subjects/subject-list.component').then(m => m.SubjectListComponent)
+        loadChildren: () => import('./features/subjects/subjects.routes').then(m => m.SUBJECTS_ROUTES)
       },
       {
         path: 'invoices',
-        loadComponent: () => import('./pages/invoices/invoice-list.component').then(m => m.InvoiceListComponent)
+        loadChildren: () => import('./features/invoices/invoices.routes').then(m => m.INVOICES_ROUTES)
       },
       {
         path: 'accounts',
-        loadComponent: () => import('./pages/accounts/account-list.component').then(m => m.AccountListComponent)
+        loadChildren: () => import('./features/accounts/accounts.routes').then(m => m.ACCOUNTS_ROUTES)
       },
       {
         path: 'holidays',
-        loadComponent: () => import('./pages/holidays/holiday-list.component').then(m => m.HolidayListComponent)
+        loadChildren: () => import('./features/holidays/holidays.routes').then(m => m.HOLIDAYS_ROUTES)
       },
       {
         path: 'fees',
-        loadComponent: () => import('./pages/fees/fee-list.component').then(m => m.FeeListComponent)
+        loadChildren: () => import('./features/fees/fees.routes').then(m => m.FEES_ROUTES)
       }
     ]
   },
   {
     path: '**',
-    redirectTo: '/students'
+    redirectTo: '/dashboard'
   }
 ];

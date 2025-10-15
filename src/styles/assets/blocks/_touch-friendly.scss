@@ -1,0 +1,111 @@
+// ========================================
+// TOUCH-FRIENDLY UTILITIES
+// ========================================
+
+// Minimum touch target size (44x44px recommended by WCAG)
+.touch-target {
+  min-height: $min-touch-target;
+  min-width: $min-touch-target;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Touch-friendly buttons
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+.btn {
+  min-height: $min-touch-target;
+  min-width: $min-touch-target;
+  
+  @include mobile-only {
+    padding: 12px 24px;
+    font-size: 16px; // Prevent zoom on iOS
+  }
+}
+
+// Touch-friendly form inputs
+input,
+select,
+textarea {
+  @include mobile-only {
+    min-height: 44px;
+    font-size: 16px; // Prevent zoom on iOS
+    padding: 8px 12px;
+  }
+}
+
+// Touch-friendly links
+a {
+  @include mobile-only {
+    padding: 8px 4px;
+    margin: -8px -4px;
+  }
+}
+
+// Disable tap highlight
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+// Better touch scrolling
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+// Prevent text selection on touch
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+// Touch-friendly table rows
+.table-touch {
+  td, th {
+    @include mobile-only {
+      padding: 12px 8px;
+    }
+  }
+}
+
+// Touch-friendly menu items
+.menu-item,
+.nav-item {
+  @include mobile-only {
+    min-height: 48px;
+    padding: 12px 16px;
+  }
+}
+
+// Mobile-specific tap areas
+.tap-area {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+  }
+}
+
+// Prevent accidental zooming
+@include mobile-only {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
