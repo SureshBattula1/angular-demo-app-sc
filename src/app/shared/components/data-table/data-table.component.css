@@ -31,14 +31,14 @@
   flex-wrap: wrap;
 }
 
-/* Row 2: Filter Block and Search/Actions */
+/* Row 2: Search on Left, Filters on Right */
 .header-row-2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-sm); /* Reduced gap */
+  gap: var(--spacing-md);
   flex-wrap: wrap;
-  padding-top: var(--spacing-xs); /* Reduced padding */
+  padding-top: var(--spacing-sm);
   border-top: 1px solid var(--divider-color);
 }
 
@@ -52,8 +52,12 @@
   gap: var(--spacing-xs); /* Reduced gap */
 }
 
-.filter-block {
-  flex: 1;
+/* Right Side: Filter Actions */
+.filter-actions-block {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .filter-info {
@@ -77,21 +81,41 @@
   font-weight: 400;
 }
 
-.search-actions-block {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
-
+/* Left Side: Search Section */
 .search-section {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  flex: 1 1 auto;
-  min-width: 250px;
-  max-width: 600px;
+  flex: 0 1 auto;
+}
+
+/* Reset Button */
+.reset-btn {
+  color: var(--primary-color);
+  transition: all var(--transition-fast);
+  
+  &:hover:not([disabled]) {
+    background-color: rgba(255, 152, 0, 0.1);
+    transform: rotate(180deg);
+  }
+  
+  &[disabled] {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  mat-icon {
+    transition: transform var(--transition-normal);
+  }
+}
+
+/* Advanced Search Button */
+.advanced-search-btn {
+  color: var(--primary-color);
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .action-buttons {
@@ -99,6 +123,15 @@
   align-items: center;
   gap: var(--spacing-sm);
   flex-shrink: 0;
+}
+
+/* Export Icon Button */
+.export-btn-icon {
+  color: var(--accent-color);
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .export-btn {
@@ -184,8 +217,8 @@
 }
 
 .search-field {
-  flex: 1;
-  min-width: 200px;
+  width: 350px;
+  flex-shrink: 0;
 }
 
 .advanced-search-btn {

@@ -36,6 +36,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild('searchInput') searchInput?: any;
   
   dataSource!: MatTableDataSource<any>;
   selection = new SelectionModel<any>(true, []);
@@ -213,6 +214,46 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
     this.currentSearchCriteria = {};
     this.dataSource.filter = '';
     this.dataSource.filterPredicate = this.createFilter();
+  }
+  
+  /**
+   * Reset all filters and search in real-time
+   */
+  resetAllFilters(): void {
+    // Clear search query
+    this.searchQuery = '';
+    
+    // Clear data source filter
+    this.dataSource.filter = '';
+    
+    // Clear current search criteria
+    this.currentSearchCriteria = {};
+    
+    // Clear current filters
+    this.currentFilters = {};
+    
+    // Reset filter predicate
+    this.dataSource.filterPredicate = this.createFilter();
+    
+    // For server-side tables, emit reset event
+    if (this.config.serverSide) {
+      this.advancedSearchChanged.emit({
+        query: '',
+        filters: {}
+      });
+    }
+    
+    // Show success message
+    console.log('All filters cleared');
+  }
+  
+  /**
+   * Check if there are any active filters
+   */
+  hasActiveFilters(): boolean {
+    return this.searchQuery.length > 0 || 
+           Object.keys(this.currentSearchCriteria).length > 0 ||
+           Object.keys(this.currentFilters).length > 0;
   }
   
   onSearchSaved(event: { name: string, criteria: SearchCriteria }): void {

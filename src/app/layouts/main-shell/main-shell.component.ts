@@ -17,8 +17,10 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
 })
 export class MainShellComponent implements OnInit {
   isHandset$: Observable<boolean>;
-  isSidebarCollapsed = false;
-  selectedTheme = 'teal-green';
+  isSidebarCollapsed = true; // Start collapsed by default (icons only on desktop, hidden on mobile/tablet)
+  selectedTheme = 'ocean-blue';
+  isTablet = false;
+  isMobile = false;
   
   // Theme definitions
   // themes = {
@@ -439,17 +441,22 @@ export class MainShellComponent implements OnInit {
   }
   
   ngOnInit() {
-    // Initialize sidebar state based on screen size
-    this.breakpointObserver.observe(Breakpoints.Handset)
-      .subscribe(result => {
-        if (result.matches) {
-          // On mobile, sidebar starts collapsed
-          this.isSidebarCollapsed = true;
-        } else {
-          // On desktop, sidebar starts expanded
-          this.isSidebarCollapsed = false;
-        }
-      });
+    // Initialize sidebar state - always start collapsed
+    this.isSidebarCollapsed = true;
+    
+    // Detect screen size
+    this.breakpointObserver.observe([
+      Breakpoints.Handset,
+      Breakpoints.Tablet
+    ]).subscribe(result => {
+      this.isMobile = this.breakpointObserver.isMatched(Breakpoints.Handset);
+      this.isTablet = this.breakpointObserver.isMatched(Breakpoints.Tablet);
+      
+      // On mobile or tablet, sidebar should be hidden (collapsed)
+      if (this.isMobile || this.isTablet || window.innerWidth <= 960) {
+        this.isSidebarCollapsed = true;
+      }
+    });
     
     // Load saved theme
     const savedTheme = localStorage.getItem('selectedTheme');
@@ -461,6 +468,36 @@ export class MainShellComponent implements OnInit {
   
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+  
+  /**
+   * Handle sidenav closed event (for mobile overlay mode)
+   */
+  onSidenavClosed(): void {
+    // On mobile, when user clicks outside, set as collapsed
+    this.isHandset$.subscribe(isHandset => {
+      if (isHandset) {
+        this.isSidebarCollapsed = true;
+      }
+    });
+  }
+  
+  /**
+   * Handle menu item click - close sidebar on mobile/tablet only
+   */
+  onMenuItemClick(): void {
+    // Check if on mobile or tablet (max-width: 960px)
+    if (this.isMobileOrTablet()) {
+      this.isSidebarCollapsed = true;
+    }
+    // On desktop, keep sidebar in current state (collapsed or expanded)
+  }
+  
+  /**
+   * Check if current view is mobile or tablet
+   */
+  isMobileOrTablet(): boolean {
+    return window.innerWidth <= 960;
   }
   
   onThemeChange(theme: string) {

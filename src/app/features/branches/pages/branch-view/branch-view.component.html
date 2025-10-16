@@ -1,0 +1,312 @@
+<div class="branch-view-container" *ngIf="!isLoading && branch">
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="header-card">
+    <mat-card-content>
+      <div class="branch-header">
+        <div class="branch-logo">
+          <mat-icon class="logo-icon">{{ getBranchTypeIcon(branch.branch_type) }}</mat-icon>
+        </div>
+        <div class="branch-info">
+          <h1 class="branch-name">{{ branch.name }}</h1>
+          <div class="branch-meta">
+            <span class="branch-code">
+              <mat-icon>qr_code</mat-icon>
+              {{ branch.code }}
+            </span>
+            <span class="branch-type">
+              <mat-icon>category</mat-icon>
+              {{ branch.branch_type }}
+            </span>
+            <span class="status-badge" [class]="getStatusClass(branch.status)">
+              <mat-icon>circle</mat-icon>
+              {{ branch.status }}
+            </span>
+          </div>
+        </div>
+        <div class="status-toggle">
+          <mat-slide-toggle 
+            [checked]="branch.is_active" 
+            (change)="toggleStatus()"
+            color="primary">
+            {{ branch.is_active ? 'Active' : 'Inactive' }}
+          </mat-slide-toggle>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid" *ngIf="stats">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_students || 0 }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_teachers || 0 }}</div>
+          <div class="stat-label">Total Teachers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon departments">
+          <mat-icon>apartment</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_departments || 0 }}</div>
+          <div class="stat-label">Departments</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon capacity">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ branch.current_enrollment || 0 }} / {{ branch.total_capacity || 0 }}</div>
+          <div class="stat-label">Capacity Utilization</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Details Sections -->
+  <div class="details-grid">
+    <!-- Basic Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Basic Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Branch Name:</span>
+          <span class="detail-value">{{ branch.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Code:</span>
+          <span class="detail-value">{{ branch.code }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Type:</span>
+          <span class="detail-value">{{ branch.branch_type }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.parent_branch">
+          <span class="detail-label">Parent Branch:</span>
+          <span class="detail-value">{{ branch.parent_branch.name }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.established_date">
+          <span class="detail-label">Established:</span>
+          <span class="detail-value">{{ branch.established_date | date }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Location -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>location_on</mat-icon>
+          Location
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Address:</span>
+          <span class="detail-value">{{ branch.address }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">City:</span>
+          <span class="detail-value">{{ branch.city }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">State:</span>
+          <span class="detail-value">{{ branch.state }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Country:</span>
+          <span class="detail-value">{{ branch.country }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Pincode:</span>
+          <span class="detail-value">{{ branch.pincode }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.region">
+          <span class="detail-label">Region:</span>
+          <span class="detail-value">{{ branch.region }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Contact Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>contact_phone</mat-icon>
+          Contact Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Phone:</span>
+          <span class="detail-value">
+            <a [href]="'tel:' + branch.phone">{{ branch.phone }}</a>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">
+            <a [href]="'mailto:' + branch.email">{{ branch.email }}</a>
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="branch.website">
+          <span class="detail-label">Website:</span>
+          <span class="detail-value">
+            <a [href]="branch.website" target="_blank">{{ branch.website }}</a>
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="branch.emergency_contact">
+          <span class="detail-label">Emergency:</span>
+          <span class="detail-value">{{ branch.emergency_contact }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Principal Information -->
+    <mat-card class="detail-card" *ngIf="branch.principal_name">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Principal Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Name:</span>
+          <span class="detail-value">{{ branch.principal_name }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.principal_contact">
+          <span class="detail-label">Contact:</span>
+          <span class="detail-value">{{ branch.principal_contact }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.principal_email">
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">{{ branch.principal_email }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Facilities -->
+    <mat-card class="detail-card facilities-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>domain</mat-icon>
+          Facilities & Features
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="facilities-grid">
+          <div class="facility-item" [class.active]="branch.is_main_branch">
+            <mat-icon>{{ branch.is_main_branch ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Main Branch</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.is_residential">
+            <mat-icon>{{ branch.is_residential ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Residential</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.has_hostel">
+            <mat-icon>{{ branch.has_hostel ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Hostel</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.has_transport">
+            <mat-icon>{{ branch.has_transport ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Transport</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.has_library">
+            <mat-icon>{{ branch.has_library ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Library</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.has_lab">
+            <mat-icon>{{ branch.has_lab ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Laboratory</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.has_canteen">
+            <mat-icon>{{ branch.has_canteen ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Canteen</span>
+          </div>
+          <div class="facility-item" [class.active]="branch.has_sports">
+            <mat-icon>{{ branch.has_sports ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Sports</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Academic Information -->
+    <mat-card class="detail-card" *ngIf="branch.board || branch.affiliation_number">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>school</mat-icon>
+          Academic Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row" *ngIf="branch.board">
+          <span class="detail-label">Board:</span>
+          <span class="detail-value">{{ branch.board }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.affiliation_number">
+          <span class="detail-label">Affiliation Number:</span>
+          <span class="detail-value">{{ branch.affiliation_number }}</span>
+        </div>
+        <div class="detail-row" *ngIf="branch.current_academic_year">
+          <span class="detail-label">Current Academic Year:</span>
+          <span class="detail-value">{{ branch.current_academic_year }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading branch details...</p>
+</div>
+

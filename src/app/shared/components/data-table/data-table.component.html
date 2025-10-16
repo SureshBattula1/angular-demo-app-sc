@@ -14,7 +14,7 @@
           class="primary-action-btn"
           (click)="onAdd()">
           <mat-icon>add</mat-icon>
-          ADD {{ (title || 'ITEM').toUpperCase() }}
+           {{ (title || 'ITEM').toUpperCase() }}
           <!-- <mat-icon>keyboard_arrow_down</mat-icon> -->
         </button>
         
@@ -36,10 +36,24 @@
       </div>
     </div>
     
-    <!-- Row 2: Filter Block and Search/Actions -->
+    <!-- Row 2: Search on Left, Filters on Right -->
     <div class="header-row-2" *ngIf="config.filterable || config.searchable || config.exportable">
-      <div class="filter-block">
-        <!-- Filter Info -->
+      <!-- Left Side: Search Section -->
+      <div class="search-section" *ngIf="config.searchable">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search in table...</mat-label>
+          <input matInput 
+            #searchInput
+            placeholder="Search in table..." 
+            [(ngModel)]="searchQuery"
+            (keyup)="applySearch($event)">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        
+      </div>
+      
+      <!-- Right Side: Filter Info and Export -->
+      <div class="filter-actions-block">
         <div class="filter-info" *ngIf="config.filterable">
           <button mat-stroked-button class="add-filter-btn" (click)="openAdvancedSearch()">
             <mat-icon>add</mat-icon>
@@ -49,38 +63,33 @@
             {{ data.length }} (100%) of {{ data.length }} {{ title.toLowerCase() || 'items' }}
           </span>
         </div>
-      </div>
-      
-      <div class="search-actions-block">
-        <!-- Search Section -->
-        <div class="search-section" *ngIf="config.searchable">
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Search in table...</mat-label>
-            <input matInput placeholder="Search in table..." (keyup)="applySearch($event)">
-            <mat-icon matPrefix>search</mat-icon>
-          </mat-form-field>
-          
-          <!-- Advanced Search Button -->
-          <button mat-icon-button 
-            *ngIf="advancedSearchConfig"
-            class="advanced-search-btn"
-            matTooltip="Advanced Search"
-            (click)="openAdvancedSearch()">
-            <mat-icon>tune</mat-icon>
-          </button>
-        </div>
         
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <!-- Export Button -->
-          <div 
-            *ngIf="config.exportable"
-            class="export-btn"
-            (click)="onExport('csv')">
-            <mat-icon>download</mat-icon>
-           
-          </div>
-        </div>
+
+        <!-- Advanced Search Button -->
+        <button mat-icon-button 
+          *ngIf="advancedSearchConfig"
+          class="advanced-search-btn"
+          matTooltip="Advanced Search"
+          (click)="openAdvancedSearch()">
+          <mat-icon>tune</mat-icon>
+        </button>
+        
+        <!-- Reset Button -->
+        <button mat-icon-button 
+          class="reset-btn"
+          matTooltip="Clear All Filters"
+          (click)="resetAllFilters()"
+          [disabled]="!hasActiveFilters()">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <!-- Export Button -->
+        <button mat-icon-button 
+          *ngIf="config.exportable"
+          class="export-btn-icon"
+          matTooltip="Export Data"
+          (click)="onExport('csv')">
+          <mat-icon>download</mat-icon>
+        </button>
       </div>
     </div>
   </div>

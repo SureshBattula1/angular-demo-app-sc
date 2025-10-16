@@ -1,0 +1,330 @@
+<div class="branch-form-container">
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add_business' }}</mat-icon>
+        {{ isEditMode ? 'Edit Branch' : 'Create New Branch' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update branch information' : 'Add a new branch to the system' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <!-- Form -->
+    <mat-card-content>
+      <form [formGroup]="branchForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Name</mat-label>
+              <input matInput formControlName="name" placeholder="Enter branch name">
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="branchForm.get('name')?.invalid && branchForm.get('name')?.touched">
+                {{ getErrorMessage('name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Code</mat-label>
+              <input matInput formControlName="code" placeholder="e.g., BRN001" [readonly]="isEditMode">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-error *ngIf="branchForm.get('code')?.invalid && branchForm.get('code')?.touched">
+                {{ getErrorMessage('code') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Type</mat-label>
+              <mat-select formControlName="branch_type">
+                <mat-option *ngFor="let type of branchTypes" [value]="type.value">
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Parent Branch</mat-label>
+              <mat-select formControlName="parent_branch_id">
+                <mat-option [value]="null">None (Top Level)</mat-option>
+                <mat-option *ngFor="let branch of parentBranches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>account_tree</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Location Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>location_on</mat-icon>
+            Location Details
+          </h3>
+          
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Address</mat-label>
+            <textarea matInput formControlName="address" rows="2" placeholder="Enter complete address"></textarea>
+            <mat-icon matPrefix>home</mat-icon>
+            <mat-error *ngIf="branchForm.get('address')?.invalid && branchForm.get('address')?.touched">
+              {{ getErrorMessage('address') }}
+            </mat-error>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" placeholder="Enter city">
+              <mat-icon matPrefix>location_city</mat-icon>
+              <mat-error *ngIf="branchForm.get('city')?.invalid && branchForm.get('city')?.touched">
+                {{ getErrorMessage('city') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>State</mat-label>
+              <input matInput formControlName="state" placeholder="Enter state">
+              <mat-icon matPrefix>map</mat-icon>
+              <mat-error *ngIf="branchForm.get('state')?.invalid && branchForm.get('state')?.touched">
+                {{ getErrorMessage('state') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Country</mat-label>
+              <input matInput formControlName="country" placeholder="Enter country">
+              <mat-icon matPrefix>public</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Region</mat-label>
+              <input matInput formControlName="region" placeholder="e.g., North, South">
+              <mat-icon matPrefix>place</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Pincode</mat-label>
+              <input matInput formControlName="pincode" placeholder="Enter 6-digit pincode">
+              <mat-icon matPrefix>pin_drop</mat-icon>
+              <mat-error *ngIf="branchForm.get('pincode')?.invalid && branchForm.get('pincode')?.touched">
+                {{ getErrorMessage('pincode') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>contact_phone</mat-icon>
+            Contact Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" placeholder="+91 1234567890">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error *ngIf="branchForm.get('phone')?.invalid && branchForm.get('phone')?.touched">
+                {{ getErrorMessage('phone') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="branch@school.com">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="branchForm.get('email')?.invalid && branchForm.get('email')?.touched">
+                {{ getErrorMessage('email') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Website</mat-label>
+              <input matInput formControlName="website" placeholder="https://www.example.com">
+              <mat-icon matPrefix>language</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Principal Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>person</mat-icon>
+            Principal Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Principal Name</mat-label>
+              <input matInput formControlName="principal_name" placeholder="Enter principal name">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Principal Contact</mat-label>
+              <input matInput formControlName="principal_contact" placeholder="Phone number">
+              <mat-icon matPrefix>phone_in_talk</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Principal Email</mat-label>
+              <input matInput type="email" formControlName="principal_email" placeholder="principal@school.com">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="branchForm.get('principal_email')?.invalid && branchForm.get('principal_email')?.touched">
+                {{ getErrorMessage('principal_email') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Academic & Capacity Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>school</mat-icon>
+            Academic Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Board</mat-label>
+              <input matInput formControlName="board" placeholder="e.g., CBSE, ICSE">
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Affiliation Number</mat-label>
+              <input matInput formControlName="affiliation_number" placeholder="Enter affiliation number">
+              <mat-icon matPrefix>verified</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Established Date</mat-label>
+              <input matInput type="date" formControlName="established_date">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="form-field-half">
+            <mat-label>Total Capacity</mat-label>
+            <input matInput type="number" formControlName="total_capacity" placeholder="Maximum students">
+            <mat-icon matPrefix>groups</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Facilities Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>domain</mat-icon>
+            Facilities & Features
+          </h3>
+          
+          <div class="checkbox-grid">
+            <mat-checkbox formControlName="is_main_branch" color="primary">
+              <mat-icon class="checkbox-icon">home</mat-icon>
+              Main Branch
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="is_residential" color="primary">
+              <mat-icon class="checkbox-icon">house</mat-icon>
+              Residential
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="has_hostel" color="primary">
+              <mat-icon class="checkbox-icon">hotel</mat-icon>
+              Hostel Available
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="has_transport" color="primary">
+              <mat-icon class="checkbox-icon">directions_bus</mat-icon>
+              Transport Facility
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="has_library" color="primary">
+              <mat-icon class="checkbox-icon">local_library</mat-icon>
+              Library
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="has_lab" color="primary">
+              <mat-icon class="checkbox-icon">biotech</mat-icon>
+              Laboratory
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="has_canteen" color="primary">
+              <mat-icon class="checkbox-icon">restaurant</mat-icon>
+              Canteen
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="has_sports" color="primary">
+              <mat-icon class="checkbox-icon">sports</mat-icon>
+              Sports Facilities
+            </mat-checkbox>
+          </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>toggle_on</mat-icon>
+            Status
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                  {{ status.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>pending_actions</mat-icon>
+            </mat-form-field>
+
+            <div class="form-field-half">
+              <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">
+                <mat-icon class="checkbox-icon">check_circle</mat-icon>
+                Branch is Active
+              </mat-checkbox>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Action Buttons -->
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || branchForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Branch' : 'Create Branch' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

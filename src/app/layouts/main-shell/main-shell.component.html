@@ -91,13 +91,14 @@
   </mat-toolbar>
 
   <!-- Sidenav Container -->
-  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed && !(isHandset$ | async)">
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed">
     <!-- Sidenav -->
     <mat-sidenav
       #drawer
-      [mode]="(isHandset$ | async) ? 'over' : 'side'"
-      [opened]="!(isHandset$ | async) || !isSidebarCollapsed"
-      [class.collapsed]="isSidebarCollapsed && !(isHandset$ | async)"
+      [mode]="isMobileOrTablet() ? 'over' : 'side'"
+      [opened]="isMobileOrTablet() ? !isSidebarCollapsed : true"
+      [class.collapsed]="isSidebarCollapsed && !isMobileOrTablet()"
+      (closedStart)="onSidenavClosed()"
       class="app-sidenav">
       
       <mat-nav-list>
@@ -105,20 +106,34 @@
         <a mat-list-item 
            routerLink="/dashboard" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Dashboard' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Dashboard' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>dashboard</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Dashboard</span>
+        </a>
+
+        <!-- Branches -->
+        <a mat-list-item 
+           routerLink="/branches" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Branches' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>business</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Branches</span>
         </a>
 
         <!-- Students -->
         <a mat-list-item 
            routerLink="/students" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Students' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Students' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>school</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Students</span>
         </a>
@@ -127,9 +142,10 @@
         <a mat-list-item 
            routerLink="/teachers" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Teachers' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Teachers' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>person</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Teachers</span>
         </a>
@@ -138,9 +154,10 @@
         <a mat-list-item 
            routerLink="/departments" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Departments' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Departments' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>business</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Departments</span>
         </a>
@@ -149,9 +166,10 @@
         <a mat-list-item 
            routerLink="/subjects" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Subjects' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Subjects' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>subject</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
         </a>
@@ -160,9 +178,10 @@
         <a mat-list-item 
            routerLink="/fees" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Fees' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Fees' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>payment</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Fees</span>
         </a>
@@ -171,9 +190,10 @@
         <a mat-list-item 
            routerLink="/accounts" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Accounts' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Accounts' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>account_balance</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Accounts</span>
         </a>
@@ -182,9 +202,10 @@
         <a mat-list-item 
            routerLink="/invoices" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Invoices' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Invoices' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>receipt</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Invoices</span>
         </a>
@@ -193,9 +214,10 @@
         <a mat-list-item 
            routerLink="/holidays" 
            routerLinkActive="active"
-           [matTooltip]="isSidebarCollapsed ? 'Holidays' : null"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Holidays' : null"
            [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="!(isSidebarCollapsed && !(isHandset$ | async))">
+           [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>event</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Holidays</span>
         </a>
