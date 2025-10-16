@@ -15,7 +15,7 @@
           (click)="onAdd()">
           <mat-icon>add</mat-icon>
           ADD {{ (title || 'ITEM').toUpperCase() }}
-          <mat-icon>keyboard_arrow_down</mat-icon>
+          <!-- <mat-icon>keyboard_arrow_down</mat-icon> -->
         </button>
         
         <!-- View Toggle (Mobile) -->
@@ -73,13 +73,13 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
           <!-- Export Button -->
-          <button mat-stroked-button 
+          <div 
             *ngIf="config.exportable"
             class="export-btn"
             (click)="onExport('csv')">
             <mat-icon>download</mat-icon>
-            <span class="button-text">EXPORT</span>
-          </button>
+           
+          </div>
         </div>
       </div>
     </div>
