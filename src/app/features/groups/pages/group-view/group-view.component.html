@@ -1,0 +1,168 @@
+<div class="group-view-container" *ngIf="!isLoading && group">
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="accent" (click)="manageMembers()">
+        <mat-icon>person_add</mat-icon>
+        Manage Members
+      </button>
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="header-card">
+    <mat-card-content>
+      <div class="group-header">
+        <div class="group-logo">
+          <mat-icon class="logo-icon">{{ getTypeIcon(group.type) }}</mat-icon>
+        </div>
+        <div class="group-info">
+          <h1 class="group-name">{{ group.name }}</h1>
+          <div class="group-meta">
+            <span class="group-code">
+              <mat-icon>qr_code</mat-icon>
+              {{ group.code }}
+            </span>
+            <span class="group-type">
+              <mat-icon>{{ getTypeIcon(group.type) }}</mat-icon>
+              {{ group.type }}
+            </span>
+            <span class="academic-year">
+              <mat-icon>event</mat-icon>
+              {{ group.academic_year }}
+            </span>
+            <span class="status-badge" [class.active]="group.is_active">
+              <mat-icon>circle</mat-icon>
+              {{ group.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Card -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon members">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ group.member_count || 0 }}</div>
+          <div class="stat-label">Total Members</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon type">
+          <mat-icon>{{ getTypeIcon(group.type) }}</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ group.type }}</div>
+          <div class="stat-label">Group Type</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon branch">
+          <mat-icon>business</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ group.branch?.name || 'N/A' }}</div>
+          <div class="stat-label">Branch</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Details Section -->
+  <div class="details-grid">
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Group Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Group Name:</span>
+          <span class="detail-value">{{ group.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Code:</span>
+          <span class="detail-value">{{ group.code }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Type:</span>
+          <span class="detail-value">{{ group.type }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Academic Year:</span>
+          <span class="detail-value">{{ group.academic_year }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Branch:</span>
+          <span class="detail-value">{{ group.branch?.name }} ({{ group.branch?.code }})</span>
+        </div>
+        <div class="detail-row" *ngIf="group.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ group.description }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" [class.text-success]="group.is_active" [class.text-muted]="!group.is_active">
+            {{ group.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Members List (if available) -->
+    <mat-card class="detail-card members-card" *ngIf="group.members && group.members.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>people</mat-icon>
+          Group Members ({{ group.members.length }})
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="members-list">
+          <div class="member-item" *ngFor="let member of group.members">
+            <mat-icon class="member-icon">{{ member.role === 'Leader' ? 'star' : 'person' }}</mat-icon>
+            <div class="member-info">
+              <div class="member-name">{{ member.student?.first_name }} {{ member.student?.last_name }}</div>
+              <div class="member-meta">
+                Grade: {{ member.student?.grade }} {{ member.student?.section }} | Role: {{ member.role }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading group details...</p>
+</div>
+

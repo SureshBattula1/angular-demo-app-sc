@@ -126,6 +126,30 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Branches</span>
         </a>
 
+        <!-- Classes -->
+        <a mat-list-item 
+           routerLink="/classes" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Classes' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>class</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Classes</span>
+        </a>
+
+        <!-- Groups -->
+        <a mat-list-item 
+           routerLink="/groups" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Groups' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>groups</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Groups</span>
+        </a>
+
         <!-- Students -->
         <a mat-list-item 
            routerLink="/students" 

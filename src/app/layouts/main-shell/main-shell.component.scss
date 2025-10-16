@@ -213,15 +213,19 @@
 .app-content {
   padding: 8px 12px; /* Reduced padding */
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: vars.$background-color;
   transition: margin-left vars.$transition-normal;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - vars.$header-height);
   
   @media (max-width: 960px) {
     padding: 6px 8px; /* Reduced mobile/tablet padding */
     margin-left: 0 !important;
     margin-right: 0 !important;
+    min-height: calc(100vh - vars.$header-height-mobile);
   }
 }
 
@@ -230,6 +234,8 @@
   /* Default state - sidebar expanded (desktop only) */
   ::ng-deep .mat-drawer-content {
     transition: margin-left vars.$transition-normal !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
   }
   
   /* Desktop only: sidebar creates margin */
@@ -238,6 +244,7 @@
     &:not(.sidebar-collapsed) {
       ::ng-deep .mat-drawer-content {
         margin-left: vars.$sidebar-width !important;
+        width: calc(100% - vars.$sidebar-width) !important;
       }
     }
     
@@ -245,6 +252,7 @@
     &.sidebar-collapsed {
       ::ng-deep .mat-drawer-content {
         margin-left: 64px !important;
+        width: calc(100% - 64px) !important;
       }
     }
   }
@@ -254,6 +262,7 @@
     ::ng-deep .mat-drawer-content {
       margin-left: 0 !important;
       margin-right: 0 !important;
+      width: 100% !important;
     }
   }
   

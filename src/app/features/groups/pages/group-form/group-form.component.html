@@ -1,0 +1,119 @@
+<div class="group-form-container">
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'group_add' }}</mat-icon>
+        {{ isEditMode ? 'Edit Student Group' : 'Create New Student Group' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update student group information' : 'Add a new student group' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <!-- Form -->
+    <mat-card-content>
+      <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Group Name</mat-label>
+              <input matInput formControlName="name" placeholder="Enter group name">
+              <mat-icon matPrefix>groups</mat-icon>
+              <mat-error *ngIf="groupForm.get('name')?.invalid && groupForm.get('name')?.touched">
+                {{ getErrorMessage('name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Group Code</mat-label>
+              <input matInput formControlName="code" placeholder="e.g., GRP001" [readonly]="isEditMode">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-error *ngIf="groupForm.get('code')?.invalid && groupForm.get('code')?.touched">
+                {{ getErrorMessage('code') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="groupForm.get('branch_id')?.invalid && groupForm.get('branch_id')?.touched">
+                {{ getErrorMessage('branch_id') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Group Type</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let type of groupTypes" [value]="type.value">
+                  <mat-icon>{{ type.icon }}</mat-icon>
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Academic Year</mat-label>
+            <input matInput formControlName="academic_year" placeholder="e.g., 2024-2025">
+            <mat-icon matPrefix>event</mat-icon>
+            <mat-error *ngIf="groupForm.get('academic_year')?.invalid && groupForm.get('academic_year')?.touched">
+              {{ getErrorMessage('academic_year') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Enter group description"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">
+              <mat-icon class="checkbox-icon">check_circle</mat-icon>
+              Group is Active
+            </mat-checkbox>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Action Buttons -->
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || groupForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Group' : 'Create Group' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+
