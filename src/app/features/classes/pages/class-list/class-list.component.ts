@@ -4,9 +4,9 @@ import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
-import { ClassService } from '../../services/class.service';
+import { ClassCrudService } from '../../services/class-crud.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { ClassSection } from '../../../../core/models/class-section.model';
+import { Class } from '../../../../core/models/class.model';
 
 @Component({
   selector: 'app-class-list',
@@ -18,7 +18,7 @@ import { ClassSection } from '../../../../core/models/class-section.model';
       [data]="classes"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Class & Section Management'"
+      [title]="'Class & Section '"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -37,8 +37,8 @@ export class ClassListComponent implements OnInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
   
   loading = false;
-  classes: ClassSection[] = [];
-  selectedClasses: ClassSection[] = [];
+  classes: Class[] = [];
+  selectedClasses: Class[] = [];
   currentFilters: Record<string, unknown> = {};
   
   // Table Configuration  
@@ -70,24 +70,50 @@ export class ClassListComponent implements OnInit {
         width: '150px'
       },
       { 
-        key: 'student_count', 
-        header: 'Total Students',
+        key: 'current_strength', 
+        header: 'Students',
         type: 'number',
         align: 'center',
-        width: '150px'
+        width: '100px'
+      },
+      { 
+        key: 'capacity', 
+        header: 'Capacity',
+        type: 'number',
+        align: 'center',
+        width: '100px'
+      },
+      { 
+        key: 'room_number', 
+        header: 'Room',
+        sortable: true,
+        width: '100px'
+      },
+      { 
+        key: 'is_active', 
+        header: 'Active', 
+        type: 'badge',
+        width: '90px',
+        align: 'center'
       }
     ],
     actions: [
       {
         icon: 'visibility',
-        label: 'View Students',
-        action: (row) => this.viewClassStudents(row)
+        label: 'View Details',
+        action: (row) => this.viewClass(row)
       },
       {
-        icon: 'people',
-        label: 'Manage Students',
+        icon: 'edit',
+        label: 'Edit',
         color: 'primary',
-        action: (row) => this.manageStudents(row)
+        action: (row) => this.editClass(row)
+      },
+      {
+        icon: 'delete',
+        label: 'Delete',
+        color: 'warn',
+        action: (row) => this.deleteClass(row)
       }
     ],
     selectable: true,
@@ -156,7 +182,7 @@ export class ClassListComponent implements OnInit {
   };
   
   constructor(
-    private classService: ClassService,
+    private classCrudService: ClassCrudService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
@@ -168,11 +194,11 @@ export class ClassListComponent implements OnInit {
   loadClasses(): void {
     this.loading = true;
     
-    this.classService.getClasses(this.currentFilters).subscribe({
+    this.classCrudService.getClasses(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success) {
+        if (response.success && response.data) {
           this.classes = response.data;
-          this.tableConfig.totalCount = response.count;
+          this.tableConfig.totalCount = response.data.length;
           this.loading = false;
         }
       },
@@ -191,29 +217,42 @@ export class ClassListComponent implements OnInit {
     this.loadClasses();
   }
   
-  onAction(event: { action: string, row: ClassSection | null }): void {
-    console.log('Action triggered:', event);
-    
-    // Handle add action
+  onAction(event: { action: string, row: Class | null }): void {
     if (event.action === 'add') {
-      this.errorHandler.showInfo('Classes are automatically created when students are assigned to grade and section. Please add/edit students to create new classes.');
+      this.router.navigate(['/classes/create']);
     }
   }
   
-  onRowClick(row: ClassSection): void {
-    this.viewClassStudents(row);
+  onRowClick(row: Class): void {
+    this.viewClass(row);
   }
   
-  onSelectionChange(selected: ClassSection[]): void {
+  onSelectionChange(selected: Class[]): void {
     this.selectedClasses = selected;
   }
   
-  viewClassStudents(classSection: ClassSection): void {
-    this.router.navigate(['/classes', classSection.grade, classSection.section || 'all', 'students']);
+  viewClass(classItem: Class): void {
+    this.router.navigate(['/classes/view', classItem.id]);
   }
   
-  manageStudents(classSection: ClassSection): void {
-    this.router.navigate(['/classes', classSection.grade, classSection.section || 'all', 'manage']);
+  editClass(classItem: Class): void {
+    this.router.navigate(['/classes/edit', classItem.id]);
+  }
+  
+  deleteClass(classItem: Class): void {
+    if (confirm(`Are you sure you want to delete class "${classItem.class_name}"?`)) {
+      this.classCrudService.deleteClass(classItem.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess('Class deleted successfully');
+            this.loadClasses();
+          }
+        },
+        error: (error) => {
+          this.errorHandler.showError(error);
+        }
+      });
+    }
   }
   
   onExport(format: string): void {
