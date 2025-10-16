@@ -210,17 +210,36 @@
 </div>
 
 <!-- User Menu -->
-<mat-menu #userMenu="matMenu">
-  <button mat-menu-item>
+<mat-menu #userMenu="matMenu" class="user-menu">
+  <!-- User Info Header -->
+  <div class="user-menu-header" mat-menu-item disabled>
+    <div class="user-avatar">
+      <mat-icon>account_circle</mat-icon>
+    </div>
+    <div class="user-details">
+      <div class="user-name">{{ getUserDisplayName() }}</div>
+      <div class="user-email">{{ getUserEmail() }}</div>
+      <div class="user-role">
+        <mat-icon class="role-icon">badge</mat-icon>
+        {{ getUserRole() }}
+      </div>
+    </div>
+  </div>
+  
+  <mat-divider></mat-divider>
+  
+  <button mat-menu-item (click)="onProfile()">
     <mat-icon>person</mat-icon>
     <span>Profile</span>
   </button>
-  <button mat-menu-item>
+  <button mat-menu-item (click)="onSettings()">
     <mat-icon>settings</mat-icon>
     <span>Settings</span>
   </button>
+  
   <mat-divider></mat-divider>
-  <button mat-menu-item>
+  
+  <button mat-menu-item (click)="onLogout()" class="logout-menu-item">
     <mat-icon>logout</mat-icon>
     <span>Logout</span>
   </button>

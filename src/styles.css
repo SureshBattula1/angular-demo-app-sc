@@ -563,3 +563,75 @@ html {
 .mat-mdc-form-field select {
   line-height: var(--line-height-compact, 1.2);
 }
+
+/* ========================================
+   SNACKBAR STYLES
+   ======================================== */
+
+.success-snackbar {
+  --mdc-snackbar-container-color: var(--success-color) !important;
+  --mat-snack-bar-button-color: var(--white) !important;
+  
+  .mdc-snackbar__surface {
+    background-color: var(--success-color) !important;
+  }
+  
+  .mdc-snackbar__label {
+    color: var(--white) !important;
+  }
+  
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: var(--white) !important;
+  }
+}
+
+.error-snackbar {
+  --mdc-snackbar-container-color: var(--error-color) !important;
+  --mat-snack-bar-button-color: var(--white) !important;
+  
+  .mdc-snackbar__surface {
+    background-color: var(--error-color) !important;
+  }
+  
+  .mdc-snackbar__label {
+    color: var(--white) !important;
+  }
+  
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: var(--white) !important;
+  }
+}
+
+.warning-snackbar {
+  --mdc-snackbar-container-color: var(--warning-color) !important;
+  --mat-snack-bar-button-color: var(--white) !important;
+  
+  .mdc-snackbar__surface {
+    background-color: var(--warning-color) !important;
+  }
+  
+  .mdc-snackbar__label {
+    color: var(--white) !important;
+  }
+  
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: var(--white) !important;
+  }
+}
+
+.info-snackbar {
+  --mdc-snackbar-container-color: var(--info-color) !important;
+  --mat-snack-bar-button-color: var(--white) !important;
+  
+  .mdc-snackbar__surface {
+    background-color: var(--info-color) !important;
+  }
+  
+  .mdc-snackbar__label {
+    color: var(--white) !important;
+  }
+  
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: var(--white) !important;
+  }
+}

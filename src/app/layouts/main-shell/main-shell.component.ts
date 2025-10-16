@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MaterialModule } from '../../shared/modules/material/material.module';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AuthService } from '../../core/services/auth.service';
+import { ErrorHandlerService } from '../../core/services/error-handler.service';
 
 @Component({
   selector: 'app-main-shell',
@@ -426,7 +428,12 @@ export class MainShellComponent implements OnInit {
 } as const;
 
   
-  constructor(private breakpointObserver: BreakpointObserver) {
+  constructor(
+    private breakpointObserver: BreakpointObserver,
+    private authService: AuthService,
+    private router: Router,
+    private errorHandler: ErrorHandlerService
+  ) {
     this.isHandset$ = this.breakpointObserver.observe(Breakpoints.Handset)
       .pipe(map(result => result.matches));
   }
@@ -624,6 +631,67 @@ export class MainShellComponent implements OnInit {
         color: ${theme.primary} !important;
       }
     `;
+  }
+  
+  /**
+   * Logout user
+   */
+  onLogout(): void {
+    if (confirm('Are you sure you want to logout?')) {
+      this.authService.logout().subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess('Logged out successfully');
+            // Redirect is handled by clearSession in auth service
+          }
+        },
+        error: (error) => {
+          // Session is cleared even on error
+          this.errorHandler.showInfo('Logged out');
+        }
+      });
+    }
+  }
+  
+  /**
+   * Navigate to profile
+   */
+  onProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+  
+  /**
+   * Navigate to settings
+   */
+  onSettings(): void {
+    this.router.navigate(['/settings']);
+  }
+  
+  /**
+   * Get user display name
+   */
+  getUserDisplayName(): string {
+    const user = this.authService.currentUser();
+    if (user) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    return 'User';
+  }
+  
+  /**
+   * Get user email
+   */
+  getUserEmail(): string {
+    const user = this.authService.currentUser();
+    return user?.email || '';
+  }
+  
+  /**
+   * Get user role
+   */
+  getUserRole(): string {
+    const user = this.authService.currentUser();
+    return user?.role || '';
   }
 }
 
