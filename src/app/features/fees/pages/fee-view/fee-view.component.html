@@ -34,7 +34,7 @@
           <mat-card class="stat-card info">
             <mat-icon class="stat-icon">receipt_long</mat-icon>
             <div class="stat-content">
-              <span class="stat-value">{{ studentFees?.payments?.length || 0 }}</span>
+              <span class="stat-value">{{ (studentFees && studentFees.payments) ? studentFees.payments.length : 0 }}</span>
               <span class="stat-label">Transactions</span>
             </div>
           </mat-card>
