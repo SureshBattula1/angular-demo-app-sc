@@ -1,0 +1,68 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1><mat-icon>payments</mat-icon> Fee Management</h1>
+      <p class="subtitle">Manage fee structures and payments</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" *ngIf="selectedTab === 0" (click)="addFeeStructure()">
+        <mat-icon>add</mat-icon>
+        Add Fee Structure
+      </button>
+      <button mat-raised-button color="accent" *ngIf="selectedTab === 1" (click)="recordPayment()">
+        <mat-icon>payment</mat-icon>
+        Record Payment
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-card class="tabs-card">
+    <mat-tab-group [(selectedIndex)]="selectedTab" (selectedIndexChange)="onTabChange($event)">
+      <!-- Fee Structures Tab -->
+      <mat-tab label="Fee Structures">
+        <ng-template mat-tab-label>
+          <mat-icon>account_balance</mat-icon>
+          Fee Structures
+        </ng-template>
+        
+        <div class="tab-content">
+          <app-data-table
+            #structuresTable
+            [data]="feeStructures"
+            [config]="structuresTableConfig"
+            [advancedSearchConfig]="structuresSearchConfig"
+            [title]="''"
+            [loading]="loading"
+            (actionClicked)="onAction($event)"
+            (advancedSearchChanged)="onStructuresSearch($event)"
+            (exportClicked)="onStructureExport($event)">
+          </app-data-table>
+        </div>
+      </mat-tab>
+
+      <!-- Fee Payments Tab -->
+      <mat-tab label="Fee Payments">
+        <ng-template mat-tab-label>
+          <mat-icon>receipt_long</mat-icon>
+          Fee Payments
+        </ng-template>
+        
+        <div class="tab-content">
+          <app-data-table
+            #paymentsTable
+            [data]="feePayments"
+            [config]="paymentsTableConfig"
+            [advancedSearchConfig]="paymentsSearchConfig"
+            [title]="''"
+            [loading]="loading"
+            (actionClicked)="onAction($event)"
+            (advancedSearchChanged)="onPaymentsSearch($event)"
+            (exportClicked)="onPaymentExport($event)">
+          </app-data-table>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</div>
+

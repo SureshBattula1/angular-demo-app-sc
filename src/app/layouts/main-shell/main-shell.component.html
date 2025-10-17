@@ -222,16 +222,28 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
         </a>
 
-        <!-- Fees -->
+        <!-- Attendance -->
+        <a mat-list-item 
+           routerLink="/attendance" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Attendance' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>fact_check</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Attendance</span>
+        </a>
+
+        <!-- Fees Management -->
         <a mat-list-item 
            routerLink="/fees" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Fees' : null"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Fee Management' : null"
            [matTooltipPosition]="'right'"
            [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>payment</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Fees</span>
+          <mat-icon matListItemIcon>payments</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Fee Management</span>
         </a>
 
         <!-- Accounts -->

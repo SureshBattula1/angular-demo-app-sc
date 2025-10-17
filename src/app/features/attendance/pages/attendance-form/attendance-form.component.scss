@@ -1,0 +1,145 @@
+// Using global CSS variables - no import needed
+:host {
+  --spacing-lg: 24px;
+  --spacing-md: 16px;
+  --spacing-xl: 32px;
+  --spacing-sm: 8px;
+  --spacing-xs: 4px;
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-radius-md: 8px;
+}
+
+.page-container {
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: var(--spacing-lg);
+  
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 28px;
+    font-weight: 600;
+  }
+  
+  .subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+}
+
+.filter-card, .students-card, .loading-card {
+  margin-bottom: var(--spacing-lg);
+}
+
+.filter-row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  flex-wrap: wrap;
+  
+  mat-form-field {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.stats {
+  margin-left: auto;
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.quick-actions {
+  padding: var(--spacing-md);
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-md);
+  
+  h3 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  button {
+    margin-right: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+}
+
+.attendance-table {
+  width: 100%;
+  
+  .student-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    small {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+  }
+  
+  .status-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    
+    mat-checkbox {
+      margin: 4px 0;
+      
+      .status-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+        vertical-align: middle;
+      }
+      
+      ::ng-deep .mdc-checkbox {
+        padding: 0;
+      }
+      
+      ::ng-deep .mdc-form-field {
+        font-size: 13px;
+      }
+    }
+  }
+  
+  mat-form-field {
+    width: 100%;
+    margin-bottom: -1.25em;
+  }
+}
+
+.loading-card {
+  text-align: center;
+  padding: var(--spacing-xl);
+  
+  mat-spinner {
+    margin: 0 auto var(--spacing-md);
+  }
+}
+
+@media (max-width: 960px) {
+  .page-container {
+    padding: var(--spacing-md);
+  }
+  
+  .filter-row {
+    flex-direction: column;
+    
+    mat-form-field {
+      width: 100%;
+    }
+  }
+}
+

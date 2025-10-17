@@ -1,0 +1,129 @@
+<div class="page-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
+        {{ isEditMode ? 'Edit Fee Structure' : 'Create Fee Structure' }}
+      </mat-card-title>
+      <mat-card-subtitle>{{ isEditMode ? 'Update fee structure information' : 'Add new fee structure for grade' }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <form [formGroup]="feeForm" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <h3><mat-icon>info</mat-icon> Fee Structure Information</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="feeForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Grade *</mat-label>
+              <mat-select formControlName="grade">
+                <mat-option *ngFor="let grade of grades" [value]="grade">
+                  Grade {{ grade }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-error *ngIf="feeForm.get('grade')?.invalid">{{ getErrorMessage('grade') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Fee Type *</mat-label>
+              <mat-select formControlName="fee_type">
+                <mat-option *ngFor="let type of feeTypes" [value]="type.value">
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-error *ngIf="feeForm.get('fee_type')?.invalid">{{ getErrorMessage('fee_type') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Amount *</mat-label>
+              <input matInput type="number" formControlName="amount" placeholder="0.00" step="0.01">
+              <span matPrefix>₹&nbsp;</span>
+              <mat-error *ngIf="feeForm.get('amount')?.invalid">{{ getErrorMessage('amount') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year *</mat-label>
+              <input matInput formControlName="academic_year" placeholder="2024-2025">
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="feeForm.get('academic_year')?.invalid">{{ getErrorMessage('academic_year') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Due Date</mat-label>
+              <input matInput type="date" formControlName="due_date">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Enter fee structure description"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="is_recurring" color="primary">
+              <mat-icon>repeat</mat-icon>
+              Recurring Fee
+            </mat-checkbox>
+          </div>
+
+          <mat-form-field appearance="outline" class="form-field-half" *ngIf="feeForm.get('is_recurring')?.value">
+            <mat-label>Recurrence Period *</mat-label>
+            <mat-select formControlName="recurrence_period">
+              <mat-option *ngFor="let period of recurrencePeriods" [value]="period.value">
+                {{ period.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>schedule</mat-icon>
+            <mat-error *ngIf="feeForm.get('recurrence_period')?.invalid">{{ getErrorMessage('recurrence_period') }}</mat-error>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="is_active" color="primary">
+              <mat-icon>check_circle</mat-icon>
+              Active
+            </mat-checkbox>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || feeForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update' : 'Create' }} Fee Structure</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

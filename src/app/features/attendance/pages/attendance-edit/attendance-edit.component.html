@@ -1,0 +1,89 @@
+<div class="page-container">
+  <mat-card class="edit-card" *ngIf="attendance">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>edit</mat-icon>
+        Edit Attendance
+      </mat-card-title>
+      <mat-card-subtitle>Update attendance record</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <!-- Student Info (Read-only) -->
+      <div class="info-section">
+        <h3>Student Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Student Name:</label>
+            <span>{{ attendance.first_name }} {{ attendance.last_name }}</span>
+          </div>
+          <div class="info-item">
+            <label>Admission No:</label>
+            <span>{{ attendance.admission_number }}</span>
+          </div>
+          <div class="info-item">
+            <label>Grade & Section:</label>
+            <span>Grade {{ attendance.grade }} - Section {{ attendance.section }}</span>
+          </div>
+          <div class="info-item">
+            <label>Date:</label>
+            <span>{{ attendance.date | date:'mediumDate' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editable Form -->
+      <form [formGroup]="attendanceForm" (ngSubmit)="onSubmit()" class="edit-form">
+        <div class="form-section">
+          <h3>Update Attendance</h3>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Status *</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                <mat-icon>{{ option.icon }}</mat-icon>
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>info</mat-icon>
+            <mat-error *ngIf="attendanceForm.get('status')?.invalid">Status is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarks</mat-label>
+            <textarea matInput formControlName="remarks" rows="3" placeholder="Enter optional remarks"></textarea>
+            <mat-icon matPrefix>comment</mat-icon>
+          </mat-form-field>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || attendanceForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">save</mat-icon>
+        <span>{{ isLoading ? 'Saving...' : 'Update Attendance' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading && !attendance" class="loading-card">
+    <mat-card-content>
+      <mat-spinner></mat-spinner>
+      <p>Loading attendance data...</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+

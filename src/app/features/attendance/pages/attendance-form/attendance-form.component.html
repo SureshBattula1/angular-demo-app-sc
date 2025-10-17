@@ -1,0 +1,136 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1><mat-icon>event_available</mat-icon> Mark Attendance</h1>
+    <p class="subtitle">Mark daily attendance for students</p>
+  </div>
+
+  <!-- Filter Section -->
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <div class="filter-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Branch</mat-label>
+          <mat-select [(ngModel)]="selectedBranch">
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>business</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Grade</mat-label>
+          <mat-select [(ngModel)]="selectedGrade">
+            <mat-option *ngFor="let grade of grades" [value]="grade">Grade {{ grade }}</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>grade</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Section</mat-label>
+          <mat-select [(ngModel)]="selectedSection">
+            <mat-option *ngFor="let section of sections" [value]="section">Section {{ section }}</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>class</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date</mat-label>
+          <input matInput type="date" [(ngModel)]="selectedDate">
+          <mat-icon matPrefix>event</mat-icon>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="loadStudents()" [disabled]="loading">
+          <mat-icon>search</mat-icon> Load Students
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Students List -->
+  <mat-card class="students-card" *ngIf="studentsLoaded">
+    <mat-card-header>
+      <mat-card-title>
+        Students ({{ students.length }})
+        <span class="stats">
+          <mat-chip color="primary">Present: {{ getPresentCount() }}</mat-chip>
+          <mat-chip color="warn">Absent: {{ getAbsentCount() }}</mat-chip>
+        </span>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>Quick Mark All As:</h3>
+        <button mat-button *ngFor="let option of statusOptions" (click)="setStatusForAll(option.value)">
+          <mat-icon>{{ option.icon }}</mat-icon> {{ option.label }}
+        </button>
+      </div>
+
+      <!-- Students Table -->
+      <table mat-table [dataSource]="students" class="attendance-table">
+        <ng-container matColumnDef="roll_number">
+          <th mat-header-cell *matHeaderCellDef>Roll No.</th>
+          <td mat-cell *matCellDef="let student">{{ student.roll_number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Student Name</th>
+          <td mat-cell *matCellDef="let student">
+            <div class="student-info">
+              <strong>{{ getStudentFullName(student) }}</strong>
+              <small>{{ student.admission_number }}</small>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let student">
+            <div class="status-checkboxes">
+              <mat-checkbox 
+                *ngFor="let option of statusOptions"
+                [checked]="student.status === option.value"
+                (change)="setStudentStatus(student, option.value)"
+                [color]="getCheckboxColor(option.value)">
+                <mat-icon class="status-icon">{{ option.icon }}</mat-icon>
+                {{ option.label }}
+              </mat-checkbox>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="remarks">
+          <th mat-header-cell *matHeaderCellDef>Remarks</th>
+          <td mat-cell *matCellDef="let student">
+            <mat-form-field appearance="outline">
+              <input matInput [(ngModel)]="student.remarks" placeholder="Optional remarks">
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['roll_number', 'name', 'status', 'remarks']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['roll_number', 'name', 'status', 'remarks']"></tr>
+      </table>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onCancel()" [disabled]="submitting">
+        <mat-icon>cancel</mat-icon> Cancel
+      </button>
+      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="submitting || students.length === 0">
+        <mat-spinner *ngIf="submitting" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!submitting">save</mat-icon>
+        <span>{{ submitting ? 'Saving...' : 'Mark Attendance' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="loading" class="loading-card">
+    <mat-card-content>
+      <mat-spinner></mat-spinner>
+      <p>Loading students...</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+

@@ -23,20 +23,6 @@ export class TeacherFormComponent implements OnInit {
   currentTeacher?: Teacher;
   
   branches: any[] = [];
-  grades = [
-    { value: '1', label: 'Grade 1' },
-    { value: '2', label: 'Grade 2' },
-    { value: '3', label: 'Grade 3' },
-    { value: '4', label: 'Grade 4' },
-    { value: '5', label: 'Grade 5' },
-    { value: '6', label: 'Grade 6' },
-    { value: '7', label: 'Grade 7' },
-    { value: '8', label: 'Grade 8' },
-    { value: '9', label: 'Grade 9' },
-    { value: '10', label: 'Grade 10' },
-    { value: '11', label: 'Grade 11' },
-    { value: '12', label: 'Grade 12' }
-  ];
 
   constructor(
     private fb: FormBuilder,
@@ -62,13 +48,12 @@ export class TeacherFormComponent implements OnInit {
 
   private initForm(): void {
     this.teacherForm = this.fb.group({
+      first_name: ['', [Validators.required, Validators.maxLength(255)]],
+      last_name: ['', [Validators.required, Validators.maxLength(255)]],
+      email: ['', [Validators.required, Validators.email]],
+      phone: [''],
+      password: ['', this.isEditMode ? [] : [Validators.required, Validators.minLength(8)]],
       branch_id: [null, Validators.required],
-      name: ['', [Validators.required, Validators.maxLength(50)]],
-      code: ['', [Validators.required, Validators.maxLength(50)]],
-      grade_level: [null],
-      capacity: [40, [Validators.required, Validators.min(1), Validators.max(100)]],
-      room_number: [''],
-      description: [''],
       is_active: [true]
     });
   }
@@ -81,6 +66,9 @@ export class TeacherFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentTeacher = response.data;
           this.teacherForm.patchValue(response.data);
+          // Remove password requirement for edit mode
+          this.teacherForm.get('password')?.clearValidators();
+          this.teacherForm.get('password')?.updateValueAndValidity();
           this.isLoading = false;
         }
       },
@@ -113,7 +101,12 @@ export class TeacherFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.teacherForm.value;
+    const formData = { ...this.teacherForm.value };
+    
+    // Remove password if empty in edit mode
+    if (this.isEditMode && !formData.password) {
+      delete formData.password;
+    }
 
     const request = this.isEditMode && this.teacherId
       ? this.teacherService.updateTeacher(this.teacherId, formData)
@@ -147,6 +140,18 @@ export class TeacherFormComponent implements OnInit {
     });
   }
 
+  private getFieldLabel(fieldName: string): string {
+    const labels: Record<string, string> = {
+      first_name: 'First Name',
+      last_name: 'Last Name',
+      email: 'Email',
+      phone: 'Phone',
+      password: 'Password',
+      branch_id: 'Branch'
+    };
+    return labels[fieldName] || fieldName;
+  }
+  
   getErrorMessage(fieldName: string): string {
     const control = this.teacherForm.get(fieldName);
     
@@ -154,31 +159,19 @@ export class TeacherFormComponent implements OnInit {
       return `${this.getFieldLabel(fieldName)} is required`;
     }
     
+    if (control?.hasError('email')) {
+      return 'Please enter a valid email';
+    }
+    
+    if (control?.hasError('minlength')) {
+      return `${this.getFieldLabel(fieldName)} must be at least ${control.errors?.['minlength'].requiredLength} characters`;
+    }
+    
     if (control?.hasError('maxlength')) {
       return `${this.getFieldLabel(fieldName)} is too long`;
     }
     
-    if (control?.hasError('min')) {
-      return `${this.getFieldLabel(fieldName)} must be at least ${control.errors?.['min'].min}`;
-    }
-    
-    if (control?.hasError('max')) {
-      return `${this.getFieldLabel(fieldName)} cannot exceed ${control.errors?.['max'].max}`;
-    }
-    
     return '';
-  }
-
-  private getFieldLabel(fieldName: string): string {
-    const labels: Record<string, string> = {
-      branch_id: 'Branch',
-      name: 'Teacher Name',
-      code: 'Teacher Code',
-      grade_level: 'Grade Level',
-      capacity: 'Capacity',
-      room_number: 'Room Number'
-    };
-    return labels[fieldName] || fieldName;
   }
 }
 

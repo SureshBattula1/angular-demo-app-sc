@@ -1,0 +1,162 @@
+<div class="page-container">
+  <mat-card class="view-card" *ngIf="studentFees && !loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>account_balance_wallet</mat-icon>
+        Student Fee Report
+      </mat-card-title>
+      <mat-card-subtitle>Complete fee payment history and pending fees</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <!-- Summary Statistics -->
+      <div class="summary-section">
+        <h3><mat-icon>insights</mat-icon> Financial Summary</h3>
+        <div class="stats-grid">
+          <mat-card class="stat-card success">
+            <mat-icon class="stat-icon">paid</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">₹{{ getTotalPaid() | number:'1.2-2' }}</span>
+              <span class="stat-label">Total Paid</span>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card warning">
+            <mat-icon class="stat-icon">pending</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">₹{{ getTotalPending() | number:'1.2-2' }}</span>
+              <span class="stat-label">Pending Amount</span>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card info">
+            <mat-icon class="stat-icon">receipt_long</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ studentFees?.payments?.length || 0 }}</span>
+              <span class="stat-label">Transactions</span>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card" [class.success]="getPaymentPercentage() === 100">
+            <mat-icon class="stat-icon">percent</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ getPaymentPercentage() | number:'1.0-2' }}%</span>
+              <span class="stat-label">Payment Progress</span>
+            </div>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Payment History -->
+      <div class="payments-section" *ngIf="studentFees?.payments && studentFees.payments.length > 0">
+        <h3><mat-icon>history</mat-icon> Payment History ({{ studentFees.payments.length }} records)</h3>
+        <div class="table-container">
+          <table mat-table [dataSource]="studentFees.payments" class="payments-table">
+            <ng-container matColumnDef="receipt_number">
+              <th mat-header-cell *matHeaderCellDef>Receipt No.</th>
+              <td mat-cell *matCellDef="let payment">{{ payment.receipt_number }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="payment_date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let payment">{{ payment.payment_date | date:'mediumDate' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fee_type">
+              <th mat-header-cell *matHeaderCellDef>Fee Type</th>
+              <td mat-cell *matCellDef="let payment">{{ payment.fee_structure?.fee_type || '-' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let payment" class="amount-cell">₹{{ payment.total_amount | number:'1.2-2' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="method">
+              <th mat-header-cell *matHeaderCellDef>Method</th>
+              <td mat-cell *matCellDef="let payment">{{ payment.payment_method }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let payment">
+                <mat-chip [class]="'status-' + getPaymentStatusColor(payment.payment_status)">
+                  {{ payment.payment_status }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="['receipt_number', 'payment_date', 'fee_type', 'amount', 'method', 'status']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['receipt_number', 'payment_date', 'fee_type', 'amount', 'method', 'status']"></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pending Fees -->
+      <div class="pending-section" *ngIf="studentFees?.pending_fees && studentFees.pending_fees.length > 0">
+        <h3><mat-icon>warning</mat-icon> Pending Fees ({{ studentFees.pending_fees.length }})</h3>
+        <div class="pending-list">
+          <mat-card class="pending-item" *ngFor="let fee of studentFees.pending_fees">
+            <div class="fee-info">
+              <div class="fee-header">
+                <mat-icon>category</mat-icon>
+                <strong>{{ fee.fee_type }}</strong>
+              </div>
+              <div class="fee-details">
+                <span class="detail-item">
+                  <mat-icon>school</mat-icon>
+                  Grade {{ fee.grade }}
+                </span>
+                <span class="detail-item">
+                  <mat-icon>event</mat-icon>
+                  {{ fee.academic_year }}
+                </span>
+                <span class="detail-item" *ngIf="fee.due_date">
+                  <mat-icon>schedule</mat-icon>
+                  Due: {{ fee.due_date | date:'shortDate' }}
+                </span>
+              </div>
+            </div>
+            <div class="fee-amount">
+              <span class="amount-label">Amount</span>
+              <span class="amount-value">₹{{ fee.amount | number:'1.2-2' }}</span>
+            </div>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- No Data Message -->
+      <div class="no-data" *ngIf="!loading && studentFees && (!studentFees.payments || studentFees.payments.length === 0) && (!studentFees.pending_fees || studentFees.pending_fees.length === 0)">
+        <mat-icon>info</mat-icon>
+        <p>No fee records found for this student</p>
+        <small>No payments made and no fees configured</small>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onBack()">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+      <button mat-button (click)="onRecordPayment()" *ngIf="studentFees?.pending_fees && studentFees.pending_fees.length > 0">
+        <mat-icon>payment</mat-icon> Record Payment
+      </button>
+      <button mat-button (click)="printReport()">
+        <mat-icon>print</mat-icon> Print
+      </button>
+      <button mat-button (click)="exportReport('pdf')">
+        <mat-icon>picture_as_pdf</mat-icon> Export PDF
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="loading" class="loading-card">
+    <mat-card-content>
+      <mat-spinner></mat-spinner>
+      <p>Loading fee data...</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+

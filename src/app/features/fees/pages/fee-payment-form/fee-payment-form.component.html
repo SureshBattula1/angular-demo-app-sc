@@ -1,0 +1,159 @@
+<div class="page-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>payment</mat-icon>
+        Record Fee Payment
+      </mat-card-title>
+      <mat-card-subtitle>Record student fee payment</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <h3><mat-icon>person</mat-icon> Student & Fee Information</h3>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Student *</mat-label>
+            <mat-select formControlName="student_id">
+              <mat-option *ngFor="let student of students" [value]="student.user_id || student.id">
+                {{ getStudentName(student) }} ({{ student.admission_number }})
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>person</mat-icon>
+            <mat-error *ngIf="paymentForm.get('student_id')?.invalid">{{ getErrorMessage('student_id') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fee Type *</mat-label>
+            <mat-select formControlName="fee_structure_id">
+              <mat-option *ngFor="let structure of feeStructures" [value]="structure.id">
+                {{ structure.fee_type }} - ₹{{ structure.amount }} ({{ structure.academic_year }})
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>category</mat-icon>
+            <mat-hint *ngIf="feeStructures.length === 0 && paymentForm.get('student_id')?.value">
+              No pending fees for this student
+            </mat-hint>
+            <mat-error *ngIf="paymentForm.get('fee_structure_id')?.invalid">{{ getErrorMessage('fee_structure_id') }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-section">
+          <h3><mat-icon>payments</mat-icon> Payment Details</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Amount Paid *</mat-label>
+              <input matInput type="number" formControlName="amount_paid" placeholder="0.00" step="0.01">
+              <span matPrefix>₹&nbsp;</span>
+              <mat-error *ngIf="paymentForm.get('amount_paid')?.invalid">{{ getErrorMessage('amount_paid') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Payment Date *</mat-label>
+              <input matInput type="date" formControlName="payment_date">
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="paymentForm.get('payment_date')?.invalid">{{ getErrorMessage('payment_date') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Payment Method *</mat-label>
+              <mat-select formControlName="payment_method">
+                <mat-option *ngFor="let method of paymentMethods" [value]="method.value">
+                  <mat-icon>{{ method.icon }}</mat-icon>
+                  {{ method.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>payment</mat-icon>
+              <mat-error *ngIf="paymentForm.get('payment_method')?.invalid">{{ getErrorMessage('payment_method') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Transaction ID</mat-label>
+              <input matInput formControlName="transaction_id" placeholder="Optional">
+              <mat-icon matPrefix>tag</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Discount Amount</mat-label>
+              <input matInput type="number" formControlName="discount_amount" placeholder="0.00" step="0.01">
+              <span matPrefix>₹&nbsp;</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Late Fee</mat-label>
+              <input matInput type="number" formControlName="late_fee" placeholder="0.00" step="0.01">
+              <span matPrefix>₹&nbsp;</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Payment Status *</mat-label>
+              <mat-select formControlName="payment_status">
+                <mat-option *ngFor="let status of paymentStatuses" [value]="status.value">
+                  {{ status.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>info</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarks</mat-label>
+            <textarea matInput formControlName="remarks" rows="2" placeholder="Optional remarks"></textarea>
+            <mat-icon matPrefix>comment</mat-icon>
+          </mat-form-field>
+
+          <!-- Total Amount Display -->
+          <div class="total-display">
+            <mat-card class="total-card">
+              <div class="total-breakdown">
+                <div class="breakdown-row">
+                  <span>Amount Paid:</span>
+                  <strong>₹{{ paymentForm.get('amount_paid')?.value || 0 }}</strong>
+                </div>
+                <div class="breakdown-row" *ngIf="paymentForm.get('late_fee')?.value">
+                  <span>Late Fee:</span>
+                  <strong>₹{{ paymentForm.get('late_fee')?.value }}</strong>
+                </div>
+                <div class="breakdown-row" *ngIf="paymentForm.get('discount_amount')?.value">
+                  <span>Discount:</span>
+                  <strong class="discount">-₹{{ paymentForm.get('discount_amount')?.value }}</strong>
+                </div>
+                <mat-divider></mat-divider>
+                <div class="breakdown-row total">
+                  <span>Total Amount:</span>
+                  <strong class="total-amount">₹{{ getTotalAmount() | number:'1.2-2' }}</strong>
+                </div>
+              </div>
+            </mat-card>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || paymentForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">save</mat-icon>
+        <span>{{ isLoading ? 'Recording...' : 'Record Payment' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

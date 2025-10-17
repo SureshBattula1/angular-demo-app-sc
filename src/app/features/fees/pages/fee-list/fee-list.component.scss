@@ -1,0 +1,99 @@
+:host {
+  --spacing-lg: 24px;
+  --spacing-md: 16px;
+  --spacing-sm: 8px;
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-radius-md: 8px;
+}
+
+.page-container {
+  padding: var(--spacing-lg);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--card-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  
+  .header-content {
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin: 0 0 4px 0;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: var(--primary-color);
+      }
+    }
+    
+    .subtitle {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+}
+
+.tabs-card {
+  box-shadow: var(--shadow-md);
+  
+  ::ng-deep .mat-mdc-tab-label {
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+.tab-content {
+  padding: var(--spacing-md) 0;
+}
+
+@media (max-width: 960px) {
+  .page-container {
+    padding: var(--spacing-md);
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    
+    .header-actions {
+      width: 100%;
+      
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .header-actions {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+

@@ -1,6 +1,5 @@
 <div class="department-form-container">
   <mat-card class="form-card">
-    <!-- Header -->
     <mat-card-header>
       <mat-card-title>
         <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
@@ -13,11 +12,9 @@
 
     <mat-divider></mat-divider>
 
-    <!-- Form -->
     <mat-card-content>
       <form [formGroup]="departmentForm" (ngSubmit)="onSubmit()">
         
-        <!-- Basic Information Section -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>info</mat-icon>
@@ -26,64 +23,51 @@
           
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Department Name *</mat-label>
+              <input matInput formControlName="name" placeholder="e.g., Science, Mathematics">
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="departmentForm.get('name')?.invalid">{{ getErrorMessage('name') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Department Head *</mat-label>
+              <input matInput formControlName="head" placeholder="e.g., Dr. John Smith">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="departmentForm.get('head')?.invalid">{{ getErrorMessage('head') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
               <mat-select formControlName="branch_id">
                 <mat-option *ngFor="let branch of branches" [value]="branch.id">
                   {{ branch.name }} ({{ branch.code }})
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>business</mat-icon>
-              <mat-error *ngIf="departmentForm.get('branch_id')?.invalid && departmentForm.get('branch_id')?.touched">
-                {{ getErrorMessage('branch_id') }}
-              </mat-error>
+              <mat-icon matPrefix>business_center</mat-icon>
+              <mat-error *ngIf="departmentForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Department Name *</mat-label>
-              <input matInput formControlName="name" placeholder="e.g., A, B, C" [readonly]="isEditMode">
-              <mat-icon matPrefix>class</mat-icon>
-              <mat-error *ngIf="departmentForm.get('name')?.invalid && departmentForm.get('name')?.touched">
-                {{ getErrorMessage('name') }}
-              </mat-error>
+              <mat-label>Established Date *</mat-label>
+              <input matInput type="date" formControlName="established_date">
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="departmentForm.get('established_date')?.invalid">{{ getErrorMessage('established_date') }}</mat-error>
             </mat-form-field>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Department Code *</mat-label>
-              <input matInput formControlName="code" placeholder="e.g., SEC-A" [readonly]="isEditMode">
-              <mat-icon matPrefix>qr_code</mat-icon>
-              <mat-error *ngIf="departmentForm.get('code')?.invalid && departmentForm.get('code')?.touched">
-                {{ getErrorMessage('code') }}
-              </mat-error>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Grade Level (Optional)</mat-label>
-              <mat-select formControlName="grade_level">
-                <mat-option [value]="null">All Grades</mat-option>
-                <mat-option *ngFor="let grade of grades" [value]="grade.value">
-                  {{ grade.label }}
-                </mat-option>
-              </mat-select>
-              <mat-icon matPrefix>school</mat-icon>
-            </mat-form-field>
-          </div>
-
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Capacity *</mat-label>
-              <input matInput type="number" formControlName="capacity" placeholder="e.g., 40">
+              <mat-label>Students Count</mat-label>
+              <input matInput type="number" formControlName="students_count" placeholder="0">
               <mat-icon matPrefix>people</mat-icon>
-              <mat-error *ngIf="departmentForm.get('capacity')?.invalid && departmentForm.get('capacity')?.touched">
-                {{ getErrorMessage('capacity') }}
-              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Room Number</mat-label>
-              <input matInput formControlName="room_number" placeholder="e.g., 101, A-201">
-              <mat-icon matPrefix>room</mat-icon>
+              <mat-label>Teachers Count</mat-label>
+              <input matInput type="number" formControlName="teachers_count" placeholder="0">
+              <mat-icon matPrefix>person</mat-icon>
             </mat-form-field>
           </div>
 
@@ -104,7 +88,6 @@
       </form>
     </mat-card-content>
 
-    <!-- Action Buttons -->
     <mat-card-actions align="end">
       <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
         <mat-icon>cancel</mat-icon>
@@ -124,4 +107,3 @@
     </mat-card-actions>
   </mat-card>
 </div>
-

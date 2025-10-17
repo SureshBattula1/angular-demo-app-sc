@@ -62,12 +62,13 @@ export class DepartmentFormComponent implements OnInit {
 
   private initForm(): void {
     this.departmentForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(255)]],
+      head: ['', [Validators.required, Validators.maxLength(255)]],
+      head_id: [null],
       branch_id: [null, Validators.required],
-      name: ['', [Validators.required, Validators.maxLength(50)]],
-      code: ['', [Validators.required, Validators.maxLength(50)]],
-      grade_level: [null],
-      capacity: [40, [Validators.required, Validators.min(1), Validators.max(100)]],
-      room_number: [''],
+      established_date: ['', Validators.required],
+      students_count: [0],
+      teachers_count: [0],
       description: [''],
       is_active: [true]
     });

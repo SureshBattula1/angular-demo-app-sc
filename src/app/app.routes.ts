@@ -53,6 +53,10 @@ export const routes: Routes = [
         loadChildren: () => import('./features/departments/departments.routes').then(m => m.DEPARTMENTS_ROUTES)
       },
       {
+        path: 'attendance',
+        loadChildren: () => import('./features/attendance/attendance.routes').then(m => m.ATTENDANCE_ROUTES)
+      },
+      {
         path: 'invoices',
         loadChildren: () => import('./features/invoices/invoices.routes').then(m => m.INVOICES_ROUTES)
       },
