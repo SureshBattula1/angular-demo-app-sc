@@ -35,35 +35,47 @@ export class ApiService {
    */
   get<T>(endpoint: string, params?: Record<string, unknown>): Observable<ApiResponse<T>> {
     const httpParams = this.buildParams(params);
-    return this.http.get<ApiResponse<T>>(`${this.API_URL}${endpoint}`, { params: httpParams });
+    return this.http.get<ApiResponse<T>>(`${this.API_URL}${endpoint}`, { 
+      params: httpParams,
+      withCredentials: true 
+    });
   }
 
   /**
    * POST request
    */
   post<T>(endpoint: string, body: unknown, options?: { headers?: Record<string, string> }): Observable<ApiResponse<T>> {
-    return this.http.post<ApiResponse<T>>(`${this.API_URL}${endpoint}`, body, options);
+    return this.http.post<ApiResponse<T>>(`${this.API_URL}${endpoint}`, body, {
+      ...options,
+      withCredentials: true
+    });
   }
 
   /**
    * PUT request
    */
   put<T>(endpoint: string, body: unknown): Observable<ApiResponse<T>> {
-    return this.http.put<ApiResponse<T>>(`${this.API_URL}${endpoint}`, body);
+    return this.http.put<ApiResponse<T>>(`${this.API_URL}${endpoint}`, body, {
+      withCredentials: true
+    });
   }
 
   /**
    * DELETE request
    */
   delete<T>(endpoint: string): Observable<ApiResponse<T>> {
-    return this.http.delete<ApiResponse<T>>(`${this.API_URL}${endpoint}`);
+    return this.http.delete<ApiResponse<T>>(`${this.API_URL}${endpoint}`, {
+      withCredentials: true
+    });
   }
 
   /**
    * PATCH request
    */
   patch<T>(endpoint: string, body: unknown): Observable<ApiResponse<T>> {
-    return this.http.patch<ApiResponse<T>>(`${this.API_URL}${endpoint}`, body);
+    return this.http.patch<ApiResponse<T>>(`${this.API_URL}${endpoint}`, body, {
+      withCredentials: true
+    });
   }
 
   /**
@@ -71,6 +83,7 @@ export class ApiService {
    */
   upload<T>(endpoint: string, formData: FormData): Observable<ApiResponse<T>> {
     return this.http.post<ApiResponse<T>>(`${this.API_URL}${endpoint}`, formData, {
+      withCredentials: true,
       headers: {
         // Let browser set Content-Type for FormData (includes boundary)
       }
