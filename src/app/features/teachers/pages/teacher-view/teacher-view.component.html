@@ -1,0 +1,93 @@
+<div class="teacher-view-container" *ngIf="!isLoading && teacher">
+  <div class="action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>block</mat-icon>
+        Deactivate
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="header-card">
+    <mat-card-content>
+      <div class="teacher-header">
+        <div class="teacher-avatar">
+          <mat-icon class="avatar-icon">person</mat-icon>
+        </div>
+        <div class="teacher-info">
+          <h1 class="teacher-name">{{ getFullName() }}</h1>
+          <div class="teacher-meta">
+            <span class="email-badge">
+              <mat-icon>email</mat-icon>
+              {{ teacher.email }}
+            </span>
+            <span class="phone-badge" *ngIf="teacher.phone">
+              <mat-icon>phone</mat-icon>
+              {{ teacher.phone }}
+            </span>
+            <span class="status-badge" [class.active]="teacher.is_active">
+              <mat-icon>circle</mat-icon>
+              {{ teacher.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="details-grid">
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Teacher Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">First Name:</span>
+          <span class="detail-value">{{ teacher.first_name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Last Name:</span>
+          <span class="detail-value">{{ teacher.last_name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">{{ teacher.email }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Phone:</span>
+          <span class="detail-value">{{ teacher.phone || 'N/A' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Branch:</span>
+          <span class="detail-value">{{ teacher.branch?.name }} ({{ teacher.branch?.code }})</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Role:</span>
+          <span class="detail-value">{{ teacher.role }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" [class.text-success]="teacher.is_active" [class.text-muted]="!teacher.is_active">
+            {{ teacher.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading teacher details...</p>
+</div>

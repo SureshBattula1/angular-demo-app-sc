@@ -1,0 +1,102 @@
+<div class="teacher-form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'person_add' }}</mat-icon>
+        {{ isEditMode ? 'Edit Teacher' : 'Add New Teacher' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update teacher information' : 'Register a new teacher' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <form [formGroup]="teacherForm" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>person</mat-icon>
+            Basic Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>First Name *</mat-label>
+              <input matInput formControlName="first_name">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="teacherForm.get('first_name')?.invalid">{{ getErrorMessage('first_name') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Last Name *</mat-label>
+              <input matInput formControlName="last_name">
+              <mat-icon matPrefix>person_outline</mat-icon>
+              <mat-error *ngIf="teacherForm.get('last_name')?.invalid">{{ getErrorMessage('last_name') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Email *</mat-label>
+              <input matInput type="email" formControlName="email">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="teacherForm.get('email')?.invalid">{{ getErrorMessage('email') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone">
+              <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="teacherForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="!isEditMode">
+              <mat-label>Password *</mat-label>
+              <input matInput type="password" formControlName="password">
+              <mat-icon matPrefix>lock</mat-icon>
+              <mat-error *ngIf="teacherForm.get('password')?.invalid">{{ getErrorMessage('password') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">
+              <mat-icon class="checkbox-icon">check_circle</mat-icon>
+              Teacher is Active
+            </mat-checkbox>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || teacherForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'person_add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Teacher' : 'Add Teacher' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

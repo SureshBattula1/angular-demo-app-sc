@@ -1,0 +1,113 @@
+<div class="department-view-container" *ngIf="!isLoading && department">
+  <div class="action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="header-card">
+    <mat-card-content>
+      <div class="department-header">
+        <div class="department-logo">
+          <mat-icon class="logo-icon">business</mat-icon>
+        </div>
+        <div class="department-info">
+          <h1 class="department-name">{{ department.name }}</h1>
+          <div class="department-meta">
+            <span><mat-icon>person</mat-icon> Head: {{ department.head }}</span>
+            <span><mat-icon>event</mat-icon> Est: {{ department.established_date | date:'yyyy' }}</span>
+            <span class="status-badge" [class.active]="department.is_active">
+              <mat-icon>circle</mat-icon>
+              {{ department.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>people</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ department.students_count }}</div>
+          <div class="stat-label">Students</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ department.teachers_count }}</div>
+          <div class="stat-label">Teachers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="details-grid">
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Department Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Department Name:</span>
+          <span class="detail-value">{{ department.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Head:</span>
+          <span class="detail-value">{{ department.head }}</span>
+        </div>
+        <div class="detail-row" *ngIf="department.headOfDepartment">
+          <span class="detail-label">Head of Department:</span>
+          <span class="detail-value">{{ department.headOfDepartment.first_name }} {{ department.headOfDepartment.last_name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Established Date:</span>
+          <span class="detail-value">{{ department.established_date | date }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Branch:</span>
+          <span class="detail-value">{{ department.branch?.name }} ({{ department.branch?.code }})</span>
+        </div>
+        <div class="detail-row" *ngIf="department.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ department.description }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" [class.text-success]="department.is_active" [class.text-muted]="!department.is_active">
+            {{ department.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading department details...</p>
+</div>

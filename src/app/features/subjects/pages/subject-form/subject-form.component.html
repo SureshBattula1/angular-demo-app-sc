@@ -1,0 +1,144 @@
+<div class="subject-form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
+        {{ isEditMode ? 'Edit Subject' : 'Create New Subject' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update subject information' : 'Add a new subject' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <form [formGroup]="subjectForm" (ngSubmit)="onSubmit()">
+        
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Subject Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Subject Name *</mat-label>
+              <input matInput formControlName="name" placeholder="e.g., Mathematics, Physics">
+              <mat-icon matPrefix>subject</mat-icon>
+              <mat-error *ngIf="subjectForm.get('name')?.invalid">{{ getErrorMessage('name') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Subject Code *</mat-label>
+              <input matInput formControlName="code" placeholder="e.g., MATH-101" [readonly]="isEditMode">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-error *ngIf="subjectForm.get('code')?.invalid">{{ getErrorMessage('code') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="subjectForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Department *</mat-label>
+              <mat-select formControlName="department_id">
+                <mat-option *ngFor="let dept of departments" [value]="dept.id">
+                  {{ dept.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business_center</mat-icon>
+              <mat-error *ngIf="subjectForm.get('department_id')?.invalid">{{ getErrorMessage('department_id') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Grade Level *</mat-label>
+              <mat-select formControlName="grade_level">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-error *ngIf="subjectForm.get('grade_level')?.invalid">{{ getErrorMessage('grade_level') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Subject Type *</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let type of subjectTypes" [value]="type.value">
+                  <mat-icon>{{ type.icon }}</mat-icon>
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-error *ngIf="subjectForm.get('type')?.invalid">{{ getErrorMessage('type') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Credits</mat-label>
+              <input matInput type="number" formControlName="credits" placeholder="0-10">
+              <mat-icon matPrefix>stars</mat-icon>
+              <mat-error *ngIf="subjectForm.get('credits')?.invalid">{{ getErrorMessage('credits') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Teacher (Optional)</mat-label>
+              <mat-select formControlName="teacher_id">
+                <mat-option [value]="null">Not Assigned</mat-option>
+                <mat-option *ngFor="let teacher of teachers" [value]="teacher.id">
+                  {{ teacher.first_name }} {{ teacher.last_name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Enter subject description"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">
+              <mat-icon class="checkbox-icon">check_circle</mat-icon>
+              Subject is Active
+            </mat-checkbox>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || subjectForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Subject' : 'Create Subject' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

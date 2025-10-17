@@ -13,6 +13,13 @@ export interface ApiResponse<T = unknown> {
   expires_in?: string;
   errors?: Record<string, string[]>;
   error?: string;
+  meta?: {
+    current_page?: number;
+    per_page?: number;
+    total?: number;
+    last_page?: number;
+  };
+  count?: number;
 }
 
 @Injectable({

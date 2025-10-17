@@ -1,0 +1,96 @@
+<div class="subject-view-container" *ngIf="!isLoading && subject">
+  <div class="action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="header-card">
+    <mat-card-content>
+      <div class="subject-header">
+        <div class="subject-logo">
+          <mat-icon class="logo-icon">subject</mat-icon>
+        </div>
+        <div class="subject-info">
+          <h1 class="subject-name">{{ subject.name }}</h1>
+          <div class="subject-meta">
+            <span><mat-icon>qr_code</mat-icon> {{ subject.code }}</span>
+            <span><mat-icon>category</mat-icon> {{ subject.type }}</span>
+            <span><mat-icon>school</mat-icon> Grade {{ subject.grade_level }}</span>
+            <span class="status-badge" [class.active]="subject.is_active">
+              <mat-icon>circle</mat-icon>
+              {{ subject.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="details-grid">
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Subject Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Subject Name:</span>
+          <span class="detail-value">{{ subject.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Code:</span>
+          <span class="detail-value">{{ subject.code }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Type:</span>
+          <span class="detail-value">{{ subject.type }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Grade Level:</span>
+          <span class="detail-value">Grade {{ subject.grade_level }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Credits:</span>
+          <span class="detail-value">{{ subject.credits }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Department:</span>
+          <span class="detail-value">{{ subject.department?.name || 'N/A' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="subject.teacher">
+          <span class="detail-label">Teacher:</span>
+          <span class="detail-value">{{ subject.teacher.first_name }} {{ subject.teacher.last_name }}</span>
+        </div>
+        <div class="detail-row" *ngIf="subject.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ subject.description }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" [class.text-success]="subject.is_active" [class.text-muted]="!subject.is_active">
+            {{ subject.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading subject details...</p>
+</div>

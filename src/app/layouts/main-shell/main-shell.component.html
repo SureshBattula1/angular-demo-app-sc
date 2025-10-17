@@ -150,6 +150,18 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Groups</span>
         </a>
 
+        <!-- Sections -->
+        <a mat-list-item 
+           routerLink="/sections" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Sections' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>view_module</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Sections</span>
+        </a>
+
         <!-- Students -->
         <a mat-list-item 
            routerLink="/students" 
@@ -160,6 +172,18 @@
            [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>school</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Students</span>
+        </a>
+
+        <!-- Subjects -->
+        <a mat-list-item 
+           routerLink="/subjects" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Subjects' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>subject</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
         </a>
 
         <!-- Teachers -->
