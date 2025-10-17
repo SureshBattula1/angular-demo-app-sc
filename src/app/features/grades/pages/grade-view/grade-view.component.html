@@ -1,0 +1,113 @@
+<div class="page-container">
+  <!-- Loading State -->
+  <mat-card *ngIf="loading" class="loading-card">
+    <mat-card-content>
+      <mat-spinner></mat-spinner>
+      <p>Loading grade details...</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Grade Details -->
+  <mat-card class="view-card" *ngIf="grade && !loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>school</mat-icon>
+        {{ grade.label }}
+      </mat-card-title>
+      <mat-card-subtitle>Grade Information and Statistics</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <!-- Basic Information -->
+      <div class="info-section">
+        <h3><mat-icon>info</mat-icon> Basic Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Grade Number</span>
+            <span class="info-value">{{ grade.value }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Display Name</span>
+            <span class="info-value">{{ grade.label }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Status</span>
+            <mat-chip [class.active]="grade.is_active">
+              {{ grade.is_active ? 'Active' : 'Inactive' }}
+            </mat-chip>
+          </div>
+          <div class="info-item" *ngIf="grade.description">
+            <span class="info-label">Description</span>
+            <span class="info-value">{{ grade.description }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-section" *ngIf="stats">
+        <h3><mat-icon>insights</mat-icon> Statistics</h3>
+        <div class="stats-grid">
+          <mat-card class="stat-card students">
+            <mat-icon class="stat-icon">people</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ stats.total_students | number }}</span>
+              <span class="stat-label">Total Students</span>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card sections">
+            <mat-icon class="stat-icon">view_list</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ stats.total_sections | number }}</span>
+              <span class="stat-label">Total Sections</span>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card teachers">
+            <mat-icon class="stat-icon">person</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ stats.total_teachers | number }}</span>
+              <span class="stat-label">Total Teachers</span>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card attendance">
+            <mat-icon class="stat-icon">event_available</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ stats.average_attendance | number:'1.0-2' }}%</span>
+              <span class="stat-label">Avg Attendance</span>
+            </div>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Sections List -->
+      <div class="sections-section" *ngIf="grade.sections && grade.sections.length > 0">
+        <h3><mat-icon>class</mat-icon> Available Sections</h3>
+        <div class="sections-chips">
+          <mat-chip *ngFor="let section of grade.sections">
+            Section {{ section }}
+          </mat-chip>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="onBack()">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon> Edit Grade
+      </button>
+      <button mat-raised-button color="accent" (click)="viewStudents()">
+        <mat-icon>people</mat-icon> View Students
+      </button>
+      <button mat-stroked-button (click)="viewSections()">
+        <mat-icon>view_list</mat-icon> View Sections
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

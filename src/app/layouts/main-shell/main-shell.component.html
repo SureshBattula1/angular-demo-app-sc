@@ -126,18 +126,31 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Branches</span>
         </a>
 
-        <!-- Classes -->
-        <a mat-list-item 
-           routerLink="/classes" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Classes' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>class</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Classes</span>
-        </a>
+         <!-- Grades -->
+         <a mat-list-item 
+         routerLink="/grades" 
+         routerLinkActive="active"
+         (click)="onMenuItemClick()"
+         [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? ' Classes( Grades)' : null"
+         [matTooltipPosition]="'right'"
+         [matTooltipDisabled]="isMobileOrTablet()">
+        <mat-icon matListItemIcon>grade</mat-icon>
+        <span matListItemTitle [class.hidden]="isSidebarCollapsed">Classes (Grades)</span>
+      </a>
 
+       <!-- Sections -->
+       <a mat-list-item 
+       routerLink="/sections" 
+       routerLinkActive="active"
+       (click)="onMenuItemClick()"
+       [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Sections' : null"
+       [matTooltipPosition]="'right'"
+       [matTooltipDisabled]="isMobileOrTablet()">
+      <mat-icon matListItemIcon>view_module</mat-icon>
+      <span matListItemTitle [class.hidden]="isSidebarCollapsed">Sections</span>
+    </a>
+
+       
         <!-- Groups -->
         <a mat-list-item 
            routerLink="/groups" 
@@ -150,17 +163,7 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Groups</span>
         </a>
 
-        <!-- Sections -->
-        <a mat-list-item 
-           routerLink="/sections" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Sections' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>view_module</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Sections</span>
-        </a>
+       
 
         <!-- Students -->
         <a mat-list-item 

@@ -59,6 +59,11 @@ export class SidebarComponent implements OnInit {
       route: '/subjects'
     },
     {
+      name: 'Grades',
+      icon: 'grade',
+      route: '/grades'
+    },
+    {
       name: 'Invoices',
       icon: 'receipt_long',
       route: '/invoices'

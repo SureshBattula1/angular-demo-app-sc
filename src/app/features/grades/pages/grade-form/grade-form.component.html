@@ -1,0 +1,130 @@
+<div class="grade-form-container">
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add_circle' }}</mat-icon>
+        {{ isEditMode ? 'Edit Grade' : 'Create New Grade' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update grade information' : 'Add a new grade to the system' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <!-- Form -->
+    <mat-card-content>
+      <form [formGroup]="gradeForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Grade Number</mat-label>
+              <mat-select 
+                formControlName="value" 
+                placeholder="Select grade number"
+                (selectionChange)="onGradeChange($event)"
+                [disabled]="isEditMode">
+                <mat-option *ngFor="let grade of gradeOptions" [value]="grade.value">
+                  {{ grade.value }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>filter_1</mat-icon>
+              <mat-hint *ngIf="!isEditMode">Select the grade number (1-12)</mat-hint>
+              <mat-error *ngIf="gradeForm.get('value')?.invalid && gradeForm.get('value')?.touched">
+                {{ getErrorMessage('value') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Grade Label</mat-label>
+              <input matInput formControlName="label" placeholder="e.g., Grade 1">
+              <mat-icon matPrefix>label</mat-icon>
+              <mat-hint>Display name for the grade</mat-hint>
+              <mat-error *ngIf="gradeForm.get('label')?.invalid && gradeForm.get('label')?.touched">
+                {{ getErrorMessage('label') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea 
+              matInput 
+              formControlName="description" 
+              rows="3" 
+              placeholder="Enter grade description (optional)"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+            <mat-hint>Optional: Additional information about this grade</mat-hint>
+            <mat-error *ngIf="gradeForm.get('description')?.invalid && gradeForm.get('description')?.touched">
+              {{ getErrorMessage('description') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Status Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>toggle_on</mat-icon>
+            Status
+          </h3>
+          
+          <div class="status-container">
+            <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">
+              <mat-icon class="checkbox-icon">check_circle</mat-icon>
+              Grade is Active
+            </mat-checkbox>
+            <p class="status-help-text">
+              <mat-icon class="help-icon">info</mat-icon>
+              When active, this grade will be available for student enrollment and class creation.
+            </p>
+          </div>
+        </div>
+
+        <!-- Info Card -->
+        <mat-card class="info-card" *ngIf="!isEditMode">
+          <mat-card-content>
+            <div class="info-header">
+              <mat-icon color="primary">lightbulb</mat-icon>
+              <strong>Quick Tips</strong>
+            </div>
+            <ul class="tips-list">
+              <li>Grade numbers should be unique (1-12 for standard schools)</li>
+              <li>The grade label will be displayed throughout the system</li>
+              <li>Once created, the grade number cannot be changed</li>
+              <li>You can activate/deactivate grades at any time</li>
+            </ul>
+          </mat-card-content>
+        </mat-card>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Action Buttons -->
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || gradeForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Grade' : 'Create Grade' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

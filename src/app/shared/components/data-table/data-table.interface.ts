@@ -37,6 +37,7 @@ export interface TableConfig {
   responsive?: boolean;           // Mobile/tablet responsive
   serverSide?: boolean;           // Enable server-side operations
   totalCount?: number;            // Total count for server-side pagination
+  showAddButton?: boolean;        // Show/hide the add button (default: true)
 }
 
 export interface SearchCriteria {

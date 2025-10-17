@@ -39,10 +39,9 @@ export class SectionListComponent implements OnInit {
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
-      { key: 'name', header: 'Section Name', sortable: true, searchable: true },
-      { key: 'grade_level', header: 'Grade Level', sortable: true, width: '120px' },
+      { key: 'name', header: 'Section Name', sortable: true, searchable: true , width: '120px'  },
+      { key: 'grade_label', header: 'Class (Grade)', sortable: true, width: '120px' },
       { key: 'capacity', header: 'Capacity', type: 'number', align: 'center', width: '100px' },
       { key: 'current_strength', header: 'Students', type: 'number', align: 'center', width: '100px' },
       { key: 'room_number', header: 'Room', sortable: true, width: '100px' },

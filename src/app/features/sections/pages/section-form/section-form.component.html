@@ -60,13 +60,18 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Grade Level (Optional)</mat-label>
-              <mat-select formControlName="grade_level">
+              <mat-select formControlName="grade_level" [disabled]="loadingGrades">
                 <mat-option [value]="null">All Grades</mat-option>
+                <mat-option *ngIf="loadingGrades" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading grades...
+                </mat-option>
                 <mat-option *ngFor="let grade of grades" [value]="grade.value">
                   {{ grade.label }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>school</mat-icon>
+              <mat-hint>Select a specific grade or leave as "All Grades"</mat-hint>
             </mat-form-field>
           </div>
 

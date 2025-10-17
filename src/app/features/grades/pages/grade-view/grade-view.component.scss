@@ -1,0 +1,282 @@
+@use '../../../../../styles/assets/variables' as *;
+
+// Page Container
+.page-container {
+  padding: 16px;
+  background-color: $background-color;
+  min-height: calc(100vh - $header-height-mobile);
+  
+  @media (min-width: $breakpoint-md) {
+    padding: 24px;
+    min-height: calc(100vh - $header-height);
+  }
+  
+  @media (min-width: $breakpoint-lg) {
+    padding: 32px;
+  }
+}
+
+// Loading Card
+.loading-card {
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px !important;
+    
+    p {
+      margin-top: 16px;
+      color: $text-secondary;
+    }
+  }
+}
+
+// View Card
+.view-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  box-shadow: $shadow-md !important;
+  border-radius: $radius-lg !important;
+  
+  mat-card-header {
+    padding: 24px 24px 16px;
+    
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px !important;
+      font-weight: $font-weight-bold !important;
+      color: $text-primary;
+      
+      mat-icon {
+        color: $primary-color;
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+    
+    mat-card-subtitle {
+      margin-left: 40px;
+      color: $text-secondary;
+    }
+  }
+  
+  mat-card-content {
+    padding: 24px !important;
+  }
+  
+  mat-card-actions {
+    padding: 16px 24px !important;
+    background: $gray-50;
+    
+    button {
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Info Section
+.info-section {
+  margin-bottom: 32px;
+  
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 16px 0;
+    
+    mat-icon {
+      color: $primary-color;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: $gray-50;
+  border-radius: $radius-md;
+  border-left: 3px solid $primary-color;
+}
+
+.info-label {
+  font-size: 12px;
+  color: $text-secondary;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 16px;
+  color: $text-primary;
+  font-weight: $font-weight-medium;
+  
+  mat-chip {
+    &.active {
+      background: rgba($success-color, 0.1);
+      color: $success-color;
+    }
+  }
+}
+
+// Stats Section
+.stats-section {
+  margin-bottom: 32px;
+  
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 16px 0;
+    
+    mat-icon {
+      color: $primary-color;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  padding: 20px !important;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: $shadow-sm !important;
+  border-radius: $radius-md !important;
+  transition: all $transition-normal;
+  
+  &:hover {
+    box-shadow: $shadow-md !important;
+    transform: translateY(-2px);
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: $white;
+  }
+  
+  &.students .stat-icon {
+    background: linear-gradient(135deg, $primary-color, $primary-light);
+  }
+  
+  &.sections .stat-icon {
+    background: linear-gradient(135deg, $accent-color, $accent-light);
+  }
+  
+  &.teachers .stat-icon {
+    background: linear-gradient(135deg, $info-color, #64b5f6);
+  }
+  
+  &.attendance .stat-icon {
+    background: linear-gradient(135deg, $primary-dark, $primary-color);
+  }
+  
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    line-height: 1;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Sections Section
+.sections-section {
+  margin-bottom: 24px;
+  
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0 0 16px 0;
+    
+    mat-icon {
+      color: $primary-color;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.sections-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  mat-chip {
+    background: $primary-color !important;
+    color: $white !important;
+    font-weight: $font-weight-medium;
+  }
+}
+

@@ -23,11 +23,7 @@ export const routes: Routes = [
       {
         path: 'branches',
         loadChildren: () => import('./features/branches/branches.routes').then(m => m.BRANCHES_ROUTES)
-      },
-      {
-        path: 'classes',
-        loadChildren: () => import('./features/classes/classes.routes').then(m => m.CLASSES_ROUTES)
-      },
+      },     
       {
         path: 'groups',
         loadChildren: () => import('./features/groups/groups.routes').then(m => m.GROUPS_ROUTES)
@@ -35,6 +31,10 @@ export const routes: Routes = [
       {
         path: 'sections',
         loadChildren: () => import('./features/sections/sections.routes').then(m => m.SECTIONS_ROUTES)
+      },
+      {
+        path: 'grades',
+        loadChildren: () => import('./features/grades/grades.routes').then(m => m.GRADES_ROUTES)
       },
       {
         path: 'students',

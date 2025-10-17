@@ -5,8 +5,10 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { SectionService } from '../../services/section.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Section } from '../../../../core/models/section.model';
+import { Grade } from '../../../../core/models/grade.model';
 
 @Component({
   selector: 'app-section-form',
@@ -23,25 +25,14 @@ export class SectionFormComponent implements OnInit {
   currentSection?: Section;
   
   branches: any[] = [];
-  grades = [
-    { value: '1', label: 'Grade 1' },
-    { value: '2', label: 'Grade 2' },
-    { value: '3', label: 'Grade 3' },
-    { value: '4', label: 'Grade 4' },
-    { value: '5', label: 'Grade 5' },
-    { value: '6', label: 'Grade 6' },
-    { value: '7', label: 'Grade 7' },
-    { value: '8', label: 'Grade 8' },
-    { value: '9', label: 'Grade 9' },
-    { value: '10', label: 'Grade 10' },
-    { value: '11', label: 'Grade 11' },
-    { value: '12', label: 'Grade 12' }
-  ];
+  grades: Grade[] = [];
+  loadingGrades = false;
 
   constructor(
     private fb: FormBuilder,
     private sectionService: SectionService,
     private branchService: BranchService,
+    private gradeService: GradeService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -50,6 +41,7 @@ export class SectionFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadGrades();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -101,6 +93,29 @@ export class SectionFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading branches:', error);
+      }
+    });
+  }
+
+  /**
+   * Load grades from API
+   */
+  private loadGrades(): void {
+    this.loadingGrades = true;
+    
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Filter only active grades and format for dropdown
+          this.grades = response.data.filter(grade => grade.is_active);
+          console.log('Grades loaded:', this.grades);
+        }
+        this.loadingGrades = false;
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+        this.errorHandler.showError('Failed to load grades');
+        this.loadingGrades = false;
       }
     });
   }
