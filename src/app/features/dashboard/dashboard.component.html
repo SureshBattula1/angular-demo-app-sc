@@ -1,0 +1,216 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <p class="dashboard-subtitle">Welcome back! Here's what's happening today.</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <mat-icon>error_outline</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadDashboardData()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && !error" class="dashboard-content">
+    
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <!-- Students Card -->
+      <div class="stat-card" *ngIf="stats.students !== undefined">
+        <div class="stat-icon students">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.students | number }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </div>
+
+      <!-- Teachers Card -->
+      <div class="stat-card" *ngIf="stats.teachers !== undefined">
+        <div class="stat-icon teachers">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.teachers | number }}</div>
+          <div class="stat-label">Total Teachers</div>
+        </div>
+      </div>
+
+      <!-- Parents Card -->
+      <div class="stat-card" *ngIf="stats.parents !== undefined">
+        <div class="stat-icon parents">
+          <mat-icon>people</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.parents | number }}</div>
+          <div class="stat-label">Total Parents</div>
+        </div>
+      </div>
+
+      <!-- Total Revenue Card -->
+      <div class="stat-card" *ngIf="stats.totalMoney !== undefined">
+        <div class="stat-icon revenue">
+          <mat-icon>attach_money</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">${{ stats.totalMoney | number:'1.0-0' }}</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+      </div>
+
+      <!-- Attendance Card -->
+      <div class="stat-card" *ngIf="stats.attendance !== undefined">
+        <div class="stat-icon attendance">
+          <mat-icon>event_available</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.attendance }}%</div>
+          <div class="stat-label">Attendance Rate</div>
+        </div>
+      </div>
+
+      <!-- Upcoming Exams Card -->
+      <div class="stat-card" *ngIf="stats.exams !== undefined">
+        <div class="stat-icon exams">
+          <mat-icon>assignment</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.exams | number }}</div>
+          <div class="stat-label">Upcoming Exams</div>
+        </div>
+      </div>
+
+      <!-- Upcoming Events Card -->
+      <div class="stat-card" *ngIf="stats.events !== undefined">
+        <div class="stat-icon events">
+          <mat-icon>event</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.events | number }}</div>
+          <div class="stat-label">Upcoming Events</div>
+        </div>
+      </div>
+
+      <!-- Pending Fees Card -->
+      <div class="stat-card" *ngIf="stats.pendingFees !== undefined">
+        <div class="stat-icon fees">
+          <mat-icon>receipt</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">${{ stats.pendingFees | number:'1.0-0' }}</div>
+          <div class="stat-label">Pending Fees</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions & Information Sections -->
+    <div class="dashboard-sections">
+      
+      <!-- Recent Attendance Section -->
+      <mat-card class="dashboard-card" *ngIf="recentAttendance.length > 0">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>fact_check</mat-icon>
+            Recent Attendance
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="attendance-list">
+            <div class="attendance-item" *ngFor="let item of recentAttendance">
+              <div class="attendance-info">
+                <span class="attendance-name">{{ item.studentName || 'Student' }}</span>
+                <span class="attendance-date">{{ item.date | date:'short' }}</span>
+              </div>
+              <span class="attendance-status" [ngClass]="'status-' + item.status.toLowerCase()">
+                {{ item.status }}
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Upcoming Exams Section -->
+      <mat-card class="dashboard-card" *ngIf="upcomingExams.length > 0">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>quiz</mat-icon>
+            Upcoming Exams
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="exam-list">
+            <div class="exam-item" *ngFor="let exam of upcomingExams">
+              <div class="exam-info">
+                <span class="exam-name">{{ exam.name }}</span>
+                <span class="exam-subject">{{ exam.subject }}</span>
+              </div>
+              <div class="exam-details">
+                <span class="exam-date">{{ exam.exam_date | date:'shortDate' }}</span>
+                <span class="exam-marks">{{ exam.total_marks }} marks</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Top Performers Section -->
+      <mat-card class="dashboard-card" *ngIf="topPerformers.length > 0">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>emoji_events</mat-icon>
+            Top Performers
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="performer-list">
+            <div class="performer-item" *ngFor="let student of topPerformers; let i = index">
+              <div class="performer-rank">{{ i + 1 }}</div>
+              <div class="performer-info">
+                <span class="performer-name">{{ student.name }}</span>
+                <span class="performer-grade">Grade: {{ student.grade }}</span>
+              </div>
+              <div class="performer-score">{{ student.percentage }}%</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2 class="section-title">Quick Actions</h2>
+      <div class="action-buttons">
+        <button mat-raised-button color="primary" routerLink="/students">
+          <mat-icon>person_add</mat-icon>
+          Add Student
+        </button>
+        <button mat-raised-button color="accent" routerLink="/attendance">
+          <mat-icon>check_circle</mat-icon>
+          Mark Attendance
+        </button>
+        <button mat-raised-button routerLink="/exams">
+          <mat-icon>add_circle</mat-icon>
+          Create Exam
+        </button>
+        <button mat-raised-button routerLink="/fees">
+          <mat-icon>payment</mat-icon>
+          Manage Fees
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
