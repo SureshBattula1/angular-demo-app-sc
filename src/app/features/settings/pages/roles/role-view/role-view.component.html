@@ -1,0 +1,110 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">
+      <mat-icon>admin_panel_settings</mat-icon>
+      Role Details
+    </h1>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button 
+        mat-raised-button 
+        color="accent" 
+        (click)="editRole()"
+        *hasPermission="'roles.update'">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button 
+        mat-raised-button 
+        color="warn" 
+        (click)="deleteRole()"
+        *hasPermission="'roles.delete'">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+  </div>
+
+  <div *ngIf="!isLoading && role">
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Basic Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">ID:</span>
+            <span class="value">{{ role.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Name:</span>
+            <span class="value">{{ role.name }}</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="label">Description:</span>
+            <span class="value">{{ role.description || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Created:</span>
+            <span class="value">{{ role.created_at | date:'medium' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Updated:</span>
+            <span class="value">{{ role.updated_at | date:'medium' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="permissions-section">
+      <div class="section-header">
+        <h2>Assigned Permissions ({{ role.permissions?.length || 0 }})</h2>
+      </div>
+
+      <div *ngIf="!role.permissions || role.permissions.length === 0" class="no-permissions-message">
+        <mat-card class="empty-state-card">
+          <mat-card-content>
+            <mat-icon>shield_off</mat-icon>
+            <h3>No Permissions Assigned</h3>
+            <p>This role currently has no permissions assigned.</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <div *ngIf="role.permissions && role.permissions.length > 0" class="permissions-grid">
+        <mat-card *ngFor="let moduleKey of getModules()" class="module-card">
+          <mat-card-header>
+            <div class="module-header-content">
+              <mat-icon class="module-icon">{{ getModuleIcon(moduleKey) }}</mat-icon>
+              <div class="module-info">
+                <h3 class="module-title">{{ getModuleDisplayName(moduleKey) }}</h3>
+                <p class="module-subtitle">
+                  {{ permissionsByModule[moduleKey].length }} 
+                  {{ permissionsByModule[moduleKey].length === 1 ? 'Permission' : 'Permissions' }}
+                </p>
+              </div>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="permissions-list">
+              <div *ngFor="let permission of permissionsByModule[moduleKey]; let isLast = last" 
+                   class="permission-row"
+                   [class.last]="isLast">
+                <mat-icon class="check-icon">check_circle</mat-icon>
+                <span class="permission-text">{{ permission.display_name || permission.name }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>
+

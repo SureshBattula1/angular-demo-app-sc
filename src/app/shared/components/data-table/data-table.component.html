@@ -97,8 +97,26 @@
   
  
   
+  <!-- No Data Message -->
+  <div class="no-data-container" *ngIf="!loading && dataSource && dataSource.data && dataSource.data.length === 0 && viewMode === 'list'">
+    <div class="no-data-content">
+      <mat-icon class="no-data-icon">inbox</mat-icon>
+      <h3>No Data Found</h3>
+      <p *ngIf="searchQuery || hasActiveFilters()">
+        No results match your search criteria. Try adjusting your filters.
+      </p>
+      <p *ngIf="!searchQuery && !hasActiveFilters()">
+        No {{ title.toLowerCase() || 'records' }} available yet.
+      </p>
+      <button mat-raised-button color="primary" *ngIf="config.showAddButton !== false" (click)="onAdd()">
+        <mat-icon>add</mat-icon>
+        Add {{ title || 'Item' }}
+      </button>
+    </div>
+  </div>
+
   <!-- Table View (Desktop/Tablet) -->
-  <div class="table-wrapper" *ngIf="viewMode === 'list'">
+  <div class="table-wrapper" *ngIf="viewMode === 'list' && dataSource && dataSource.data && dataSource.data.length > 0">
     <table mat-table [dataSource]="dataSource" matSort class="data-table">
       
       <!-- Selection Column -->
@@ -187,7 +205,26 @@
   
   <!-- Card View (Mobile) -->
   <div class="card-view" *ngIf="viewMode === 'card'">
-    <mat-card *ngFor="let row of dataSource.data" class="data-card" (click)="onRowClick(row)">
+    <!-- No Data Message for Card View -->
+    <div class="no-data-container" *ngIf="!loading && dataSource && dataSource.data && dataSource.data.length === 0">
+      <div class="no-data-content">
+        <mat-icon class="no-data-icon">inbox</mat-icon>
+        <h3>No Data Found</h3>
+        <p *ngIf="searchQuery || hasActiveFilters()">
+          No results match your search criteria. Try adjusting your filters.
+        </p>
+        <p *ngIf="!searchQuery && !hasActiveFilters()">
+          No {{ title.toLowerCase() || 'records' }} available yet.
+        </p>
+        <button mat-raised-button color="primary" *ngIf="config.showAddButton !== false" (click)="onAdd()">
+          <mat-icon>add</mat-icon>
+          Add {{ title || 'Item' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <mat-card *ngFor="let row of dataSource && dataSource.data ? dataSource.data : []" class="data-card" (click)="onRowClick(row)">
       <mat-card-content>
         <div class="card-field" *ngFor="let column of config.columns">
           <span class="field-label">{{ column.header }}:</span>
@@ -205,12 +242,12 @@
     </mat-card>
   </div>
   
-  <!-- Pagination -->
+  <!-- Pagination (hidden when no data) -->
   <mat-paginator 
-    *ngIf="config.pagination !== false"
+    *ngIf="config.pagination !== false && dataSource && dataSource.data && dataSource.data.length > 0"
     [pageSize]="pageSize"
     [pageSizeOptions]="pageSizeOptions"
-    [length]="config.serverSide ? totalCount : dataSource.data.length"
+    [length]="config.serverSide ? totalCount : (dataSource.data ? dataSource.data.length : 0)"
     [pageIndex]="currentPage"
     [disabled]="loading"
     showFirstLastButtons>

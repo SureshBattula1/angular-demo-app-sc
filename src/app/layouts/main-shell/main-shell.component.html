@@ -286,6 +286,19 @@
           <mat-icon matListItemIcon>event</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Holidays</span>
         </a>
+
+        <!-- Settings -->
+        <a mat-list-item 
+           *hasPermission="['roles.view', 'permissions.view', 'users.view']"
+           routerLink="/settings" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Settings' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>settings</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Settings</span>
+        </a>
       </mat-nav-list>
     </mat-sidenav>
 

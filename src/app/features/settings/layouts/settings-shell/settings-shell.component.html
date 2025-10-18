@@ -1,0 +1,133 @@
+<div class="app-container">
+  <!-- Header Toolbar -->
+  <mat-toolbar class="app-header" color="primary">
+    <!-- Toggle Button -->
+    <button mat-icon-button 
+            (click)="toggleSidebar()" 
+            class="sidebar-toggle"
+            aria-label="Toggle sidebar">
+      <mat-icon>{{ isSidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+    </button>
+    
+    <!-- Back to Dashboard Button -->
+    <button mat-icon-button 
+            (click)="backToDashboard()" 
+            matTooltip="Back to Dashboard"
+            aria-label="Back to dashboard">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    
+    <span class="app-title">Settings</span>
+    <span class="spacer"></span>
+    
+    <!-- Header Actions -->
+    <button mat-icon-button aria-label="Notifications">
+      <mat-icon matBadge="3" matBadgeColor="warn">notifications</mat-icon>
+    </button>
+    
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Sidenav Container -->
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed">
+    <!-- Sidenav -->
+    <mat-sidenav
+      #drawer
+      [mode]="isMobileOrTablet() ? 'over' : 'side'"
+      [opened]="isMobileOrTablet() ? !isSidebarCollapsed : true"
+      [class.collapsed]="isSidebarCollapsed && !isMobileOrTablet()"
+      (closedStart)="onSidenavClosed()"
+      class="app-sidenav">
+      
+      <mat-nav-list>
+        <!-- Settings Header -->
+        <div class="sidebar-header" *ngIf="!isSidebarCollapsed || isMobileOrTablet()">
+          <h3>Settings Management</h3>
+        </div>
+
+        <!-- Roles -->
+        <a mat-list-item 
+           *hasPermission="['roles.view', 'roles.create']"
+           routerLink="/settings/roles" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Roles' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Roles</span>
+        </a>
+
+        <!-- Permissions -->
+        <a mat-list-item 
+           *hasPermission="['permissions.view', 'permissions.create']"
+           routerLink="/settings/permissions" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Permissions' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>shield</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Permissions</span>
+        </a>
+
+        <!-- Users -->
+        <a mat-list-item 
+           *hasPermission="['users.view', 'users.create']"
+           routerLink="/settings/users" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Users' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>people</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Users</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content class="app-content">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
+
+<!-- User Menu -->
+<mat-menu #userMenu="matMenu" class="user-menu">
+  <!-- User Info Header -->
+  <div class="user-menu-header" mat-menu-item disabled>
+    <div class="user-avatar">
+      <mat-icon>account_circle</mat-icon>
+    </div>
+    <div class="user-details">
+      <div class="user-name">{{ getUserDisplayName() }}</div>
+      <div class="user-email">{{ getUserEmail() }}</div>
+      <div class="user-role">
+        <mat-icon class="role-icon">badge</mat-icon>
+        {{ getUserRole() }}
+      </div>
+    </div>
+  </div>
+  
+  <mat-divider></mat-divider>
+  
+  <button mat-menu-item (click)="onProfile()">
+    <mat-icon>person</mat-icon>
+    <span>Profile</span>
+  </button>
+  <button mat-menu-item (click)="backToDashboard()">
+    <mat-icon>dashboard</mat-icon>
+    <span>Dashboard</span>
+  </button>
+  
+  <mat-divider></mat-divider>
+  
+  <button mat-menu-item (click)="onLogout()" class="logout-menu-item">
+    <mat-icon>logout</mat-icon>
+    <span>Logout</span>
+  </button>
+</mat-menu>
+

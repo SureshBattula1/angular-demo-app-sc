@@ -38,9 +38,14 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('searchInput') searchInput?: any;
   
-  dataSource!: MatTableDataSource<any>;
+  dataSource: MatTableDataSource<any>;
   selection = new SelectionModel<any>(true, []);
   displayedColumns: string[] = [];
+  
+  constructor() {
+    // Initialize dataSource to prevent undefined errors
+    this.dataSource = new MatTableDataSource<any>([]);
+  }
   
   // Search & Filter
   searchQuery = '';
