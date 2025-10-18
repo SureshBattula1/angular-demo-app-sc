@@ -1,0 +1,223 @@
+@use '../../../../../styles/assets/variables' as *;
+
+.holiday-form-container {
+  padding: var(--spacing-lg);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-card {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+}
+
+.card-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.header-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: var(--primary-color);
+}
+
+.header-text {
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+}
+
+.loading-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xxl);
+}
+
+// Form Sections
+.form-section {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+
+  &:last-of-type {
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+
+  mat-icon {
+    color: var(--primary-color);
+  }
+}
+
+// Form Rows
+.form-row {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-field-full {
+  flex: 1;
+  width: 100%;
+}
+
+.form-field-half {
+  flex: 1;
+  min-width: 0;
+}
+
+// Info Box
+.info-box {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: rgba(var(--primary-rgb), 0.1);
+  border: 1px solid rgba(var(--primary-rgb), 0.3);
+  border-radius: var(--radius-md);
+  color: var(--primary-color);
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+// Type Option in Select
+.type-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.type-color-indicator {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+}
+
+// Checkbox Group
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+
+  mat-checkbox {
+    display: flex;
+    align-items: center;
+    
+    .checkbox-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      color: var(--text-secondary);
+    }
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) 0;
+  border-top: 1px solid var(--gray-300);
+  margin-top: var(--spacing-lg);
+
+  button {
+    min-width: 140px;
+  }
+}
+
+// Mobile Responsive
+@media (max-width: $breakpoint-sm) {
+  .holiday-form-container {
+    padding: var(--spacing-sm);
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-field-half {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .card-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .info-box {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+// Material Overrides
+::ng-deep {
+  .mat-form-field {
+    width: 100%;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    margin-top: 4px;
+  }
+
+  .mat-mdc-checkbox {
+    margin-right: var(--spacing-sm);
+  }
+}
+

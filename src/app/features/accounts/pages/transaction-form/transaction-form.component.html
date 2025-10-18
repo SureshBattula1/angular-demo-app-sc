@@ -1,0 +1,168 @@
+<div class="transaction-form-container">
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'receipt_long' }}</mat-icon>
+        {{ isEditMode ? 'Edit Transaction' : 'New Transaction' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update transaction details' : 'Record an income or expense transaction' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <!-- Form -->
+    <mat-card-content>
+      <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Transaction Type & Basic Info -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Transaction Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Transaction Type *</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let t of transactionTypes" [value]="t.value">
+                  <mat-icon [color]="t.color">{{ t.icon }}</mat-icon>
+                  {{ t.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>swap_vert</mat-icon>
+              <mat-error *ngIf="transactionForm.get('type')?.invalid">{{ getErrorMessage('type') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="transactionForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Category *</mat-label>
+              <mat-select formControlName="category_id" [disabled]="loadingCategories">
+                <mat-option *ngIf="loadingCategories" disabled>Loading...</mat-option>
+                <mat-option *ngFor="let category of currentCategories" [value]="category.id">
+                  {{ category.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-hint>Select transaction type first</mat-hint>
+              <mat-error *ngIf="transactionForm.get('category_id')?.invalid">{{ getErrorMessage('category_id') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Transaction Date *</mat-label>
+              <input matInput type="date" formControlName="transaction_date">
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="transactionForm.get('transaction_date')?.invalid">{{ getErrorMessage('transaction_date') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Amount *</mat-label>
+            <input matInput type="number" formControlName="amount" placeholder="0.00" min="0" step="0.01">
+            <span matPrefix>₹&nbsp;</span>
+            <mat-icon matSuffix>account_balance_wallet</mat-icon>
+            <mat-error *ngIf="transactionForm.get('amount')?.invalid">{{ getErrorMessage('amount') }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>payment</mat-icon>
+            Payment Details
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Payment Method *</mat-label>
+              <mat-select formControlName="payment_method">
+                <mat-option *ngFor="let method of paymentMethods" [value]="method.value">
+                  <mat-icon>{{ method.icon }}</mat-icon>
+                  {{ method.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>credit_card</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Reference Number</mat-label>
+              <input matInput formControlName="payment_reference" placeholder="Check #, Transaction ID, etc.">
+              <mat-icon matPrefix>receipt</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Bank Name</mat-label>
+              <input matInput formControlName="bank_name" placeholder="If applicable">
+              <mat-icon matPrefix>account_balance</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Party Name</mat-label>
+              <input matInput formControlName="party_name" placeholder="Person or organization">
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>description</mat-icon>
+            Details
+          </h3>
+          
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Description *</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Brief description of the transaction"></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+            <mat-error *ngIf="transactionForm.get('description')?.invalid">{{ getErrorMessage('description') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Additional Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="2" placeholder="Optional additional information"></textarea>
+            <mat-icon matPrefix>note</mat-icon>
+          </mat-form-field>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Action Buttons -->
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button 
+        mat-raised-button 
+        [color]="transactionForm.get('type')?.value === 'Income' ? 'primary' : 'warn'"
+        type="submit" 
+        (click)="onSubmit()"
+        [disabled]="isLoading || transactionForm.invalid"
+      >
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Transaction' : 'Create Transaction' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

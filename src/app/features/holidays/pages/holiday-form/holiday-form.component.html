@@ -1,0 +1,172 @@
+<div class="holiday-form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <div class="card-header-content">
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit_calendar' : 'add_circle' }}</mat-icon>
+        <div class="header-text">
+          <h2>{{ isEditMode ? 'Edit Holiday' : 'Add New Holiday' }}</h2>
+          <p>{{ isEditMode ? 'Update holiday information' : 'Create a new holiday or event' }}</p>
+        </div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading Spinner -->
+      <div *ngIf="loading" class="loading-overlay">
+        <mat-spinner diameter="50"></mat-spinner>
+      </div>
+
+      <form [formGroup]="holidayForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Holiday Title *</mat-label>
+              <input matInput formControlName="title" placeholder="e.g., Diwali, Summer Vacation">
+              <mat-icon matPrefix>title</mat-icon>
+              <mat-error *ngIf="holidayForm.get('title')?.invalid">{{ getErrorMessage('title') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Description (Optional)</mat-label>
+              <textarea matInput formControlName="description" rows="3" placeholder="Add details about the holiday..."></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Date & Duration Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>event</mat-icon>
+            Date & Duration
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Start Date *</mat-label>
+              <input matInput [matDatepicker]="startPicker" formControlName="start_date">
+              <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="holidayForm.get('start_date')?.invalid">{{ getErrorMessage('start_date') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>End Date *</mat-label>
+              <input matInput [matDatepicker]="endPicker" formControlName="end_date">
+              <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="holidayForm.get('end_date')?.invalid">{{ getErrorMessage('end_date') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row" *ngIf="getDuration() > 0">
+            <div class="info-box">
+              <mat-icon>timer</mat-icon>
+              <span>Duration: <strong>{{ getDuration() }} {{ getDuration() === 1 ? 'day' : 'days' }}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type & Display Settings Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>category</mat-icon>
+            Type & Display Settings
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Holiday Type *</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let type of holidayTypes" [value]="type.value">
+                  <span class="type-option">
+                    <span class="type-color-indicator" [style.background-color]="type.color"></span>
+                    {{ type.label }}
+                  </span>
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>label</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Calendar Color</mat-label>
+              <input matInput type="color" formControlName="color">
+              <mat-icon matPrefix>palette</mat-icon>
+              <mat-hint>Color for calendar visualization</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Applicability Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>school</mat-icon>
+            Applicability
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option [value]="null">All Branches</mat-option>
+                <mat-option *ngIf="loadingBranches" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading branches...
+                </mat-option>
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-hint>Leave empty for all branches</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year</mat-label>
+              <input matInput formControlName="academic_year" placeholder="e.g., 2025-2026">
+              <mat-icon matPrefix>school</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <div class="checkbox-group">
+              <mat-checkbox formControlName="is_recurring">
+                <mat-icon class="checkbox-icon">repeat</mat-icon>
+                Recurring Holiday (Annual)
+              </mat-checkbox>
+              <mat-checkbox formControlName="is_active">
+                <mat-icon class="checkbox-icon">check_circle</mat-icon>
+                Active
+              </mat-checkbox>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="submitting">
+            <mat-icon>close</mat-icon>
+            Cancel
+          </button>
+          
+          <button type="submit" mat-raised-button color="primary" [disabled]="holidayForm.invalid || submitting">
+            <mat-spinner *ngIf="submitting" diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+            <mat-icon *ngIf="!submitting">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+            {{ submitting ? 'Saving...' : (isEditMode ? 'Update Holiday' : 'Create Holiday') }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
+

@@ -1,0 +1,168 @@
+<div class="account-dashboard-container">
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && dashboard">
+    
+    <!-- Header Section -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          <mat-icon>account_balance</mat-icon>
+          Accounts & Finance
+        </h1>
+        <p class="page-subtitle">Comprehensive income and expense tracking</p>
+      </div>
+      
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="addTransaction('Income')">
+          <mat-icon>add</mat-icon>
+          Add Income
+        </button>
+        <button mat-raised-button color="warn" (click)="addTransaction('Expense')">
+          <mat-icon>remove</mat-icon>
+          Add Expense
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-section">
+      <mat-card class="summary-card income-card">
+        <mat-card-content>
+          <div class="summary-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="summary-details">
+            <h3 class="summary-label">Total Income</h3>
+            <p class="summary-value">₹{{ dashboard.summary.total_income | number:'1.2-2' }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card expense-card">
+        <mat-card-content>
+          <div class="summary-icon">
+            <mat-icon>trending_down</mat-icon>
+          </div>
+          <div class="summary-details">
+            <h3 class="summary-label">Total Expense</h3>
+            <p class="summary-value">₹{{ dashboard.summary.total_expense | number:'1.2-2' }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card balance-card" [class.positive]="dashboard.summary.net_balance >= 0" [class.negative]="dashboard.summary.net_balance < 0">
+        <mat-card-content>
+          <div class="summary-icon">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <div class="summary-details">
+            <h3 class="summary-label">Net Balance</h3>
+            <p class="summary-value">₹{{ dashboard.summary.net_balance | number:'1.2-2' }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div class="breakdown-section">
+      <!-- Income Breakdown -->
+      <mat-card class="breakdown-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="income-icon">attach_money</mat-icon>
+            Income Breakdown
+          </mat-card-title>
+          <button mat-button color="primary" (click)="viewAllIncome()">
+            View All
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </mat-card-header>
+        <mat-divider></mat-divider>
+        <mat-card-content>
+          <div class="category-list">
+            <div class="category-item" *ngFor="let item of dashboard.income_by_category">
+              <span class="category-name">{{ item.category }}</span>
+              <span class="category-amount income">₹{{ item.amount | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="dashboard.income_by_category.length === 0" class="empty-state">
+              <mat-icon>info</mat-icon>
+              <p>No income recorded yet</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Expense Breakdown -->
+      <mat-card class="breakdown-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="expense-icon">money_off</mat-icon>
+            Expense Breakdown
+          </mat-card-title>
+          <button mat-button color="warn" (click)="viewAllExpenses()">
+            View All
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </mat-card-header>
+        <mat-divider></mat-divider>
+        <mat-card-content>
+          <div class="category-list">
+            <div class="category-item" *ngFor="let item of dashboard.expense_by_category">
+              <span class="category-name">{{ item.category }}</span>
+              <span class="category-amount expense">₹{{ item.amount | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="dashboard.expense_by_category.length === 0" class="empty-state">
+              <mat-icon>info</mat-icon>
+              <p>No expenses recorded yet</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Transactions -->
+    <mat-card class="recent-transactions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>receipt</mat-icon>
+          Recent Transactions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-divider></mat-divider>
+      <mat-card-content>
+        <div class="transactions-list">
+          <div class="transaction-item" *ngFor="let transaction of dashboard.recent_transactions" (click)="viewTransaction(transaction)">
+            <div class="transaction-icon" [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
+              <mat-icon>{{ transaction.type === 'Income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+            </div>
+            <div class="transaction-details">
+              <h4 class="transaction-title">{{ transaction.description }}</h4>
+              <p class="transaction-meta">
+                <span class="transaction-category">{{ transaction.category?.name }}</span>
+                <span class="transaction-date">{{ transaction.transaction_date | date:'mediumDate' }}</span>
+              </p>
+            </div>
+            <div class="transaction-amount" [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
+              {{ transaction.type === 'Income' ? '+' : '-' }}₹{{ transaction.amount | number:'1.2-2' }}
+            </div>
+          </div>
+          <div *ngIf="dashboard.recent_transactions.length === 0" class="empty-state">
+            <mat-icon>receipt_long</mat-icon>
+            <p>No transactions yet</p>
+            <button mat-stroked-button color="primary" (click)="addTransaction('Income')">
+              Add First Transaction
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>
+

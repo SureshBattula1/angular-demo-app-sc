@@ -1,0 +1,172 @@
+@use '../../../../../styles/assets/variables' as *;
+
+.invoice-view-container {
+  padding: var(--spacing-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.invoice-card {
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xxl);
+}
+
+// Invoice Header
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+
+  .header-left h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .invoice-number {
+    margin: var(--spacing-xs) 0 0 0;
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+  }
+}
+
+// Status Chips
+::ng-deep {
+  .status-draft { background: var(--gray-500) !important; color: white !important; }
+  .status-sent { background: var(--primary-color) !important; color: white !important; }
+  .status-paid { background: var(--success-color) !important; color: white !important; }
+  .status-partial { background: var(--warning-color) !important; color: white !important; }
+  .status-overdue, .overdue-chip { background: var(--error-color) !important; color: white !important; }
+  
+  .payment-unpaid { background: var(--error-color) !important; color: white !important; }
+  .payment-partial { background: var(--warning-color) !important; color: white !important; }
+  .payment-paid { background: var(--success-color) !important; color: white !important; }
+}
+
+// Info Section
+.info-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+
+  .info-block h3 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .info-block p {
+    margin: 4px 0;
+    color: var(--text-primary);
+
+    &.small {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+  }
+}
+
+// Items Table
+.items-section {
+  margin: var(--spacing-lg) 0;
+
+  h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-weight: 600;
+  }
+
+  .items-table {
+    width: 100%;
+    background: white;
+
+    th {
+      background: var(--gray-100);
+      font-weight: 600;
+    }
+
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+  }
+}
+
+// Totals
+.totals-section {
+  display: flex;
+  justify-content: flex-end;
+  margin: var(--spacing-lg) 0;
+
+  .totals-details {
+    min-width: 350px;
+    background: var(--gray-50);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--spacing-sm) 0;
+
+      &.grand-total {
+        font-size: 1.25rem;
+        padding-top: var(--spacing-md);
+      }
+
+      &.balance {
+        color: var(--error-color);
+        font-weight: 600;
+      }
+
+      &.paid {
+        color: var(--success-color);
+      }
+    }
+  }
+}
+
+// Linked Transactions
+.linked-transactions {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-md);
+  background: rgba(var(--primary-rgb), 0.05);
+  border-radius: var(--radius-md);
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0 0 var(--spacing-md) 0;
+  }
+
+  .transaction-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+}
+
+// Print Styles
+@media print {
+  .invoice-view-container { padding: 0; }
+  .invoice-card { box-shadow: none; border: 1px solid #000; }
+  .no-print { display: none !important; }
+  .linked-transactions { display: none; }
+}
+
+// Mobile
+@media (max-width: $breakpoint-sm) {
+  .invoice-view-container { padding: var(--spacing-sm); }
+  .info-section { grid-template-columns: 1fr; }
+  .totals-details { min-width: 100%; }
+}
+

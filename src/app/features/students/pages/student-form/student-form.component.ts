@@ -5,8 +5,12 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { StudentCrudService } from '../../services/student-crud.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Student } from '../../../../core/models/student.model';
+import { Grade } from '../../../../core/models/grade.model';
+import { Section } from '../../../../core/models/section.model';
 
 @Component({
   selector: 'app-student-form',
@@ -23,8 +27,12 @@ export class StudentFormComponent implements OnInit {
   currentStudent?: Student;
   
   branches: any[] = [];
-  grades = Array.from({length: 12}, (_, i) => ({ value: `${i + 1}`, label: `Grade ${i + 1}` }));
-  sections = ['A', 'B', 'C', 'D', 'E', 'F'].map(s => ({ value: s, label: `Section ${s}` }));
+  grades: Grade[] = [];
+  sections: Section[] = [];
+  loadingGrades = false;
+  loadingSections = false;
+  
+  // Static dropdowns
   genders = ['Male', 'Female', 'Other'].map(g => ({ value: g, label: g }));
   bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => ({ value: bg, label: bg }));
   categories = ['General', 'SC', 'ST', 'OBC', 'Other'].map(c => ({ value: c, label: c }));
@@ -33,6 +41,8 @@ export class StudentFormComponent implements OnInit {
     private fb: FormBuilder,
     private studentCrudService: StudentCrudService,
     private branchService: BranchService,
+    private gradeService: GradeService,
+    private sectionService: SectionService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -41,12 +51,47 @@ export class StudentFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadGrades();
+    
+    // Setup dynamic section loading based on grade and branch
+    this.setupDynamicSectionLoading();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.studentId = +params['id'];
         this.isEditMode = true;
         this.loadStudent(this.studentId);
+      }
+    });
+  }
+
+  /**
+   * Setup listeners to reload sections when grade or branch changes
+   */
+  private setupDynamicSectionLoading(): void {
+    // Listen to grade changes
+    this.studentForm.get('grade')?.valueChanges.subscribe(grade => {
+      console.log('Grade changed to:', grade);
+      if (grade) {
+        const branchId = this.studentForm.get('branch_id')?.value;
+        this.loadSectionsByGradeAndBranch(grade, branchId);
+        // Clear section selection when grade changes
+        this.studentForm.patchValue({ section: null }, { emitEvent: false });
+      } else {
+        this.sections = [];
+      }
+    });
+
+    // Listen to branch changes
+    this.studentForm.get('branch_id')?.valueChanges.subscribe(branchId => {
+      console.log('Branch changed to:', branchId);
+      if (branchId) {
+        const grade = this.studentForm.get('grade')?.value;
+        if (grade) {
+          this.loadSectionsByGradeAndBranch(grade, branchId);
+          // Clear section selection when branch changes
+          this.studentForm.patchValue({ section: null }, { emitEvent: false });
+        }
       }
     });
   }
@@ -154,6 +199,58 @@ export class StudentFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading branches:', error);
+      }
+    });
+  }
+
+  /**
+   * Load grades from API dynamically
+   */
+  private loadGrades(): void {
+    this.loadingGrades = true;
+    console.log('Loading grades from API...');
+    
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Filter only active grades
+          this.grades = response.data.filter(grade => grade.is_active);
+          console.log('Grades loaded:', this.grades);
+        }
+        this.loadingGrades = false;
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+        this.errorHandler.showError('Failed to load grades');
+        this.loadingGrades = false;
+      }
+    });
+  }
+
+  /**
+   * Load sections filtered by grade and branch
+   */
+  private loadSectionsByGradeAndBranch(grade: string, branchId?: number): void {
+    this.loadingSections = true;
+    console.log('Loading sections for grade:', grade, 'branch:', branchId);
+    
+    const params: any = { grade_level: grade };
+    if (branchId) {
+      params.branch_id = branchId;
+    }
+
+    this.sectionService.getSections(params).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.sections = response.data.filter((section: Section) => section.is_active);
+          console.log('Sections loaded:', this.sections);
+        }
+        this.loadingSections = false;
+      },
+      error: (error) => {
+        console.error('Error loading sections:', error);
+        this.sections = [];
+        this.loadingSections = false;
       }
     });
   }

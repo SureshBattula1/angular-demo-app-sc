@@ -5,8 +5,14 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { SubjectService } from '../../services/subject.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { DepartmentService } from '../../../departments/services/department.service';
+import { GradeService } from '../../../grades/services/grade.service';
+import { TeacherService } from '../../../teachers/services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Subject } from '../../../../core/models/subject.model';
+import { Department } from '../../../../core/models/department.model';
+import { Grade } from '../../../../core/models/grade.model';
+import { Teacher } from '../../../../core/models/teacher.model';
 
 @Component({
   selector: 'app-subject-form',
@@ -23,10 +29,15 @@ export class SubjectFormComponent implements OnInit {
   currentSubject?: Subject;
   
   branches: any[] = [];
-  departments: any[] = [];
-  teachers: any[] = [];
+  departments: Department[] = [];
+  teachers: Teacher[] = [];
+  grades: Grade[] = [];
   
-  grades = Array.from({length: 12}, (_, i) => ({ value: `${i + 1}`, label: `Grade ${i + 1}` }));
+  loadingBranches = false;
+  loadingDepartments = false;
+  loadingTeachers = false;
+  loadingGrades = false;
+  
   subjectTypes = [
     { value: 'Core', label: 'Core', icon: 'star' },
     { value: 'Elective', label: 'Elective', icon: 'check_box' },
@@ -39,6 +50,9 @@ export class SubjectFormComponent implements OnInit {
     private fb: FormBuilder,
     private subjectService: SubjectService,
     private branchService: BranchService,
+    private departmentService: DepartmentService,
+    private gradeService: GradeService,
+    private teacherService: TeacherService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -48,6 +62,8 @@ export class SubjectFormComponent implements OnInit {
     this.initForm();
     this.loadBranches();
     this.loadDepartments();
+    this.loadGrades();
+    this.loadTeachers();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -93,22 +109,81 @@ export class SubjectFormComponent implements OnInit {
   }
 
   private loadBranches(): void {
+    this.loadingBranches = true;
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
-        if (response.success) {
+        if (response.success && response.data) {
           this.branches = response.data;
+          console.log('Branches loaded:', this.branches.length);
         }
+        this.loadingBranches = false;
       },
       error: (error: any) => {
         console.error('Error loading branches:', error);
+        this.errorHandler.showError('Failed to load branches');
+        this.loadingBranches = false;
       }
     });
   }
 
   private loadDepartments(): void {
-    // You can inject DepartmentService if needed
-    // For now, this is a placeholder
-    this.departments = [];
+    this.loadingDepartments = true;
+    console.log('Loading departments from API...');
+    
+    this.departmentService.getDepartments({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.departments = response.data;
+          console.log('Departments loaded:', this.departments.length);
+        }
+        this.loadingDepartments = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading departments:', error);
+        this.errorHandler.showError('Failed to load departments');
+        this.loadingDepartments = false;
+      }
+    });
+  }
+
+  private loadGrades(): void {
+    this.loadingGrades = true;
+    console.log('Loading grades from API...');
+    
+    this.gradeService.getGrades().subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.grades = response.data.filter((grade: Grade) => grade.is_active);
+          console.log('Grades loaded:', this.grades.length);
+        }
+        this.loadingGrades = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading grades:', error);
+        this.errorHandler.showError('Failed to load grades');
+        this.loadingGrades = false;
+      }
+    });
+  }
+
+  private loadTeachers(): void {
+    this.loadingTeachers = true;
+    console.log('Loading teachers from API...');
+    
+    this.teacherService.getTeachers({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.teachers = response.data;
+          console.log('Teachers loaded:', this.teachers.length);
+        }
+        this.loadingTeachers = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading teachers:', error);
+        this.errorHandler.showError('Failed to load teachers');
+        this.loadingTeachers = false;
+      }
+    });
   }
 
   onSubmit(): void {

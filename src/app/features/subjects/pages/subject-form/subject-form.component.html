@@ -40,23 +40,33 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
-              <mat-select formControlName="branch_id">
+              <mat-select formControlName="branch_id" [disabled]="loadingBranches">
+                <mat-option *ngIf="loadingBranches" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading branches...
+                </mat-option>
                 <mat-option *ngFor="let branch of branches" [value]="branch.id">
                   {{ branch.name }} ({{ branch.code }})
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>business</mat-icon>
+              <mat-hint *ngIf="branches.length > 0">{{ branches.length }} branches available</mat-hint>
               <mat-error *ngIf="subjectForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Department *</mat-label>
-              <mat-select formControlName="department_id">
+              <mat-select formControlName="department_id" [disabled]="loadingDepartments">
+                <mat-option *ngIf="loadingDepartments" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading departments...
+                </mat-option>
                 <mat-option *ngFor="let dept of departments" [value]="dept.id">
                   {{ dept.name }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>business_center</mat-icon>
+              <mat-hint *ngIf="departments.length > 0">{{ departments.length }} departments available</mat-hint>
               <mat-error *ngIf="subjectForm.get('department_id')?.invalid">{{ getErrorMessage('department_id') }}</mat-error>
             </mat-form-field>
           </div>
@@ -64,12 +74,17 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Grade Level *</mat-label>
-              <mat-select formControlName="grade_level">
+              <mat-select formControlName="grade_level" [disabled]="loadingGrades">
+                <mat-option *ngIf="loadingGrades" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading grades...
+                </mat-option>
                 <mat-option *ngFor="let grade of grades" [value]="grade.value">
                   {{ grade.label }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>school</mat-icon>
+              <mat-hint *ngIf="grades.length > 0">{{ grades.length }} grades available</mat-hint>
               <mat-error *ngIf="subjectForm.get('grade_level')?.invalid">{{ getErrorMessage('grade_level') }}</mat-error>
             </mat-form-field>
 
@@ -96,13 +111,18 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Teacher (Optional)</mat-label>
-              <mat-select formControlName="teacher_id">
+              <mat-select formControlName="teacher_id" [disabled]="loadingTeachers">
                 <mat-option [value]="null">Not Assigned</mat-option>
+                <mat-option *ngIf="loadingTeachers" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading teachers...
+                </mat-option>
                 <mat-option *ngFor="let teacher of teachers" [value]="teacher.id">
                   {{ teacher.first_name }} {{ teacher.last_name }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>person</mat-icon>
+              <mat-hint *ngIf="teachers.length > 0">{{ teachers.length }} teachers available</mat-hint>
             </mat-form-field>
           </div>
 

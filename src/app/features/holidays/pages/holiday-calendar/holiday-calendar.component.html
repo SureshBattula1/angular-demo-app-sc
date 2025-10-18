@@ -1,0 +1,140 @@
+<div class="holiday-calendar-container">
+  <!-- Calendar Card -->
+  <mat-card class="calendar-card">
+    <mat-card-header>
+      <div class="calendar-header-content">
+        <div class="calendar-navigation">
+          <button mat-icon-button (click)="previousMonth()" [disabled]="loading">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <h2 class="calendar-title">{{ monthNames[currentMonth] }} {{ currentYear }}</h2>
+          <button mat-icon-button (click)="nextMonth()" [disabled]="loading">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+        
+        <div class="calendar-actions">
+          <button mat-button (click)="goToToday()">
+            <mat-icon>today</mat-icon>
+            Today
+          </button>
+          <button mat-button (click)="viewList()">
+            <mat-icon>list</mat-icon>
+            List View
+          </button>
+          <button *ngIf="canCreate()" mat-raised-button color="primary" (click)="addHoliday()">
+            <mat-icon>add</mat-icon>
+            Add Holiday
+          </button>
+        </div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="calendar-main-content">
+        <!-- Calendar Section -->
+        <div class="calendar-section">
+          <!-- Loading Spinner -->
+          <div *ngIf="loading" class="loading-overlay">
+            <mat-spinner diameter="40"></mat-spinner>
+          </div>
+
+          <!-- Legend -->
+          <div class="calendar-legend">
+            <mat-chip-set>
+              <mat-chip *ngFor="let type of holidayTypes" class="type-chip">
+                <span class="type-indicator" [style.background-color]="type.color"></span>
+                {{ type.label }}
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="calendar-wrapper">
+            <!-- Weekday Headers -->
+            <div class="calendar-grid">
+              <div class="weekday-header" *ngFor="let day of weekDays">
+                {{ day }}
+              </div>
+
+              <!-- Calendar Days -->
+              <div
+                *ngFor="let day of calendarDays"
+                class="calendar-day"
+                [class.other-month]="!day.isCurrentMonth"
+                [class.today]="day.isToday"
+                [class.weekend]="day.isWeekend"
+                [class.has-holiday]="day.holidays.length > 0"
+                (click)="onDayClick(day)">
+                
+                <span class="day-number">{{ day.number }}</span>
+
+                <!-- Holiday indicators -->
+                <div class="holiday-indicators" *ngIf="day.holidays.length > 0">
+                  <div
+                    *ngFor="let holiday of day.holidays"
+                    class="holiday-marker"
+                    [style.background-color]="holiday.color || getTypeColor(holiday.type)"
+                    [matTooltip]="holiday.title + ' - ' + holiday.type"
+                    (click)="viewHoliday(holiday, $event)">
+                    <span class="holiday-title">{{ holiday.title }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Holidays Sidebar -->
+        <div class="upcoming-section">
+          <h3 class="upcoming-title">
+            <mat-icon>event_upcoming</mat-icon>
+            Upcoming Holidays
+          </h3>
+
+          <div *ngIf="loadingUpcoming" class="loading-placeholder">
+            <mat-spinner diameter="30"></mat-spinner>
+          </div>
+
+          <div *ngIf="!loadingUpcoming" class="upcoming-list">
+            <div *ngIf="upcomingHolidays.length === 0" class="no-upcoming">
+              <mat-icon>event_busy</mat-icon>
+              <p>No upcoming holidays</p>
+            </div>
+
+            <mat-card
+              *ngFor="let holiday of upcomingHolidays"
+              class="upcoming-holiday-card"
+              (click)="viewHoliday(holiday)">
+              <div class="upcoming-holiday-indicator" [style.background-color]="holiday.color || getTypeColor(holiday.type)"></div>
+              <div class="upcoming-holiday-content">
+                <h4>{{ holiday.title }}</h4>
+                <p class="holiday-date">
+                  <mat-icon>event</mat-icon>
+                  {{ formatDateRange(holiday) }}
+                </p>
+                <mat-chip class="holiday-type-badge" [style.background-color]="holiday.color || getTypeColor(holiday.type)">
+                  {{ holiday.type }}
+                </mat-chip>
+                <p *ngIf="holiday.duration && holiday.duration > 1" class="holiday-duration">
+                  {{ holiday.duration }} days
+                </p>
+              </div>
+              <div class="upcoming-holiday-actions">
+                <button
+                  *ngIf="canEdit(holiday)"
+                  mat-icon-button
+                  color="primary"
+                  (click)="editHoliday(holiday, $event)"
+                  matTooltip="Edit Holiday">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
