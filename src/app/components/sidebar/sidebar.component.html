@@ -1,4 +1,9 @@
 <div class="sidebar" [class.collapsed]="isCollapsed && !isMobile" [class.mobile-open]="isMobileOpen">
+  <!-- TEMPORARY DEBUG INFO -->
+  <div style="background: #ff9800; color: white; padding: 5px; font-size: 11px; text-align: center;">
+    DEBUG: {{permissionService.userPermissions().length}} perms | {{menuItems.length}}/{{allMenuItems.length}} menus
+  </div>
+  
   <!-- Logo Section -->
   <div class="sidebar-header">
     <div class="logo">
@@ -15,9 +20,9 @@
     </button>
   </div>
 
-  <!-- Main Menu -->
+  <!-- Navigation Menu -->
   <div class="main-menu">
-    <h3 class="menu-section-title" *ngIf="!isCollapsed || isMobile">Main Menu</h3>
+    <h3 class="menu-section-title" *ngIf="!isCollapsed || isMobile">Menu</h3>
     
     <mat-nav-list class="nav-list">
       <ng-container *ngFor="let item of menuItems">
@@ -65,37 +70,6 @@
           <span matListItemTitle class="menu-text" *ngIf="!isCollapsed || isMobile">{{ item.name }}</span>
         </mat-list-item>
       </ng-container>
-    </mat-nav-list>
-  </div>
-
-  <!-- Management Section -->
-  <div class="management-menu" *ngIf="!isCollapsed || isMobile">
-    <h3 class="menu-section-title">Management</h3>
-    <mat-nav-list class="nav-list">
-      <mat-list-item 
-        class="menu-item"
-        [routerLink]="'/accounts'"
-        routerLinkActive="active"
-        (click)="onMenuItemClick()">
-        <mat-icon matListItemIcon class="menu-icon">account_balance</mat-icon>
-        <span matListItemTitle class="menu-text">Accounts</span>
-      </mat-list-item>
-      <mat-list-item 
-        class="menu-item"
-        [routerLink]="'/holidays'"
-        routerLinkActive="active"
-        (click)="onMenuItemClick()">
-        <mat-icon matListItemIcon class="menu-icon">event</mat-icon>
-        <span matListItemTitle class="menu-text">Holiday</span>
-      </mat-list-item>
-      <mat-list-item 
-        class="menu-item"
-        [routerLink]="'/fees'"
-        routerLinkActive="active"
-        (click)="onMenuItemClick()">
-        <mat-icon matListItemIcon class="menu-icon">payments</mat-icon>
-        <span matListItemTitle class="menu-text">Fees</span>
-      </mat-list-item>
     </mat-nav-list>
   </div>
 </div>

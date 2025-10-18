@@ -7,11 +7,13 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
+import { PermissionService } from '../../core/services/permission.service';
+import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 
 @Component({
   selector: 'app-main-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule, MaterialModule],
+  imports: [CommonModule, RouterModule, MaterialModule, HasPermissionDirective],
   templateUrl: './main-shell.component.html',
   styleUrls: ['./main-shell.component.scss']
 })
@@ -434,7 +436,8 @@ export class MainShellComponent implements OnInit {
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    public permissionService: PermissionService
   ) {
     this.isHandset$ = this.breakpointObserver.observe(Breakpoints.Handset)
       .pipe(map(result => result.matches));

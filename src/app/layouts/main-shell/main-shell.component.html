@@ -104,6 +104,7 @@
       <mat-nav-list>
         <!-- Dashboard -->
         <a mat-list-item 
+           *hasPermission="'dashboard.view'"
            routerLink="/dashboard" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -116,6 +117,7 @@
 
         <!-- Branches -->
         <a mat-list-item 
+           *hasPermission="['branches.view', 'branches.create']"
            routerLink="/branches" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -128,6 +130,7 @@
 
          <!-- Grades -->
          <a mat-list-item 
+         *hasPermission="'grades.view'"
          routerLink="/grades" 
          routerLinkActive="active"
          (click)="onMenuItemClick()"
@@ -140,6 +143,7 @@
 
        <!-- Sections -->
        <a mat-list-item 
+       *hasPermission="'sections.view'"
        routerLink="/sections" 
        routerLinkActive="active"
        (click)="onMenuItemClick()"
@@ -153,6 +157,7 @@
        
         <!-- Groups -->
         <a mat-list-item 
+           *hasPermission="'groups.view'"
            routerLink="/groups" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -167,6 +172,7 @@
 
         <!-- Students -->
         <a mat-list-item 
+           *hasPermission="['students.view', 'students.create']"
            routerLink="/students" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -179,6 +185,7 @@
 
         <!-- Subjects -->
         <a mat-list-item 
+           *hasPermission="'subjects.view'"
            routerLink="/subjects" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -191,6 +198,7 @@
 
         <!-- Teachers -->
         <a mat-list-item 
+           *hasPermission="'teachers.view'"
            routerLink="/teachers" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -203,6 +211,7 @@
 
         <!-- Departments -->
         <a mat-list-item 
+           *hasPermission="'departments.view'"
            routerLink="/departments" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -213,20 +222,9 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Departments</span>
         </a>
 
-        <!-- Subjects -->
-        <a mat-list-item 
-           routerLink="/subjects" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Subjects' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>subject</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
-        </a>
-
         <!-- Attendance -->
         <a mat-list-item 
+           *hasPermission="['attendance.view', 'attendance.mark']"
            routerLink="/attendance" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -239,6 +237,7 @@
 
         <!-- Fees Management -->
         <a mat-list-item 
+           *hasPermission="['fees.view', 'fees.collect']"
            routerLink="/fees" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -251,6 +250,7 @@
 
         <!-- Accounts -->
         <a mat-list-item 
+           *hasPermission="['accounts.view', 'transactions.view']"
            routerLink="/accounts" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -263,6 +263,7 @@
 
         <!-- Invoices -->
         <a mat-list-item 
+           *hasPermission="'invoices.view'"
            routerLink="/invoices" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -275,6 +276,7 @@
 
         <!-- Holidays -->
         <a mat-list-item 
+           *hasPermission="'holidays.view'"
            routerLink="/holidays" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"

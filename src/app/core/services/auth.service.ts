@@ -1,7 +1,8 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Injector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, tap, catchError, of, map } from 'rxjs';
 import { ApiService, ApiResponse } from './api.service';
+import { PermissionService } from './permission.service';
 
 export interface User {
   id: number;
@@ -56,9 +57,19 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
+  // Lazy getter to avoid circular dependency
+  private _permissionService?: PermissionService;
+  private get permissionService(): PermissionService {
+    if (!this._permissionService) {
+      this._permissionService = this.injector.get(PermissionService);
+    }
+    return this._permissionService;
+  }
+
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private injector: Injector
   ) {
     this.loadUserFromStorage();
   }
@@ -72,6 +83,12 @@ export class AuthService {
       tap(response => {
         if (response.success && response.access_token) {
           this.setSession(response);
+          
+          // Load user permissions after successful login
+          if (response.user && response.user.id) {
+            this.permissionService.loadUserPermissions(response.user.id).subscribe();
+            this.permissionService.loadModules().subscribe();
+          }
         }
       })
     );
@@ -182,6 +199,10 @@ export class AuthService {
     this.currentUser.set(null);
     this.currentUserSubject.next(null);
     this.isAuthenticated.set(false);
+    
+    // Clear permissions
+    this.permissionService.clearPermissions();
+    
     this.router.navigate(['/auth/login']);
   }
 
@@ -197,6 +218,13 @@ export class AuthService {
         const user = JSON.parse(userStr) as User;
         this.updateCurrentUser(user);
         this.isAuthenticated.set(true);
+        
+        // Load permissions when user is loaded from storage
+        // This ensures permissions are available on page refresh
+        if (user && user.id) {
+          this.permissionService.loadUserPermissions(user.id).subscribe();
+          this.permissionService.loadModules().subscribe();
+        }
       } catch {
         this.clearSession();
       }
