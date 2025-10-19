@@ -155,18 +155,7 @@
     </a>
 
        
-        <!-- Groups -->
-        <a mat-list-item 
-           *hasPermission="'groups.view'"
-           routerLink="/groups" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Groups' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>groups</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Groups</span>
-        </a>
+      
 
        
 
@@ -287,8 +276,21 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Holidays</span>
         </a>
 
+          <!-- Groups -->
+          <a mat-list-item 
+          *hasPermission="'groups.view'"
+          routerLink="/groups" 
+          routerLinkActive="active"
+          (click)="onMenuItemClick()"
+          [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Groups' : null"
+          [matTooltipPosition]="'right'"
+          [matTooltipDisabled]="isMobileOrTablet()">
+         <mat-icon matListItemIcon>groups</mat-icon>
+         <span matListItemTitle [class.hidden]="isSidebarCollapsed">Groups</span>
+       </a>
+
         <!-- Settings -->
-        <a mat-list-item 
+        <!-- <a mat-list-item 
            *hasPermission="['roles.view', 'permissions.view', 'users.view']"
            routerLink="/settings" 
            routerLinkActive="active"
@@ -298,7 +300,7 @@
            [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>settings</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Settings</span>
-        </a>
+        </a> -->
       </mat-nav-list>
     </mat-sidenav>
 

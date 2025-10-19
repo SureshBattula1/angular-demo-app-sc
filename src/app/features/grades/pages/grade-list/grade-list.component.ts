@@ -76,13 +76,13 @@ export class GradeListComponent implements OnInit {
         width: '150px',
         align: 'center'
       },
-      { 
-        key: 'classes_count', 
-        header: 'Classes', 
-        type: 'number',
-        align: 'center',
-        width: '100px'
-      },
+      // { 
+      //   key: 'classes_count', 
+      //   header: 'Classes', 
+      //   type: 'number',
+      //   align: 'center',
+      //   width: '100px'
+      // },
       { 
         key: 'is_active', 
         header: 'Status', 

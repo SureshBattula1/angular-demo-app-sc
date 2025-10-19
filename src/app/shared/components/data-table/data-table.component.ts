@@ -33,6 +33,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Output() paginationChanged = new EventEmitter<PaginationEvent>();
   @Output() sortChanged = new EventEmitter<SortEvent>();
   @Output() advancedSearchChanged = new EventEmitter<SearchEvent>();
+  @Output() searchFieldChanged = new EventEmitter<{ field: string, value: any }>();
   
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -270,6 +271,10 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   onSearchSaved(event: { name: string, criteria: SearchCriteria }): void {
     this.savedSearches.push(event);
     localStorage.setItem('savedSearches', JSON.stringify(this.savedSearches));
+  }
+  
+  onFieldValueChanged(event: { field: string, value: any }): void {
+    this.searchFieldChanged.emit(event);
   }
   
   createFilter(): (data: any, filter: string) => boolean {

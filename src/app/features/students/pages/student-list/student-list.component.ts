@@ -1,12 +1,15 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { StudentCrudService } from '../../services/student-crud.service';
+import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Student } from '../../../../core/models/student.model';
+import { Section } from '../../../../core/models/section.model';
 
 @Component({
   selector: 'app-student-list',
@@ -24,32 +27,34 @@ import { Student } from '../../../../core/models/student.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
+      (searchFieldChanged)="onSearchFieldChanged($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
 })
-export class StudentListComponent implements OnInit {
+export class StudentListComponent implements OnInit, AfterViewInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
   
   loading = false;
   students: Student[] = [];
   selectedStudents: Student[] = [];
   currentFilters: Record<string, unknown> = {};
+  allSections: Section[] = []; // Store all sections for filtering
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      { key: 'admission_number', header: 'Admission No.', sortable: true, searchable: true, width: '140px' },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      // { key: 'admission_number', header: 'Admission No.', sortable: true, searchable: true, width: '140px' },
       { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
       { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
       { key: 'email', header: 'Email', searchable: true },
-      { key: 'grade', header: 'Grade', sortable: true, width: '100px' },
+      { key: 'grade', header: 'Class (Grade)', sortable: true, width: '100px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
       { key: 'roll_number', header: 'Roll No.', width: '100px' },
       { key: 'phone', header: 'Phone', width: '130px' },
       { key: 'student_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      // { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewStudent(row) },
@@ -80,7 +85,7 @@ export class StudentListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter admission number',
         icon: 'badge',
-        group: 'Basic Information'
+        // group: 'Basic Information'
       },
       {
         key: 'roll_number',
@@ -88,42 +93,24 @@ export class StudentListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter roll number',
         icon: 'numbers',
-        group: 'Basic Information'
+        // group: 'Basic Information'
       },
       {
         key: 'grade',
         label: 'Grade',
         type: 'select',
         icon: 'school',
-        options: [
-          { value: '1', label: 'Grade 1' },
-          { value: '2', label: 'Grade 2' },
-          { value: '3', label: 'Grade 3' },
-          { value: '4', label: 'Grade 4' },
-          { value: '5', label: 'Grade 5' },
-          { value: '6', label: 'Grade 6' },
-          { value: '7', label: 'Grade 7' },
-          { value: '8', label: 'Grade 8' },
-          { value: '9', label: 'Grade 9' },
-          { value: '10', label: 'Grade 10' },
-          { value: '11', label: 'Grade 11' },
-          { value: '12', label: 'Grade 12' }
-        ],
-        group: 'Academic'
+        options: [], // Will be populated dynamically
+        // group: 'Academic'
       },
       {
         key: 'section',
         label: 'Section',
         type: 'select',
         icon: 'class',
-        options: [
-          { value: 'A', label: 'Section A' },
-          { value: 'B', label: 'Section B' },
-          { value: 'C', label: 'Section C' },
-          { value: 'D', label: 'Section D' },
-          { value: 'E', label: 'Section E' }
-        ],
-        group: 'Academic'
+        options: [], // Will be populated dynamically based on selected grade
+        dependsOn: 'grade', // Section field depends on grade selection
+         // group: 'Academic'
       },
       {
         key: 'status',
@@ -137,7 +124,7 @@ export class StudentListComponent implements OnInit {
           { value: 'Suspended', label: 'Suspended' },
           { value: 'Expelled', label: 'Expelled' }
         ],
-        group: 'Status'
+        // group: 'Status'
       },
       {
         key: 'gender',
@@ -149,19 +136,90 @@ export class StudentListComponent implements OnInit {
           { value: 'Female', label: 'Female' },
           { value: 'Other', label: 'Other' }
         ],
-        group: 'Personal'
+        // group: 'Personal'
       }
     ]
   };
   
   constructor(
     private studentCrudService: StudentCrudService,
+    private gradeService: GradeService,
+    private sectionService: SectionService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadGrades();
+    this.loadSections();
     this.loadStudents();
+  }
+  
+  ngAfterViewInit(): void {
+    // No additional setup needed
+  }
+  
+  /**
+   * Load grades dynamically for advanced search filter
+   */
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade');
+          if (gradeField) {
+            gradeField.options = response.data.map(grade => ({
+              value: grade.value,
+              label: grade.label
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+      }
+    });
+  }
+  
+  /**
+   * Load all sections for filtering
+   */
+  loadSections(): void {
+    this.sectionService.getSections().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.allSections = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading sections:', error);
+      }
+    });
+  }
+  
+  /**
+   * Update section options based on selected grade
+   */
+  updateSectionOptions(selectedGrade: string | null): void {
+    const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section');
+    if (sectionField) {
+      if (selectedGrade) {
+        // Filter sections by grade
+        const filteredSections = this.allSections.filter(
+          section => section.grade_level === selectedGrade
+        );
+        sectionField.options = filteredSections.map(section => ({
+          value: section.name,
+          label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+        }));
+      } else {
+        // Show all sections or clear
+        sectionField.options = this.allSections.map(section => ({
+          value: section.name,
+          label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+        }));
+      }
+    }
   }
   
   loadStudents(): void {
@@ -182,6 +240,13 @@ export class StudentListComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+  
+  onSearchFieldChanged(event: { field: string, value: any }): void {
+    // Update sections when grade field changes
+    if (event.field === 'grade') {
+      this.updateSectionOptions(event.value);
+    }
   }
   
   onAdvancedSearchChange(event: SearchEvent): void {

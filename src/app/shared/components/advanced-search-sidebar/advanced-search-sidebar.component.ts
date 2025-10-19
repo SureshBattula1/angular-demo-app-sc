@@ -44,6 +44,7 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
   @Output() searchReset = new EventEmitter<void>();
   @Output() searchSaved = new EventEmitter<{ name: string, criteria: SearchCriteria }>();
   @Output() closed = new EventEmitter<void>();
+  @Output() fieldValueChanged = new EventEmitter<{ field: string, value: any }>();
   
   searchForm!: FormGroup;
   groupedFields: { [key: string]: SearchFieldConfig[] } = {};
@@ -80,6 +81,15 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
   
   setupDependencies(): void {
     this.config.fields.forEach(field => {
+      // Emit value changes for all fields
+      const control = this.searchForm.get(field.key);
+      if (control) {
+        control.valueChanges.subscribe(value => {
+          this.fieldValueChanged.emit({ field: field.key, value });
+        });
+      }
+      
+      // Handle field dependencies
       if (field.dependsOn) {
         const dependentControl = this.searchForm.get(field.dependsOn);
         const currentControl = this.searchForm.get(field.key);

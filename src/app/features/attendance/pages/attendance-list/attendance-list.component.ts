@@ -7,6 +7,7 @@ import { TableConfig, SearchEvent } from '../../../../shared/components/data-tab
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AttendanceService } from '../../services/attendance.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentAttendance, TeacherAttendance } from '../../../../core/models/attendance.model';
 
@@ -165,20 +166,7 @@ export class AttendanceListComponent implements OnInit {
         label: 'Grade',
         type: 'select',
         icon: 'school',
-        options: [
-          { value: '1', label: 'Grade 1' },
-          { value: '2', label: 'Grade 2' },
-          { value: '3', label: 'Grade 3' },
-          { value: '4', label: 'Grade 4' },
-          { value: '5', label: 'Grade 5' },
-          { value: '6', label: 'Grade 6' },
-          { value: '7', label: 'Grade 7' },
-          { value: '8', label: 'Grade 8' },
-          { value: '9', label: 'Grade 9' },
-          { value: '10', label: 'Grade 10' },
-          { value: '11', label: 'Grade 11' },
-          { value: '12', label: 'Grade 12' }
-        ],
+        options: [], // Will be populated dynamically
         group: 'Class Filters'
       },
       {
@@ -210,12 +198,36 @@ export class AttendanceListComponent implements OnInit {
     private attendanceService: AttendanceService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
-    private branchService: BranchService
+    private branchService: BranchService,
+    private gradeService: GradeService
   ) {}
   
   ngOnInit(): void {
     this.loadBranches();
+    this.loadGrades();
     this.loadAttendance();
+  }
+  
+  /**
+   * Load grades dynamically for advanced search filter
+   */
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade');
+          if (gradeField) {
+            gradeField.options = response.data.map(grade => ({
+              value: grade.value,
+              label: grade.label
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+      }
+    });
   }
   
   loadBranches(): void {

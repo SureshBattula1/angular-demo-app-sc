@@ -337,6 +337,43 @@
   }
 }
 
+// Additional styles
+.parent-section {
+  margin-bottom: var(--spacing-md);
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  strong {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .detail-row {
+    margin-top: var(--spacing-xs);
+  }
+}
+
+.my-3 {
+  margin-top: var(--spacing-md) !important;
+  margin-bottom: var(--spacing-md) !important;
+}
+
+.no-info {
+  padding: var(--spacing-md) 0;
+  text-align: center;
+  
+  p {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 0;
+  }
+}
+
 // Responsive
 @media (max-width: $breakpoint-md) {
   .student-view-container {
