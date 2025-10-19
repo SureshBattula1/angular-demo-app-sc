@@ -34,6 +34,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   @Output() sortChanged = new EventEmitter<SortEvent>();
   @Output() advancedSearchChanged = new EventEmitter<SearchEvent>();
   @Output() searchFieldChanged = new EventEmitter<{ field: string, value: any }>();
+  @Output() searchResetEvent = new EventEmitter<void>();
   
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -223,9 +224,18 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   }
   
   onSearchReset(): void {
+    // Clear search query
+    this.searchQuery = '';
+    
+    // Clear current search criteria
     this.currentSearchCriteria = {};
+    
+    // Clear data source filter
     this.dataSource.filter = '';
     this.dataSource.filterPredicate = this.createFilter();
+    
+    // Emit reset event to parent component to reload data
+    this.searchResetEvent.emit();
   }
   
   /**

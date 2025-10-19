@@ -8,8 +8,10 @@ import { AdvancedSearchConfig } from '../../../../shared/components/advanced-sea
 import { AttendanceService } from '../../services/attendance.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentAttendance, TeacherAttendance } from '../../../../core/models/attendance.model';
+import { Section } from '../../../../core/models/section.model';
 
 @Component({
   selector: 'app-attendance-list',
@@ -17,31 +19,22 @@ import { StudentAttendance, TeacherAttendance } from '../../../../core/models/at
   imports: [CommonModule, MaterialModule, DataTableComponent],
   template: `
     <div class="page-container">
-      <div class="page-header">
-        <div class="header-content">
-          <h1><mat-icon>fact_check</mat-icon> Attendance Management</h1>
-          <p class="subtitle">View and manage attendance records</p>
-        </div>
-        <div class="header-actions">
-          <button mat-raised-button color="primary" (click)="markAttendance()">
-            <mat-icon>event_available</mat-icon>
-            Mark Attendance
-          </button>
-        </div>
-      </div>
 
       <app-data-table
         #dataTable
         [data]="attendanceRecords"
         [config]="tableConfig"
         [advancedSearchConfig]="advancedSearchConfig"
-        [title]="''"
+        [title]="'Attendances'"
         [loading]="loading"
         (actionClicked)="onAction($event)"
         (rowClicked)="onRowClick($event)"
         (selectionChanged)="onSelectionChange($event)"
         (exportClicked)="onExport($event)"
-        (advancedSearchChanged)="onAdvancedSearchChange($event)">
+        (searchChanged)="onSearchChange($event)"
+        (searchFieldChanged)="onSearchFieldChanged($event)"
+        (advancedSearchChanged)="onAdvancedSearchChange($event)"
+        (searchResetEvent)="onSearchReset()">
       </app-data-table>
     </div>
   `,
@@ -68,15 +61,16 @@ export class AttendanceListComponent implements OnInit {
   selectedRecords: (StudentAttendance | TeacherAttendance)[] = [];
   currentFilters: Record<string, unknown> = { type: 'student' };
   branches: any[] = [];
+  allSections: Section[] = [];
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
       { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
       { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
-      { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
-      { key: 'grade', header: 'Grade', sortable: true, width: '100px' },
+      // { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
+      { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
       { key: 'status', header: 'Status', type: 'badge', width: '120px', align: 'center' },
       { key: 'remarks', header: 'Remarks', width: '200px' }
@@ -115,7 +109,7 @@ export class AttendanceListComponent implements OnInit {
           { value: 'teacher', label: 'Teacher Attendance' }
         ],
         defaultValue: 'student',
-        group: 'Basic Filters'
+        // group: 'Basic Filters'
       },
       {
         key: 'branch_id',
@@ -123,28 +117,28 @@ export class AttendanceListComponent implements OnInit {
         type: 'select',
         icon: 'business',
         options: [], // Will be populated dynamically
-        group: 'Basic Filters'
+        // group: 'Basic Filters'
       },
       {
         key: 'date',
         label: 'Date',
         type: 'date',
         icon: 'event',
-        group: 'Basic Filters'
+        // group: 'Basic Filters'
       },
       {
         key: 'from_date',
         label: 'From Date',
         type: 'date',
         icon: 'event',
-        group: 'Date Range'
+        // group: 'Date Range'
       },
       {
         key: 'to_date',
         label: 'To Date',
         type: 'date',
         icon: 'event',
-        group: 'Date Range'
+        // group: 'Date Range'
       },
       {
         key: 'status',
@@ -159,7 +153,7 @@ export class AttendanceListComponent implements OnInit {
           { value: 'Sick Leave', label: 'Sick Leave' },
           { value: 'Leave', label: 'Leave' }
         ],
-        group: 'Status Filters'
+        // group: 'Status Filters'
       },
       {
         key: 'grade',
@@ -167,30 +161,25 @@ export class AttendanceListComponent implements OnInit {
         type: 'select',
         icon: 'school',
         options: [], // Will be populated dynamically
-        group: 'Class Filters'
+        // group: 'Class Filters'
       },
       {
         key: 'section',
         label: 'Section',
         type: 'select',
         icon: 'class',
-        options: [
-          { value: 'A', label: 'Section A' },
-          { value: 'B', label: 'Section B' },
-          { value: 'C', label: 'Section C' },
-          { value: 'D', label: 'Section D' },
-          { value: 'E', label: 'Section E' }
-        ],
-        group: 'Class Filters'
+        options: [], // Will be populated dynamically based on selected grade
+        dependsOn: 'grade', // Section field depends on grade selection
+        // group: 'Class Filters'
       },
-      {
-        key: 'admission_number',
-        label: 'Admission Number',
-        type: 'text',
-        icon: 'badge',
-        placeholder: 'Enter admission number',
-        group: 'Student Search'
-      }
+      // {
+      //   key: 'admission_number',
+      //   label: 'Admission Number',
+      //   type: 'text',
+      //   icon: 'badge',
+      //   placeholder: 'Enter admission number',
+      //   // group: 'Student Search'
+      // }
     ]
   };
   
@@ -199,13 +188,56 @@ export class AttendanceListComponent implements OnInit {
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private branchService: BranchService,
-    private gradeService: GradeService
+    private gradeService: GradeService,
+    private sectionService: SectionService
   ) {}
   
   ngOnInit(): void {
     this.loadBranches();
     this.loadGrades();
+    this.loadSections();
     this.loadAttendance();
+  }
+  
+  /**
+   * Load all sections for filtering
+   */
+  loadSections(): void {
+    this.sectionService.getSections().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.allSections = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading sections:', error);
+      }
+    });
+  }
+  
+  /**
+   * Update section options based on selected grade
+   */
+  updateSectionOptions(selectedGrade: string | null): void {
+    const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section');
+    if (sectionField) {
+      if (selectedGrade) {
+        // Filter sections by grade
+        const filteredSections = this.allSections.filter(
+          section => section.grade_level === selectedGrade
+        );
+        sectionField.options = filteredSections.map(section => ({
+          value: section.name,
+          label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+        }));
+      } else {
+        // Show all sections or clear
+        sectionField.options = this.allSections.map(section => ({
+          value: section.name,
+          label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+        }));
+      }
+    }
   }
   
   /**
@@ -279,6 +311,9 @@ export class AttendanceListComponent implements OnInit {
     const attendance = event.row as StudentAttendance | TeacherAttendance;
     
     switch (event.action) {
+      case 'add':
+        this.markAttendance();
+        break;
       case 'view':
         this.viewAttendance(attendance);
         break;
@@ -307,9 +342,32 @@ export class AttendanceListComponent implements OnInit {
     // Implement export logic
   }
   
+  onSearchChange(query: string): void {
+    // Handle basic search
+    this.loadAttendance({ search: query });
+  }
+  
+  onSearchFieldChanged(event: { field: string, value: any }): void {
+    // Update sections when grade field changes
+    if (event.field === 'grade') {
+      this.updateSectionOptions(event.value);
+    }
+  }
+  
   onAdvancedSearchChange(event: SearchEvent): void {
-    const filters = event.filters || {};
+    const filters = {
+      ...event.filters,
+      search: event.query
+    };
     this.loadAttendance(filters);
+  }
+  
+  onSearchReset(): void {
+    // Reset section options to show all sections
+    this.updateSectionOptions(null);
+    // Reload attendance data with default filters
+    this.currentFilters = { type: 'student' };
+    this.loadAttendance();
   }
   
   viewAttendance(attendance: StudentAttendance | TeacherAttendance): void {

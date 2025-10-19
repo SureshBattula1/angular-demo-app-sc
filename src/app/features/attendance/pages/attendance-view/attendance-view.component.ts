@@ -21,6 +21,7 @@ export class AttendanceViewComponent implements OnInit {
   attendance?: StudentAttendance | TeacherAttendance;
   attendanceHistory: StudentAttendance[] = [];
   summary: any = null;
+  studentInfo: any = null;
   
   constructor(
     private route: ActivatedRoute,
@@ -85,7 +86,7 @@ export class AttendanceViewComponent implements OnInit {
         console.log('Student Attendance Response:', response);
         
         if (response.success) {
-          // Backend returns: { success: true, data: [...], summary: {...} }
+          // Backend returns: { success: true, data: [...], summary: {...}, student: {...} }
           this.attendanceHistory = response.data || [];
           this.summary = response.summary || {
             total_days: 0,
@@ -95,12 +96,15 @@ export class AttendanceViewComponent implements OnInit {
             leaves: 0,
             percentage: 0
           };
+          this.studentInfo = response.student || null;
           
           console.log('Loaded history:', this.attendanceHistory.length, 'records');
           console.log('Summary:', this.summary);
+          console.log('Student Info:', this.studentInfo);
         } else {
           this.attendanceHistory = [];
           this.summary = null;
+          this.studentInfo = null;
         }
         this.loading = false;
       },

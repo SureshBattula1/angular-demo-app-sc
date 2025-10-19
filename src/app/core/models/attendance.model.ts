@@ -17,6 +17,7 @@ export interface StudentAttendance {
   email?: string;
   admission_number?: string;
   grade?: string;
+  grade_label?: string;
   roll_number?: string;
 }
 

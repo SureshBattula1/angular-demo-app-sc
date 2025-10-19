@@ -10,7 +10,7 @@
       <div class="filter-row">
         <mat-form-field appearance="outline">
           <mat-label>Branch</mat-label>
-          <mat-select [(ngModel)]="selectedBranch">
+          <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onGradeOrBranchChange()">
             <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
           </mat-select>
           <mat-icon matPrefix>business</mat-icon>
@@ -18,18 +18,21 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Grade</mat-label>
-          <mat-select [(ngModel)]="selectedGrade">
-            <mat-option *ngFor="let grade of grades" [value]="grade">Grade {{ grade }}</mat-option>
+          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onGradeOrBranchChange()">
+            <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
           </mat-select>
           <mat-icon matPrefix>grade</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Section</mat-label>
-          <mat-select [(ngModel)]="selectedSection">
-            <mat-option *ngFor="let section of sections" [value]="section">Section {{ section }}</mat-option>
+          <mat-select [(ngModel)]="selectedSection" [disabled]="!selectedGrade || sections.length === 0">
+            <mat-option *ngFor="let section of sections" [value]="section.name">
+              {{ section.name }} {{ section.code ? '(' + section.code + ')' : '' }}
+            </mat-option>
           </mat-select>
           <mat-icon matPrefix>class</mat-icon>
+          <mat-hint *ngIf="sections.length === 0 && selectedGrade">No sections available for selected grade/branch</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">

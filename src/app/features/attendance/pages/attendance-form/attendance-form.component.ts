@@ -6,8 +6,12 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { AttendanceService } from '../../services/attendance.service';
 import { StudentCrudService } from '../../../students/services/student-crud.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AttendanceStudent, BulkAttendanceRequest } from '../../../../core/models/attendance.model';
+import { Grade } from '../../../../core/models/grade.model';
+import { Section } from '../../../../core/models/section.model';
 
 @Component({
   selector: 'app-attendance-form',
@@ -22,6 +26,9 @@ export class AttendanceFormComponent implements OnInit {
   studentsLoaded = false;
   
   branches: any[] = [];
+  grades: Grade[] = [];
+  sections: Section[] = [];
+  allSections: Section[] = []; // Store all sections for filtering
   students: AttendanceStudent[] = [];
   
   selectedBranch: number | null = null;
@@ -29,9 +36,6 @@ export class AttendanceFormComponent implements OnInit {
   selectedSection: string | null = null;
   selectedDate: string = this.getTodayDate();
   academicYear: string = this.getCurrentAcademicYear();
-  
-  grades = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-  sections = ['A', 'B', 'C', 'D', 'E'];
   
   statusOptions = [
     { value: 'Present', label: 'Present', icon: 'check_circle', color: 'success' },
@@ -46,12 +50,16 @@ export class AttendanceFormComponent implements OnInit {
     private attendanceService: AttendanceService,
     private studentService: StudentCrudService,
     private branchService: BranchService,
+    private gradeService: GradeService,
+    private sectionService: SectionService,
     private errorHandler: ErrorHandlerService,
     private router: Router
   ) {}
   
   ngOnInit(): void {
     this.loadBranches();
+    this.loadGrades();
+    this.loadAllSections();
   }
   
   loadBranches(): void {
@@ -65,6 +73,68 @@ export class AttendanceFormComponent implements OnInit {
         this.errorHandler.showError(error);
       }
     });
+  }
+  
+  /**
+   * Load grades dynamically
+   */
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.grades = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+      }
+    });
+  }
+  
+  /**
+   * Load all sections for filtering
+   */
+  loadAllSections(): void {
+    this.sectionService.getSections().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.allSections = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading sections:', error);
+      }
+    });
+  }
+  
+  /**
+   * Update sections when grade or branch changes
+   */
+  onGradeOrBranchChange(): void {
+    if (this.selectedGrade && this.selectedBranch) {
+      // Filter sections by selected grade and branch
+      this.sections = this.allSections.filter(
+        section => section.grade_level === this.selectedGrade && 
+                   section.branch_id === this.selectedBranch
+      );
+    } else if (this.selectedGrade) {
+      // Filter by grade only
+      this.sections = this.allSections.filter(
+        section => section.grade_level === this.selectedGrade
+      );
+    } else if (this.selectedBranch) {
+      // Filter by branch only
+      this.sections = this.allSections.filter(
+        section => section.branch_id === this.selectedBranch
+      );
+    } else {
+      this.sections = [];
+    }
+    
+    // Reset section selection if current selection is not in filtered list
+    if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
+      this.selectedSection = null;
+    }
   }
   
   loadStudents(): void {

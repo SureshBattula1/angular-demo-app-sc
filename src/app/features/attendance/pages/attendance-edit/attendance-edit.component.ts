@@ -86,29 +86,67 @@ export class AttendanceEditComponent implements OnInit {
     
     this.isLoading = true;
     
-    // Note: This will need backend API implementation
-    this.errorHandler.showInfo('Update functionality requires backend API implementation');
+    const updateData = this.attendanceForm.value;
     
-    // TODO: Implement update API
-    // const updateData = this.attendanceForm.value;
-    // this.attendanceService.updateAttendance(this.attendanceId, updateData).subscribe({
-    //   next: (response) => {
-    //     this.errorHandler.showSuccess('Attendance updated successfully');
-    //     this.router.navigate(['/attendance']);
-    //   },
-    //   error: (error) => {
-    //     this.errorHandler.showError(error);
-    //     this.isLoading = false;
-    //   }
-    // });
-    
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 1000);
+    this.attendanceService.updateAttendance(this.attendanceId, updateData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.errorHandler.showSuccess('Attendance updated successfully');
+          this.router.navigate(['/attendance']);
+        } else {
+          this.errorHandler.showError(response.message || 'Failed to update attendance');
+          this.isLoading = false;
+        }
+      },
+      error: (error) => {
+        this.errorHandler.showError(error);
+        this.isLoading = false;
+      }
+    });
   }
   
   onCancel(): void {
     this.router.navigate(['/attendance']);
+  }
+  
+  getStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'Present': 'success',
+      'Absent': 'danger',
+      'Late': 'warning',
+      'Half-Day': 'info',
+      'Sick Leave': 'secondary',
+      'Leave': 'secondary'
+    };
+    return colors[status] || 'default';
+  }
+  
+  getStatusIcon(status: string): string {
+    const icons: Record<string, string> = {
+      'Present': 'check_circle',
+      'Absent': 'cancel',
+      'Late': 'schedule',
+      'Half-Day': 'timelapse',
+      'Sick Leave': 'local_hospital',
+      'Leave': 'event_busy'
+    };
+    return icons[status] || 'info';
+  }
+  
+  getSelectedStatusIcon(): string {
+    const selectedValue = this.attendanceForm.get('status')?.value;
+    if (!selectedValue) return 'info';
+    
+    const selectedOption = this.statusOptions.find(opt => opt.value === selectedValue);
+    return selectedOption?.icon || 'info';
+  }
+  
+  getSelectedStatusLabel(): string {
+    const selectedValue = this.attendanceForm.get('status')?.value;
+    if (!selectedValue) return 'Select status';
+    
+    const selectedOption = this.statusOptions.find(opt => opt.value === selectedValue);
+    return selectedOption?.label || selectedValue;
   }
 }
 

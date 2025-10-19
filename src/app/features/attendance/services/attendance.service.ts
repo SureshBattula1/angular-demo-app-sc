@@ -48,6 +48,16 @@ export class AttendanceService {
   }
 
   /**
+   * Update attendance record
+   */
+  updateAttendance(id: number, data: Partial<StudentAttendance | TeacherAttendance>): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
+    return this.http.put<ApiResponse<StudentAttendance | TeacherAttendance>>(
+      `${this.apiUrl}/${id}`,
+      data
+    );
+  }
+
+  /**
    * Mark bulk attendance (optimized)
    */
   markBulkAttendance(bulkData: BulkAttendanceRequest): Observable<ApiResponse<{ marked: number; errors: string[] }>> {
