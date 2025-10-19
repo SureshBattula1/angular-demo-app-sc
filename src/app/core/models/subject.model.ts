@@ -6,6 +6,7 @@ export interface Subject {
   department_id: number;
   teacher_id: number | null;
   grade_level: string;
+  grade_label?: string;
   credits: number;
   type: 'Core' | 'Elective' | 'Language' | 'Lab' | 'Activity';
   branch_id: number;

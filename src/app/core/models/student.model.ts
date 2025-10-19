@@ -5,14 +5,13 @@ export interface Student {
   admission_number: string;
   admission_date: string;
   roll_number: string | null;
-  registration_number: string | null;
   
   // Academic Details
   grade: string;
+  grade_label?: string;
   section: string | null;
   academic_year: string;
   stream: string | null;
-  elective_subjects: string[] | null;
   
   // Personal Details
   first_name: string;
@@ -22,14 +21,9 @@ export interface Student {
   date_of_birth: string;
   gender: 'Male' | 'Female' | 'Other';
   blood_group: string | null;
-  religion: string | null;
-  category: string | null;
-  nationality: string;
-  mother_tongue: string | null;
   
   // Address
   current_address: string;
-  permanent_address: string | null;
   city: string;
   state: string;
   country: string;
@@ -41,17 +35,11 @@ export interface Student {
   father_occupation: string | null;
   father_phone: string;
   father_email: string | null;
-  father_annual_income: number | null;
   
   mother_name: string;
   mother_occupation: string | null;
   mother_phone: string | null;
   mother_email: string | null;
-  mother_annual_income: number | null;
-  
-  guardian_name: string | null;
-  guardian_relation: string | null;
-  guardian_phone: string | null;
   
   // Emergency Contact
   emergency_contact_name: string;
@@ -61,21 +49,21 @@ export interface Student {
   // Previous Education
   previous_school: string | null;
   previous_grade: string | null;
-  previous_percentage: number | null;
-  transfer_certificate_number: string | null;
   
   // Medical
   medical_history: string | null;
   allergies: string | null;
-  medications: string | null;
-  height_cm: number | null;
-  weight_kg: number | null;
+  
+  // Branch relationship
+  branch?: {
+    id: number;
+    name: string;
+    code: string;
+  };
   
   // Status
   student_status: 'Active' | 'Graduated' | 'Left' | 'Suspended' | 'Expelled';
-  admission_status: 'Admitted' | 'Provisional' | 'Cancelled';
   
-  remarks: string | null;
   is_active: boolean;
   
   created_at?: string;

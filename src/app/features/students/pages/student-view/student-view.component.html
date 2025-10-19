@@ -33,7 +33,7 @@
             </span>
             <span>
               <mat-icon>school</mat-icon>
-              {{ gradeLabel }} ({{ student.grade }}) {{ student.section ? '- ' + student.section : '' }}
+              {{ getGradeLabel() }} ({{ student.grade }}) {{ student.section ? '- ' + student.section : '' }}
             </span>
             <span *ngIf="student.roll_number">
               <mat-icon>numbers</mat-icon>
@@ -84,14 +84,6 @@
           <span class="detail-label">Blood Group:</span>
           <span class="detail-value">{{ student.blood_group }}</span>
         </div>
-        <div class="detail-row" *ngIf="student.religion">
-          <span class="detail-label">Religion:</span>
-          <span class="detail-value">{{ student.religion }}</span>
-        </div>
-        <div class="detail-row" *ngIf="student.category">
-          <span class="detail-label">Category:</span>
-          <span class="detail-value">{{ student.category }}</span>
-        </div>
       </mat-card-content>
     </mat-card>
 
@@ -114,7 +106,7 @@
         </div>
         <div class="detail-row">
           <span class="detail-label">Grade:</span>
-          <span class="detail-value">{{ gradeLabel }} ({{ student.grade }})</span>
+          <span class="detail-value">{{ getGradeLabel() }} ({{ student.grade }})</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Section:</span>
@@ -132,6 +124,10 @@
           <span class="detail-label">Stream:</span>
           <span class="detail-value">{{ student.stream }}</span>
         </div>
+        <div class="detail-row" *ngIf="student.branch">
+          <span class="detail-label">Branch:</span>
+          <span class="detail-value">{{ student.branch.name }} ({{ student.branch.code }})</span>
+        </div>
       </mat-card-content>
     </mat-card>
 
@@ -144,38 +140,25 @@
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="parent-section">
-          <strong>Current Address:</strong>
-          <div class="detail-row">
-            <span class="detail-label">Address:</span>
-            <span class="detail-value">{{ student.current_address }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">City:</span>
-            <span class="detail-value">{{ student.city }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">State:</span>
-            <span class="detail-value">{{ student.state }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">PIN Code:</span>
-            <span class="detail-value">{{ student.pincode }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Country:</span>
-            <span class="detail-value">{{ student.country }}</span>
-          </div>
+        <div class="detail-row">
+          <span class="detail-label">Address:</span>
+          <span class="detail-value">{{ student.current_address }}</span>
         </div>
-
-        <mat-divider class="my-3" *ngIf="student.permanent_address"></mat-divider>
-
-        <div class="parent-section" *ngIf="student.permanent_address">
-          <strong>Permanent Address:</strong>
-          <div class="detail-row">
-            <span class="detail-label">Address:</span>
-            <span class="detail-value">{{ student.permanent_address }}</span>
-          </div>
+        <div class="detail-row">
+          <span class="detail-label">City:</span>
+          <span class="detail-value">{{ student.city }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">State:</span>
+          <span class="detail-value">{{ student.state }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">PIN Code:</span>
+          <span class="detail-value">{{ student.pincode }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Country:</span>
+          <span class="detail-value">{{ student.country }}</span>
         </div>
       </mat-card-content>
     </mat-card>
@@ -253,7 +236,7 @@
       </mat-card-header>
       <mat-card-content>
         <!-- Previous Education Section -->
-        <div class="parent-section" *ngIf="student.previous_school || student.previous_grade || student.previous_percentage || student.transfer_certificate_number">
+        <div class="parent-section" *ngIf="student.previous_school || student.previous_grade">
           <strong>Previous Education:</strong>
           <div class="detail-row" *ngIf="student.previous_school">
             <span class="detail-label">School:</span>
@@ -263,29 +246,13 @@
             <span class="detail-label">Grade:</span>
             <span class="detail-value">{{ student.previous_grade }}</span>
           </div>
-          <div class="detail-row" *ngIf="student.previous_percentage">
-            <span class="detail-label">Percentage:</span>
-            <span class="detail-value">{{ student.previous_percentage }}%</span>
-          </div>
-          <div class="detail-row" *ngIf="student.transfer_certificate_number">
-            <span class="detail-label">TC Number:</span>
-            <span class="detail-value">{{ student.transfer_certificate_number }}</span>
-          </div>
         </div>
 
-        <mat-divider class="my-3" *ngIf="(student.previous_school || student.previous_grade) && (student.medical_history || student.allergies || student.medications || student.height_cm || student.weight_kg)"></mat-divider>
+        <mat-divider class="my-3" *ngIf="(student.previous_school || student.previous_grade) && (student.medical_history || student.allergies)"></mat-divider>
 
         <!-- Medical Information Section -->
-        <div class="parent-section" *ngIf="student.medical_history || student.allergies || student.medications || student.height_cm || student.weight_kg">
+        <div class="parent-section" *ngIf="student.medical_history || student.allergies">
           <strong>Medical Information:</strong>
-          <div class="detail-row" *ngIf="student.height_cm">
-            <span class="detail-label">Height:</span>
-            <span class="detail-value">{{ student.height_cm }} cm</span>
-          </div>
-          <div class="detail-row" *ngIf="student.weight_kg">
-            <span class="detail-label">Weight:</span>
-            <span class="detail-value">{{ student.weight_kg }} kg</span>
-          </div>
           <div class="detail-row" *ngIf="student.medical_history">
             <span class="detail-label">Medical History:</span>
             <span class="detail-value">{{ student.medical_history }}</span>
@@ -294,41 +261,10 @@
             <span class="detail-label">Allergies:</span>
             <span class="detail-value">{{ student.allergies }}</span>
           </div>
-          <div class="detail-row" *ngIf="student.medications">
-            <span class="detail-label">Medications:</span>
-            <span class="detail-value">{{ student.medications }}</span>
-          </div>
-        </div>
-
-        <mat-divider class="my-3" *ngIf="(student.medical_history || student.allergies || student.height_cm || student.weight_kg) && (student.nationality || student.mother_tongue || student.elective_subjects || student.remarks)"></mat-divider>
-
-        <!-- Other Information Section -->
-        <div class="parent-section" *ngIf="student.nationality || student.mother_tongue || student.elective_subjects || student.remarks || student.admission_status">
-          <strong>Other Details:</strong>
-          <div class="detail-row" *ngIf="student.nationality">
-            <span class="detail-label">Nationality:</span>
-            <span class="detail-value">{{ student.nationality }}</span>
-          </div>
-          <div class="detail-row" *ngIf="student.mother_tongue">
-            <span class="detail-label">Mother Tongue:</span>
-            <span class="detail-value">{{ student.mother_tongue }}</span>
-          </div>
-          <div class="detail-row" *ngIf="student.elective_subjects && student.elective_subjects.length > 0">
-            <span class="detail-label">Elective Subjects:</span>
-            <span class="detail-value">{{ student.elective_subjects.join(', ') }}</span>
-          </div>
-          <div class="detail-row" *ngIf="student.admission_status">
-            <span class="detail-label">Admission Status:</span>
-            <span class="detail-value">{{ student.admission_status }}</span>
-          </div>
-          <div class="detail-row" *ngIf="student.remarks">
-            <span class="detail-label">Remarks:</span>
-            <span class="detail-value">{{ student.remarks }}</span>
-          </div>
         </div>
 
         <!-- Show message if no additional info -->
-        <div *ngIf="!student.previous_school && !student.previous_grade && !student.previous_percentage && !student.transfer_certificate_number && !student.medical_history && !student.allergies && !student.medications && !student.height_cm && !student.weight_kg && !student.nationality && !student.mother_tongue && !student.remarks && (!student.elective_subjects || student.elective_subjects?.length === 0) && !student.admission_status" class="no-info">
+        <div *ngIf="!student.previous_school && !student.previous_grade && !student.medical_history && !student.allergies" class="no-info">
           <p class="text-muted">No additional information available</p>
         </div>
       </mat-card-content>

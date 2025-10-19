@@ -41,12 +41,12 @@ export class SubjectListComponent implements OnInit {
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
       { key: 'name', header: 'Subject Name', sortable: true, searchable: true },
       { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'type', header: 'Type', sortable: true, type: 'badge', width: '110px', align: 'center' },
-      { key: 'grade_level', header: 'Grade', sortable: true, width: '100px', align: 'center' },
+      { key: 'grade_label', header: 'Grade', sortable: true, width: '120px', align: 'center' },
       { key: 'credits', header: 'Credits', type: 'number', align: 'center', width: '100px' },
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
@@ -80,7 +80,7 @@ export class SubjectListComponent implements OnInit {
         placeholder: 'Select branch',
         icon: 'business',
         options: [], // Will be populated dynamically
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'code',
@@ -88,7 +88,7 @@ export class SubjectListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter subject code',
         icon: 'qr_code',
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'type',
@@ -102,7 +102,7 @@ export class SubjectListComponent implements OnInit {
           { value: 'Lab', label: 'Lab' },
           { value: 'Activity', label: 'Activity' }
         ],
-        group: 'Type'
+        // group: 'Type'
       },
       {
         key: 'grade_level',
@@ -110,14 +110,14 @@ export class SubjectListComponent implements OnInit {
         type: 'select',
         icon: 'school',
         options: [], // Will be populated dynamically
-        group: 'Grade'
+        // group: 'Grade'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
