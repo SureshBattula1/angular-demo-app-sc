@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SharedModule } from '../../shared.module';
@@ -48,6 +48,7 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
   
   searchForm!: FormGroup;
   groupedFields: { [key: string]: SearchFieldConfig[] } = {};
+  private previousConfig?: AdvancedSearchConfig;
   
   constructor(private fb: FormBuilder) {}
   
@@ -55,13 +56,30 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
     if (this.config) {
       this.initializeForm();
       this.groupFields();
+      this.previousConfig = this.config;
     }
   }
   
-  ngOnChanges(): void {
-    if (this.searchForm && this.config) {
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only reinitialize if the config has actually changed, not when isOpen changes
+    if (changes['config'] && !changes['config'].firstChange) {
+      const currentConfig = changes['config'].currentValue;
+      const previousConfig = changes['config'].previousValue;
+      
+      // Check if the config has actually changed (not just reference)
+      if (JSON.stringify(currentConfig) !== JSON.stringify(previousConfig)) {
+        if (this.searchForm && this.config) {
+          this.initializeForm();
+          this.groupFields();
+          this.previousConfig = this.config;
+        }
+      }
+    }
+    // Initialize form if it doesn't exist yet and we have config
+    else if (!this.searchForm && this.config) {
       this.initializeForm();
       this.groupFields();
+      this.previousConfig = this.config;
     }
   }
   
