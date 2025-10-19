@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '../../shared.module';
 import { TableColumn, TableAction, TableConfig, SearchCriteria, PaginationEvent, SortEvent, SearchEvent } from './data-table.interface';
@@ -8,6 +8,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-data-table',
@@ -16,7 +17,7 @@ import { SelectionModel } from '@angular/cdk/collections';
   templateUrl: './data-table.component.html',
   styleUrls: ['./data-table.component.css']
 })
-export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
+export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
   @Input() data: any[] = [];
   @Input() config!: TableConfig;
   @Input() advancedSearchConfig?: AdvancedSearchConfig;
@@ -44,7 +45,11 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   selection = new SelectionModel<any>(true, []);
   displayedColumns: string[] = [];
   
-  constructor() {
+  // Subscriptions for cleanup
+  private subscriptions = new Subscription();
+  private resizeListener: (() => void) | null = null;
+  
+  constructor(private cdr: ChangeDetectorRef) {
     // Initialize dataSource to prevent undefined errors
     this.dataSource = new MatTableDataSource<any>([]);
   }
@@ -56,7 +61,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   currentSearchCriteria: SearchCriteria = {};
   
   // Pagination
-  pageSize = 10;
+  pageSize = 5;
   pageSizeOptions = [5, 10, 25, 50, 100];
   totalCount = 0;
   currentPage = 0;
@@ -72,10 +77,16 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   // Math object for templates
   Math = Math;
   
+  // Debug flag - set to true to enable console logging
+  private DEBUG = false;
+  
   ngOnInit(): void {
     this.initializeTable();
     this.checkScreenSize();
-    window.addEventListener('resize', () => this.checkScreenSize());
+    
+    // Add resize listener with proper cleanup
+    this.resizeListener = () => this.checkScreenSize();
+    window.addEventListener('resize', this.resizeListener);
     
     // Load saved searches from localStorage
     const saved = localStorage.getItem('savedSearches');
@@ -84,13 +95,39 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
     }
   }
   
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.unsubscribe();
+    
+    // Remove resize event listener
+    if (this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+    }
+  }
+  
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.dataSource) {
-      this.dataSource.data = this.data;
+    if (changes['data'] && !changes['data'].firstChange) {
+      if (this.dataSource) {
+        // Update existing dataSource data
+        this.dataSource.data = this.data || [];
+        
+        // Update total count for display
+        if (!this.config.serverSide) {
+          this.totalCount = this.data?.length || 0;
+        }
+        
+        // For client-side pagination, the MatTableDataSource automatically updates
+        // the paginator. We just need to ensure it's connected.
+        if (this.paginator && this.config.pagination !== false && !this.config.serverSide) {
+          // Reset to first page when data changes significantly
+          if (this.paginator.pageIndex > 0 && this.data.length <= this.paginator.pageIndex * this.paginator.pageSize) {
+            this.paginator.firstPage();
+          }
+        }
+      }
     }
     
     if (changes['config'] && changes['config'].currentValue) {
-      console.log('Config changed, reinitializing table');
       this.initializeTable();
     }
   }
@@ -120,8 +157,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
       this.displayedColumns.push('actions');
     }
     
-    console.log('Table initialized with columns:', this.displayedColumns);
-    
     // Initialize data source
     this.dataSource = new MatTableDataSource(this.data);
     
@@ -129,30 +164,86 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
     if (!this.config.serverSide) {
       this.dataSource.filterPredicate = this.createFilter();
     }
+    
+    // Reconnect paginator and sort if they exist (after view init)
+    this.connectPaginatorAndSort();
   }
   
   ngAfterViewInit(): void {
-    if (this.config.pagination !== false && !this.config.serverSide) {
-      this.dataSource.paginator = this.paginator;
+    if (this.DEBUG) {
+      console.log('📊 DataTable ngAfterViewInit:', {
+        hasPaginator: !!this.paginator,
+        hasSort: !!this.sort,
+        dataLength: this.data?.length,
+        pageSize: this.pageSize,
+        config: this.config
+      });
     }
     
-    if (!this.config.serverSide) {
-      this.dataSource.sort = this.sort;
-    } else {
-      // For server-side, handle sort events manually
-      if (this.sort) {
-        this.sort.sortChange.subscribe((sort: Sort) => {
-          this.onServerSort(sort);
-        });
+    // Connect paginator and sort after view initialization
+    this.connectPaginatorAndSort();
+  }
+  
+  /**
+   * Connect paginator and sort to the data source
+   * This should be called after view init and whenever dataSource is recreated
+   */
+  private connectPaginatorAndSort(): void {
+    if (!this.dataSource) {
+      if (this.DEBUG) console.log('⚠️ No dataSource available');
+      return;
+    }
+    
+    // Wait for next tick to ensure view is fully rendered
+    Promise.resolve().then(() => {
+      // Client-side pagination - let MatTableDataSource handle everything
+      if (this.config.pagination !== false && !this.config.serverSide) {
+        if (this.paginator) {
+          // Disconnect first to clear any existing connection
+          this.dataSource.paginator = null;
+          
+          // Reconnect - MatTableDataSource will automatically handle everything
+          this.dataSource.paginator = this.paginator;
+          
+          if (this.DEBUG) {
+            console.log('✅ Paginator connected:', {
+              paginatorConnected: !!this.dataSource.paginator,
+              pageSize: this.paginator.pageSize,
+              length: this.paginator.length,
+              dataLength: this.dataSource.data?.length
+            });
+          }
+        } else {
+          if (this.DEBUG) console.log('⚠️ No paginator ViewChild available');
+        }
       }
       
-      // For server-side, handle pagination events manually
-      if (this.paginator) {
-        this.paginator.page.subscribe((pageEvent: PageEvent) => {
-          this.onServerPageChange(pageEvent);
-        });
+      // Client-side sorting
+      if (!this.config.serverSide) {
+        if (this.sort) {
+          // Disconnect first to clear any existing connection
+          this.dataSource.sort = null;
+          // Reconnect
+          this.dataSource.sort = this.sort;
+        }
+      } else {
+        // For server-side, handle sort events manually
+        if (this.sort && this.sort.sortChange.observers.length === 0) {
+          const sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
+            this.onServerSort(sort);
+          });
+          this.subscriptions.add(sortSub);
+        }
+        
+        // For server-side, handle pagination events manually  
+        if (this.paginator && this.paginator.page.observers.length === 0) {
+          const pageSub = this.paginator.page.subscribe((pageEvent: PageEvent) => {
+            this.onServerPageChange(pageEvent);
+          });
+          this.subscriptions.add(pageSub);
+        }
       }
-    }
+    });
   }
   
   checkScreenSize(): void {

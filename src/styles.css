@@ -106,7 +106,7 @@
   --line-height-relaxed: 1.75;
 
   /* Touch Targets */
-  --min-touch-target: 44px;
+  --min-touch-target: 32px;
   --optimal-touch-target: 48px;
 }
 

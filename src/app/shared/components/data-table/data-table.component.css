@@ -274,7 +274,7 @@
   font-size: 14px;
   white-space: nowrap;
   background: transparent;
-  padding: var(--spacing-md);
+  /* padding: var(--spacing-md); */
 }
 
 .header-content {
@@ -295,7 +295,7 @@
 }
 
 .data-table td {
-  padding: var(--spacing-md);
+  /* padding: var(--spacing-md); */
   vertical-align: middle;
   border-bottom: 1px solid var(--divider-color);
   max-width: 200px;

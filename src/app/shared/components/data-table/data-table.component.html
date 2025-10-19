@@ -250,14 +250,15 @@
     </mat-card>
   </div>
   
-  <!-- Pagination (hidden when no data) -->
+  <!-- Pagination (shown when pagination is enabled) -->
   <mat-paginator 
-    *ngIf="config.pagination !== false && dataSource && dataSource.data && dataSource.data.length > 0"
+    *ngIf="config.pagination !== false && dataSource"
     [pageSize]="pageSize"
     [pageSizeOptions]="pageSizeOptions"
-    [length]="config.serverSide ? totalCount : (dataSource.data ? dataSource.data.length : 0)"
+    [length]="totalCount"
     [pageIndex]="currentPage"
     [disabled]="loading"
+    [hidePageSize]="false"
     showFirstLastButtons>
   </mat-paginator>
   
