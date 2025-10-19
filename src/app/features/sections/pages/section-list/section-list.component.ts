@@ -6,6 +6,7 @@ import { TableConfig, SearchEvent } from '../../../../shared/components/data-tab
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { SectionService } from '../../services/section.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Section } from '../../../../core/models/section.model';
 
@@ -19,7 +20,7 @@ import { Section } from '../../../../core/models/section.model';
       [data]="sections"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Section'"
+      [title]="'Sections'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -42,6 +43,7 @@ export class SectionListComponent implements OnInit {
     columns: [
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
       { key: 'name', header: 'Section ', sortable: true, searchable: true , width: '120px'  },
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'grade_label', header: 'Class (Grade)', sortable: true, width: '120px' },
       { key: 'capacity', header: 'Capacity', type: 'number', align: 'center', width: '100px' },
       { key: 'current_strength', header: 'Students', type: 'number', align: 'center', width: '100px' },
@@ -71,6 +73,15 @@ export class SectionListComponent implements OnInit {
     showReset: true,
     showSaveSearch: false,
     fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        group: 'Basic Information'
+      },
       {
         key: 'code',
         label: 'Section Code',
@@ -108,13 +119,37 @@ export class SectionListComponent implements OnInit {
   constructor(
     private sectionService: SectionService,
     private gradeService: GradeService,
+    private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadGrades();
     this.loadSections();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   /**

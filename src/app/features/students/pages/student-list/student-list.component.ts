@@ -7,6 +7,7 @@ import { AdvancedSearchConfig } from '../../../../shared/components/advanced-sea
 import { StudentCrudService } from '../../services/student-crud.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Student } from '../../../../core/models/student.model';
 import { Section } from '../../../../core/models/section.model';
@@ -21,7 +22,7 @@ import { Section } from '../../../../core/models/section.model';
       [data]="students"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Student Management'"
+      [title]="'Students'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -49,6 +50,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
       { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
       { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
       { key: 'email', header: 'Email', searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
       { key: 'grade', header: 'Class (Grade)', sortable: true, width: '100px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
       { key: 'roll_number', header: 'Roll No.', width: '100px' },
@@ -79,6 +81,15 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     showReset: true,
     showSaveSearch: false,
     fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        // group: 'Basic Information'
+      },
       {
         key: 'admission_number',
         label: 'Admission Number',
@@ -145,14 +156,38 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     private studentCrudService: StudentCrudService,
     private gradeService: GradeService,
     private sectionService: SectionService,
+    private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadGrades();
     this.loadSections();
     this.loadStudents();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   ngAfterViewInit(): void {

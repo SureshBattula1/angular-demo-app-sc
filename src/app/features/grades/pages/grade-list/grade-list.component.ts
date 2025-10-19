@@ -6,6 +6,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { GradeService } from '../../services/grade.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Grade } from '../../../../core/models/grade.model';
 
@@ -19,7 +20,7 @@ import { Grade } from '../../../../core/models/grade.model';
       [data]="grades"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Grade'"
+      [title]="' Classes (Grades)'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -131,10 +132,19 @@ export class GradeListComponent implements OnInit {
   // Advanced Search Configuration
   advancedSearchConfig: AdvancedSearchConfig = {
     title: 'Advanced Grade Search',
-    width: '400px',
+    width: '450px',
     showReset: true,
     showSaveSearch: false,
     fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        group: 'Basic Information'
+      },
       {
         key: 'value',
         label: 'Grade Number',
@@ -171,13 +181,37 @@ export class GradeListComponent implements OnInit {
   
   constructor(
     private gradeService: GradeService,
+    private branchService: BranchService,
     private router: Router,
     private dialog: MatDialog,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadGrades();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   /**

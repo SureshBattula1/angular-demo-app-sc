@@ -5,6 +5,8 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { SubjectService } from '../../services/subject.service';
+import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Subject } from '../../../../core/models/subject.model';
 
@@ -18,7 +20,7 @@ import { Subject } from '../../../../core/models/subject.model';
       [data]="subjects"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Subject Management'"
+      [title]="'Subjects'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -42,6 +44,7 @@ export class SubjectListComponent implements OnInit {
       { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
       { key: 'name', header: 'Subject Name', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'type', header: 'Type', sortable: true, type: 'badge', width: '110px', align: 'center' },
       { key: 'grade_level', header: 'Grade', sortable: true, width: '100px', align: 'center' },
       { key: 'credits', header: 'Credits', type: 'number', align: 'center', width: '100px' },
@@ -71,6 +74,15 @@ export class SubjectListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        group: 'Basic'
+      },
+      {
         key: 'code',
         label: 'Subject Code',
         type: 'text',
@@ -97,10 +109,7 @@ export class SubjectListComponent implements OnInit {
         label: 'Grade Level',
         type: 'select',
         icon: 'school',
-        options: Array.from({length: 12}, (_, i) => ({
-          value: `${i + 1}`,
-          label: `Grade ${i + 1}`
-        })),
+        options: [], // Will be populated dynamically
         group: 'Grade'
       },
       {
@@ -115,12 +124,60 @@ export class SubjectListComponent implements OnInit {
   
   constructor(
     private subjectService: SubjectService,
+    private branchService: BranchService,
+    private gradeService: GradeService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
+    this.loadGrades();
     this.loadSubjects();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
+  }
+  
+  /**
+   * Load grades dynamically for advanced search filter
+   */
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
+          if (gradeField) {
+            gradeField.options = response.data.map(grade => ({
+              value: grade.value,
+              label: grade.label
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+      }
+    });
   }
   
   loadSubjects(): void {
