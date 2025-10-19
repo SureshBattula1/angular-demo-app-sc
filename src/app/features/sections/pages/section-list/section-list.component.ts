@@ -18,7 +18,7 @@ import { Section } from '../../../../core/models/section.model';
       [data]="sections"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Section Management'"
+      [title]="'Section'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -40,7 +40,7 @@ export class SectionListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
-      { key: 'name', header: 'Section Name', sortable: true, searchable: true , width: '120px'  },
+      { key: 'name', header: 'Section ', sortable: true, searchable: true , width: '120px'  },
       { key: 'grade_label', header: 'Class (Grade)', sortable: true, width: '120px' },
       { key: 'capacity', header: 'Capacity', type: 'number', align: 'center', width: '100px' },
       { key: 'current_strength', header: 'Students', type: 'number', align: 'center', width: '100px' },
@@ -105,14 +105,14 @@ export class SectionListComponent implements OnInit {
           { value: '11', label: 'Grade 11' },
           { value: '12', label: 'Grade 12' }
         ],
-        group: 'Grade'
+        group: 'Basic Information'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        group: 'Basic Information'
       }
     ]
   };

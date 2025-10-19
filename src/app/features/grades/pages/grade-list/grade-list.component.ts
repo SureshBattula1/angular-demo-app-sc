@@ -58,7 +58,7 @@ export class GradeListComponent implements OnInit {
       },
       { 
         key: 'label', 
-        header: 'Display Name', 
+        header: 'Name', 
         sortable: true, 
         searchable: true,
         width: '120px'
@@ -145,7 +145,7 @@ export class GradeListComponent implements OnInit {
       },
       {
         key: 'label',
-        label: 'Grade Label',
+        label: 'Grade Name',
         type: 'text',
         placeholder: 'Search by label',
         icon: 'label',
@@ -156,16 +156,16 @@ export class GradeListComponent implements OnInit {
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Filters'
+       group: 'Basic Information'
       },
-      {
-        key: 'min_students',
-        label: 'Minimum Students',
-        type: 'number',
-        placeholder: 'Min students count',
-        icon: 'people',
-        group: 'Statistics'
-      }
+      // {
+      //   key: 'min_students',
+      //   label: 'Minimum Students',
+      //   type: 'number',
+      //   placeholder: 'Min students count',
+      //   icon: 'people',
+      //   group: 'Basic Information'
+      // }
     ]
   };
   

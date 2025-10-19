@@ -156,7 +156,9 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   // Search Functions
   applySearch(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value;
-    this.searchQuery = filterValue.trim();
+    // Keep spaces in the middle and on the right side, only trim leading spaces
+    // Also normalize multiple consecutive spaces to single space for better matching
+    this.searchQuery = filterValue.replace(/^\s+/, '').replace(/\s+/g, ' ');
     
     if (this.config.serverSide) {
       // For server-side, emit search event
@@ -207,7 +209,11 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
           return criteriaValue.includes(dataValue);
         }
         if (typeof criteriaValue === 'string') {
-          return dataValue?.toString().toLowerCase().includes(criteriaValue.toLowerCase());
+          // Normalize spaces for better matching with search text containing spaces
+          // Only trim leading spaces, keep trailing spaces
+          const normalizedData = dataValue?.toString().toLowerCase().replace(/\s+/g, ' ') || '';
+          const normalizedCriteria = criteriaValue.toLowerCase().replace(/^\s+/, '').replace(/\s+/g, ' ');
+          return normalizedData.includes(normalizedCriteria);
         }
         return dataValue === criteriaValue;
       });
@@ -280,13 +286,24 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
           return value?.toString().toLowerCase().includes(filterValue.toString().toLowerCase());
         });
       } catch {
-        // Basic search fallback
-        const searchStr = filter.toLowerCase();
+        // Basic search fallback - supports spaces in search (including trailing spaces)
+        const searchStr = filter.toLowerCase().replace(/^\s+/, '');
+        
+        // If search is empty, show all
+        if (!searchStr) {
+          return true;
+        }
+        
         return this.config.columns
           .filter(col => col.searchable !== false)
           .some(col => {
             const value = data[col.key];
-            return value?.toString().toLowerCase().includes(searchStr);
+            if (value === null || value === undefined) {
+              return false;
+            }
+            // Normalize spaces in the value for better matching
+            const normalizedValue = value.toString().toLowerCase().replace(/\s+/g, ' ');
+            return normalizedValue.includes(searchStr);
           });
       }
     };
@@ -345,6 +362,34 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   getCellValue(row: any, column: TableColumn): any {
     const value = row[column.key];
     
+    // Check if value is null, undefined, or empty string
+    // Note: 0 and false are valid values and should not be replaced with "-"
+    if (value === null || value === undefined || value === '') {
+      return '-';
+    }
+    
+    // Handle arrays - show "-" if empty, otherwise show joined values or count
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return '-';
+      }
+      // If array contains simple values (strings/numbers), join them
+      // Otherwise show count
+      if (value.every(item => typeof item === 'string' || typeof item === 'number')) {
+        return value.join(', ');
+      }
+      return `${value.length} items`;
+    }
+    
+    // Handle objects (but not dates) - show "-" if empty
+    if (typeof value === 'object' && !(value instanceof Date)) {
+      if (Object.keys(value).length === 0) {
+        return '-';
+      }
+      // For non-empty objects, return as-is (might have custom template)
+      return value;
+    }
+    
     if (column.pipe) {
       return this.applyPipe(value, column.pipe);
     }
@@ -355,9 +400,9 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   applyPipe(value: any, pipeName: string): any {
     switch (pipeName) {
       case 'date':
-        return value ? new Date(value).toLocaleDateString() : '';
+        return value ? new Date(value).toLocaleDateString() : '-';
       case 'currency':
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+        return (value !== null && value !== undefined) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value) : '-';
       default:
         return value;
     }

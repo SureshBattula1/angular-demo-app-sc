@@ -50,12 +50,6 @@ export class BranchListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       { 
-        key: 'id', 
-        header: 'ID', 
-        sortable: true, 
-        width: '80px'
-      },
-      { 
         key: 'code', 
         header: 'Code', 
         sortable: true, 
@@ -83,12 +77,6 @@ export class BranchListComponent implements OnInit {
         width: '120px'
       },
       { 
-        key: 'region', 
-        header: 'Region', 
-        sortable: true,
-        width: '120px'
-      },
-      { 
         key: 'phone', 
         header: 'Phone', 
         width: '140px'
@@ -98,26 +86,13 @@ export class BranchListComponent implements OnInit {
         header: 'Principal',
         width: '150px'
       },
-      { 
-        key: 'current_enrollment', 
-        header: 'Enrollment',
-        type: 'number',
-        align: 'center',
-        width: '110px'
-      },
+    
       { 
         key: 'total_capacity', 
         header: 'Capacity',
         type: 'number',
         align: 'center',
         width: '100px'
-      },
-      { 
-        key: 'status', 
-        header: 'Status', 
-        type: 'badge',
-        width: '120px',
-        align: 'center'
       },
       { 
         key: 'is_active', 
@@ -207,24 +182,25 @@ export class BranchListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter city',
         icon: 'location_city',
-        group: 'Location'
+         group: 'Basic Information'
+        // group: 'Location'
       },
-      {
-        key: 'region',
-        label: 'Region',
-        type: 'text',
-        placeholder: 'Enter region',
-        icon: 'place',
-        group: 'Location'
-      },
-      {
-        key: 'state',
-        label: 'State',
-        type: 'text',
-        placeholder: 'Enter state',
-        icon: 'map',
-        group: 'Location'
-      },
+      // {
+      //   key: 'region',
+      //   label: 'Region',
+      //   type: 'text',
+      //   placeholder: 'Enter region',
+      //   icon: 'place',
+      //   group: 'Location'
+      // },
+      // {
+      //   key: 'state',
+      //   label: 'State',
+      //   type: 'text',
+      //   placeholder: 'Enter state',
+      //   icon: 'map',
+      //   group: 'Location'
+      // },
       {
         key: 'status',
         label: 'Status',
@@ -237,50 +213,50 @@ export class BranchListComponent implements OnInit {
           { value: 'Maintenance', label: 'Maintenance' },
           { value: 'Closed', label: 'Closed' }
         ],
-        group: 'Status'
+        group: 'Basic Information'
       },
-      {
-        key: 'is_active',
-        label: 'Active Only',
-        type: 'checkbox',
-        icon: 'check_circle',
-        group: 'Status'
-      },
-      {
-        key: 'is_main_branch',
-        label: 'Main Branch Only',
-        type: 'checkbox',
-        icon: 'home',
-        group: 'Filters'
-      },
-      {
-        key: 'has_hostel',
-        label: 'Has Hostel',
-        type: 'checkbox',
-        icon: 'hotel',
-        group: 'Facilities'
-      },
-      {
-        key: 'has_transport',
-        label: 'Has Transport',
-        type: 'checkbox',
-        icon: 'directions_bus',
-        group: 'Facilities'
-      },
-      {
-        key: 'has_library',
-        label: 'Has Library',
-        type: 'checkbox',
-        icon: 'local_library',
-        group: 'Facilities'
-      },
-      {
-        key: 'has_lab',
-        label: 'Has Lab',
-        type: 'checkbox',
-        icon: 'biotech',
-        group: 'Facilities'
-      }
+      // {
+      //   key: 'is_active',
+      //   label: 'Active Only',
+      //   type: 'checkbox',
+      //   icon: 'check_circle',
+      //   group: 'Status'
+      // },
+      // {
+      //   key: 'is_main_branch',
+      //   label: 'Main Branch Only',
+      //   type: 'checkbox',
+      //   icon: 'home',
+      //   group: 'Filters'
+      // },
+      // {
+      //   key: 'has_hostel',
+      //   label: 'Has Hostel',
+      //   type: 'checkbox',
+      //   icon: 'hotel',
+      //   group: 'Facilities'
+      // },
+      // {
+      //   key: 'has_transport',
+      //   label: 'Has Transport',
+      //   type: 'checkbox',
+      //   icon: 'directions_bus',
+      //   group: 'Facilities'
+      // },
+      // {
+      //   key: 'has_library',
+      //   label: 'Has Library',
+      //   type: 'checkbox',
+      //   icon: 'local_library',
+      //   group: 'Facilities'
+      // },
+      // {
+      //   key: 'has_lab',
+      //   label: 'Has Lab',
+      //   type: 'checkbox',
+      //   icon: 'biotech',
+      //   group: 'Facilities'
+      // }
     ]
   };
   

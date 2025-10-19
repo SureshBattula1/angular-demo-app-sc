@@ -42,7 +42,7 @@
       <!-- Left Side: Search Section -->
       <div class="search-section" *ngIf="config.searchable">
         <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Search in table...</mat-label>
+          <mat-label>Search...</mat-label>
           <input matInput 
             #searchInput
             placeholder="Search in table..." 
@@ -165,6 +165,10 @@
               {{ getCellValue(row, column) }}
             </span>
             
+            <span *ngIf="column.type === 'number'">
+              {{ getCellValue(row, column) }}
+            </span>
+            
             <span *ngIf="column.type === 'badge'" class="badge">
               {{ getCellValue(row, column) }}
             </span>
@@ -228,7 +232,7 @@
       <mat-card-content>
         <div class="card-field" *ngFor="let column of config.columns">
           <span class="field-label">{{ column.header }}:</span>
-          <span class="field-value">{{ getCellValue(row, column) }}</span>
+          <span class="field-value" [class.number-value]="column.type === 'number'">{{ getCellValue(row, column) }}</span>
         </div>
       </mat-card-content>
       <mat-card-actions *ngIf="config.actions">
