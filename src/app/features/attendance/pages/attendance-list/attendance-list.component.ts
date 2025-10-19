@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, TableColumn, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AttendanceService } from '../../services/attendance.service';
 import { BranchService } from '../../../branches/services/branch.service';
@@ -64,17 +64,7 @@ export class AttendanceListComponent implements OnInit {
   allSections: Section[] = [];
   
   tableConfig: TableConfig = {
-    columns: [
-      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
-      // { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
-      { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
-      { key: 'section', header: 'Section', sortable: true, width: '100px' },
-      { key: 'status', header: 'Status', type: 'badge', width: '120px', align: 'center' },
-      { key: 'remarks', header: 'Remarks', width: '200px' }
-    ],
+    columns: this.getStudentColumns(),
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row) },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row) },
@@ -199,6 +189,61 @@ export class AttendanceListComponent implements OnInit {
     this.loadAttendance();
   }
   
+  getStudentColumns(): TableColumn[] {
+    return [
+      { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
+      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
+      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
+      { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
+      { key: 'section', header: 'Section', sortable: true, width: '100px' },
+      { key: 'status', header: 'Status', type: 'badge', width: '120px', align: 'center' },
+      { key: 'remarks', header: 'Remarks', width: '200px' }
+    ];
+  }
+  
+  getTeacherColumns(): TableColumn[] {
+    return [
+      { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
+      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
+      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'employee_id', header: 'Employee ID', searchable: true, width: '140px' },
+      { key: 'email', header: 'Email', searchable: true, width: '200px' },
+      { key: 'status', header: 'Status', type: 'badge', width: '120px', align: 'center' },
+      { key: 'remarks', header: 'Remarks', width: '200px' }
+    ];
+  }
+  
+  updateTableColumns(type: 'student' | 'teacher'): void {
+    console.log('Updating table columns for type:', type);
+    
+    const newColumns = type === 'student' ? this.getStudentColumns() : this.getTeacherColumns();
+    const newActions = type === 'student' 
+      ? [
+          { icon: 'visibility', label: 'View Details', action: (row: any) => this.viewAttendance(row) },
+          { icon: 'edit', label: 'Edit', color: 'primary' as const, action: (row: any) => this.editAttendance(row) },
+          { icon: 'delete', label: 'Delete', color: 'warn' as const, action: (row: any) => this.deleteAttendance(row) },
+          { icon: 'assessment', label: 'Student Report', color: 'accent' as const, action: (row: any) => this.viewStudentReport(row) }
+        ]
+      : [
+          { icon: 'visibility', label: 'View Details', action: (row: any) => this.viewAttendance(row) },
+          { icon: 'edit', label: 'Edit', color: 'primary' as const, action: (row: any) => this.editAttendance(row) },
+          { icon: 'delete', label: 'Delete', color: 'warn' as const, action: (row: any) => this.deleteAttendance(row) }
+        ];
+    
+    console.log('New columns:', newColumns);
+    console.log('New actions:', newActions);
+    
+    // Create a new tableConfig object to trigger Angular change detection
+    this.tableConfig = {
+      ...this.tableConfig,
+      columns: newColumns,
+      actions: newActions
+    };
+    
+    console.log('Table config updated, columns:', this.tableConfig.columns.length);
+  }
+  
   /**
    * Load all sections for filtering
    */
@@ -285,13 +330,23 @@ export class AttendanceListComponent implements OnInit {
   
   loadAttendance(filters?: Record<string, unknown>): void {
     this.loading = true;
-    this.currentFilters = { ...this.currentFilters, ...filters };
+    
+    // Merge filters and ensure type is always set
+    this.currentFilters = { 
+      type: 'student', // Default to student
+      ...this.currentFilters, 
+      ...filters 
+    };
+    
+    console.log('Loading attendance with filters:', this.currentFilters);
     
     this.attendanceService.getAttendance(this.currentFilters).subscribe({
       next: (response) => {
+        console.log('Attendance response:', response);
         if (response.success && response.data) {
           this.attendanceRecords = response.data;
           this.tableConfig.totalCount = response.meta?.total || response.data.length;
+          console.log('Loaded records:', this.attendanceRecords.length);
         } else {
           this.attendanceRecords = [];
           this.tableConfig.totalCount = 0;
@@ -299,6 +354,7 @@ export class AttendanceListComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
+        console.error('Error loading attendance:', error);
         this.errorHandler.showError(error);
         this.loading = false;
         this.attendanceRecords = [];
@@ -348,23 +404,44 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
+    console.log('Search field changed:', event.field, '=', event.value);
+    
     // Update sections when grade field changes
     if (event.field === 'grade') {
       this.updateSectionOptions(event.value);
     }
+    
+    // Update table columns when type changes
+    if (event.field === 'type') {
+      console.log('Updating table columns for type:', event.value);
+      this.updateTableColumns(event.value as 'student' | 'teacher');
+    }
   }
   
   onAdvancedSearchChange(event: SearchEvent): void {
-    const filters = {
+    console.log('Advanced search changed:', event);
+    
+    const filters: Record<string, any> = {
       ...event.filters,
       search: event.query
     };
+    
+    console.log('Filters to apply:', filters);
+    
+    // Update columns based on type filter
+    if (filters['type']) {
+      console.log('Updating columns for type:', filters['type']);
+      this.updateTableColumns(filters['type'] as 'student' | 'teacher');
+    }
+    
     this.loadAttendance(filters);
   }
   
   onSearchReset(): void {
     // Reset section options to show all sections
     this.updateSectionOptions(null);
+    // Reset to student columns
+    this.updateTableColumns('student');
     // Reload attendance data with default filters
     this.currentFilters = { type: 'student' };
     this.loadAttendance();

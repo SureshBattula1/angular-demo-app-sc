@@ -88,6 +88,11 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
     if (changes['data'] && this.dataSource) {
       this.dataSource.data = this.data;
     }
+    
+    if (changes['config'] && changes['config'].currentValue) {
+      console.log('Config changed, reinitializing table');
+      this.initializeTable();
+    }
   }
   
   initializeTable(): void {
@@ -102,7 +107,9 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
       this.totalCount = this.data.length;
     }
     
-    // Setup columns
+    // Clear and setup columns
+    this.displayedColumns = [];
+    
     if (this.config.selectable) {
       this.displayedColumns.push('select');
     }
@@ -112,6 +119,8 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
     if (this.config.actions && this.config.actions.length > 0) {
       this.displayedColumns.push('actions');
     }
+    
+    console.log('Table initialized with columns:', this.displayedColumns);
     
     // Initialize data source
     this.dataSource = new MatTableDataSource(this.data);

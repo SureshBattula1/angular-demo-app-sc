@@ -1,145 +1,535 @@
-// Using global CSS variables - no import needed
-:host {
-  --spacing-lg: 24px;
-  --spacing-md: 16px;
-  --spacing-xl: 32px;
-  --spacing-sm: 8px;
-  --spacing-xs: 4px;
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --border-radius-md: 8px;
-}
+// This component uses global view-pages.css for consistent styling
+// Only component-specific styles are defined here
 
-.page-container {
-  padding: var(--spacing-lg);
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: var(--spacing-lg);
-  
-  h1 {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin: 0 0 var(--spacing-xs) 0;
-    font-size: 28px;
-    font-weight: 600;
-  }
-  
-  .subtitle {
-    margin: 0;
-    color: var(--text-secondary);
-  }
-}
-
-.filter-card, .students-card, .loading-card {
-  margin-bottom: var(--spacing-lg);
-}
-
-.filter-row {
+.page-title {
   display: flex;
-  gap: var(--spacing-md);
   align-items: center;
-  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #333);
   
-  mat-form-field {
-    flex: 1;
-    min-width: 200px;
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--primary-color, #1976d2);
   }
 }
 
-.stats {
-  margin-left: auto;
-  display: flex;
-  gap: var(--spacing-sm);
+.page-subtitle {
+  margin: 8px 0 0 44px;
+  color: var(--text-secondary, #666);
+  font-size: 14px;
 }
 
+// Type Selector Card
+.type-selector-card {
+  mat-card-content {
+    padding: 16px 24px !important;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.attendance-type-toggle {
+  .mat-button-toggle {
+    min-width: 200px;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Filter Grid
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: start;
+  
+  .load-button {
+    margin-top: 4px;
+    height: 56px;
+  }
+}
+
+// Header Stats
+.header-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.stat-chip {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+  
+  &.stat-success {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+  
+  &.stat-danger {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+}
+
+// Quick Actions
 .quick-actions {
-  padding: var(--spacing-md);
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius-md);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
   
   h3 {
-    margin: 0 0 var(--spacing-sm) 0;
+    margin: 0 0 12px 0;
     font-size: 14px;
     font-weight: 600;
+    color: var(--text-secondary, #666);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
+}
+
+.quick-actions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   
   button {
-    margin-right: var(--spacing-sm);
-    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    
+    &.btn-success {
+      border-color: #4caf50;
+      color: #4caf50;
+      
+      &:hover {
+        background-color: rgba(76, 175, 80, 0.08);
+      }
+    }
+    
+    &.btn-danger {
+      border-color: #f44336;
+      color: #f44336;
+      
+      &:hover {
+        background-color: rgba(244, 67, 54, 0.08);
+      }
+    }
+    
+    &.btn-warning {
+      border-color: #ff9800;
+      color: #ff9800;
+      
+      &:hover {
+        background-color: rgba(255, 152, 0, 0.08);
+      }
+    }
+    
+    &.btn-info {
+      border-color: #2196f3;
+      color: #2196f3;
+      
+      &:hover {
+        background-color: rgba(33, 150, 243, 0.08);
+      }
+    }
+    
+    &.btn-secondary {
+      border-color: #757575;
+      color: #757575;
+      
+      &:hover {
+        background-color: rgba(117, 117, 117, 0.08);
+      }
+    }
+  }
+}
+
+// Attendance Table
+.table-responsive {
+  overflow-x: auto;
+  margin-top: 16px;
+  border-radius: 8px;
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #555;
+    }
   }
 }
 
 .attendance-table {
   width: 100%;
+  border-collapse: collapse;
   
-  .student-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  .mat-mdc-header-cell {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary, #333);
+    padding: 16px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+  }
+  
+  .mat-mdc-cell {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  
+  .mat-mdc-row {
+    transition: background-color 0.2s ease;
     
-    small {
-      color: var(--text-secondary);
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+  }
+}
+
+.person-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  strong {
+    font-size: 14px;
+    color: var(--text-primary, #333);
+  }
+  
+  small {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+  }
+}
+
+.status-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  
+  mat-checkbox {
+    .mat-mdc-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .status-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+  }
+}
+
+.remarks-field {
+  width: 100%;
+  margin: 0;
+  
+  .mat-mdc-text-field-wrapper {
+    padding-bottom: 0;
+  }
+  
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.button-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+// Detail Card Header
+.detail-card {
+  mat-card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-color, #1976d2);
+    
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  mat-card-content {
+    padding: 24px;
+  }
+}
+
+// ========================================
+//   MOBILE RESPONSIVE STYLES
+// ========================================
+
+// Tablet (768px and below)
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 24px;
+    
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+  
+  .page-subtitle {
+    margin-left: 40px;
+    font-size: 13px;
+  }
+  
+  .attendance-type-toggle {
+    .mat-button-toggle {
+      min-width: 150px;
+      font-size: 13px;
+    }
+  }
+  
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-stats {
+    justify-content: flex-start;
+  }
+  
+  .quick-actions {
+    padding: 12px;
+    
+    h3 {
+      font-size: 13px;
+    }
+  }
+  
+  .quick-actions-buttons {
+    gap: 6px;
+    
+    button {
       font-size: 12px;
+      padding: 6px 12px;
+      
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  .detail-card {
+    mat-card-header {
+      padding: 16px;
+    }
+    
+    mat-card-content {
+      padding: 16px;
+    }
+  }
+  
+  .attendance-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 10px 8px;
+      font-size: 13px;
+      
+      &:first-child {
+        padding-left: 12px;
+      }
+      
+      &:last-child {
+        padding-right: 12px;
+      }
     }
   }
   
   .status-checkboxes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    
-    mat-checkbox {
-      margin: 4px 0;
-      
-      .status-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        margin-right: 4px;
-        vertical-align: middle;
-      }
-      
-      ::ng-deep .mdc-checkbox {
-        padding: 0;
-      }
-      
-      ::ng-deep .mdc-form-field {
-        font-size: 13px;
-      }
-    }
-  }
-  
-  mat-form-field {
-    width: 100%;
-    margin-bottom: -1.25em;
-  }
-}
-
-.loading-card {
-  text-align: center;
-  padding: var(--spacing-xl);
-  
-  mat-spinner {
-    margin: 0 auto var(--spacing-md);
-  }
-}
-
-@media (max-width: 960px) {
-  .page-container {
-    padding: var(--spacing-md);
-  }
-  
-  .filter-row {
     flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
     
-    mat-form-field {
+    button {
       width: 100%;
     }
   }
 }
 
+// Mobile (480px and below)
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+    
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  .page-subtitle {
+    margin-left: 36px;
+    font-size: 12px;
+  }
+  
+  .attendance-type-toggle {
+    width: 100%;
+    
+    .mat-button-toggle {
+      width: 50%;
+      min-width: auto;
+      font-size: 12px;
+      
+      mat-icon {
+        margin-right: 4px;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  .stat-chip {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+    
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+  
+  .attendance-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 8px 4px;
+      font-size: 12px;
+    }
+  }
+  
+  .person-info {
+    strong {
+      font-size: 13px;
+    }
+    
+    small {
+      font-size: 11px;
+    }
+  }
+  
+  .detail-card {
+    mat-card-header {
+      padding: 12px;
+    }
+    
+    mat-card-content {
+      padding: 12px;
+    }
+    
+    mat-card-title {
+      font-size: 16px;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+// ========================================
+//   PRINT STYLES
+// ========================================
+
+@media print {
+  .view-action-bar {
+    display: none !important;
+  }
+  
+  .type-selector-card,
+  .form-actions,
+  .quick-actions {
+    display: none !important;
+  }
+  
+  .detail-card {
+    box-shadow: none !important;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+  
+  .attendance-table {
+    .status-checkboxes {
+      mat-checkbox {
+        .mat-checkbox-inner-container {
+          display: none;
+        }
+        
+        .mat-checkbox-label {
+          padding-left: 0;
+        }
+      }
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AttendanceService } from '../../services/attendance.service';
 import { StudentCrudService } from '../../../students/services/student-crud.service';
+import { TeacherService } from '../../../teachers/services/teacher.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
@@ -24,12 +25,15 @@ export class AttendanceFormComponent implements OnInit {
   loading = false;
   submitting = false;
   studentsLoaded = false;
+  teachersLoaded = false;
   
+  attendanceType: 'student' | 'teacher' = 'student';
   branches: any[] = [];
   grades: Grade[] = [];
   sections: Section[] = [];
   allSections: Section[] = []; // Store all sections for filtering
   students: AttendanceStudent[] = [];
+  teachers: any[] = [];
   
   selectedBranch: number | null = null;
   selectedGrade: string | null = null;
@@ -49,6 +53,7 @@ export class AttendanceFormComponent implements OnInit {
   constructor(
     private attendanceService: AttendanceService,
     private studentService: StudentCrudService,
+    private teacherService: TeacherService,
     private branchService: BranchService,
     private gradeService: GradeService,
     private sectionService: SectionService,
@@ -153,22 +158,38 @@ export class AttendanceFormComponent implements OnInit {
     }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
-          this.students = response.data.map((student: any) => ({
-            id: student.user_id || student.id,
-            first_name: student.first_name,
-            last_name: student.last_name,
-            admission_number: student.admission_number,
-            roll_number: student.roll_number,
-            grade: student.grade,
-            section: student.section,
-            status: 'Present',
-            remarks: ''
-          }));
-          this.studentsLoaded = true;
+          console.log('Students API response:', response.data);
+          
+          this.students = response.data.map((student: any) => {
+            const userId = student.user_id || student.id;
+            
+            if (!userId) {
+              console.error('Student without user_id:', student);
+            }
+            
+            return {
+              id: userId,
+              first_name: student.first_name || '',
+              last_name: student.last_name || '',
+              admission_number: student.admission_number || '',
+              roll_number: student.roll_number || '',
+              grade: student.grade || '',
+              section: student.section || '',
+              status: 'Present',
+              remarks: ''
+            };
+          });
+          
+          // Filter out any students without IDs
+          this.students = this.students.filter(s => s.id);
           
           if (this.students.length === 0) {
             this.errorHandler.showWarning('No students found for selected class');
+          } else {
+            console.log('Loaded students:', this.students.length, 'students with IDs');
           }
+          
+          this.studentsLoaded = true;
         }
         this.loading = false;
       },
@@ -179,14 +200,95 @@ export class AttendanceFormComponent implements OnInit {
     });
   }
   
-  setStatusForAll(status: string): void {
-    this.students.forEach(student => {
-      student.status = status as any;
+  loadTeachers(): void {
+    if (!this.selectedBranch) {
+      this.errorHandler.showWarning('Please select branch');
+      return;
+    }
+
+    this.loading = true;
+    this.teachersLoaded = false;
+
+    this.teacherService.getTeachers({
+      branch_id: this.selectedBranch,
+      is_active: true
+    }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          console.log('Teachers API response:', response.data);
+          
+          this.teachers = response.data.map((teacher: any) => {
+            const userId = teacher.user_id || teacher.id;
+            
+            if (!userId) {
+              console.error('Teacher without user_id:', teacher);
+            }
+            
+            return {
+              id: userId,
+              first_name: teacher.first_name || '',
+              last_name: teacher.last_name || '',
+              employee_id: teacher.employee_id || '',
+              email: teacher.email || '',
+              department: teacher.department?.name || 'N/A',
+              status: 'Present',
+              remarks: ''
+            };
+          });
+          
+          // Filter out any teachers without IDs
+          this.teachers = this.teachers.filter(t => t.id);
+          
+          if (this.teachers.length === 0) {
+            this.errorHandler.showWarning('No teachers found for selected branch');
+          } else {
+            console.log('Loaded teachers:', this.teachers.length, 'teachers with IDs');
+          }
+          
+          this.teachersLoaded = true;
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        this.errorHandler.showError(error);
+        this.loading = false;
+      }
     });
+  }
+  
+  onAttendanceTypeChange(): void {
+    this.studentsLoaded = false;
+    this.teachersLoaded = false;
+    this.students = [];
+    this.teachers = [];
+  }
+  
+  loadAttendance(): void {
+    if (this.attendanceType === 'student') {
+      this.loadStudents();
+    } else {
+      this.loadTeachers();
+    }
+  }
+  
+  setStatusForAll(status: string): void {
+    if (this.attendanceType === 'student') {
+      this.students.forEach(student => {
+        student.status = status as any;
+      });
+    } else {
+      this.teachers.forEach(teacher => {
+        teacher.status = status as any;
+      });
+    }
   }
   
   setStudentStatus(student: AttendanceStudent, status: string): void {
     student.status = status as any;
+  }
+  
+  setTeacherStatus(teacher: any, status: string): void {
+    teacher.status = status;
   }
   
   getCheckboxColor(status: string): 'primary' | 'accent' | 'warn' {
@@ -201,33 +303,61 @@ export class AttendanceFormComponent implements OnInit {
       return;
     }
     
-    if (this.students.length === 0) {
+    if (this.attendanceType === 'student' && this.students.length === 0) {
       this.errorHandler.showWarning('No students to mark attendance');
+      return;
+    }
+    
+    if (this.attendanceType === 'teacher' && this.teachers.length === 0) {
+      this.errorHandler.showWarning('No teachers to mark attendance');
       return;
     }
     
     this.submitting = true;
     
     const bulkData: BulkAttendanceRequest = {
-      type: 'student',
+      type: this.attendanceType,
       date: this.selectedDate,
       branch_id: this.selectedBranch,
       academic_year: this.academicYear,
-      attendance: this.students.map(student => ({
-        id: student.id,
-        status: student.status || 'Present',
-        remarks: student.remarks || '',
-        grade_level: student.grade,
-        section: student.section
-      }))
+      attendance: this.attendanceType === 'student' 
+        ? this.students.map(student => {
+            // Ensure id exists
+            if (!student.id) {
+              console.error('Student missing id:', student);
+            }
+            return {
+              id: student.id,
+              status: student.status || 'Present',
+              remarks: student.remarks || '',
+              grade_level: student.grade,
+              section: student.section
+            };
+          })
+        : this.teachers.map(teacher => {
+            // Ensure id exists
+            if (!teacher.id) {
+              console.error('Teacher missing id:', teacher);
+            }
+            return {
+              id: teacher.id,
+              status: teacher.status || 'Present',
+              remarks: teacher.remarks || ''
+            };
+          })
     };
+    
+    // Debug log
+    console.log('Submitting bulk attendance:', bulkData);
     
     this.attendanceService.markBulkAttendance(bulkData).subscribe({
       next: (response: any) => {
         this.submitting = false;
         if (response.success) {
+          const count = response.data?.marked || (this.attendanceType === 'student' ? this.students.length : this.teachers.length);
+          const type = this.attendanceType === 'student' ? 'students' : 'teachers';
           this.errorHandler.showSuccess(
-            `Attendance marked successfully for ${response.data?.marked || this.students.length} students`
+            `Attendance marked successfully for ${count} ${type}`
           );
           
           if (response.data?.errors && response.data.errors.length > 0) {
@@ -252,12 +382,24 @@ export class AttendanceFormComponent implements OnInit {
     return `${student.first_name} ${student.last_name}`;
   }
   
+  getTeacherFullName(teacher: any): string {
+    return `${teacher.first_name} ${teacher.last_name}`;
+  }
+  
   getPresentCount(): number {
-    return this.students.filter(s => s.status === 'Present').length;
+    if (this.attendanceType === 'student') {
+      return this.students.filter(s => s.status === 'Present').length;
+    } else {
+      return this.teachers.filter(t => t.status === 'Present').length;
+    }
   }
   
   getAbsentCount(): number {
-    return this.students.filter(s => s.status === 'Absent').length;
+    if (this.attendanceType === 'student') {
+      return this.students.filter(s => s.status === 'Absent').length;
+    } else {
+      return this.teachers.filter(t => t.status === 'Absent').length;
+    }
   }
   
   private getTodayDate(): string {
