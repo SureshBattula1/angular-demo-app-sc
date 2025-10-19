@@ -122,10 +122,10 @@ export class GradeListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [5, 10, 25, 50],
-    defaultPageSize: 12,
+    defaultPageSize: 25,
     showAddButton: true  // Enable add button for creating new grades
   };
   
@@ -223,8 +223,12 @@ export class GradeListComponent implements OnInit {
     this.gradeService.getGrades(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.grades = response.data;
-          this.tableConfig.totalCount = response.count;
+          this.grades = response.data || [];
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          } else if (response.count) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.count };
+          }
           this.loading = false;
         }
       },
@@ -265,7 +269,8 @@ export class GradeListComponent implements OnInit {
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadGrades();
   }

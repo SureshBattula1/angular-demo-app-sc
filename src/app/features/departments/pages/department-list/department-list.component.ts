@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { DepartmentService } from '../../services/department.service';
 import { BranchService } from '../../../branches/services/branch.service';
@@ -25,6 +25,8 @@ import { Department } from '../../../../core/models/department.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
@@ -60,10 +62,10 @@ export class DepartmentListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -146,9 +148,12 @@ export class DepartmentListComponent implements OnInit {
     
     this.departmentService.getDepartments(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.departments = response.data;
-          this.tableConfig.totalCount = response.data.length;
+        if (response.success) {
+          this.departments = response.data || [];
+          if (response.meta) {
+            // Update config by creating a new reference to trigger Angular change detection
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          }
           this.loading = false;
         }
       },
@@ -159,10 +164,49 @@ export class DepartmentListComponent implements OnInit {
     });
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1, // Backend expects 1-based page numbers
+      per_page: event.pageSize
+    };
+    this.loadDepartments();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    // Map frontend column names to backend column names
+    const columnMapping: Record<string, string> = {
+      'name': 'name',
+      'head': 'head',
+      'branch.name': 'branch_id',
+      'established_date': 'established_date',
+      'students_count': 'students_count',
+      'teachers_count': 'teachers_count',
+      'is_active': 'is_active'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadDepartments();
+  }
+
   onAdvancedSearchChange(event: SearchEvent): void {
+    // Reset to first page when searching
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadDepartments();
   }

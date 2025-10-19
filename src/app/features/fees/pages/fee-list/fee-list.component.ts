@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, TableColumn, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { FeeService } from '../../services/fee.service';
 import { FeeTypeService } from '../../services/fee-type.service';
@@ -87,6 +87,8 @@ import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.m
               (selectionChanged)="onSelectionChange($event)"
               (exportClicked)="onStructureExport($event)"
               (searchChanged)="onSearchChange($event)"
+              (paginationChanged)="onStructurePaginationChange($event)"
+              (sortChanged)="onStructureSortChange($event)"
               (advancedSearchChanged)="onStructuresSearch($event)"
               (searchResetEvent)="onSearchReset()">
             </app-data-table>
@@ -106,6 +108,8 @@ import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.m
               (selectionChanged)="onSelectionChange($event)"
               (exportClicked)="onPaymentExport($event)"
               (searchChanged)="onSearchChange($event)"
+              (paginationChanged)="onPaymentPaginationChange($event)"
+              (sortChanged)="onPaymentSortChange($event)"
               (advancedSearchChanged)="onPaymentsSearch($event)"
               (searchResetEvent)="onSearchReset()">
             </app-data-table>
@@ -125,6 +129,8 @@ import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.m
               (selectionChanged)="onSelectionChange($event)"
               (exportClicked)="onFeeTypeExport($event)"
               (searchChanged)="onSearchChange($event)"
+              (paginationChanged)="onFeeTypePaginationChange($event)"
+              (sortChanged)="onFeeTypeSortChange($event)"
               (advancedSearchChanged)="onFeeTypesSearch($event)"
               (searchResetEvent)="onSearchReset()">
             </app-data-table>
@@ -167,8 +173,10 @@ export class FeeListComponent implements OnInit {
   paymentCount = 0;
   feeTypeCount = 0;
   
-  // Current filters
-  currentFilters: Record<string, unknown> = {};
+  // Current filters for each tab
+  structureFilters: Record<string, unknown> = {};
+  paymentFilters: Record<string, unknown> = {};
+  feeTypeFilters: Record<string, unknown> = {};
   branches: any[] = [];
   grades: any[] = [];
   
@@ -186,7 +194,7 @@ export class FeeListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25
@@ -204,7 +212,7 @@ export class FeeListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25
@@ -325,7 +333,7 @@ export class FeeListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25
@@ -418,12 +426,13 @@ export class FeeListComponent implements OnInit {
   // Load fee structures
   loadFeeStructures(filters: Record<string, any> = {}): void {
     this.loading = true;
+    this.structureFilters = { ...this.structureFilters, ...filters };
     
-    this.feeService.getFeeStructures(filters).subscribe({
+    this.feeService.getFeeStructures(this.structureFilters).subscribe({
       next: (response: any) => {
-        if (response.success && response.data) {
+        if (response.success) {
           // Transform data to add grade_label and amount_formatted
-          this.feeStructures = response.data.map((structure: any) => {
+          this.feeStructures = (response.data || []).map((structure: any) => {
             const gradeObj = this.grades.find((g: any) => g.value === structure.grade);
             return {
               ...structure,
@@ -431,12 +440,18 @@ export class FeeListComponent implements OnInit {
               amount_formatted: `₹${structure.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`
             };
           });
-          this.structureCount = this.feeStructures.length;
-          this.structuresTableConfig.totalCount = this.structureCount;
+          
+          if (response.meta) {
+            this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: response.meta.total };
+            this.structureCount = response.meta.total;
+          } else {
+            this.structureCount = this.feeStructures.length;
+            this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: this.structureCount };
+          }
         } else {
           this.feeStructures = [];
           this.structureCount = 0;
-          this.structuresTableConfig.totalCount = 0;
+          this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: 0 };
         }
         this.loading = false;
       },
@@ -444,7 +459,7 @@ export class FeeListComponent implements OnInit {
         this.errorHandler.showError(error);
         this.feeStructures = [];
         this.structureCount = 0;
-        this.structuresTableConfig.totalCount = 0;
+        this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: 0 };
         this.loading = false;
       }
     });
@@ -453,12 +468,13 @@ export class FeeListComponent implements OnInit {
   // Load fee payments
   loadFeePayments(filters: Record<string, any> = {}): void {
     this.loading = true;
+    this.paymentFilters = { ...this.paymentFilters, ...filters };
     
-    this.feeService.getFeePayments(filters).subscribe({
+    this.feeService.getFeePayments(this.paymentFilters).subscribe({
       next: (response: any) => {
-        if (response.success && response.data) {
+        if (response.success) {
           // Transform data to add student_name, fee_type_name, and amount_formatted
-          this.feePayments = response.data.map((payment: any) => {
+          this.feePayments = (response.data || []).map((payment: any) => {
             // Get student name from relationship
             const studentName = payment.student 
               ? `${payment.student.first_name || ''} ${payment.student.last_name || ''}`.trim()
@@ -480,12 +496,18 @@ export class FeeListComponent implements OnInit {
               amount_formatted: amountFormatted
             };
           });
-          this.paymentCount = this.feePayments.length;
-          this.paymentsTableConfig.totalCount = this.paymentCount;
+          
+          if (response.meta) {
+            this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: response.meta.total };
+            this.paymentCount = response.meta.total;
+          } else {
+            this.paymentCount = this.feePayments.length;
+            this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: this.paymentCount };
+          }
         } else {
           this.feePayments = [];
           this.paymentCount = 0;
-          this.paymentsTableConfig.totalCount = 0;
+          this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: 0 };
         }
         this.loading = false;
       },
@@ -493,7 +515,7 @@ export class FeeListComponent implements OnInit {
         this.errorHandler.showError(error);
         this.feePayments = [];
         this.paymentCount = 0;
-        this.paymentsTableConfig.totalCount = 0;
+        this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: 0 };
         this.loading = false;
       }
     });
@@ -502,17 +524,24 @@ export class FeeListComponent implements OnInit {
   // Load fee types
   loadFeeTypes(filters: Record<string, any> = {}): void {
     this.loading = true;
+    this.feeTypeFilters = { ...this.feeTypeFilters, ...filters };
     
-    this.feeTypeService.getFeeTypes(filters).subscribe({
+    this.feeTypeService.getFeeTypes(this.feeTypeFilters).subscribe({
       next: (response: any) => {
-        if (response.success && response.data) {
-          this.feeTypes = response.data;
-          this.feeTypeCount = this.feeTypes.length;
-          this.feeTypesTableConfig.totalCount = this.feeTypeCount;
+        if (response.success) {
+          this.feeTypes = response.data || [];
+          
+          if (response.meta) {
+            this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: response.meta.total };
+            this.feeTypeCount = response.meta.total;
+          } else {
+            this.feeTypeCount = this.feeTypes.length;
+            this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: this.feeTypeCount };
+          }
         } else {
           this.feeTypes = [];
           this.feeTypeCount = 0;
-          this.feeTypesTableConfig.totalCount = 0;
+          this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: 0 };
         }
         this.loading = false;
       },
@@ -520,7 +549,7 @@ export class FeeListComponent implements OnInit {
         this.errorHandler.showError(error);
         this.feeTypes = [];
         this.feeTypeCount = 0;
-        this.feeTypesTableConfig.totalCount = 0;
+        this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: 0 };
         this.loading = false;
       }
     });
@@ -784,7 +813,8 @@ export class FeeListComponent implements OnInit {
     
     const filters: Record<string, any> = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     
     this.loadFeeStructures(filters);
@@ -795,7 +825,8 @@ export class FeeListComponent implements OnInit {
     
     const filters: Record<string, any> = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     
     this.loadFeePayments(filters);
@@ -806,7 +837,8 @@ export class FeeListComponent implements OnInit {
     
     const filters: Record<string, any> = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     
     this.loadFeeTypes(filters);
@@ -815,12 +847,59 @@ export class FeeListComponent implements OnInit {
   onSearchReset(): void {
     // Load fresh data for active tab
     if (this.activeTab === 'structures') {
+      this.structureFilters = {};
       this.loadFeeStructures();
     } else if (this.activeTab === 'payments') {
+      this.paymentFilters = {};
       this.loadFeePayments();
     } else {
+      this.feeTypeFilters = {};
       this.loadFeeTypes();
     }
+  }
+  
+  // Pagination handlers
+  onStructurePaginationChange(event: PaginationEvent): void {
+    this.loadFeeStructures({
+      page: event.page + 1,
+      per_page: event.pageSize
+    });
+  }
+  
+  onPaymentPaginationChange(event: PaginationEvent): void {
+    this.loadFeePayments({
+      page: event.page + 1,
+      per_page: event.pageSize
+    });
+  }
+  
+  onFeeTypePaginationChange(event: PaginationEvent): void {
+    this.loadFeeTypes({
+      page: event.page + 1,
+      per_page: event.pageSize
+    });
+  }
+  
+  // Sort handlers
+  onStructureSortChange(event: SortEvent): void {
+    this.loadFeeStructures({
+      sort_by: event.field,
+      sort_direction: event.direction
+    });
+  }
+  
+  onPaymentSortChange(event: SortEvent): void {
+    this.loadFeePayments({
+      sort_by: event.field,
+      sort_direction: event.direction
+    });
+  }
+  
+  onFeeTypeSortChange(event: SortEvent): void {
+    this.loadFeeTypes({
+      sort_by: event.field,
+      sort_direction: event.direction
+    });
   }
 
   onFeeTypeExport(format: string): void {

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { SectionService } from '../../services/section.service';
 import { GradeService } from '../../../grades/services/grade.service';
@@ -26,6 +26,8 @@ import { Section } from '../../../../core/models/section.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
@@ -61,10 +63,10 @@ export class SectionListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -198,9 +200,11 @@ export class SectionListComponent implements OnInit {
     
     this.sectionService.getSections(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.sections = response.data;
-          this.tableConfig.totalCount = response.data.length;
+        if (response.success) {
+          this.sections = response.data || [];
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          }
           this.loading = false;
         }
       },
@@ -211,10 +215,48 @@ export class SectionListComponent implements OnInit {
     });
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1,
+      per_page: event.pageSize
+    };
+    this.loadSections();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    const columnMapping: Record<string, string> = {
+      'code': 'code',
+      'name': 'name',
+      'branch.name': 'branch_id',
+      'grade_label': 'grade_level',
+      'capacity': 'capacity',
+      'current_strength': 'current_strength',
+      'room_number': 'room_number',
+      'is_active': 'is_active'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadSections();
+  }
+  
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadSections();
   }

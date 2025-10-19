@@ -22,6 +22,15 @@ export interface GradeListResponse {
   count?: number;
   total?: number;
   message?: string;
+  meta?: {
+    current_page?: number;
+    per_page?: number;
+    total?: number;
+    last_page?: number;
+    from?: number | null;
+    to?: number | null;
+    has_more_pages?: boolean;
+  };
 }
 
 export interface GradeOption {

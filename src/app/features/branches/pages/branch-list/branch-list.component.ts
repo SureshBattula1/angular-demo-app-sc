@@ -283,7 +283,7 @@ export class BranchListComponent implements OnInit {
           this.branches = response.data;
           // Update total count from meta for server-side pagination
           if (response.meta) {
-            this.tableConfig.totalCount = response.meta.total;
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           } else {
             this.tableConfig.totalCount = response.count || response.data.length;
           }

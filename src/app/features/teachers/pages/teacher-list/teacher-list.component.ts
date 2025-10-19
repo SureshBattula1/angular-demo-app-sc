@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { TeacherService } from '../../services/teacher.service';
 import { BranchService } from '../../../branches/services/branch.service';
@@ -25,6 +25,8 @@ import { Teacher } from '../../../../core/models/teacher.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
@@ -60,10 +62,10 @@ export class TeacherListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -146,9 +148,11 @@ export class TeacherListComponent implements OnInit {
     
     this.teacherService.getTeachers(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.teachers = response.data;
-          this.tableConfig.totalCount = response.data.length;
+        if (response.success) {
+          this.teachers = response.data || [];
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          }
           this.loading = false;
         }
       },
@@ -159,10 +163,47 @@ export class TeacherListComponent implements OnInit {
     });
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1,
+      per_page: event.pageSize
+    };
+    this.loadTeachers();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    const columnMapping: Record<string, string> = {
+      'first_name': 'users.first_name',
+      'last_name': 'users.last_name',
+      'email': 'users.email',
+      'phone': 'users.phone',
+      'branch.name': 'branch_id',
+      'role': 'users.role',
+      'is_active': 'users.is_active'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadTeachers();
+  }
+  
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadTeachers();
   }

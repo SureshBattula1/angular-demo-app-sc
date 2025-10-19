@@ -411,12 +411,17 @@ export class AttendanceListComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.studentRecords = response.data || [];
-          this.studentCount = this.studentRecords.length;
-          this.studentTableConfig.totalCount = response.meta?.total || this.studentRecords.length;
+          if (response.meta) {
+            this.studentTableConfig = { ...this.studentTableConfig, totalCount: response.meta.total };
+            this.studentCount = response.meta.total;
+          } else {
+            this.studentCount = this.studentRecords.length;
+            this.studentTableConfig = { ...this.studentTableConfig, totalCount: this.studentRecords.length };
+          }
         } else {
           this.studentRecords = [];
           this.studentCount = 0;
-          this.studentTableConfig.totalCount = 0;
+          this.studentTableConfig = { ...this.studentTableConfig, totalCount: 0 };
         }
         this.loading = false;
       },
@@ -424,7 +429,7 @@ export class AttendanceListComponent implements OnInit {
         this.errorHandler.showError(error);
         this.studentRecords = [];
         this.studentCount = 0;
-        this.studentTableConfig.totalCount = 0;
+        this.studentTableConfig = { ...this.studentTableConfig, totalCount: 0 };
         this.loading = false;
       }
     });
@@ -439,12 +444,17 @@ export class AttendanceListComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.teacherRecords = response.data || [];
-          this.teacherCount = this.teacherRecords.length;
-          this.teacherTableConfig.totalCount = response.meta?.total || this.teacherRecords.length;
+          if (response.meta) {
+            this.teacherTableConfig = { ...this.teacherTableConfig, totalCount: response.meta.total };
+            this.teacherCount = response.meta.total;
+          } else {
+            this.teacherCount = this.teacherRecords.length;
+            this.teacherTableConfig = { ...this.teacherTableConfig, totalCount: this.teacherRecords.length };
+          }
         } else {
           this.teacherRecords = [];
           this.teacherCount = 0;
-          this.teacherTableConfig.totalCount = 0;
+          this.teacherTableConfig = { ...this.teacherTableConfig, totalCount: 0 };
         }
         this.loading = false;
       },
@@ -452,7 +462,7 @@ export class AttendanceListComponent implements OnInit {
         this.errorHandler.showError(error);
         this.teacherRecords = [];
         this.teacherCount = 0;
-        this.teacherTableConfig.totalCount = 0;
+        this.teacherTableConfig = { ...this.teacherTableConfig, totalCount: 0 };
         this.loading = false;
       }
     });

@@ -65,6 +65,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   pageSizeOptions = [5, 10, 25, 50, 100];
   totalCount = 0;
   currentPage = 0;
+  previousPageSize = 5; // Track previous page size to detect changes
   
   // Server-side state
   currentSort: { field: string; direction: 'asc' | 'desc' } | null = null;
@@ -127,14 +128,49 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
       }
     }
     
-    if (changes['config'] && changes['config'].currentValue) {
-      this.initializeTable();
+    if (changes['config']) {
+      // For server-side pagination, update totalCount when config changes
+      if (this.config.serverSide && this.config.totalCount !== undefined) {
+        this.totalCount = this.config.totalCount;
+        // Update paginator length if it exists, but preserve pageSize and pageIndex
+        if (this.paginator) {
+          const currentPageSize = this.paginator.pageSize;
+          const currentPageIndex = this.paginator.pageIndex;
+          
+          this.paginator.length = this.config.totalCount;
+          // Preserve user's selections
+          this.paginator.pageSize = currentPageSize;
+          this.paginator.pageIndex = currentPageIndex;
+          this.pageSize = currentPageSize;
+          this.currentPage = currentPageIndex;
+          
+          if (this.DEBUG) {
+            console.log('📊 Updated paginator from config (preserved user selections):', {
+              totalCount: this.config.totalCount,
+              pageSize: currentPageSize,
+              pageIndex: currentPageIndex
+            });
+          }
+        }
+      }
+      
+      if (changes['config'].currentValue && changes['config'].firstChange) {
+        this.initializeTable();
+      }
     }
   }
   
   initializeTable(): void {
-    // Set page size
-    this.pageSize = this.config.defaultPageSize || 10;
+    // Set page size - preserve user's selection if paginator exists
+    if (this.config.serverSide && this.paginator && this.paginator.pageSize) {
+      // Preserve the user's selected page size
+      this.pageSize = this.paginator.pageSize;
+      this.previousPageSize = this.paginator.pageSize;
+    } else {
+      // Use default page size for initial load
+      this.pageSize = this.config.defaultPageSize || 10;
+      this.previousPageSize = this.pageSize;
+    }
     this.pageSizeOptions = this.config.pageSizeOptions || [5, 10, 25, 50, 100];
     
     // Set total count for server-side pagination
@@ -236,11 +272,36 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         }
         
         // For server-side, handle pagination events manually  
-        if (this.paginator && this.paginator.page.observers.length === 0) {
-          const pageSub = this.paginator.page.subscribe((pageEvent: PageEvent) => {
-            this.onServerPageChange(pageEvent);
-          });
-          this.subscriptions.add(pageSub);
+        if (this.paginator) {
+          // Only set initial configuration if paginator hasn't been configured yet
+          // This preserves user's page size selection across data reloads
+          if (!this.paginator.length) {
+            this.paginator.length = this.totalCount;
+            this.paginator.pageSize = this.pageSize;
+            this.paginator.pageIndex = this.currentPage;
+          } else {
+            // Update only the length, preserve user's pageSize and pageIndex
+            this.paginator.length = this.totalCount;
+            // Keep the user's selected pageSize
+            this.pageSize = this.paginator.pageSize;
+            this.currentPage = this.paginator.pageIndex;
+          }
+          
+          if (this.paginator.page.observers.length === 0) {
+            const pageSub = this.paginator.page.subscribe((pageEvent: PageEvent) => {
+              this.onServerPageChange(pageEvent);
+            });
+            this.subscriptions.add(pageSub);
+          }
+          
+          if (this.DEBUG) {
+            console.log('✅ Server-side paginator configured:', {
+              length: this.paginator.length,
+              pageSize: this.paginator.pageSize,
+              pageIndex: this.paginator.pageIndex,
+              totalCount: this.totalCount
+            });
+          }
         }
       }
     });
@@ -571,8 +632,34 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   }
 
   onServerPageChange(pageEvent: PageEvent): void {
-    this.currentPage = pageEvent.pageIndex;
-    this.pageSize = pageEvent.pageSize;
+    // Detect if this is a page size change (not a page navigation)
+    const isPageSizeChange = pageEvent.pageSize !== this.previousPageSize;
+    
+    if (isPageSizeChange) {
+      // When page size changes, reset to first page
+      this.currentPage = 0;
+      this.pageSize = pageEvent.pageSize;
+      this.previousPageSize = pageEvent.pageSize;
+      
+      if (this.DEBUG) {
+        console.log('📏 Page size changed:', {
+          oldSize: this.previousPageSize,
+          newSize: pageEvent.pageSize,
+          resetToPage: 0
+        });
+      }
+    } else {
+      // Normal page navigation
+      this.currentPage = pageEvent.pageIndex;
+      this.pageSize = pageEvent.pageSize;
+      
+      if (this.DEBUG) {
+        console.log('📄 Page changed:', {
+          pageIndex: pageEvent.pageIndex,
+          pageSize: pageEvent.pageSize
+        });
+      }
+    }
     
     this.paginationChanged.emit({
       page: this.currentPage,

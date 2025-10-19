@@ -268,7 +268,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
         if (response.success) {
           this.students = response.data || [];
           if (response.meta) {
-            this.tableConfig.totalCount = response.meta.total;
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           }
           this.loading = false;
         }
