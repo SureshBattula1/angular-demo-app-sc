@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, TableColumn, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AttendanceService } from '../../services/attendance.service';
 import { BranchService } from '../../../branches/services/branch.service';
@@ -74,6 +74,8 @@ import { Section } from '../../../../core/models/section.model';
               (rowClicked)="onRowClick($event)"
               (selectionChanged)="onSelectionChange($event)"
               (exportClicked)="onExport($event)"
+              (paginationChanged)="onPaginationChange($event)"
+              (sortChanged)="onSortChange($event)"
               (searchChanged)="onSearchChange($event)"
               (searchFieldChanged)="onSearchFieldChanged($event)"
               (advancedSearchChanged)="onAdvancedSearchChange($event)"
@@ -94,6 +96,8 @@ import { Section } from '../../../../core/models/section.model';
               (rowClicked)="onRowClick($event)"
               (selectionChanged)="onSelectionChange($event)"
               (exportClicked)="onExport($event)"
+              (paginationChanged)="onPaginationChange($event)"
+              (sortChanged)="onSortChange($event)"
               (searchChanged)="onSearchChange($event)"
               (searchFieldChanged)="onSearchFieldChanged($event)"
               (advancedSearchChanged)="onAdvancedSearchChange($event)"
@@ -724,13 +728,68 @@ export class AttendanceListComponent implements OnInit {
     // Note: Type changes are now handled by tab switching
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1, // Backend expects 1-based page numbers
+      per_page: event.pageSize
+    };
+    
+    // Reload data for active tab
+    if (this.activeTab === 'student') {
+      this.loadStudentAttendance(this.currentFilters);
+    } else {
+      this.loadTeacherAttendance(this.currentFilters);
+    }
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    // Map frontend column names to backend column names
+    const columnMapping: Record<string, string> = {
+      'date': this.activeTab === 'student' ? 'student_attendance.date' : 'teacher_attendance.date',
+      'first_name': 'users.first_name',
+      'last_name': 'users.last_name',
+      'admission_number': 'students.admission_number',
+      'grade_label': 'students.grade',
+      'section': 'students.section',
+      'status': this.activeTab === 'student' ? 'student_attendance.status' : 'teacher_attendance.status',
+      'employee_id': 'teachers.employee_id'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    
+    // Reload data for active tab
+    if (this.activeTab === 'student') {
+      this.loadStudentAttendance(this.currentFilters);
+    } else {
+      this.loadTeacherAttendance(this.currentFilters);
+    }
+  }
+
   onAdvancedSearchChange(event: SearchEvent): void {
     console.log('Advanced search changed:', event);
     
+    // Reset to first page when searching
     const filters: Record<string, any> = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
+    
+    // Save current filters
+    this.currentFilters = filters;
     
     console.log('Filters to apply:', filters);
     

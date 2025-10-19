@@ -18,6 +18,9 @@ export interface ApiResponse<T = unknown> {
     per_page?: number;
     total?: number;
     last_page?: number;
+    from?: number | null;
+    to?: number | null;
+    has_more_pages?: boolean;
   };
   count?: number;
 }

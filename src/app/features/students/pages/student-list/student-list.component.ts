@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { StudentCrudService } from '../../services/student-crud.service';
 import { GradeService } from '../../../grades/services/grade.service';
@@ -28,6 +28,8 @@ import { Section } from '../../../../core/models/section.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
       (searchFieldChanged)="onSearchFieldChanged($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
@@ -46,7 +48,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   tableConfig: TableConfig = {
     columns: [
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      // { key: 'admission_number', header: 'Admission No.', sortable: true, searchable: true, width: '140px' },
+      { key: 'admission_number', header: 'Admission No.', sortable: true, searchable: true, width: '140px' },
       { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
       { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
       { key: 'gender', header: 'Gender', sortable: true, searchable: true },
@@ -73,7 +75,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -285,10 +287,51 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     }
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1, // Backend expects 1-based page numbers
+      per_page: event.pageSize
+    };
+    this.loadStudents();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    // Map frontend column names to backend column names
+    const columnMapping: Record<string, string> = {
+      'first_name': 'users.first_name',
+      'last_name': 'users.last_name',
+      'admission_number': 'students.admission_number',
+      'roll_number': 'students.roll_number',
+      'gender': 'students.gender',
+      'grade_label': 'students.grade',
+      'section': 'students.section',
+      'student_status': 'students.student_status',
+      'branch.name': 'branches.name'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadStudents();
+  }
+
   onAdvancedSearchChange(event: SearchEvent): void {
+    // Reset to first page when searching
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadStudents();
   }

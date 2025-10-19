@@ -99,11 +99,17 @@ export interface BranchStats {
 export interface BranchListResponse {
   success: boolean;
   data: Branch[];
-  count: number;
+  count?: number;
   total?: number;
-  current_page?: number;
-  last_page?: number;
-  per_page?: number;
+  meta?: {
+    current_page?: number;
+    per_page?: number;
+    total?: number;
+    last_page?: number;
+    from?: number | null;
+    to?: number | null;
+    has_more_pages?: boolean;
+  };
 }
 
 export interface BranchFormData {

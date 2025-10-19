@@ -133,10 +133,10 @@ export class BranchListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
-    pageSizeOptions: [5, 10, 25, 50, 100],
-    defaultPageSize: 10
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25
   };
   
   // Advanced Search Configuration
@@ -272,7 +272,7 @@ export class BranchListComponent implements OnInit {
   }
   
   /**
-   * Load branches from server
+   * Load branches from server with pagination and sorting
    */
   loadBranches(): void {
     this.loading = true;
@@ -281,7 +281,12 @@ export class BranchListComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.branches = response.data;
-          this.tableConfig.totalCount = response.count;
+          // Update total count from meta for server-side pagination
+          if (response.meta) {
+            this.tableConfig.totalCount = response.meta.total;
+          } else {
+            this.tableConfig.totalCount = response.count || response.data.length;
+          }
           this.loading = false;
         }
       },
@@ -308,9 +313,19 @@ export class BranchListComponent implements OnInit {
    * Handle sort changes
    */
   onSortChange(event: SortEvent): void {
+    // Map frontend column names to backend column names if needed
+    const columnMapping: Record<string, string> = {
+      // Most branch columns match directly, but add mappings if needed
+      'is_active': 'is_active',
+      'branch_type': 'branch_type',
+      'total_capacity': 'total_capacity'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
     this.currentFilters = {
       ...this.currentFilters,
-      sort_by: event.field,
+      sort_by: sortColumn,
       sort_direction: event.direction
     };
     this.loadBranches();
@@ -320,9 +335,11 @@ export class BranchListComponent implements OnInit {
    * Handle advanced search changes
    */
   onAdvancedSearchChange(event: SearchEvent): void {
+    // Reset to first page when searching
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadBranches();
   }
