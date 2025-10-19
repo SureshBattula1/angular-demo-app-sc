@@ -17,11 +17,14 @@ export class AttendanceViewComponent implements OnInit {
   loading = false;
   attendanceId?: number;
   studentId?: number;
+  teacherId?: number;
   showReport = false;
+  reportType: 'student' | 'teacher' = 'student';
   attendance?: StudentAttendance | TeacherAttendance;
-  attendanceHistory: StudentAttendance[] = [];
+  attendanceHistory: any[] = [];
   summary: any = null;
   studentInfo: any = null;
+  teacherInfo: any = null;
   
   constructor(
     private route: ActivatedRoute,
@@ -38,10 +41,16 @@ export class AttendanceViewComponent implements OnInit {
         // Check if we need to show report
         this.route.queryParams.subscribe(queryParams => {
           this.showReport = queryParams['report'] === 'true';
+          this.reportType = queryParams['type'] || 'student';
           
           if (this.showReport) {
-            this.studentId = this.attendanceId;
-            this.loadStudentReport();
+            if (this.reportType === 'student') {
+              this.studentId = this.attendanceId;
+              this.loadStudentReport();
+            } else {
+              this.teacherId = this.attendanceId;
+              this.loadTeacherReport();
+            }
           } else {
             this.loadAttendance();
           }
@@ -110,6 +119,60 @@ export class AttendanceViewComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading student report:', error);
+        this.errorHandler.showError(error);
+        this.loading = false;
+        this.attendanceHistory = [];
+        this.summary = {
+          total_days: 0,
+          present: 0,
+          absent: 0,
+          late: 0,
+          percentage: 0
+        };
+      }
+    });
+  }
+  
+  loadTeacherReport(): void {
+    if (!this.teacherId) return;
+    
+    this.loading = true;
+    
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    this.attendanceService.getTeacherAttendance(this.teacherId, {
+      from_date: firstDayOfMonth.toISOString().split('T')[0],
+      to_date: now.toISOString().split('T')[0]
+    }).subscribe({
+      next: (response: any) => {
+        console.log('Teacher Attendance Response:', response);
+        
+        if (response.success) {
+          // Backend returns: { success: true, data: [...], summary: {...}, teacher: {...} }
+          this.attendanceHistory = response.data || [];
+          this.summary = response.summary || {
+            total_days: 0,
+            present: 0,
+            absent: 0,
+            late: 0,
+            leaves: 0,
+            percentage: 0
+          };
+          this.teacherInfo = response.teacher || null;
+          
+          console.log('Loaded teacher history:', this.attendanceHistory.length, 'records');
+          console.log('Summary:', this.summary);
+          console.log('Teacher Info:', this.teacherInfo);
+        } else {
+          this.attendanceHistory = [];
+          this.summary = null;
+          this.teacherInfo = null;
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading teacher report:', error);
         this.errorHandler.showError(error);
         this.loading = false;
         this.attendanceHistory = [];

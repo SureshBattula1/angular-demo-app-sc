@@ -228,7 +228,8 @@ export class AttendanceListComponent implements OnInit {
       : [
           { icon: 'visibility', label: 'View Details', action: (row: any) => this.viewAttendance(row) },
           { icon: 'edit', label: 'Edit', color: 'primary' as const, action: (row: any) => this.editAttendance(row) },
-          { icon: 'delete', label: 'Delete', color: 'warn' as const, action: (row: any) => this.deleteAttendance(row) }
+          { icon: 'delete', label: 'Delete', color: 'warn' as const, action: (row: any) => this.deleteAttendance(row) },
+          { icon: 'assessment', label: 'Teacher Report', color: 'accent' as const, action: (row: any) => this.viewTeacherReport(row) }
         ];
     
     console.log('New columns:', newColumns);
@@ -471,7 +472,17 @@ export class AttendanceListComponent implements OnInit {
   
   viewStudentReport(attendance: StudentAttendance | TeacherAttendance): void {
     if ('student_id' in attendance) {
-      this.router.navigate(['/attendance/view', attendance.student_id], { queryParams: { report: true } });
+      this.router.navigate(['/attendance/view', attendance.student_id], { 
+        queryParams: { report: 'true', type: 'student' } 
+      });
+    }
+  }
+  
+  viewTeacherReport(attendance: StudentAttendance | TeacherAttendance): void {
+    if ('teacher_id' in attendance) {
+      this.router.navigate(['/attendance/view', attendance.teacher_id], { 
+        queryParams: { report: 'true', type: 'teacher' } 
+      });
     }
   }
   

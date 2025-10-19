@@ -103,6 +103,25 @@ export class AttendanceService {
   }
 
   /**
+   * Get teacher attendance history
+   */
+  getTeacherAttendance(teacherId: number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: TeacherAttendance[]; summary: any }>> {
+    let params = new HttpParams();
+    
+    if (filters?.from_date) {
+      params = params.set('from_date', filters.from_date);
+    }
+    if (filters?.to_date) {
+      params = params.set('to_date', filters.to_date);
+    }
+
+    return this.http.get<ApiResponse<{ data: TeacherAttendance[]; summary: any }>>(
+      `${this.apiUrl}/teacher/${teacherId}`,
+      { params }
+    );
+  }
+
+  /**
    * Generate attendance report
    */
   getReport(filters: {
