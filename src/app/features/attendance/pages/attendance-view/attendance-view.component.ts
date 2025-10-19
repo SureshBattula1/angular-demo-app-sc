@@ -20,6 +20,7 @@ export class AttendanceViewComponent implements OnInit {
   teacherId?: number;
   showReport = false;
   reportType: 'student' | 'teacher' = 'student';
+  returnTab: 'student' | 'teacher' = 'student';
   attendance?: StudentAttendance | TeacherAttendance;
   attendanceHistory: any[] = [];
   summary: any = null;
@@ -42,6 +43,7 @@ export class AttendanceViewComponent implements OnInit {
         this.route.queryParams.subscribe(queryParams => {
           this.showReport = queryParams['report'] === 'true';
           this.reportType = queryParams['type'] || 'student';
+          this.returnTab = queryParams['returnTab'] || queryParams['type'] || 'student';
           
           if (this.showReport) {
             if (this.reportType === 'student') {
@@ -223,12 +225,16 @@ export class AttendanceViewComponent implements OnInit {
   }
   
   onBack(): void {
-    this.router.navigate(['/attendance']);
+    this.router.navigate(['/attendance'], {
+      queryParams: { tab: this.returnTab }
+    });
   }
   
   onEdit(): void {
     if (this.attendanceId) {
-      this.router.navigate(['/attendance/edit', this.attendanceId]);
+      this.router.navigate(['/attendance/edit', this.attendanceId], {
+        queryParams: { type: this.reportType, returnTab: this.returnTab }
+      });
     }
   }
   

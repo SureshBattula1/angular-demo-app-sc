@@ -1,0 +1,371 @@
+/* ========================================
+   TABS COMPONENT - GLOBAL STYLES
+   Mobile Responsive Tabbed Interface
+   ======================================== */
+
+/* Tab Container */
+.tabs-container {
+  background: var(--card-background);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Tab Header */
+.tabs-header {
+  display: flex;
+  border-bottom: 2px solid var(--divider-color);
+  background: var(--gray-50);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.tabs-header::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Individual Tab */
+.tab-item {
+  flex: 1;
+  min-width: 120px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: var(--font-weight-medium, 500);
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-fast);
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  min-height: var(--min-touch-target);
+}
+
+.tab-item:hover {
+  background: var(--gray-100);
+  color: var(--text-primary);
+}
+
+.tab-item.active {
+  color: var(--primary-color);
+  background: var(--white);
+  border-bottom-color: var(--primary-color);
+  font-weight: var(--font-weight-bold, 700);
+}
+
+.tab-item:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
+/* Tab Icon */
+.tab-item mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Tab Badge (for counts) */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--gray-400);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold, 700);
+  margin-left: var(--spacing-xs);
+}
+
+.tab-item.active .tab-badge {
+  background: var(--primary-color);
+}
+
+/* Tab Content */
+.tabs-content {
+  background: var(--white);
+}
+
+.tab-pane {
+  display: none;
+  padding: var(--spacing-lg);
+  animation: fadeInTab var(--transition-normal);
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+@keyframes fadeInTab {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   MOBILE RESPONSIVE (Mobile-First)
+   ======================================== */
+
+/* Extra Small Devices (Portrait Phones, < 600px) */
+@media (max-width: 599px) {
+  .tabs-container {
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-sm);
+  }
+
+  .tabs-header {
+    justify-content: flex-start;
+  }
+
+  .tab-item {
+    flex: 0 0 auto;
+    min-width: 100px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 14px;
+  }
+
+  .tab-item mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .tab-pane {
+    padding: var(--spacing-md);
+  }
+
+  /* Stack tab labels on very small screens */
+  .tab-item .tab-label-full {
+    display: none;
+  }
+
+  .tab-item .tab-label-short {
+    display: inline;
+  }
+}
+
+/* Small Devices (Landscape Phones, 600px - 959px) */
+@media (min-width: 600px) and (max-width: 959px) {
+  .tab-item {
+    min-width: 140px;
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .tab-pane {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* Medium Devices and Up (Tablets, 960px+) */
+@media (min-width: 960px) {
+  .tab-item {
+    flex: 1;
+  }
+
+  .tab-item .tab-label-short {
+    display: none;
+  }
+
+  .tab-item .tab-label-full {
+    display: inline;
+  }
+}
+
+/* ========================================
+   TABS VARIANTS
+   ======================================== */
+
+/* Vertical Tabs (for desktop sidebars) */
+.tabs-container.vertical {
+  display: flex;
+}
+
+.tabs-container.vertical .tabs-header {
+  flex-direction: column;
+  border-bottom: none;
+  border-right: 2px solid var(--divider-color);
+  min-width: 200px;
+}
+
+.tabs-container.vertical .tab-item {
+  justify-content: flex-start;
+  text-align: left;
+  border-bottom: none;
+  border-right: 3px solid transparent;
+}
+
+.tabs-container.vertical .tab-item.active {
+  border-right-color: var(--primary-color);
+  border-bottom-color: transparent;
+}
+
+.tabs-container.vertical .tabs-content {
+  flex: 1;
+}
+
+/* Pills Variant */
+.tabs-container.pills .tabs-header {
+  border-bottom: none;
+  background: transparent;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+}
+
+.tabs-container.pills .tab-item {
+  border-radius: var(--radius-md);
+  border-bottom: none;
+}
+
+.tabs-container.pills .tab-item.active {
+  background: var(--primary-color);
+  color: var(--white);
+  border-bottom-color: transparent;
+}
+
+.tabs-container.pills .tab-item:hover {
+  background: var(--primary-light);
+  color: var(--white);
+}
+
+/* Centered Tabs */
+.tabs-header.centered {
+  justify-content: center;
+}
+
+/* Full Width Tabs */
+.tabs-header.full-width .tab-item {
+  flex: 1;
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .tab-item {
+    border: 2px solid transparent;
+  }
+
+  .tab-item.active {
+    border: 2px solid var(--primary-color);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .tab-item,
+  .tab-pane {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.tab-item:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+
+.tab-pane.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  opacity: 0.6;
+}
+
+/* ========================================
+   TABLET OPTIMIZATION (768px - 1024px)
+   ======================================== */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tabs-container {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .tab-item {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .tab-pane {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* ========================================
+   TOUCH DEVICE OPTIMIZATION
+   ======================================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets on touch devices */
+  .tab-item {
+    min-height: var(--optimal-touch-target, 48px);
+    padding: 14px var(--spacing-lg);
+  }
+
+  /* Remove hover effects on touch devices */
+  .tab-item:hover {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+
+  .tab-item.active:hover {
+    background: var(--white);
+    color: var(--primary-color);
+  }
+}
+
+/* ========================================
+   LANDSCAPE MOBILE OPTIMIZATION
+   ======================================== */
+
+@media (max-width: 959px) and (orientation: landscape) {
+  .tabs-container {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .tab-item {
+    padding: 10px var(--spacing-md);
+    font-size: 13px;
+  }
+
+  .tab-pane {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ========================================
+   SAFE AREA SUPPORT (for devices with notch)
+   ======================================== */
+
+@supports (padding: max(0px)) {
+  .tabs-header {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
