@@ -236,15 +236,7 @@ export class FeeListComponent implements OnInit {
         label: 'Fee Type',
         type: 'select',
         icon: 'category',
-        options: [
-          { value: 'Tuition', label: 'Tuition' },
-          { value: 'Library', label: 'Library' },
-          { value: 'Laboratory', label: 'Laboratory' },
-          { value: 'Sports', label: 'Sports' },
-          { value: 'Transport', label: 'Transport' },
-          { value: 'Exam', label: 'Exam' },
-          { value: 'Other', label: 'Other' }
-        ]
+        options: [] // Will be populated dynamically from API
       },
       {
         key: 'academic_year',
@@ -411,6 +403,7 @@ export class FeeListComponent implements OnInit {
     
     this.loadBranches();
     this.loadGrades();
+    this.loadFeeTypesForFilter();
     this.loadFeeStructures();
     this.loadFeePayments();
     this.loadFeeTypes();
@@ -429,7 +422,15 @@ export class FeeListComponent implements OnInit {
     this.feeService.getFeeStructures(filters).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
-          this.feeStructures = response.data;
+          // Transform data to add grade_label and amount_formatted
+          this.feeStructures = response.data.map((structure: any) => {
+            const gradeObj = this.grades.find((g: any) => g.value === structure.grade);
+            return {
+              ...structure,
+              grade_label: gradeObj ? gradeObj.label : `Grade ${structure.grade}`,
+              amount_formatted: `₹${structure.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`
+            };
+          });
           this.structureCount = this.feeStructures.length;
           this.structuresTableConfig.totalCount = this.structureCount;
         } else {
@@ -456,7 +457,29 @@ export class FeeListComponent implements OnInit {
     this.feeService.getFeePayments(filters).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
-          this.feePayments = response.data;
+          // Transform data to add student_name, fee_type_name, and amount_formatted
+          this.feePayments = response.data.map((payment: any) => {
+            // Get student name from relationship
+            const studentName = payment.student 
+              ? `${payment.student.first_name || ''} ${payment.student.last_name || ''}`.trim()
+              : 'N/A';
+            
+            // Get fee type from fee_structure relationship
+            const feeTypeName = payment.fee_structure?.fee_type || 'N/A';
+            
+            // Format amount
+            const amountFormatted = `₹${payment.amount_paid?.toLocaleString('en-IN', { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 2 
+            }) || '0.00'}`;
+            
+            return {
+              ...payment,
+              student_name: studentName,
+              fee_type_name: feeTypeName,
+              amount_formatted: amountFormatted
+            };
+          });
           this.paymentCount = this.feePayments.length;
           this.paymentsTableConfig.totalCount = this.paymentCount;
         } else {
@@ -506,9 +529,9 @@ export class FeeListComponent implements OnInit {
   getStructureColumns(): TableColumn[] {
     return [
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      { key: 'grade', header: 'Grade', sortable: true, searchable: true, width: '100px' },
-      { key: 'fee_type', header: 'Fee Type', sortable: true, searchable: true, width: '130px' },
-      { key: 'amount', header: 'Amount', sortable: true, width: '120px', align: 'right' },
+      { key: 'grade_label', header: 'Grade', sortable: true, searchable: true, width: '120px' },
+      { key: 'fee_type', header: 'Fee Type', sortable: true, searchable: true, width: '150px' },
+      { key: 'amount_formatted', header: 'Amount', sortable: true, width: '120px', align: 'right' },
       { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
       { key: 'due_date', header: 'Due Date', type: 'date', sortable: true, width: '120px' },
       { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
@@ -519,9 +542,9 @@ export class FeeListComponent implements OnInit {
     return [
       { key: 'receipt_number', header: 'Receipt No.', sortable: true, searchable: true, width: '140px' },
       { key: 'payment_date', header: 'Payment Date', type: 'date', sortable: true, width: '130px' },
-      { key: 'student_name', header: 'Student', sortable: true, searchable: true },
-      { key: 'fee_type', header: 'Fee Type', sortable: true, width: '120px' },
-      { key: 'amount_paid', header: 'Amount', sortable: true, width: '110px', align: 'right' },
+      { key: 'student_name', header: 'Student', sortable: true, searchable: true, width: '200px' },
+      { key: 'fee_type_name', header: 'Fee Type', sortable: true, width: '150px' },
+      { key: 'amount_formatted', header: 'Amount', sortable: true, width: '120px', align: 'right' },
       { key: 'payment_method', header: 'Method', sortable: true, width: '100px' },
       { key: 'payment_status', header: 'Status', type: 'badge', width: '120px', align: 'center' }
     ];
@@ -585,6 +608,7 @@ export class FeeListComponent implements OnInit {
     this.gradeService.getGrades().subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          this.grades = response.data;
           const gradeOptions = response.data.map(grade => ({
             value: grade.value,
             label: grade.label
@@ -599,6 +623,31 @@ export class FeeListComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading grades:', error);
+      }
+    });
+  }
+
+  /**
+   * Load fee types for advanced search filter
+   */
+  loadFeeTypesForFilter(): void {
+    this.feeTypeService.getFeeTypes({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          const feeTypeOptions = response.data.map((feeType: any) => ({
+            value: feeType.name,
+            label: feeType.name
+          }));
+          
+          // Update structure search config with fee types
+          const structureFeeTypeField = this.structuresSearchConfig.fields.find(f => f.key === 'fee_type');
+          if (structureFeeTypeField) {
+            structureFeeTypeField.options = feeTypeOptions;
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading fee types for filter:', error);
       }
     });
   }

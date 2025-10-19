@@ -4,7 +4,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { FeeService } from '../../services/fee.service';
+import { FeeTypeService } from '../../services/fee-type.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FeeStructure } from '../../../../core/models/fee.model';
 
@@ -19,19 +21,13 @@ export class FeeStructureFormComponent implements OnInit {
   feeForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
+  submitting = false;
   feeStructureId?: string | number;
+  returnTab = 'structures';
   
   branches: any[] = [];
-  grades = Array.from({length: 12}, (_, i) => (i + 1).toString());
-  feeTypes = [
-    { value: 'Tuition', label: 'Tuition Fee' },
-    { value: 'Library', label: 'Library Fee' },
-    { value: 'Laboratory', label: 'Laboratory Fee' },
-    { value: 'Sports', label: 'Sports Fee' },
-    { value: 'Transport', label: 'Transport Fee' },
-    { value: 'Exam', label: 'Examination Fee' },
-    { value: 'Other', label: 'Other Fee' }
-  ];
+  grades: any[] = [];
+  feeTypes: any[] = [];
   recurrencePeriods = [
     { value: 'Monthly', label: 'Monthly' },
     { value: 'Quarterly', label: 'Quarterly' },
@@ -43,13 +39,17 @@ export class FeeStructureFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private feeService: FeeService,
+    private feeTypeService: FeeTypeService,
     private branchService: BranchService,
+    private gradeService: GradeService,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadGrades();
+    this.loadFeeTypes();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -57,6 +57,10 @@ export class FeeStructureFormComponent implements OnInit {
         this.isEditMode = true;
         this.loadFeeStructure();
       }
+    });
+    
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['tab'] || 'structures';
     });
   }
   
@@ -90,12 +94,42 @@ export class FeeStructureFormComponent implements OnInit {
   loadBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
-        if (response.success) {
+        if (response.success && response.data) {
           this.branches = response.data;
         }
       },
       error: (error: any) => {
-        this.errorHandler.showError(error);
+        console.error('Error loading branches:', error);
+      }
+    });
+  }
+  
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.grades = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+      }
+    });
+  }
+  
+  loadFeeTypes(): void {
+    this.feeTypeService.getFeeTypes({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.feeTypes = response.data.map((ft: any) => ({
+            value: ft.name,
+            label: ft.name,
+            code: ft.code
+          }));
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading fee types:', error);
       }
     });
   }
@@ -107,8 +141,8 @@ export class FeeStructureFormComponent implements OnInit {
     
     this.feeService.getFeeStructureById(this.feeStructureId).subscribe({
       next: (response: any) => {
-        if (response.success || response.data) {
-          const structure = response.data || response;
+        if (response.success && response.data) {
+          const structure = response.data;
           this.feeForm.patchValue(structure);
         }
         this.isLoading = false;
@@ -116,7 +150,9 @@ export class FeeStructureFormComponent implements OnInit {
       error: (error) => {
         this.errorHandler.showError(error);
         this.isLoading = false;
-        this.router.navigate(['/fees']);
+        this.router.navigate(['/fees'], {
+          queryParams: { tab: this.returnTab }
+        });
       }
     });
   }
@@ -128,7 +164,7 @@ export class FeeStructureFormComponent implements OnInit {
       return;
     }
     
-    this.isLoading = true;
+    this.submitting = true;
     const formData = this.feeForm.value;
     
     const request = this.isEditMode && this.feeStructureId
@@ -137,23 +173,27 @@ export class FeeStructureFormComponent implements OnInit {
     
     request.subscribe({
       next: (response) => {
-        this.isLoading = false;
+        this.submitting = false;
         if (response.success) {
           this.errorHandler.showSuccess(
             this.isEditMode ? 'Fee structure updated successfully' : 'Fee structure created successfully'
           );
-          this.router.navigate(['/fees']);
+          this.router.navigate(['/fees'], {
+            queryParams: { tab: this.returnTab }
+          });
         }
       },
       error: (error) => {
-        this.isLoading = false;
+        this.submitting = false;
         this.errorHandler.showError(error);
       }
     });
   }
   
   onCancel(): void {
-    this.router.navigate(['/fees']);
+    this.router.navigate(['/fees'], {
+      queryParams: { tab: this.returnTab }
+    });
   }
   
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -201,4 +241,3 @@ export class FeeStructureFormComponent implements OnInit {
     return labels[fieldName] || fieldName;
   }
 }
-

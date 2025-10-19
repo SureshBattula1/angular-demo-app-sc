@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { FeeService } from '../../services/fee.service';
 import { StudentCrudService } from '../../../students/services/student-crud.service';
@@ -17,6 +17,7 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 export class FeePaymentFormComponent implements OnInit {
   paymentForm!: FormGroup;
   isLoading = false;
+  returnTab = 'payments';
   
   students: any[] = [];
   feeStructures: any[] = [];
@@ -40,6 +41,7 @@ export class FeePaymentFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private feeService: FeeService,
     private studentService: StudentCrudService,
     private errorHandler: ErrorHandlerService
@@ -48,6 +50,11 @@ export class FeePaymentFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadStudents();
+    
+    // Get return tab from query params
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['tab'] || 'payments';
+    });
   }
   
   initForm(): void {
@@ -140,7 +147,9 @@ export class FeePaymentFormComponent implements OnInit {
         this.isLoading = false;
         if (response.success) {
           this.errorHandler.showSuccess('Payment recorded successfully');
-          this.router.navigate(['/fees']);
+          this.router.navigate(['/fees'], {
+            queryParams: { tab: this.returnTab }
+          });
         }
       },
       error: (error) => {
@@ -151,7 +160,9 @@ export class FeePaymentFormComponent implements OnInit {
   }
   
   onCancel(): void {
-    this.router.navigate(['/fees']);
+    this.router.navigate(['/fees'], {
+      queryParams: { tab: this.returnTab }
+    });
   }
   
   private markFormGroupTouched(formGroup: FormGroup): void {

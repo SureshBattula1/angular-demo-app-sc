@@ -1,0 +1,222 @@
+<div class="view-container" *ngIf="!loading && feePayment">
+  
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onPrint()">
+        <mat-icon>print</mat-icon>
+        Print Receipt
+      </button>
+      <button mat-raised-button color="accent" (click)="onDownloadReceipt()">
+        <mat-icon>download</mat-icon>
+        Download PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">receipt_long</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Payment Receipt</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>confirmation_number</mat-icon>
+              {{ feePayment.receipt_number || 'N/A' }}
+            </span>
+            <span *ngIf="feePayment.student">
+              <mat-icon>person</mat-icon>
+              {{ feePayment.student.first_name }} {{ feePayment.student.last_name }}
+            </span>
+            <span>
+              <mat-icon>event</mat-icon>
+              {{ feePayment.payment_date | date:'mediumDate' }}
+            </span>
+            <span class="status-badge" [ngClass]="getPaymentStatusClass(feePayment.payment_status)">
+              <mat-icon>circle</mat-icon>
+              {{ feePayment.payment_status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Details Grid -->
+  <div class="view-details-grid">
+    <!-- Payment Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>payment</mat-icon>
+          Payment Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Receipt Number:</span>
+          <span class="detail-value receipt-number">{{ feePayment.receipt_number || 'N/A' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Payment Date:</span>
+          <span class="detail-value">{{ feePayment.payment_date | date:'full' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Amount Paid:</span>
+          <span class="detail-value amount-value">₹{{ feePayment.amount_paid | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.discount_amount && feePayment.discount_amount > 0">
+          <span class="detail-label">Discount:</span>
+          <span class="detail-value discount-value">-₹{{ feePayment.discount_amount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.late_fee && feePayment.late_fee > 0">
+          <span class="detail-label">Late Fee:</span>
+          <span class="detail-value late-fee-value">+₹{{ feePayment.late_fee | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Total Amount:</span>
+          <span class="detail-value total-amount">₹{{ feePayment.total_amount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Payment Status:</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="getPaymentStatusClass(feePayment.payment_status)">
+              {{ feePayment.payment_status }}
+            </span>
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Student Information -->
+    <mat-card class="detail-card" *ngIf="feePayment.student">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Student Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Student Name:</span>
+          <span class="detail-value">{{ feePayment.student.first_name }} {{ feePayment.student.last_name }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.student.admission_number">
+          <span class="detail-label">Admission Number:</span>
+          <span class="detail-value">{{ feePayment.student.admission_number }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.student.email">
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">{{ feePayment.student.email }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.student.phone">
+          <span class="detail-label">Phone:</span>
+          <span class="detail-value">{{ feePayment.student.phone }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Fee Structure Details -->
+    <mat-card class="detail-card" *ngIf="feePayment.fee_structure">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>account_balance</mat-icon>
+          Fee Structure Details
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Fee Type:</span>
+          <span class="detail-value">
+            <span class="fee-type-badge">{{ feePayment.fee_structure.fee_type }}</span>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Grade:</span>
+          <span class="detail-value">Grade {{ feePayment.fee_structure.grade }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Academic Year:</span>
+          <span class="detail-value">{{ feePayment.fee_structure.academic_year }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.fee_structure.due_date">
+          <span class="detail-label">Due Date:</span>
+          <span class="detail-value">{{ feePayment.fee_structure.due_date | date:'mediumDate' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Transaction Details -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>receipt</mat-icon>
+          Transaction Details
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Payment Method:</span>
+          <span class="detail-value">
+            <span class="payment-method-badge">
+              <mat-icon>{{ getPaymentMethodIcon(feePayment.payment_method) }}</mat-icon>
+              {{ feePayment.payment_method }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.transaction_id">
+          <span class="detail-label">Transaction ID:</span>
+          <span class="detail-value transaction-id">{{ feePayment.transaction_id }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.remarks">
+          <span class="detail-label">Remarks:</span>
+          <span class="detail-value">{{ feePayment.remarks }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- System Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          System Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Payment ID:</span>
+          <span class="detail-value">#{{ feePayment.id }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.created_at">
+          <span class="detail-label">Created At:</span>
+          <span class="detail-value">{{ feePayment.created_at | date:'medium' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.updated_at">
+          <span class="detail-label">Last Updated:</span>
+          <span class="detail-value">{{ feePayment.updated_at | date:'medium' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feePayment.created_by">
+          <span class="detail-label">Created By:</span>
+          <span class="detail-value">{{ feePayment.created_by }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- Loading State -->
+<div class="view-loading-container" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+  <p>Loading payment information...</p>
+</div>
+

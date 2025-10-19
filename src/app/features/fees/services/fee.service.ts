@@ -81,6 +81,12 @@ export class FeeService {
     );
   }
 
+  getFeePaymentById(id: string | number): Observable<ApiResponse<FeePayment>> {
+    return this.http.get<ApiResponse<FeePayment>>(
+      `${this.apiUrl}/fee-payments/${id}`
+    );
+  }
+
   recordPayment(payment: Partial<FeePayment>): Observable<ApiResponse<FeePayment>> {
     return this.http.post<ApiResponse<FeePayment>>(
       `${this.apiUrl}/fee-payments`,

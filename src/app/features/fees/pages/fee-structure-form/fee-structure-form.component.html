@@ -1,129 +1,226 @@
-<div class="page-container">
-  <mat-card class="form-card">
+<div class="fee-structure-form-container">
+  <mat-card class="form-card" *ngIf="!isLoading">
+    <!-- Header -->
     <mat-card-header>
       <mat-card-title>
-        <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
-        {{ isEditMode ? 'Edit Fee Structure' : 'Create Fee Structure' }}
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'account_balance' }}</mat-icon>
+        {{ isEditMode ? 'Edit Fee Structure' : 'Add New Fee Structure' }}
       </mat-card-title>
-      <mat-card-subtitle>{{ isEditMode ? 'Update fee structure information' : 'Add new fee structure for grade' }}</mat-card-subtitle>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update fee structure information' : 'Create a new fee structure for students' }}
+      </mat-card-subtitle>
     </mat-card-header>
 
     <mat-divider></mat-divider>
 
     <mat-card-content>
       <form [formGroup]="feeForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Basic Information -->
         <div class="form-section">
-          <h3><mat-icon>info</mat-icon> Fee Structure Information</h3>
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
           
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
-              <mat-select formControlName="branch_id">
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-select formControlName="branch_id" placeholder="Select branch">
                 <mat-option *ngFor="let branch of branches" [value]="branch.id">
                   {{ branch.name }}
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>business</mat-icon>
-              <mat-error *ngIf="feeForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
+              <mat-hint>Select the branch for this fee structure</mat-hint>
+              <mat-error *ngIf="feeForm.get('branch_id')?.hasError('required')">
+                Branch is required
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Grade *</mat-label>
-              <mat-select formControlName="grade">
-                <mat-option *ngFor="let grade of grades" [value]="grade">
-                  Grade {{ grade }}
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-select formControlName="grade" placeholder="Select grade">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>school</mat-icon>
-              <mat-error *ngIf="feeForm.get('grade')?.invalid">{{ getErrorMessage('grade') }}</mat-error>
+              <mat-hint>Select the grade level</mat-hint>
+              <mat-error *ngIf="feeForm.get('grade')?.hasError('required')">
+                Grade is required
+              </mat-error>
             </mat-form-field>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Fee Type *</mat-label>
-              <mat-select formControlName="fee_type">
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-select formControlName="fee_type" placeholder="Select fee type">
                 <mat-option *ngFor="let type of feeTypes" [value]="type.value">
                   {{ type.label }}
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>category</mat-icon>
-              <mat-error *ngIf="feeForm.get('fee_type')?.invalid">{{ getErrorMessage('fee_type') }}</mat-error>
+              <mat-hint>Select the type of fee</mat-hint>
+              <mat-error *ngIf="feeForm.get('fee_type')?.hasError('required')">
+                Fee type is required
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Amount *</mat-label>
-              <input matInput type="number" formControlName="amount" placeholder="0.00" step="0.01">
-              <span matPrefix>₹&nbsp;</span>
-              <mat-error *ngIf="feeForm.get('amount')?.invalid">{{ getErrorMessage('amount') }}</mat-error>
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+              <input matInput 
+                type="number" 
+                formControlName="amount" 
+                placeholder="0.00"
+                min="0"
+                step="0.01">
+              <mat-hint>Enter the fee amount</mat-hint>
+              <mat-error *ngIf="feeForm.get('amount')?.hasError('required')">
+                Amount is required
+              </mat-error>
+              <mat-error *ngIf="feeForm.get('amount')?.hasError('min')">
+                Amount must be greater than 0
+              </mat-error>
             </mat-form-field>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year *</mat-label>
-              <input matInput formControlName="academic_year" placeholder="2024-2025">
               <mat-icon matPrefix>event</mat-icon>
-              <mat-error *ngIf="feeForm.get('academic_year')?.invalid">{{ getErrorMessage('academic_year') }}</mat-error>
+              <input matInput 
+                formControlName="academic_year" 
+                placeholder="2024-2025">
+              <mat-hint>Academic year for this fee</mat-hint>
+              <mat-error *ngIf="feeForm.get('academic_year')?.hasError('required')">
+                Academic year is required
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Due Date</mat-label>
-              <input matInput type="date" formControlName="due_date">
-              <mat-icon matPrefix>event</mat-icon>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+              <input matInput 
+                type="date" 
+                formControlName="due_date">
+              <mat-hint>Payment deadline (optional)</mat-hint>
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Description</mat-label>
-            <textarea matInput formControlName="description" rows="3" placeholder="Enter fee structure description"></textarea>
-            <mat-icon matPrefix>description</mat-icon>
-          </mat-form-field>
-
           <div class="form-row">
-            <mat-checkbox formControlName="is_recurring" color="primary">
-              <mat-icon>repeat</mat-icon>
-              Recurring Fee
-            </mat-checkbox>
-          </div>
-
-          <mat-form-field appearance="outline" class="form-field-half" *ngIf="feeForm.get('is_recurring')?.value">
-            <mat-label>Recurrence Period *</mat-label>
-            <mat-select formControlName="recurrence_period">
-              <mat-option *ngFor="let period of recurrencePeriods" [value]="period.value">
-                {{ period.label }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>schedule</mat-icon>
-            <mat-error *ngIf="feeForm.get('recurrence_period')?.invalid">{{ getErrorMessage('recurrence_period') }}</mat-error>
-          </mat-form-field>
-
-          <div class="form-row">
-            <mat-checkbox formControlName="is_active" color="primary">
-              <mat-icon>check_circle</mat-icon>
-              Active
-            </mat-checkbox>
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Description</mat-label>
+              <mat-icon matPrefix>description</mat-icon>
+              <textarea 
+                matInput 
+                formControlName="description" 
+                rows="4"
+                placeholder="Additional details about this fee structure (optional)"
+                maxlength="500">
+              </textarea>
+              <mat-hint align="end">
+                {{ feeForm.get('description')?.value?.length || 0 }}/500
+              </mat-hint>
+            </mat-form-field>
           </div>
         </div>
+
+        <!-- Fee Structure Settings -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>settings</mat-icon>
+            Fee Structure Configuration
+          </h3>
+          
+          <div class="settings-grid">
+            <!-- Is Recurring -->
+            <div class="setting-card">
+              <div class="setting-content">
+                <div class="setting-icon-wrapper recurring">
+                  <mat-icon>autorenew</mat-icon>
+                </div>
+                <div class="setting-info">
+                  <h4>Recurring Fee</h4>
+                  <p>This fee repeats at regular intervals</p>
+                </div>
+              </div>
+              <mat-slide-toggle 
+                formControlName="is_recurring" 
+                color="primary"
+                class="setting-toggle">
+              </mat-slide-toggle>
+            </div>
+
+            <!-- Is Active -->
+            <div class="setting-card">
+              <div class="setting-content">
+                <div class="setting-icon-wrapper active">
+                  <mat-icon>toggle_on</mat-icon>
+                </div>
+                <div class="setting-info">
+                  <h4>Active Status</h4>
+                  <p>Fee structure is active and can be used</p>
+                </div>
+              </div>
+              <mat-slide-toggle 
+                formControlName="is_active" 
+                color="primary"
+                class="setting-toggle">
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- Recurrence Period (conditional) -->
+          <div class="form-row" *ngIf="feeForm.get('is_recurring')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Recurrence Period *</mat-label>
+              <mat-icon matPrefix>schedule</mat-icon>
+              <mat-select formControlName="recurrence_period" placeholder="Select period">
+                <mat-option *ngFor="let period of recurrencePeriods" [value]="period.value">
+                  {{ period.label }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>How often this fee repeats</mat-hint>
+              <mat-error *ngIf="feeForm.get('recurrence_period')?.hasError('required')">
+                Recurrence period is required for recurring fees
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
       </form>
     </mat-card-content>
 
+    <!-- Form Actions -->
     <mat-card-actions align="end">
-      <button mat-button (click)="onCancel()" [disabled]="isLoading">
-        <mat-icon>cancel</mat-icon>
+      <button 
+        mat-button 
+        type="button" 
+        (click)="onCancel()"
+        [disabled]="submitting">
+        <mat-icon>close</mat-icon>
         Cancel
       </button>
+      
       <button 
         mat-raised-button 
         color="primary" 
+        type="submit"
         (click)="onSubmit()"
-        [disabled]="isLoading || feeForm.invalid"
-      >
-        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
-        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
-        <span>{{ isEditMode ? 'Update' : 'Create' }} Fee Structure</span>
+        [disabled]="submitting || feeForm.invalid">
+        <mat-spinner *ngIf="submitting" diameter="20" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!submitting">{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon>
+        {{ submitting ? 'Saving...' : (isEditMode ? 'Update Fee Structure' : 'Create Fee Structure') }}
       </button>
     </mat-card-actions>
   </mat-card>
 </div>
 
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner></mat-spinner>
+  <p>Loading fee structure information...</p>
+</div>

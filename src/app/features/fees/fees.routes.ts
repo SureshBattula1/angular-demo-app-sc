@@ -19,7 +19,7 @@ export const FEES_ROUTES: Routes = [
   },
   {
     path: 'structure/view/:id',
-    loadComponent: () => import('./pages/fee-view/fee-view.component').then(m => m.FeeViewComponent),
+    loadComponent: () => import('./pages/fee-structure-view/fee-structure-view.component').then(m => m.FeeStructureViewComponent),
     canActivate: [authGuard]
   },
   {
@@ -29,7 +29,7 @@ export const FEES_ROUTES: Routes = [
   },
   {
     path: 'payment/view/:id',
-    loadComponent: () => import('./pages/fee-view/fee-view.component').then(m => m.FeeViewComponent),
+    loadComponent: () => import('./pages/fee-payment-view/fee-payment-view.component').then(m => m.FeePaymentViewComponent),
     canActivate: [authGuard]
   },
   {
