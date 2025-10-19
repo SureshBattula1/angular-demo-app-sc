@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, TableColumn, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
@@ -9,6 +9,7 @@ import { AttendanceService } from '../../services/attendance.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
+import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentAttendance, TeacherAttendance } from '../../../../core/models/attendance.model';
 import { Section } from '../../../../core/models/section.model';
@@ -67,7 +68,7 @@ import { Section } from '../../../../core/models/section.model';
               [data]="studentRecords"
               [config]="studentTableConfig"
               [advancedSearchConfig]="studentSearchConfig"
-              [title]="'Student Attendance Records'"
+              [title]="'Student Attendances'"
               [loading]="loading"
               (actionClicked)="onStudentAction($event)"
               (rowClicked)="onRowClick($event)"
@@ -87,7 +88,7 @@ import { Section } from '../../../../core/models/section.model';
               [data]="teacherRecords"
               [config]="teacherTableConfig"
               [advancedSearchConfig]="teacherSearchConfig"
-              [title]="'Teacher Attendance Records'"
+              [title]="'Teacher Attendances'"
               [loading]="loading"
               (actionClicked)="onTeacherAction($event)"
               (rowClicked)="onRowClick($event)"
@@ -105,7 +106,7 @@ import { Section } from '../../../../core/models/section.model';
   `,
   styles: [`
     :host { display: block; }
-    .page-container { padding: 24px; max-width: 1600px; margin: 0 auto; }
+    .page-container { max-width: 1600px; margin: 0 auto; }
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 16px; background: var(--card-background); border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
     .header-content h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: var(--text-primary); }
     .header-content h1 mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--primary-color); }
@@ -253,15 +254,7 @@ export class AttendanceListComponent implements OnInit {
         label: 'Department',
         type: 'select',
         icon: 'business',
-        options: [
-          { value: 'Mathematics', label: 'Mathematics' },
-          { value: 'Science', label: 'Science' },
-          { value: 'English', label: 'English' },
-          { value: 'Social Studies', label: 'Social Studies' },
-          { value: 'Physical Education', label: 'Physical Education' },
-          { value: 'Arts', label: 'Arts' },
-          { value: 'Music', label: 'Music' }
-        ]
+        options: [] // Will be populated dynamically from API
       },
       {
         key: 'status',
@@ -372,15 +365,29 @@ export class AttendanceListComponent implements OnInit {
     private attendanceService: AttendanceService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
+    private route: ActivatedRoute,
     private branchService: BranchService,
     private gradeService: GradeService,
-    private sectionService: SectionService
+    private sectionService: SectionService,
+    private departmentService: DepartmentService
   ) {}
   
   ngOnInit(): void {
+    // Check query parameters to restore active tab
+    this.route.queryParams.subscribe(params => {
+      const tabType = params['tab'];
+      if (tabType === 'teacher') {
+        this.activeTab = 'teacher';
+      } else {
+        this.activeTab = 'student'; // Default to student
+      }
+      console.log('Active tab set to:', this.activeTab);
+    });
+    
     this.loadBranches();
     this.loadGrades();
     this.loadSections();
+    this.loadDepartments();
     this.loadStudentAttendance();
     this.loadTeacherAttendance();
   }
@@ -594,6 +601,37 @@ export class AttendanceListComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('Error loading branches:', error);
+      }
+    });
+  }
+
+  /**
+   * Load departments dynamically for teacher advanced search filter
+   */
+  loadDepartments(): void {
+    this.departmentService.getDepartments({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const departmentOptions = response.data.map(dept => ({
+            value: dept.name,
+            label: dept.name
+          }));
+          
+          // Update teacher search config with departments
+          const teacherDeptField = this.teacherSearchConfig.fields.find(f => f.key === 'department');
+          if (teacherDeptField) {
+            teacherDeptField.options = departmentOptions;
+          }
+          
+          // Update old advanced search config if it exists
+          const deptField = this.advancedSearchConfig.fields.find(f => f.key === 'department');
+          if (deptField) {
+            deptField.options = departmentOptions;
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
       }
     });
   }

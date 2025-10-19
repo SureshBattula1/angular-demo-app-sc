@@ -131,7 +131,15 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
       
       // Only include fields with values
       Object.keys(this.searchForm.value).forEach(key => {
-        const value = this.searchForm.value[key];
+        let value = this.searchForm.value[key];
+        
+        // Check if this is a date field
+        const field = this.config.fields.find(f => f.key === key);
+        if (field && field.type === 'date' && value instanceof Date) {
+          // Format date as YYYY-MM-DD
+          value = this.formatDate(value);
+        }
+        
         if (value !== null && value !== undefined && value !== '') {
           criteria[key] = value;
         }
@@ -145,6 +153,16 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
         this.searchForm.controls[key].markAsTouched();
       });
     }
+  }
+  
+  /**
+   * Format date to YYYY-MM-DD string
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
   
   onReset(): void {
