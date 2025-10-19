@@ -241,33 +241,6 @@
   margin-left: var(--spacing-xs);
 }
 
-/* Override Material form field styles for compact search */
-::ng-deep .search-field.mat-mdc-form-field {
-  margin: 0;
-  font-size: 14px;
-}
-
-::ng-deep .search-field .mat-mdc-text-field-wrapper {
-  padding: 0;
-}
-
-::ng-deep .search-field .mat-mdc-form-field-infix {
-  min-height: 40px;
-  padding: 6px 0;
-}
-
-::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
-
-::ng-deep .search-field .mat-mdc-form-field-label {
-  font-size: 14px;
-}
-
-::ng-deep .search-field input {
-  font-size: 14px;
-  padding: 8px 0;
-}
 
 /* ========================================
    TABLE WRAPPER

@@ -70,8 +70,9 @@
   gap: var(--spacing-sm);
 }
 
+
 .field-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .group-title {
@@ -83,13 +84,6 @@
   border-bottom: 2px solid var(--primary-color);
 }
 
-.form-field {
-  margin-bottom: var(--spacing-sm);
-}
-
-.form-field mat-form-field {
-  width: 100%;
-}
 
 .field-label {
   display: block;
@@ -99,36 +93,17 @@
   font-size: 14px;
 }
 
-/* Compact form fields */
-::ng-deep .form-field .mat-mdc-form-field {
+::ng-deep .form-field input,
+::ng-deep .form-field .mat-mdc-select {
   font-size: 14px;
-  margin-bottom: 0;
-}
-
-::ng-deep .form-field .mat-mdc-form-field-infix {
-  min-height: 40px;
-  padding: 8px 0;
-}
-
-::ng-deep .form-field .mat-mdc-text-field-wrapper {
-  padding-bottom: 0;
-}
-
-::ng-deep .form-field .mat-mdc-form-field-subscript-wrapper {
-  display: none;
 }
 
 ::ng-deep .form-field .mat-mdc-form-field-label {
   font-size: 14px;
 }
 
-::ng-deep .form-field input,
-::ng-deep .form-field .mat-mdc-select {
-  font-size: 14px;
-}
-
-::ng-deep .form-field .mat-mdc-select-trigger {
-  height: 40px;
+::ng-deep .form-field .mat-mdc-form-field {
+  width: 100%;;
 }
 
 .radio-group {
@@ -217,7 +192,7 @@
     padding-bottom: 4px;
   }
   
-  .form-field {
+  /* .form-field {
     margin-bottom: var(--spacing-xs);
   }
   
@@ -246,7 +221,7 @@
   
   ::ng-deep .form-field .mat-mdc-select-trigger {
     height: 36px;
-  }
+  } */
   
   .footer-actions {
     flex-wrap: wrap;
