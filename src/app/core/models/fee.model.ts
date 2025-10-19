@@ -76,3 +76,29 @@ export interface FeeStatistics {
   collection_percentage: number;
 }
 
+export interface FeeType {
+  id?: string | number;
+  name: string;
+  code: string;
+  description?: string;
+  branch_id: string | number;
+  is_mandatory: boolean;
+  is_refundable: boolean;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  // Relationships
+  branch?: any;
+  fee_structures?: FeeStructure[];
+}
+
+export interface FeeTypeFormData {
+  name: string;
+  code: string;
+  description?: string;
+  branch_id: string | number;
+  is_mandatory?: boolean;
+  is_refundable?: boolean;
+  is_active?: boolean;
+}
+
