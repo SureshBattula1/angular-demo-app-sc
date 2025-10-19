@@ -5,6 +5,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { DepartmentService } from '../../services/department.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Department } from '../../../../core/models/department.model';
 
@@ -18,7 +19,7 @@ import { Department } from '../../../../core/models/department.model';
       [data]="departments"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Department Management'"
+      [title]="'Departments'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -39,9 +40,10 @@ export class DepartmentListComponent implements OnInit {
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      { key: 'name', header: 'Department Name', sortable: true, searchable: true },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      { key: 'name', header: 'Name', sortable: true, searchable: true },
       { key: 'head', header: 'Head', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'established_date', header: 'Established', sortable: true, type: 'date', width: '130px' },
       { key: 'students_count', header: 'Students', type: 'number', align: 'center', width: '100px' },
       { key: 'teachers_count', header: 'Teachers', type: 'number', align: 'center', width: '100px' },
@@ -71,12 +73,21 @@ export class DepartmentListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        // group: 'Basic'
+      },
+      {
         key: 'name',
         label: 'Department Name',
         type: 'text',
         placeholder: 'Enter department name',
-        icon: 'business',
-        group: 'Basic'
+        icon: 'apartment',
+        // group: 'Basic'
       },
       {
         key: 'head',
@@ -84,26 +95,50 @@ export class DepartmentListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter head name',
         icon: 'person',
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
   
   constructor(
     private departmentService: DepartmentService,
+    private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadDepartments();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   loadDepartments(): void {

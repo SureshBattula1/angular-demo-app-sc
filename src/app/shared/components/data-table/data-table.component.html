@@ -169,6 +169,10 @@
               {{ getCellValue(row, column) }}
             </span>
             
+            <span *ngIf="column.type === 'date'">
+              {{ getCellValue(row, column) }}
+            </span>
+            
             <span *ngIf="column.type === 'badge'" class="badge">
               {{ getCellValue(row, column) }}
             </span>

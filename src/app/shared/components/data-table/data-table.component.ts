@@ -365,7 +365,18 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
   
   // Utility Functions
   getCellValue(row: any, column: TableColumn): any {
-    const value = row[column.key];
+    // Handle nested properties (e.g., 'branch.name')
+    let value: any;
+    if (column.key.includes('.')) {
+      const keys = column.key.split('.');
+      value = row;
+      for (const key of keys) {
+        value = value?.[key];
+        if (value === null || value === undefined) break;
+      }
+    } else {
+      value = row[column.key];
+    }
     
     // Check if value is null, undefined, or empty string
     // Note: 0 and false are valid values and should not be replaced with "-"
@@ -397,6 +408,11 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges {
     
     if (column.pipe) {
       return this.applyPipe(value, column.pipe);
+    }
+    
+    // Auto-apply date formatting for date type columns
+    if (column.type === 'date') {
+      return this.applyPipe(value, 'date');
     }
     
     return value;

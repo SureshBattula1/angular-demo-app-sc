@@ -1,6 +1,6 @@
-<div class="student-view-container" *ngIf="!isLoading && student">
+<div class="view-container" *ngIf="!isLoading && student">
   <!-- Action Bar -->
-  <div class="action-bar">
+  <div class="view-action-bar">
     <button mat-button (click)="onBack()">
       <mat-icon>arrow_back</mat-icon>
       Back to List
@@ -18,24 +18,24 @@
   </div>
 
   <!-- Header Card -->
-  <mat-card class="header-card">
+  <mat-card class="view-header-card">
     <mat-card-content>
-      <div class="student-header">
-        <div class="student-avatar">
+      <div class="view-header">
+        <div class="view-avatar">
           <mat-icon class="avatar-icon">person</mat-icon>
         </div>
-        <div class="student-info">
-          <h1 class="student-name">{{ getFullName() }}</h1>
-          <div class="student-meta">
-            <span class="admission-badge">
+        <div class="view-info">
+          <h1 class="view-name">{{ getFullName() }}</h1>
+          <div class="view-meta">
+            <span>
               <mat-icon>badge</mat-icon>
               {{ student.admission_number }}
             </span>
-            <span class="grade-badge">
+            <span>
               <mat-icon>school</mat-icon>
               {{ gradeLabel }} ({{ student.grade }}) {{ student.section ? '- ' + student.section : '' }}
             </span>
-            <span class="roll-badge" *ngIf="student.roll_number">
+            <span *ngIf="student.roll_number">
               <mat-icon>numbers</mat-icon>
               Roll: {{ student.roll_number }}
             </span>
@@ -50,7 +50,7 @@
   </mat-card>
 
   <!-- Details Grid -->
-  <div class="details-grid">
+  <div class="view-details-grid">
     <!-- Personal Information -->
     <mat-card class="detail-card">
       <mat-card-header>
@@ -337,7 +337,7 @@
 </div>
 
 <!-- Loading State -->
-<div class="loading-container" *ngIf="isLoading">
+<div class="view-loading-container" *ngIf="isLoading">
   <mat-spinner diameter="50"></mat-spinner>
   <p>Loading student details...</p>
 </div>

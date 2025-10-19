@@ -1,5 +1,5 @@
-<div class="teacher-view-container" *ngIf="!isLoading && teacher">
-  <div class="action-bar">
+<div class="view-container" *ngIf="!isLoading && teacher">
+  <div class="view-action-bar">
     <button mat-button (click)="onBack()">
       <mat-icon>arrow_back</mat-icon>
       Back to List
@@ -16,20 +16,20 @@
     </div>
   </div>
 
-  <mat-card class="header-card">
+  <mat-card class="view-header-card">
     <mat-card-content>
-      <div class="teacher-header">
-        <div class="teacher-avatar">
+      <div class="view-header">
+        <div class="view-avatar">
           <mat-icon class="avatar-icon">person</mat-icon>
         </div>
-        <div class="teacher-info">
-          <h1 class="teacher-name">{{ getFullName() }}</h1>
-          <div class="teacher-meta">
-            <span class="email-badge">
+        <div class="view-info">
+          <h1 class="view-name">{{ getFullName() }}</h1>
+          <div class="view-meta">
+            <span>
               <mat-icon>email</mat-icon>
               {{ teacher.email }}
             </span>
-            <span class="phone-badge" *ngIf="teacher.phone">
+            <span *ngIf="teacher.phone">
               <mat-icon>phone</mat-icon>
               {{ teacher.phone }}
             </span>
@@ -43,7 +43,7 @@
     </mat-card-content>
   </mat-card>
 
-  <div class="details-grid">
+  <div class="view-details-grid">
     <mat-card class="detail-card">
       <mat-card-header>
         <mat-card-title>
@@ -87,7 +87,7 @@
   </div>
 </div>
 
-<div class="loading-container" *ngIf="isLoading">
+<div class="view-loading-container" *ngIf="isLoading">
   <mat-spinner diameter="50"></mat-spinner>
   <p>Loading teacher details...</p>
 </div>

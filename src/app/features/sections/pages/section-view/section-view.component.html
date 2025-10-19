@@ -1,6 +1,6 @@
-<div class="section-view-container" *ngIf="!isLoading && sectionData">
+<div class="view-container" *ngIf="!isLoading && sectionData">
   <!-- Action Bar -->
-  <div class="action-bar">
+  <div class="view-action-bar">
     <button mat-button (click)="onBack()">
       <mat-icon>arrow_back</mat-icon>
       Back to List
@@ -18,24 +18,24 @@
   </div>
 
   <!-- Header Card -->
-  <mat-card class="header-card">
+  <mat-card class="view-header-card">
     <mat-card-content>
-      <div class="section-header">
-        <div class="section-logo">
-          <mat-icon class="logo-icon">view_module</mat-icon>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">view_module</mat-icon>
         </div>
-        <div class="section-info">
-          <h1 class="section-name">Section {{ sectionData.name }}</h1>
-          <div class="section-meta">
-            <span class="code-badge">
+        <div class="view-info">
+          <h1 class="view-name">Section {{ sectionData.name }}</h1>
+          <div class="view-meta">
+            <span>
               <mat-icon>qr_code</mat-icon>
               {{ sectionData.code }}
             </span>
-            <span class="grade-badge" *ngIf="sectionData.grade_level">
+            <span *ngIf="sectionData.grade_level">
               <mat-icon>school</mat-icon>
               Grade {{ sectionData.grade_level }}
             </span>
-            <span class="room-number" *ngIf="sectionData.room_number">
+            <span *ngIf="sectionData.room_number">
               <mat-icon>room</mat-icon>
               Room {{ sectionData.room_number }}
             </span>
@@ -50,7 +50,7 @@
   </mat-card>
 
   <!-- Statistics Card -->
-  <div class="stats-grid">
+  <div class="view-stats-grid">
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon students">
@@ -101,7 +101,7 @@
   </div>
 
   <!-- Details Section -->
-  <div class="details-grid">
+  <div class="view-details-grid">
     <mat-card class="detail-card">
       <mat-card-header>
         <mat-card-title>
@@ -188,7 +188,7 @@
 </div>
 
 <!-- Loading State -->
-<div class="loading-container" *ngIf="isLoading">
+<div class="view-loading-container" *ngIf="isLoading">
   <mat-spinner diameter="50"></mat-spinner>
   <p>Loading section details...</p>
 </div>

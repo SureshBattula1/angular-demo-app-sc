@@ -5,6 +5,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { TeacherService } from '../../services/teacher.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Teacher } from '../../../../core/models/teacher.model';
 
@@ -18,7 +19,7 @@ import { Teacher } from '../../../../core/models/teacher.model';
       [data]="teachers"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Teacher Management'"
+      [title]="'Teachers'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -39,11 +40,12 @@ export class TeacherListComponent implements OnInit {
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
       { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
       { key: 'email', header: 'Email', searchable: true },
       { key: 'phone', header: 'Phone', width: '130px' },
+      { key: 'branch.name', header: 'Branch', width: '130px' },
       { key: 'role', header: 'Role', type: 'badge', width: '100px', align: 'center' },
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
@@ -71,12 +73,21 @@ export class TeacherListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        // group: 'Basic Information'
+      },
+      {
         key: 'email',
         label: 'Email',
         type: 'text',
         placeholder: 'Enter email',
         icon: 'email',
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'phone',
@@ -84,26 +95,50 @@ export class TeacherListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter phone number',
         icon: 'phone',
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
   
   constructor(
     private teacherService: TeacherService,
+    private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadTeachers();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   loadTeachers(): void {

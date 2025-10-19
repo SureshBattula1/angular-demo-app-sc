@@ -19,7 +19,7 @@ import { Branch } from '../../../../core/models/branch.model';
       [data]="branches"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Branch'"
+      [title]="'Branchs'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"

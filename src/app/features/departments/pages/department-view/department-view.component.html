@@ -1,5 +1,5 @@
-<div class="department-view-container" *ngIf="!isLoading && department">
-  <div class="action-bar">
+<div class="view-container" *ngIf="!isLoading && department">
+  <div class="view-action-bar">
     <button mat-button (click)="onBack()">
       <mat-icon>arrow_back</mat-icon>
       Back to List
@@ -16,17 +16,23 @@
     </div>
   </div>
 
-  <mat-card class="header-card">
+  <mat-card class="view-header-card">
     <mat-card-content>
-      <div class="department-header">
-        <div class="department-logo">
-          <mat-icon class="logo-icon">business</mat-icon>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">business</mat-icon>
         </div>
-        <div class="department-info">
-          <h1 class="department-name">{{ department.name }}</h1>
-          <div class="department-meta">
-            <span><mat-icon>person</mat-icon> Head: {{ department.head }}</span>
-            <span><mat-icon>event</mat-icon> Est: {{ department.established_date | date:'yyyy' }}</span>
+        <div class="view-info">
+          <h1 class="view-name">{{ department.name }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>person</mat-icon>
+              Head: {{ department.head }}
+            </span>
+            <span>
+              <mat-icon>event</mat-icon>
+              Est: {{ department.established_date | date:'yyyy' }}
+            </span>
             <span class="status-badge" [class.active]="department.is_active">
               <mat-icon>circle</mat-icon>
               {{ department.is_active ? 'Active' : 'Inactive' }}
@@ -37,7 +43,7 @@
     </mat-card-content>
   </mat-card>
 
-  <div class="stats-grid">
+  <div class="view-stats-grid">
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon students">
@@ -63,7 +69,7 @@
     </mat-card>
   </div>
 
-  <div class="details-grid">
+  <div class="view-details-grid">
     <mat-card class="detail-card">
       <mat-card-header>
         <mat-card-title>
@@ -107,7 +113,7 @@
   </div>
 </div>
 
-<div class="loading-container" *ngIf="isLoading">
+<div class="view-loading-container" *ngIf="isLoading">
   <mat-spinner diameter="50"></mat-spinner>
   <p>Loading department details...</p>
 </div>
