@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AttendanceService } from '../../services/attendance.service';
 import { StudentCrudService } from '../../../students/services/student-crud.service';
@@ -26,10 +26,8 @@ export class AttendanceFormComponent implements OnInit {
   submitting = false;
   studentsLoaded = false;
   teachersLoaded = false;
-  isTypeDisabled = false; // Disable type toggle when coming from specific tab
   
   attendanceType: 'student' | 'teacher' = 'student';
-  returnTab: 'student' | 'teacher' = 'student';
   branches: any[] = [];
   grades: Grade[] = [];
   sections: Section[] = [];
@@ -60,22 +58,10 @@ export class AttendanceFormComponent implements OnInit {
     private gradeService: GradeService,
     private sectionService: SectionService,
     private errorHandler: ErrorHandlerService,
-    private router: Router,
-    private route: ActivatedRoute
+    private router: Router
   ) {}
   
   ngOnInit(): void {
-    // Get attendance type from query parameters
-    this.route.queryParams.subscribe(params => {
-      const typeFromQuery = params['type'];
-      if (typeFromQuery) {
-        this.attendanceType = typeFromQuery;
-        this.isTypeDisabled = true; // Disable toggle when type is specified
-      }
-      this.returnTab = params['returnTab'] || params['type'] || 'student';
-      console.log('Attendance Form - Type:', this.attendanceType, 'Return Tab:', this.returnTab, 'Disabled:', this.isTypeDisabled);
-    });
-    
     this.loadBranches();
     this.loadGrades();
     this.loadAllSections();
@@ -378,11 +364,7 @@ export class AttendanceFormComponent implements OnInit {
             console.warn('Some errors occurred:', response.data.errors);
           }
           
-          // Navigate back with correct tab
-          console.log('Navigating back to attendance list with tab:', this.returnTab);
-          this.router.navigate(['/attendance'], {
-            queryParams: { tab: this.returnTab }
-          });
+          this.router.navigate(['/attendance']);
         }
       },
       error: (error: any) => {
@@ -393,9 +375,7 @@ export class AttendanceFormComponent implements OnInit {
   }
   
   onCancel(): void {
-    this.router.navigate(['/attendance'], {
-      queryParams: { tab: this.returnTab }
-    });
+    this.router.navigate(['/attendance']);
   }
   
   getStudentFullName(student: AttendanceStudent): string {

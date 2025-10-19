@@ -19,8 +19,6 @@ export class AttendanceEditComponent implements OnInit {
   isLoading = false;
   attendanceId?: number;
   attendance?: StudentAttendance;
-  attendanceType: 'student' | 'teacher' = 'student';
-  returnTab: 'student' | 'teacher' = 'student';
   
   statusOptions = [
     { value: 'Present', label: 'Present', icon: 'check_circle' },
@@ -45,13 +43,6 @@ export class AttendanceEditComponent implements OnInit {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.attendanceId = +params['id'];
-        
-        // Get query parameters
-        this.route.queryParams.subscribe(queryParams => {
-          this.attendanceType = queryParams['type'] || 'student';
-          this.returnTab = queryParams['returnTab'] || queryParams['type'] || 'student';
-        });
-        
         this.loadAttendance();
       }
     });
@@ -83,9 +74,7 @@ export class AttendanceEditComponent implements OnInit {
       error: (error) => {
         this.errorHandler.showError(error);
         this.isLoading = false;
-        this.router.navigate(['/attendance'], {
-          queryParams: { tab: this.returnTab }
-        });
+        this.router.navigate(['/attendance']);
       }
     });
   }
@@ -103,9 +92,7 @@ export class AttendanceEditComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.errorHandler.showSuccess('Attendance updated successfully');
-          this.router.navigate(['/attendance'], {
-            queryParams: { tab: this.returnTab }
-          });
+          this.router.navigate(['/attendance']);
         } else {
           this.errorHandler.showError(response.message || 'Failed to update attendance');
           this.isLoading = false;
@@ -119,9 +106,7 @@ export class AttendanceEditComponent implements OnInit {
   }
   
   onCancel(): void {
-    this.router.navigate(['/attendance'], {
-      queryParams: { tab: this.returnTab }
-    });
+    this.router.navigate(['/attendance']);
   }
   
   getStatusColor(status: string): string {
