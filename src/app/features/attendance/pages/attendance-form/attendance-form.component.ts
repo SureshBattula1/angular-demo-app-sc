@@ -74,7 +74,6 @@ export class AttendanceFormComponent implements OnInit {
         this.isTypeDisabled = true; // Disable toggle when type is specified
         this.returnTab = typeFromQuery; // Set return tab to the same type
       }
-      console.log('Attendance Form - Type:', this.attendanceType, 'Return Tab:', this.returnTab, 'Disabled:', this.isTypeDisabled);
     });
     
     this.loadBranches();
@@ -106,7 +105,6 @@ export class AttendanceFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
       }
     });
   }
@@ -122,7 +120,6 @@ export class AttendanceFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading sections:', error);
       }
     });
   }
@@ -173,13 +170,11 @@ export class AttendanceFormComponent implements OnInit {
     }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
-          console.log('Students API response:', response.data);
           
           this.students = response.data.map((student: any) => {
             const userId = student.user_id || student.id;
             
             if (!userId) {
-              console.error('Student without user_id:', student);
             }
             
             return {
@@ -201,7 +196,6 @@ export class AttendanceFormComponent implements OnInit {
           if (this.students.length === 0) {
             this.errorHandler.showWarning('No students found for selected class');
           } else {
-            console.log('Loaded students:', this.students.length, 'students with IDs');
           }
           
           this.studentsLoaded = true;
@@ -230,13 +224,11 @@ export class AttendanceFormComponent implements OnInit {
     }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          console.log('Teachers API response:', response.data);
           
           this.teachers = response.data.map((teacher: any) => {
             const userId = teacher.user_id || teacher.id;
             
             if (!userId) {
-              console.error('Teacher without user_id:', teacher);
             }
             
             return {
@@ -257,7 +249,6 @@ export class AttendanceFormComponent implements OnInit {
           if (this.teachers.length === 0) {
             this.errorHandler.showWarning('No teachers found for selected branch');
           } else {
-            console.log('Loaded teachers:', this.teachers.length, 'teachers with IDs');
           }
           
           this.teachersLoaded = true;
@@ -339,7 +330,6 @@ export class AttendanceFormComponent implements OnInit {
         ? this.students.map(student => {
             // Ensure id exists
             if (!student.id) {
-              console.error('Student missing id:', student);
             }
             return {
               id: student.id,
@@ -352,7 +342,6 @@ export class AttendanceFormComponent implements OnInit {
         : this.teachers.map(teacher => {
             // Ensure id exists
             if (!teacher.id) {
-              console.error('Teacher missing id:', teacher);
             }
             return {
               id: teacher.id,
@@ -363,7 +352,6 @@ export class AttendanceFormComponent implements OnInit {
     };
     
     // Debug log
-    console.log('Submitting bulk attendance:', bulkData);
     
     this.attendanceService.markBulkAttendance(bulkData).subscribe({
       next: (response: any) => {
@@ -376,7 +364,6 @@ export class AttendanceFormComponent implements OnInit {
           );
           
           if (response.data?.errors && response.data.errors.length > 0) {
-            console.warn('Some errors occurred:', response.data.errors);
           }
           
           // Navigate back to attendance list with the correct tab active

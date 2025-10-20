@@ -71,7 +71,6 @@ export class StudentFormComponent implements OnInit {
   private setupDynamicSectionLoading(): void {
     // Listen to grade changes
     this.studentForm.get('grade')?.valueChanges.subscribe(grade => {
-      console.log('Grade changed to:', grade);
       if (grade) {
         const branchId = this.studentForm.get('branch_id')?.value;
         this.loadSectionsByGradeAndBranch(grade, branchId);
@@ -84,7 +83,6 @@ export class StudentFormComponent implements OnInit {
 
     // Listen to branch changes
     this.studentForm.get('branch_id')?.valueChanges.subscribe(branchId => {
-      console.log('Branch changed to:', branchId);
       if (branchId) {
         const grade = this.studentForm.get('grade')?.value;
         if (grade) {
@@ -198,7 +196,6 @@ export class StudentFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -208,19 +205,16 @@ export class StudentFormComponent implements OnInit {
    */
   private loadGrades(): void {
     this.loadingGrades = true;
-    console.log('Loading grades from API...');
     
     this.gradeService.getGrades().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           // Filter only active grades
           this.grades = response.data.filter(grade => grade.is_active);
-          console.log('Grades loaded:', this.grades);
         }
         this.loadingGrades = false;
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
         this.errorHandler.showError('Failed to load grades');
         this.loadingGrades = false;
       }
@@ -232,7 +226,6 @@ export class StudentFormComponent implements OnInit {
    */
   private loadSectionsByGradeAndBranch(grade: string, branchId?: number): void {
     this.loadingSections = true;
-    console.log('Loading sections for grade:', grade, 'branch:', branchId);
     
     const params: any = { grade_level: grade };
     if (branchId) {
@@ -243,12 +236,10 @@ export class StudentFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.sections = response.data.filter((section: Section) => section.is_active);
-          console.log('Sections loaded:', this.sections);
         }
         this.loadingSections = false;
       },
       error: (error) => {
-        console.error('Error loading sections:', error);
         this.sections = [];
         this.loadingSections = false;
       }

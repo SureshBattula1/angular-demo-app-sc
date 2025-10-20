@@ -171,7 +171,6 @@ export class IncomeListComponent implements OnInit {
           }
         }
       },
-      error: (error) => console.error('Error loading categories:', error)
     });
   }
   

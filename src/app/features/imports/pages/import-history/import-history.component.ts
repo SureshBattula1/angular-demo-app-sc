@@ -155,7 +155,6 @@ export class ImportHistoryComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading history:', err);
         this.loading = false;
       }
     });

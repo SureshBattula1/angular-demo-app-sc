@@ -88,7 +88,6 @@ export class TeacherFormComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
       }
     });
   }

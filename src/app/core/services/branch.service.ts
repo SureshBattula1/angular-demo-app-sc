@@ -159,7 +159,6 @@ export class BranchService {
         this.canViewAllBranches.set(data.can_view_all_branches || false);
         this.accessibleBranchIds.set(data.accessible_branch_ids);
       } catch (e) {
-        console.error('Failed to load branches from storage', e);
       }
     }
   }

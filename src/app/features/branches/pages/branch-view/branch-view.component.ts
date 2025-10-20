@@ -62,7 +62,6 @@ export class BranchViewComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading stats:', error);
       }
     });
   }

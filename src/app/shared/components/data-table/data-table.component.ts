@@ -4,6 +4,7 @@ import { SharedModule } from '../../shared.module';
 import { TableColumn, TableAction, TableConfig, SearchCriteria, PaginationEvent, SortEvent, SearchEvent } from './data-table.interface';
 import { AdvancedSearchConfig } from '../advanced-search-sidebar/search-field.interface';
 import { AdvancedSearchSidebarComponent } from '../advanced-search-sidebar/advanced-search-sidebar.component';
+import { ExportButtonComponent, ExportEvent } from '../export-button/export-button.component';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
@@ -13,7 +14,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule, SharedModule, AdvancedSearchSidebarComponent],
+  imports: [CommonModule, SharedModule, AdvancedSearchSidebarComponent, ExportButtonComponent],
   templateUrl: './data-table.component.html',
   styleUrls: ['./data-table.component.css']
 })
@@ -28,7 +29,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   @Output() rowClicked = new EventEmitter<any>();
   @Output() selectionChanged = new EventEmitter<any[]>();
   @Output() searchChanged = new EventEmitter<string>();
-  @Output() exportClicked = new EventEmitter<string>();
+  @Output() exportClicked = new EventEmitter<'excel' | 'pdf' | 'csv'>();
   
   // Server-side events
   @Output() paginationChanged = new EventEmitter<PaginationEvent>();
@@ -79,9 +80,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   
   // Math object for templates
   Math = Math;
-  
-  // Debug flag - set to true to enable console logging
-  private DEBUG = true;
   
   ngOnInit(): void {
     this.initializeTable();
@@ -149,14 +147,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
           this.paginator.pageIndex = currentPageIndex;
           this.pageSize = currentPageSize;
           this.currentPage = currentPageIndex;
-          
-          if (this.DEBUG) {
-            console.log('📊 Updated paginator from config (preserved user selections):', {
-              totalCount: this.config.totalCount,
-              pageSize: currentPageSize,
-              pageIndex: currentPageIndex
-            });
-          }
         }
       }
       
@@ -212,17 +202,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   }
   
   ngAfterViewInit(): void {
-    if (this.DEBUG) {
-      console.log('📊 DataTable ngAfterViewInit:', {
-        hasPaginator: !!this.paginator,
-        hasSort: !!this.sort,
-        dataLength: this.data?.length,
-        pageSize: this.pageSize,
-        serverSide: this.config.serverSide,
-        config: this.config
-      });
-    }
-    
     // Connect paginator and sort after view initialization
     setTimeout(() => {
       this.connectPaginatorAndSort();
@@ -235,7 +214,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
    */
   private connectPaginatorAndSort(): void {
     if (!this.dataSource) {
-      if (this.DEBUG) console.log('⚠️ No dataSource available');
       return;
     }
     
@@ -249,17 +227,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
           
           // Reconnect - MatTableDataSource will automatically handle everything
           this.dataSource.paginator = this.paginator;
-          
-          if (this.DEBUG) {
-            console.log('✅ Paginator connected:', {
-              paginatorConnected: !!this.dataSource.paginator,
-              pageSize: this.paginator.pageSize,
-              length: this.paginator.length,
-              dataLength: this.dataSource.data?.length
-            });
-          }
-        } else {
-          if (this.DEBUG) console.log('⚠️ No paginator ViewChild available');
         }
       }
       
@@ -270,59 +237,21 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
           this.dataSource.sort = null;
           // Reconnect
           this.dataSource.sort = this.sort;
-          
-          if (this.DEBUG) {
-            console.log('✅ Sort connected for client-side');
-          }
         }
       } else {
         // For server-side, handle sort events manually
-        if (this.DEBUG) {
-          console.log('🔧 Attempting to set up server-side sort:', {
-            hasSort: !!this.sort,
-            sortSubscribed: this.sortSubscribed,
-            serverSide: this.config.serverSide
-          });
-        }
-        
         if (this.sort && !this.sortSubscribed) {
           // CRITICAL: Connect sort to dataSource even for server-side
           // This is needed for mat-sort-header directives to trigger sortChange events
           this.dataSource.sort = this.sort;
           
-          console.log('🔗 Connected MatSort to dataSource for server-side sorting');
-          if (this.DEBUG) {
-            console.log('🔧 Setting up server-side sort subscription:', {
-              hasSortView: !!this.sort,
-              currentObserverCount: this.sort.sortChange.observers.length,
-              sortActive: this.sort.active,
-              sortDirection: this.sort.direction
-            });
-          }
-          
           // Subscribe to sort changes for server-side tables
           // The subscription will be cleaned up in ngOnDestroy
           const sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
-            console.log('🔀🔀🔀 SORT EVENT TRIGGERED!!!', {
-              active: sort.active,
-              direction: sort.direction,
-              timestamp: new Date().toISOString()
-            });
             this.onServerSort(sort);
           });
           this.subscriptions.add(sortSub);
           this.sortSubscribed = true;
-          
-          if (this.DEBUG) {
-            console.log('✅ Sort subscription created for server-side:', {
-              observerCount: this.sort.sortChange.observers.length,
-              subscriptionActive: !sortSub.closed
-            });
-          }
-        } else if (!this.sort && this.DEBUG) {
-          console.log('⚠️ No MatSort ViewChild available for server-side sorting');
-        } else if (this.sortSubscribed && this.DEBUG) {
-          console.log('ℹ️ Sort subscription already exists, skipping');
         }
         
         // For server-side, handle pagination events manually  
@@ -347,15 +276,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
             });
             this.subscriptions.add(pageSub);
             this.paginatorSubscribed = true;
-          }
-          
-          if (this.DEBUG) {
-            console.log('✅ Server-side paginator configured:', {
-              length: this.paginator.length,
-              pageSize: this.paginator.pageSize,
-              pageIndex: this.paginator.pageIndex,
-              totalCount: this.totalCount
-            });
           }
         }
       }
@@ -480,9 +400,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         filters: {}
       });
     }
-    
-    // Show success message
-    console.log('All filters cleared');
   }
   
   /**
@@ -580,8 +497,8 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   }
   
   // Export Functions
-  onExport(format: 'csv' | 'excel' | 'pdf'): void {
-    this.exportClicked.emit(format);
+  onExport(event: ExportEvent): void {
+    this.exportClicked.emit(event.format);
   }
   
   // Add Functions
@@ -671,15 +588,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
 
   // Manual sort trigger for testing
   onHeaderClick(column: TableColumn): void {
-    console.log('🖱️🖱️🖱️ HEADER CLICKED!!!', {
-      columnKey: column.key,
-      columnHeader: column.header,
-      sortable: column.sortable,
-      hasSort: !!this.sort,
-      sortActive: this.sort?.active,
-      sortDirection: this.sort?.direction
-    });
-    
     // Only trigger manual sort for server-side and sortable columns
     if (this.config.serverSide && column.sortable !== false) {
       // Determine next sort direction
@@ -694,11 +602,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         }
       }
       
-      console.log('🔧 MANUALLY TRIGGERING SORT:', {
-        field: column.key,
-        direction: nextDirection
-      });
-      
       // Manually call onServerSort to test the full chain
       this.onServerSort({
         active: column.key,
@@ -709,33 +612,20 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
 
   // Server-side event handlers
   onServerSort(sort: Sort): void {
-    console.log('🔀🔀🔀 onServerSort METHOD CALLED:', {
-      active: sort.active,
-      direction: sort.direction,
-      hasParentListener: this.sortChanged.observed,
-      observerCount: this.sortChanged.observers.length
-    });
-    
     if (sort.direction) {
       this.currentSort = {
         field: sort.active,
         direction: sort.direction as 'asc' | 'desc'
       };
       
-      console.log('📤 EMITTING SORT EVENT TO PARENT:', this.currentSort);
-      
       // Emit sort event to parent component
       this.sortChanged.emit({
         field: sort.active,
         direction: sort.direction as 'asc' | 'desc'
       });
-      
-      console.log('✅ Sort event emitted successfully');
     } else {
       // Clear sort
       this.currentSort = null;
-      
-      console.log('🔄 Clearing sort...');
       
       // Emit sort event with empty direction to indicate sort clear
       // Parent component should handle this by loading data without sorting
@@ -743,8 +633,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         field: sort.active,
         direction: 'asc' // Default direction when clearing
       });
-      
-      console.log('✅ Sort clear event emitted');
     }
   }
 
@@ -757,25 +645,10 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
       this.currentPage = 0;
       this.pageSize = pageEvent.pageSize;
       this.previousPageSize = pageEvent.pageSize;
-      
-      if (this.DEBUG) {
-        console.log('📏 Page size changed:', {
-          oldSize: this.previousPageSize,
-          newSize: pageEvent.pageSize,
-          resetToPage: 0
-        });
-      }
     } else {
       // Normal page navigation
       this.currentPage = pageEvent.pageIndex;
       this.pageSize = pageEvent.pageSize;
-      
-      if (this.DEBUG) {
-        console.log('📄 Page changed:', {
-          pageIndex: pageEvent.pageIndex,
-          pageSize: pageEvent.pageSize
-        });
-      }
     }
     
     this.paginationChanged.emit({

@@ -155,7 +155,6 @@ export class SubjectListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -177,7 +176,6 @@ export class SubjectListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
       }
     });
   }

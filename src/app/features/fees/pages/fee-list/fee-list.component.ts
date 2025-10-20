@@ -406,7 +406,6 @@ export class FeeListComponent implements OnInit {
       } else {
         this.activeTab = 'structures'; // Default to structures
       }
-      console.log('Active tab set to:', this.activeTab);
     });
     
     this.loadBranches();
@@ -420,7 +419,6 @@ export class FeeListComponent implements OnInit {
   // Tab switching method
   switchTab(tab: 'structures' | 'payments' | 'types'): void {
     this.activeTab = tab;
-    console.log('Switched to tab:', tab);
   }
 
   // Load fee structures
@@ -625,7 +623,6 @@ export class FeeListComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -651,7 +648,6 @@ export class FeeListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
       }
     });
   }
@@ -676,7 +672,6 @@ export class FeeListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading fee types for filter:', error);
       }
     });
   }
@@ -699,7 +694,6 @@ export class FeeListComponent implements OnInit {
         this.addFeeStructure();
         break;
       default:
-        console.log('Unknown structure action:', event.action);
     }
   }
 
@@ -718,7 +712,6 @@ export class FeeListComponent implements OnInit {
         this.recordPayment();
         break;
       default:
-        console.log('Unknown payment action:', event.action);
     }
   }
   
@@ -809,7 +802,6 @@ export class FeeListComponent implements OnInit {
   }
   
   onStructuresSearch(event: SearchEvent): void {
-    console.log('Advanced search changed:', event);
     
     const filters: Record<string, any> = {
       ...event.filters,
@@ -821,7 +813,6 @@ export class FeeListComponent implements OnInit {
   }
   
   onPaymentsSearch(event: SearchEvent): void {
-    console.log('Advanced search changed:', event);
     
     const filters: Record<string, any> = {
       ...event.filters,
@@ -833,7 +824,6 @@ export class FeeListComponent implements OnInit {
   }
   
   onFeeTypesSearch(event: SearchEvent): void {
-    console.log('Advanced search changed:', event);
     
     const filters: Record<string, any> = {
       ...event.filters,
@@ -927,7 +917,6 @@ export class FeeListComponent implements OnInit {
         this.addFeeType();
         break;
       default:
-        console.log('Unknown fee type action:', event.action);
     }
   }
 

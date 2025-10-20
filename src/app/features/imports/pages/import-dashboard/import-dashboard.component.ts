@@ -48,7 +48,6 @@ export class ImportDashboardComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load import modules';
         this.loading = false;
-        console.error('Error loading modules:', err);
       }
     });
   }

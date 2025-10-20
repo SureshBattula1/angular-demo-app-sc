@@ -46,17 +46,14 @@ export class TopNavComponent implements OnInit {
   }
 
   onSearch(): void {
-    console.log('Search query:', this.searchQuery);
     // Implement search functionality
   }
 
   onLanguageChange(language: any): void {
     this.selectedLanguage = language.code;
-    console.log('Language changed to:', language.name);
   }
 
   openNotifications(): void {
-    console.log('Open notifications');
   }
 
   openFullscreen(): void {
@@ -68,7 +65,6 @@ export class TopNavComponent implements OnInit {
   }
 
   onProfileMenuClick(action: string): void {
-    console.log('Profile action:', action);
     // Implement profile menu actions
   }
 }

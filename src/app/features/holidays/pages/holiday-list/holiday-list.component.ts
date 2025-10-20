@@ -101,7 +101,6 @@ export class HolidayListComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading holidays:', error);
         this.errorHandler.showError('Failed to load holidays');
         this.loading = false;
       }
@@ -144,7 +143,6 @@ export class HolidayListComponent implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error deleting holiday:', error);
           this.errorHandler.showError('Failed to delete holiday');
         }
       });

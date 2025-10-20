@@ -86,7 +86,6 @@ export class UserListComponent implements OnInit {
         });
       },
       error: (error) => {
-        console.error('Error loading roles:', error);
       }
     });
   }

@@ -114,12 +114,10 @@ export class SubjectFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           this.branches = response.data;
-          console.log('Branches loaded:', this.branches.length);
         }
         this.loadingBranches = false;
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
         this.errorHandler.showError('Failed to load branches');
         this.loadingBranches = false;
       }
@@ -128,18 +126,15 @@ export class SubjectFormComponent implements OnInit {
 
   private loadDepartments(): void {
     this.loadingDepartments = true;
-    console.log('Loading departments from API...');
     
     this.departmentService.getDepartments({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.departments = response.data;
-          console.log('Departments loaded:', this.departments.length);
         }
         this.loadingDepartments = false;
       },
       error: (error: any) => {
-        console.error('Error loading departments:', error);
         this.errorHandler.showError('Failed to load departments');
         this.loadingDepartments = false;
       }
@@ -148,18 +143,15 @@ export class SubjectFormComponent implements OnInit {
 
   private loadGrades(): void {
     this.loadingGrades = true;
-    console.log('Loading grades from API...');
     
     this.gradeService.getGrades().subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.grades = response.data.filter((grade: Grade) => grade.is_active);
-          console.log('Grades loaded:', this.grades.length);
         }
         this.loadingGrades = false;
       },
       error: (error: any) => {
-        console.error('Error loading grades:', error);
         this.errorHandler.showError('Failed to load grades');
         this.loadingGrades = false;
       }
@@ -168,18 +160,15 @@ export class SubjectFormComponent implements OnInit {
 
   private loadTeachers(): void {
     this.loadingTeachers = true;
-    console.log('Loading teachers from API...');
     
     this.teacherService.getTeachers({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.teachers = response.data;
-          console.log('Teachers loaded:', this.teachers.length);
         }
         this.loadingTeachers = false;
       },
       error: (error: any) => {
-        console.error('Error loading teachers:', error);
         this.errorHandler.showError('Failed to load teachers');
         this.loadingTeachers = false;
       }

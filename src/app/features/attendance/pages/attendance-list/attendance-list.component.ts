@@ -385,7 +385,6 @@ export class AttendanceListComponent implements OnInit {
       } else {
         this.activeTab = 'student'; // Default to student
       }
-      console.log('Active tab set to:', this.activeTab);
     });
     
     this.loadBranches();
@@ -399,7 +398,6 @@ export class AttendanceListComponent implements OnInit {
   // Tab switching method
   switchTab(tab: 'student' | 'teacher'): void {
     this.activeTab = tab;
-    console.log('Switched to tab:', tab);
   }
 
   // Load student attendance
@@ -511,7 +509,6 @@ export class AttendanceListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading sections:', error);
       }
     });
   }
@@ -578,7 +575,6 @@ export class AttendanceListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
       }
     });
   }
@@ -614,7 +610,6 @@ export class AttendanceListComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -645,7 +640,6 @@ export class AttendanceListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading departments:', error);
       }
     });
   }
@@ -676,7 +670,6 @@ export class AttendanceListComponent implements OnInit {
         this.viewStudentReport(attendance);
         break;
       default:
-        console.log('Unknown student action:', event.action);
     }
   }
 
@@ -701,7 +694,6 @@ export class AttendanceListComponent implements OnInit {
         this.viewTeacherReport(attendance);
         break;
       default:
-        console.log('Unknown teacher action:', event.action);
     }
   }
   
@@ -728,7 +720,6 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
-    console.log('Search field changed:', event.field, '=', event.value);
     
     // Update sections when grade field changes
     if (event.field === 'grade') {
@@ -789,7 +780,6 @@ export class AttendanceListComponent implements OnInit {
   }
 
   onAdvancedSearchChange(event: SearchEvent): void {
-    console.log('Advanced search changed:', event);
     
     // Reset to first page when searching
     const filters: Record<string, any> = {
@@ -801,7 +791,6 @@ export class AttendanceListComponent implements OnInit {
     // Save current filters
     this.currentFilters = filters;
     
-    console.log('Filters to apply:', filters);
     
     // Load data for active tab
     if (this.activeTab === 'student') {

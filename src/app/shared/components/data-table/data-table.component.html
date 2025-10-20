@@ -84,13 +84,12 @@
           <mat-icon>refresh</mat-icon>
         </button>
         <!-- Export Button -->
-        <button mat-icon-button 
+        <app-export-button
           *ngIf="config.exportable"
-          class="export-btn-icon"
-          matTooltip="Export Data"
-          (click)="onExport('csv')">
-          <mat-icon>download</mat-icon>
-        </button>
+          (export)="onExport($event)"
+          [disabled]="loading"
+          [loading]="false">
+        </app-export-button>
       </div>
     </div>
   </div>

@@ -158,7 +158,6 @@ export class StudentImportComponent implements OnInit {
       },
       error: (err) => {
         this.showError('Failed to load branches');
-        console.error('Error loading branches:', err);
       }
     });
   }
@@ -170,7 +169,6 @@ export class StudentImportComponent implements OnInit {
       },
       error: (err) => {
         this.showError('Failed to load grades');
-        console.error('Error loading grades:', err);
       }
     });
   }
@@ -197,11 +195,9 @@ export class StudentImportComponent implements OnInit {
     this.apiService.get(url).subscribe({
       next: (response: any) => {
         this.sections = response.data?.data || response.data || response;
-        console.log(`📚 Loaded ${this.sections.length} sections for Branch ${branchId}${grade ? ', Grade ' + grade : ''}`);
       },
       error: (err) => {
         this.showError('Failed to load sections');
-        console.error('Error loading sections:', err);
       }
     });
   }
@@ -222,7 +218,6 @@ export class StudentImportComponent implements OnInit {
       },
       error: (err) => {
         this.showError('Failed to download template');
-        console.error('Error downloading template:', err);
       }
     });
   }
@@ -248,15 +243,6 @@ export class StudentImportComponent implements OnInit {
     this.isUploading = true;
     const context: ImportContext = this.contextForm.value;
 
-    // 🔥 Debug logging
-    console.log('📤 Uploading file with context:', {
-      file: this.selectedFile.name,
-      branch_id: context.branch_id,
-      grade: context.grade,
-      section: context.section,
-      academic_year: context.academic_year
-    });
-
     this.importService.uploadFile('student', this.selectedFile, context).subscribe({
       next: (response) => {
         this.currentBatchId = response.batch_id;
@@ -276,9 +262,6 @@ export class StudentImportComponent implements OnInit {
         this.isUploading = false;
         
         // 🔥 Detailed error logging
-        console.error('❌ Upload error:', err);
-        console.error('Error status:', err.status);
-        console.error('Error response:', err.error);
         
         // Show detailed error message
         let errorMsg = 'File upload failed';
@@ -286,7 +269,6 @@ export class StudentImportComponent implements OnInit {
           // Laravel validation errors
           const errors = Object.values(err.error.errors).flat();
           errorMsg = errors.join(', ');
-          console.error('Validation errors:', err.error.errors);
         } else if (err.error?.message) {
           errorMsg = err.error.message;
         }
@@ -309,12 +291,10 @@ export class StudentImportComponent implements OnInit {
         this.loadPreview();
         
         // 🔥 Already on validation step, no need to move
-        console.log('✅ Validation complete - you can review the data below');
       },
       error: (err) => {
         this.isValidating = false;
         this.showError('Validation failed');
-        console.error('Validation error:', err);
       }
     });
   }
@@ -322,7 +302,6 @@ export class StudentImportComponent implements OnInit {
   loadPreview(page: number = 1, status?: 'valid' | 'invalid' | 'all'): void {
     if (!this.currentBatchId) return;
 
-    console.log(`📊 Loading preview - Page: ${page}, Status: ${status || 'all'}`);
 
     this.importService.getPreview('student', this.currentBatchId, page, this.pageSize, status).subscribe({
       next: (preview) => {
@@ -332,13 +311,9 @@ export class StudentImportComponent implements OnInit {
         this.currentPage = preview.meta.current_page;
         
         // 🔥 Debug logging
-        console.log(`✅ Preview loaded - ${preview.data.length} records (Total: ${preview.meta.total})`);
-        console.log('Summary:', preview.summary);
-        console.log('Filter status:', status);
       },
       error: (err) => {
         this.showError('Failed to load preview');
-        console.error('Preview error:', err);
       }
     });
   }
@@ -351,7 +326,6 @@ export class StudentImportComponent implements OnInit {
     if (index === 2) status = 'invalid';
     
     // 🔥 Debug logging
-    console.log('📑 Tab changed to:', index, '| Status filter:', status);
     
     // 🔥 Clear previous data before loading new
     this.previewData = [];
@@ -384,7 +358,6 @@ export class StudentImportComponent implements OnInit {
       error: (err) => {
         this.isImporting = false;
         this.showError('Import failed');
-        console.error('Import error:', err);
       }
     });
   }
@@ -403,7 +376,6 @@ export class StudentImportComponent implements OnInit {
         },
         error: (err) => {
           this.showError('Failed to cancel import');
-          console.error('Cancel error:', err);
         }
       });
     }

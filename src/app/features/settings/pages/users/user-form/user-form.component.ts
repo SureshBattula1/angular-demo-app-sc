@@ -90,7 +90,6 @@ export class UserFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }

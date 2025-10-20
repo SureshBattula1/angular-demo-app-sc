@@ -58,7 +58,6 @@ export class HolidayCalendarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('Holiday Calendar initialized');
     this.loadCalendarData();
     this.loadUpcomingHolidays();
   }
@@ -73,18 +72,14 @@ export class HolidayCalendarComponent implements OnInit {
 
     this.holidayService.getCalendarData(year, month).subscribe({
       next: (response) => {
-        console.log('Calendar API response:', response);
         if (response.success && response.data) {
           this.holidays = response.data;
-          console.log(`Loaded ${this.holidays.length} holidays for ${this.monthNames[this.currentMonth]} ${this.currentYear}`);
           this.generateCalendar();
         } else {
-          console.warn('No holidays data in response');
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading calendar:', error);
         this.errorHandler.showError('Failed to load calendar data');
         this.loading = false;
       }
@@ -104,7 +99,6 @@ export class HolidayCalendarComponent implements OnInit {
         this.loadingUpcoming = false;
       },
       error: (error) => {
-        console.error('Error loading upcoming holidays:', error);
         this.loadingUpcoming = false;
       }
     });
@@ -142,7 +136,6 @@ export class HolidayCalendarComponent implements OnInit {
     }
     
     this.calendarDays = days;
-    console.log(`Generated ${days.length} calendar days, ${days.filter(d => d.holidays.length > 0).length} days have holidays`);
   }
 
   /**

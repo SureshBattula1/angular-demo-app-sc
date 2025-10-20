@@ -52,17 +52,13 @@ export class FeeViewComponent implements OnInit {
     
     this.feeService.getStudentFees(this.studentId).subscribe({
       next: (response: any) => {
-        console.log('Student Fees Response:', response);
         
         if (response.success && response.data) {
           this.studentFees = response.data;
-          console.log('Loaded payments:', this.studentFees?.payments?.length || 0);
-          console.log('Pending fees:', this.studentFees?.pending_fees?.length || 0);
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading student fees:', error);
         this.errorHandler.showError(error);
         this.loading = false;
         this.router.navigate(['/fees'], {

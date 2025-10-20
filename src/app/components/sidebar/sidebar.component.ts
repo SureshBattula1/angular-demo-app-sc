@@ -168,7 +168,6 @@ export class SidebarComponent implements OnInit {
    */
   private filterMenuItems(): void {
     const currentPerms = this.permissionService.userPermissions();
-    console.log('🔍 Filtering with permissions:', currentPerms.length, 'permissions loaded');
     
     this.menuItems = this.allMenuItems
       .filter(item => this.hasPermissionForItem(item))
