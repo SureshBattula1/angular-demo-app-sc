@@ -33,19 +33,50 @@ export class ImportService {
    * Upload file for import
    */
   uploadFile(entity: string, file: File, context: ImportContext): Observable<{batch_id: string; file_name: string; file_size: number; status: string}> {
+    // 🔥 Validate required fields
+    if (!file) {
+      throw new Error('File is required');
+    }
+    if (!context.branch_id) {
+      throw new Error('Branch ID is required');
+    }
+    
+    // 🔥 For student imports, grade and academic_year are required
+    if (entity === 'student') {
+      if (!context.grade) {
+        throw new Error('Grade is required for student import');
+      }
+      if (!context.academic_year) {
+        throw new Error('Academic year is required for student import');
+      }
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('branch_id', context.branch_id.toString());
     
+    // Add optional/conditional fields
     if (context.grade) {
       formData.append('grade', context.grade);
-    }
-    if (context.section) {
-      formData.append('section', context.section);
     }
     if (context.academic_year) {
       formData.append('academic_year', context.academic_year);
     }
+    if (context.section && context.section.trim() !== '') {
+      formData.append('section', context.section);
+    }
+
+    // 🔥 Debug logging
+    console.log('📤 Uploading with context:', {
+      entity: entity,
+      file: file.name,
+      file_size: file.size,
+      file_type: file.type,
+      branch_id: context.branch_id,
+      grade: context.grade || '(not applicable)',
+      section: context.section || '(not selected)',
+      academic_year: context.academic_year || '(not applicable)'
+    });
 
     return this.http.post<{success: boolean; data: any}>(`${this.baseUrl}/${entity}/upload`, formData)
       .pipe(map(response => response.data));

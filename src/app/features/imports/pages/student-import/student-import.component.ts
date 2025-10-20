@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -46,6 +46,8 @@ import { ImportContext, ImportRecord, ValidationResult } from '../../../../core/
   styleUrls: ['./student-import.component.scss']
 })
 export class StudentImportComponent implements OnInit {
+  @ViewChild('stepper') stepper!: MatStepper;
+  
   contextForm!: FormGroup;
   uploadForm!: FormGroup;
 
@@ -88,6 +90,7 @@ export class StudentImportComponent implements OnInit {
   ngOnInit(): void {
     this.loadBranches();
     this.loadGrades();
+    this.setupDynamicSectionLoading();
   }
 
   initializeForms(): void {
@@ -103,6 +106,37 @@ export class StudentImportComponent implements OnInit {
     });
   }
 
+  /**
+   * Setup listeners to reload sections when grade or branch changes
+   */
+  setupDynamicSectionLoading(): void {
+    // Listen to branch changes
+    this.contextForm.get('branch_id')?.valueChanges.subscribe(branchId => {
+      if (branchId) {
+        const grade = this.contextForm.get('grade')?.value;
+        this.loadSections(branchId, grade);
+        // Clear section selection when branch changes
+        this.contextForm.patchValue({ section: '' }, { emitEvent: false });
+      } else {
+        this.sections = [];
+      }
+    });
+
+    // Listen to grade changes
+    this.contextForm.get('grade')?.valueChanges.subscribe(grade => {
+      if (grade) {
+        const branchId = this.contextForm.get('branch_id')?.value;
+        if (branchId) {
+          this.loadSections(branchId, grade);
+          // Clear section selection when grade changes
+          this.contextForm.patchValue({ section: '' }, { emitEvent: false });
+        }
+      } else {
+        this.sections = [];
+      }
+    });
+  }
+
   generateAcademicYears(): void {
     const currentYear = new Date().getFullYear();
     for (let i = -1; i <= 1; i++) {
@@ -112,9 +146,15 @@ export class StudentImportComponent implements OnInit {
   }
 
   loadBranches(): void {
-    this.apiService.get('/branches').subscribe({
+    // 🔥 Use /accessible endpoint to respect branch-level access
+    this.apiService.get('/branches/accessible').subscribe({
       next: (response: any) => {
         this.branches = response.data || response;
+        
+        // 🔥 Auto-select branch if user has only one branch
+        if (response.can_select_branch === false && response.user_branch_id) {
+          this.contextForm.patchValue({ branch_id: response.user_branch_id });
+        }
       },
       error: (err) => {
         this.showError('Failed to load branches');
@@ -138,14 +178,26 @@ export class StudentImportComponent implements OnInit {
   onBranchChange(): void {
     const branchId = this.contextForm.get('branch_id')?.value;
     if (branchId) {
-      this.loadSections(branchId);
+      const grade = this.contextForm.get('grade')?.value;
+      this.loadSections(branchId, grade);
     }
   }
 
-  loadSections(branchId: number): void {
-    this.apiService.get(`/sections?branch_id=${branchId}`).subscribe({
+  /**
+   * Load sections filtered by branch and optionally by grade
+   */
+  loadSections(branchId: number, grade?: string): void {
+    let url = `/sections?branch_id=${branchId}`;
+    
+    // 🔥 Also filter by grade if selected
+    if (grade) {
+      url += `&grade_level=${grade}`;
+    }
+    
+    this.apiService.get(url).subscribe({
       next: (response: any) => {
-        this.sections = response.data || response;
+        this.sections = response.data?.data || response.data || response;
+        console.log(`📚 Loaded ${this.sections.length} sections for Branch ${branchId}${grade ? ', Grade ' + grade : ''}`);
       },
       error: (err) => {
         this.showError('Failed to load sections');
@@ -176,25 +228,70 @@ export class StudentImportComponent implements OnInit {
   }
 
   uploadFile(): void {
-    if (!this.selectedFile || !this.contextForm.valid) {
-      this.showError('Please select a file and fill all required context fields');
+    // Validate file is selected
+    if (!this.selectedFile) {
+      this.showError('Please select a file');
+      return;
+    }
+
+    // Validate context form
+    if (!this.contextForm.valid) {
+      this.showError('Please fill all required context fields: Branch, Grade, and Academic Year');
+      
+      // Mark all fields as touched to show errors
+      Object.keys(this.contextForm.controls).forEach(key => {
+        this.contextForm.get(key)?.markAsTouched();
+      });
       return;
     }
 
     this.isUploading = true;
     const context: ImportContext = this.contextForm.value;
 
+    // 🔥 Debug logging
+    console.log('📤 Uploading file with context:', {
+      file: this.selectedFile.name,
+      branch_id: context.branch_id,
+      grade: context.grade,
+      section: context.section,
+      academic_year: context.academic_year
+    });
+
     this.importService.uploadFile('student', this.selectedFile, context).subscribe({
       next: (response) => {
         this.currentBatchId = response.batch_id;
         this.isUploading = false;
-        this.showSuccess('File uploaded successfully');
+        this.showSuccess('File uploaded successfully - validating...');
+        
+        // 🔥 Move to next step (validation)
+        setTimeout(() => {
+          if (this.stepper) {
+            this.stepper.next();
+          }
+        }, 500);
+        
         this.validateImport();
       },
       error: (err) => {
         this.isUploading = false;
-        this.showError('File upload failed');
-        console.error('Upload error:', err);
+        
+        // 🔥 Detailed error logging
+        console.error('❌ Upload error:', err);
+        console.error('Error status:', err.status);
+        console.error('Error response:', err.error);
+        
+        // Show detailed error message
+        let errorMsg = 'File upload failed';
+        if (err.error?.errors) {
+          // Laravel validation errors
+          const errors = Object.values(err.error.errors).flat();
+          errorMsg = errors.join(', ');
+          console.error('Validation errors:', err.error.errors);
+        } else if (err.error?.message) {
+          errorMsg = err.error.message;
+        }
+        
+        this.showError(errorMsg);
       }
     });
   }
@@ -210,6 +307,9 @@ export class StudentImportComponent implements OnInit {
         this.isValidating = false;
         this.showSuccess(`Validation completed: ${result.valid_rows} valid, ${result.invalid_rows} invalid`);
         this.loadPreview();
+        
+        // 🔥 Already on validation step, no need to move
+        console.log('✅ Validation complete - you can review the data below');
       },
       error: (err) => {
         this.isValidating = false;
@@ -222,12 +322,19 @@ export class StudentImportComponent implements OnInit {
   loadPreview(page: number = 1, status?: 'valid' | 'invalid' | 'all'): void {
     if (!this.currentBatchId) return;
 
+    console.log(`📊 Loading preview - Page: ${page}, Status: ${status || 'all'}`);
+
     this.importService.getPreview('student', this.currentBatchId, page, this.pageSize, status).subscribe({
       next: (preview) => {
         this.previewData = preview.data;
         this.previewSummary = preview.summary;
         this.totalRecords = preview.meta.total;
         this.currentPage = preview.meta.current_page;
+        
+        // 🔥 Debug logging
+        console.log(`✅ Preview loaded - ${preview.data.length} records (Total: ${preview.meta.total})`);
+        console.log('Summary:', preview.summary);
+        console.log('Filter status:', status);
       },
       error: (err) => {
         this.showError('Failed to load preview');
@@ -243,11 +350,22 @@ export class StudentImportComponent implements OnInit {
     if (index === 1) status = 'valid';
     if (index === 2) status = 'invalid';
     
+    // 🔥 Debug logging
+    console.log('📑 Tab changed to:', index, '| Status filter:', status);
+    
+    // 🔥 Clear previous data before loading new
+    this.previewData = [];
+    
     this.loadPreview(1, status);
   }
 
   onPageChange(event: any): void {
-    this.loadPreview(event.pageIndex + 1);
+    // 🔥 Preserve the current status filter when paginating
+    let status: 'valid' | 'invalid' | 'all' | undefined = undefined;
+    if (this.selectedTab === 1) status = 'valid';
+    if (this.selectedTab === 2) status = 'invalid';
+    
+    this.loadPreview(event.pageIndex + 1, status);
   }
 
   commitImport(): void {
@@ -305,4 +423,5 @@ export class StudentImportComponent implements OnInit {
     });
   }
 }
+
 

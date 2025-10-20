@@ -11,9 +11,9 @@ export interface ImportModule {
 
 export interface ImportContext {
   branch_id: number;
-  grade?: string;
-  section?: string;
-  academic_year?: string;
+  grade?: string;  // Required for students, not for teachers
+  section?: string;  // Optional
+  academic_year?: string;  // Required for students, not for teachers
 }
 
 export interface ImportBatch {
