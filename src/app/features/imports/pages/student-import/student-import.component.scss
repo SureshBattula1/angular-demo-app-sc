@@ -366,6 +366,42 @@
   }
 }
 
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  margin-top: 16px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-light);
+
+  .empty-icon {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}
+
 /* Import Progress/Ready */
 .import-progress,
 .import-ready {

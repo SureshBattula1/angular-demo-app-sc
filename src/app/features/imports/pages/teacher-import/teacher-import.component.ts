@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -46,6 +46,8 @@ import { ImportContext, ImportRecord, ValidationResult } from '../../../../core/
   styleUrls: ['./teacher-import.component.scss']
 })
 export class TeacherImportComponent implements OnInit {
+  @ViewChild('stepper') stepper!: MatStepper;
+
   contextForm!: FormGroup;
   uploadForm!: FormGroup;
 
@@ -94,9 +96,14 @@ export class TeacherImportComponent implements OnInit {
   }
 
   loadBranches(): void {
-    this.apiService.get('/branches').subscribe({
+    this.apiService.get('/branches/accessible').subscribe({
       next: (response: any) => {
         this.branches = response.data || response;
+        
+        // Auto-select branch for restricted users
+        if (response.can_select_branch === false && response.user_branch_id) {
+          this.contextForm.patchValue({ branch_id: response.user_branch_id });
+        }
       },
       error: (err) => {
         this.showError('Failed to load branches');
@@ -137,17 +144,29 @@ export class TeacherImportComponent implements OnInit {
       branch_id: this.contextForm.get('branch_id')?.value
     };
 
+    console.log('📤 Uploading teacher file with context:', context);
+
     this.importService.uploadFile('teacher', this.selectedFile, context).subscribe({
       next: (response) => {
         this.currentBatchId = response.batch_id;
         this.isUploading = false;
-        this.showSuccess('File uploaded successfully');
+        this.showSuccess('File uploaded successfully - validating...');
+        
+        console.log('✅ File uploaded, batch ID:', response.batch_id);
+        
+        // 🔥 Auto-advance to next step
+        setTimeout(() => {
+          if (this.stepper) {
+            this.stepper.next();
+          }
+        }, 500);
+        
         this.validateImport();
       },
       error: (err) => {
         this.isUploading = false;
         this.showError('File upload failed');
-        console.error('Upload error:', err);
+        console.error('❌ Upload error:', err);
       }
     });
   }
@@ -157,17 +176,22 @@ export class TeacherImportComponent implements OnInit {
 
     this.isValidating = true;
 
+    console.log('🔍 Validating import, batch ID:', this.currentBatchId);
+
     this.importService.validateImport('teacher', this.currentBatchId).subscribe({
       next: (result) => {
         this.validationResult = result;
         this.isValidating = false;
         this.showSuccess(`Validation completed: ${result.valid_rows} valid, ${result.invalid_rows} invalid`);
+        
+        console.log('✅ Validation complete:', result);
+        
         this.loadPreview();
       },
       error: (err) => {
         this.isValidating = false;
         this.showError('Validation failed');
-        console.error('Validation error:', err);
+        console.error('❌ Validation error:', err);
       }
     });
   }
@@ -175,16 +199,21 @@ export class TeacherImportComponent implements OnInit {
   loadPreview(page: number = 1, status?: 'valid' | 'invalid' | 'all'): void {
     if (!this.currentBatchId) return;
 
+    console.log(`📊 Loading preview - Page: ${page}, Status: ${status || 'all'}`);
+
     this.importService.getPreview('teacher', this.currentBatchId, page, this.pageSize, status).subscribe({
       next: (preview) => {
         this.previewData = preview.data;
         this.previewSummary = preview.summary;
         this.totalRecords = preview.meta.total;
         this.currentPage = preview.meta.current_page;
+        
+        console.log(`✅ Preview loaded - ${preview.data.length} records (Total: ${preview.meta.total})`);
+        console.log('Summary:', preview.summary);
       },
       error: (err) => {
         this.showError('Failed to load preview');
-        console.error('Preview error:', err);
+        console.error('❌ Preview error:', err);
       }
     });
   }
@@ -196,11 +225,21 @@ export class TeacherImportComponent implements OnInit {
     if (index === 1) status = 'valid';
     if (index === 2) status = 'invalid';
     
+    console.log('📑 Tab changed to:', index, '| Status filter:', status);
+    
+    // Clear previous data before loading new
+    this.previewData = [];
+    
     this.loadPreview(1, status);
   }
 
   onPageChange(event: any): void {
-    this.loadPreview(event.pageIndex + 1);
+    // Preserve the current status filter when paginating
+    let status: 'valid' | 'invalid' | 'all' | undefined = undefined;
+    if (this.selectedTab === 1) status = 'valid';
+    if (this.selectedTab === 2) status = 'invalid';
+    
+    this.loadPreview(event.pageIndex + 1, status);
   }
 
   commitImport(): void {
