@@ -74,4 +74,5 @@ export interface TableState {
   searchQuery?: string;
   filters?: { [key: string]: any };
   loading: boolean;
+  serverSide?: boolean;
 }

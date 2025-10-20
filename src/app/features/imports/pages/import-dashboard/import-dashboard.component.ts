@@ -54,8 +54,7 @@ export class ImportDashboardComponent implements OnInit {
   }
 
   selectModule(module: ImportModule): void {
-    const moduleName = module.name.toLowerCase();
-    this.router.navigate(['/imports', moduleName]);
+    this.router.navigate(['/imports', module.id]);
   }
 
   viewHistory(): void {

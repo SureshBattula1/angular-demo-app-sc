@@ -136,14 +136,16 @@
           </mat-checkbox>
         </td>
       </ng-container>
-      
+       
       <!-- Dynamic Columns -->
       <ng-container *ngFor="let column of config.columns" [matColumnDef]="column.key">
         <th mat-header-cell 
           *matHeaderCellDef 
-          [mat-sort-header]="column.sortable ? column.key : ''"
+          mat-sort-header
+          [disabled]="column.sortable === false"
           [style.width]="column.width"
-          [style.text-align]="column.align || 'left'">
+          [style.text-align]="column.align || 'left'"
+          (click)="onHeaderClick(column)">
           <div class="header-content">
             {{ column.header }}
           </div>
