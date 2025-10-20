@@ -191,11 +191,10 @@
         <td mat-cell *matCellDef="let row" class="actions-column">
           <div class="action-buttons">
             <button mat-icon-button 
-              *ngFor="let action of config.actions"
+              *ngFor="let action of getVisibleActions(row)"
               [matTooltip]="action.label"
               [color]="action.color"
-              (click)="onActionClick(action, row); $event.stopPropagation()"
-              [hidden]="action.show && !action.show(row)">
+              (click)="onActionClick(action, row); $event.stopPropagation()">
               <mat-icon>{{ action.icon }}</mat-icon>
             </button>
           </div>
@@ -239,9 +238,9 @@
           <span class="field-value" [class.number-value]="column.type === 'number'">{{ getCellValue(row, column) }}</span>
         </div>
       </mat-card-content>
-      <mat-card-actions *ngIf="config.actions">
+      <mat-card-actions *ngIf="config.actions && getVisibleActions(row).length > 0">
         <button mat-button 
-          *ngFor="let action of config.actions"
+          *ngFor="let action of getVisibleActions(row)"
           (click)="onActionClick(action, row); $event.stopPropagation()">
           <mat-icon>{{ action.icon }}</mat-icon>
           {{ action.label }}

@@ -14,8 +14,25 @@ export class BranchService {
 
   /**
    * Get all branches with filters
+   * Now uses /branches/accessible to respect branch-level access control
    */
   getBranches(params?: Record<string, unknown>): Observable<BranchListResponse> {
+    // 🔥 CHANGED: Use /accessible endpoint to filter by user's branch access
+    return this.apiService.get<Branch[]>(`${this.ENDPOINT}/accessible`, params).pipe(
+      map(response => ({
+        success: response.success,
+        data: response.data || [],
+        count: response.data?.length || 0,
+        total: response.data?.length || 0
+      }))
+    );
+  }
+
+  /**
+   * Get ALL branches (SuperAdmin only - for branch management module)
+   * Use this ONLY in branch management pages where admins manage branches
+   */
+  getAllBranches(params?: Record<string, unknown>): Observable<BranchListResponse> {
     return this.apiService.get<Branch[]>(this.ENDPOINT, params).pipe(
       map(response => ({
         success: response.success,

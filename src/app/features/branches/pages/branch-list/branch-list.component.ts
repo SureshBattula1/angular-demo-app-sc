@@ -277,7 +277,8 @@ export class BranchListComponent implements OnInit {
   loadBranches(): void {
     this.loading = true;
     
-    this.branchService.getBranches(this.currentFilters).subscribe({
+    // 🔥 Use getAllBranches() for branch management (admins need to see all)
+    this.branchService.getAllBranches(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
           this.branches = response.data;

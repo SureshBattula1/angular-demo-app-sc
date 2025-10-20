@@ -697,5 +697,25 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
       this.sort.sort({ id: '', start: 'asc', disableClear: false });
     }
   }
+
+  /**
+   * Get actions that should be visible for a specific row
+   * Filters based on the show property of each action
+   */
+  getVisibleActions(row: any): TableAction[] {
+    if (!this.config.actions) {
+      return [];
+    }
+    
+    return this.config.actions.filter(action => {
+      // If no show function defined, always show
+      if (!action.show) {
+        return true;
+      }
+      
+      // Otherwise, call the show function
+      return action.show(row);
+    });
+  }
 }
 
