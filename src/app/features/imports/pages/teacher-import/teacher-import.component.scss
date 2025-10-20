@@ -1,0 +1,259 @@
+.teacher-import-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 500;
+    }
+
+    button mat-icon {
+      margin-right: 8px;
+    }
+  }
+
+  .step-content {
+    padding: 24px 0;
+    min-height: 400px;
+
+    h2 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .step-description {
+      margin: 0 0 24px 0;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .context-form {
+      max-width: 400px;
+      margin-bottom: 24px;
+    }
+
+    .file-upload-area {
+      margin: 24px 0;
+
+      .upload-box {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 48px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: #3f51b5;
+          background-color: rgba(63, 81, 181, 0.05);
+        }
+
+        mat-icon {
+          font-size: 64px;
+          width: 64px;
+          height: 64px;
+          color: #3f51b5;
+          margin-bottom: 16px;
+        }
+
+        p {
+          margin: 0;
+          color: rgba(0, 0, 0, 0.6);
+        }
+
+        .file-selected {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          color: #3f51b5;
+          font-weight: 500;
+
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+            margin: 0;
+          }
+        }
+      }
+    }
+
+    .validation-progress,
+    .import-progress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px;
+      text-align: center;
+
+      mat-spinner {
+        margin-bottom: 24px;
+      }
+
+      p {
+        margin: 8px 0;
+        font-size: 16px;
+      }
+
+      .note {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 14px;
+      }
+    }
+
+    .validation-summary {
+      margin: 24px 0;
+
+      .summary-card {
+        .summary-stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 24px;
+
+          .stat {
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.02);
+
+            &.valid {
+              background-color: rgba(76, 175, 80, 0.1);
+              .stat-value {
+                color: #4caf50;
+              }
+            }
+
+            &.invalid {
+              background-color: rgba(244, 67, 54, 0.1);
+              .stat-value {
+                color: #f44336;
+              }
+            }
+
+            .stat-value {
+              display: block;
+              font-size: 32px;
+              font-weight: 600;
+              margin-bottom: 8px;
+            }
+
+            .stat-label {
+              display: block;
+              font-size: 14px;
+              color: rgba(0, 0, 0, 0.6);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+          }
+        }
+      }
+    }
+
+    .table-container {
+      margin: 24px 0;
+
+      .preview-table {
+        width: 100%;
+
+        th {
+          font-weight: 600;
+          background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        mat-chip {
+          &.valid {
+            background-color: #4caf50;
+            color: white;
+          }
+
+          &.invalid {
+            background-color: #f44336;
+            color: white;
+          }
+
+          &.pending {
+            background-color: #ff9800;
+            color: white;
+          }
+        }
+
+        .errors-list {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .error-item {
+            font-size: 12px;
+            color: #f44336;
+            display: block;
+          }
+        }
+      }
+    }
+
+    .import-complete {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px;
+      text-align: center;
+
+      mat-icon {
+        font-size: 80px;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+      }
+
+      h3 {
+        margin: 0 0 16px 0;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 0 0 24px 0;
+        color: rgba(0, 0, 0, 0.6);
+      }
+
+      button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+
+    .step-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+
+      button mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .teacher-import-container {
+    .step-content {
+      .validation-summary {
+        .summary-stats {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+}
+

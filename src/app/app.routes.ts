@@ -100,6 +100,12 @@ export const routes: Routes = [
         loadChildren: () => import('./features/fees/fees.routes').then(m => m.FEES_ROUTES),
         canActivate: [permissionGuard],
         data: { permissions: ['fees.view', 'fees.collect'], permissionMode: 'any' }
+      },
+      {
+        path: 'imports',
+        loadChildren: () => import('./features/imports/imports.routes').then(m => m.IMPORTS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['students.create', 'teachers.create'], permissionMode: 'any' }
       }
     ]
   },

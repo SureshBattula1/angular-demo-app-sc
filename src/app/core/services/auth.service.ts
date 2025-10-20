@@ -80,7 +80,8 @@ export class AuthService {
     private router: Router,
     private injector: Injector
   ) {
-    this.loadUserFromStorage();
+    // Defer loading user from storage to avoid circular dependency
+    setTimeout(() => this.loadUserFromStorage(), 0);
   }
 
   /**
