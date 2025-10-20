@@ -11,6 +11,7 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { StudentAttendance, TeacherAttendance } from '../../../../core/models/attendance.model';
 import { Section } from '../../../../core/models/section.model';
 
@@ -368,6 +369,7 @@ export class AttendanceListComponent implements OnInit {
   constructor(
     private attendanceService: AttendanceService,
     private errorHandler: ErrorHandlerService,
+    private exportService: ExportService,
     private router: Router,
     private route: ActivatedRoute,
     private branchService: BranchService,
@@ -706,8 +708,28 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onExport(format: string): void {
-    this.errorHandler.showInfo(`Exporting ${this.selectedRecords.length || 'all'} records as ${format.toUpperCase()}...`);
-    // Implement export logic
+    const type = this.activeTab; // 'student' or 'teacher'
+    const recordCount = this.selectedRecords.length || (type === 'student' ? this.studentCount : this.teacherCount);
+    
+    this.errorHandler.showInfo(`Exporting ${recordCount} ${type} attendance records as ${format.toUpperCase()}...`);
+    
+    // Prepare export configuration
+    const exportConfig = {
+      endpoint: '/attendance/export',
+      filename: `${type}_attendance_export`
+    };
+    
+    // Prepare export options with current filters
+    const exportOptions = {
+      format: format as 'excel' | 'pdf' | 'csv',
+      filters: {
+        ...this.currentFilters,
+        type: type
+      }
+    };
+    
+    // Call the export service
+    this.exportService.export(exportConfig, exportOptions);
   }
   
   onSearchChange(query: string): void {
