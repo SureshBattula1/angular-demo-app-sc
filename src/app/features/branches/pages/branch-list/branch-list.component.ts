@@ -275,9 +275,11 @@ export class BranchListComponent implements OnInit {
    * Load branches from server with pagination and sorting
    */
   loadBranches(): void {
+    console.log('🚀🚀🚀 loadBranches CALLED with filters:', this.currentFilters);
     this.loading = true;
     
     // 🔥 Use getAllBranches() for branch management (admins need to see all)
+    console.log('📞 Making API call to getAllBranches...');
     this.branchService.getAllBranches(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
@@ -314,6 +316,11 @@ export class BranchListComponent implements OnInit {
    * Handle sort changes
    */
   onSortChange(event: SortEvent): void {
+    console.log('🎯🎯🎯 PARENT onSortChange CALLED!!!', {
+      event,
+      currentFilters: this.currentFilters
+    });
+    
     // Map frontend column names to backend column names if needed
     const columnMapping: Record<string, string> = {
       // Most branch columns match directly, but add mappings if needed
@@ -329,6 +336,8 @@ export class BranchListComponent implements OnInit {
       sort_by: sortColumn,
       sort_direction: event.direction
     };
+    
+    console.log('📡 About to call loadBranches with filters:', this.currentFilters);
     this.loadBranches();
   }
   

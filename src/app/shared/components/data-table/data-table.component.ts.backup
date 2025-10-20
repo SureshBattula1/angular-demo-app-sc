@@ -48,8 +48,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   // Subscriptions for cleanup
   private subscriptions = new Subscription();
   private resizeListener: (() => void) | null = null;
-  private sortSubscribed = false;
-  private paginatorSubscribed = false;
   
   constructor(private cdr: ChangeDetectorRef) {
     // Initialize dataSource to prevent undefined errors
@@ -81,7 +79,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   Math = Math;
   
   // Debug flag - set to true to enable console logging
-  private DEBUG = true;
+  private DEBUG = false;
   
   ngOnInit(): void {
     this.initializeTable();
@@ -101,10 +99,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   ngOnDestroy(): void {
     // Clean up subscriptions
     this.subscriptions.unsubscribe();
-    
-    // Reset subscription flags
-    this.sortSubscribed = false;
-    this.paginatorSubscribed = false;
     
     // Remove resize event listener
     if (this.resizeListener) {
@@ -218,15 +212,12 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         hasSort: !!this.sort,
         dataLength: this.data?.length,
         pageSize: this.pageSize,
-        serverSide: this.config.serverSide,
         config: this.config
       });
     }
     
     // Connect paginator and sort after view initialization
-    setTimeout(() => {
-      this.connectPaginatorAndSort();
-    }, 0);
+    this.connectPaginatorAndSort();
   }
   
   /**
@@ -277,52 +268,24 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         }
       } else {
         // For server-side, handle sort events manually
-        if (this.DEBUG) {
-          console.log('🔧 Attempting to set up server-side sort:', {
-            hasSort: !!this.sort,
-            sortSubscribed: this.sortSubscribed,
-            serverSide: this.config.serverSide
-          });
-        }
-        
-        if (this.sort && !this.sortSubscribed) {
-          // CRITICAL: Connect sort to dataSource even for server-side
-          // This is needed for mat-sort-header directives to trigger sortChange events
-          this.dataSource.sort = this.sort;
+        if (this.sort) {
+          // Check if subscription already exists, if not create one
+          if (this.sort.sortChange.observers.length === 0) {
+            const sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
+              if (this.DEBUG) {
+                console.log('🔀 Sort changed:', sort);
+              }
+              this.onServerSort(sort);
+            });
+            this.subscriptions.add(sortSub);
+          }
           
-          console.log('🔗 Connected MatSort to dataSource for server-side sorting');
           if (this.DEBUG) {
-            console.log('🔧 Setting up server-side sort subscription:', {
+            console.log('✅ Sort subscription set up for server-side:', {
               hasSortView: !!this.sort,
-              currentObserverCount: this.sort.sortChange.observers.length,
-              sortActive: this.sort.active,
-              sortDirection: this.sort.direction
+              observerCount: this.sort.sortChange.observers.length
             });
           }
-          
-          // Subscribe to sort changes for server-side tables
-          // The subscription will be cleaned up in ngOnDestroy
-          const sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
-            console.log('🔀🔀🔀 SORT EVENT TRIGGERED!!!', {
-              active: sort.active,
-              direction: sort.direction,
-              timestamp: new Date().toISOString()
-            });
-            this.onServerSort(sort);
-          });
-          this.subscriptions.add(sortSub);
-          this.sortSubscribed = true;
-          
-          if (this.DEBUG) {
-            console.log('✅ Sort subscription created for server-side:', {
-              observerCount: this.sort.sortChange.observers.length,
-              subscriptionActive: !sortSub.closed
-            });
-          }
-        } else if (!this.sort && this.DEBUG) {
-          console.log('⚠️ No MatSort ViewChild available for server-side sorting');
-        } else if (this.sortSubscribed && this.DEBUG) {
-          console.log('ℹ️ Sort subscription already exists, skipping');
         }
         
         // For server-side, handle pagination events manually  
@@ -341,12 +304,11 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
             this.currentPage = this.paginator.pageIndex;
           }
           
-          if (!this.paginatorSubscribed) {
+          if (this.paginator.page.observers.length === 0) {
             const pageSub = this.paginator.page.subscribe((pageEvent: PageEvent) => {
               this.onServerPageChange(pageEvent);
             });
             this.subscriptions.add(pageSub);
-            this.paginatorSubscribed = true;
           }
           
           if (this.DEBUG) {
@@ -669,52 +631,14 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     }
   }
 
-  // Manual sort trigger for testing
-  onHeaderClick(column: TableColumn): void {
-    console.log('🖱️🖱️🖱️ HEADER CLICKED!!!', {
-      columnKey: column.key,
-      columnHeader: column.header,
-      sortable: column.sortable,
-      hasSort: !!this.sort,
-      sortActive: this.sort?.active,
-      sortDirection: this.sort?.direction
-    });
-    
-    // Only trigger manual sort for server-side and sortable columns
-    if (this.config.serverSide && column.sortable !== false) {
-      // Determine next sort direction
-      let nextDirection: 'asc' | 'desc' | '' = 'asc';
-      
-      if (this.currentSort?.field === column.key) {
-        // Toggle direction: asc -> desc -> no sort
-        if (this.currentSort.direction === 'asc') {
-          nextDirection = 'desc';
-        } else if (this.currentSort.direction === 'desc') {
-          nextDirection = ''; // Clear sort
-        }
-      }
-      
-      console.log('🔧 MANUALLY TRIGGERING SORT:', {
-        field: column.key,
-        direction: nextDirection
-      });
-      
-      // Manually call onServerSort to test the full chain
-      this.onServerSort({
-        active: column.key,
-        direction: nextDirection
-      });
-    }
-  }
-
   // Server-side event handlers
   onServerSort(sort: Sort): void {
-    console.log('🔀🔀🔀 onServerSort METHOD CALLED:', {
-      active: sort.active,
-      direction: sort.direction,
-      hasParentListener: this.sortChanged.observed,
-      observerCount: this.sortChanged.observers.length
-    });
+    if (this.DEBUG) {
+      console.log('🔀 onServerSort called:', {
+        active: sort.active,
+        direction: sort.direction
+      });
+    }
     
     if (sort.direction) {
       this.currentSort = {
@@ -722,20 +646,18 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         direction: sort.direction as 'asc' | 'desc'
       };
       
-      console.log('📤 EMITTING SORT EVENT TO PARENT:', this.currentSort);
-      
       // Emit sort event to parent component
       this.sortChanged.emit({
         field: sort.active,
         direction: sort.direction as 'asc' | 'desc'
       });
       
-      console.log('✅ Sort event emitted successfully');
+      if (this.DEBUG) {
+        console.log('✅ Sort emitted:', this.currentSort);
+      }
     } else {
       // Clear sort
       this.currentSort = null;
-      
-      console.log('🔄 Clearing sort...');
       
       // Emit sort event with empty direction to indicate sort clear
       // Parent component should handle this by loading data without sorting
@@ -744,7 +666,9 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         direction: 'asc' // Default direction when clearing
       });
       
-      console.log('✅ Sort clear event emitted');
+      if (this.DEBUG) {
+        console.log('🔄 Sort cleared');
+      }
     }
   }
 

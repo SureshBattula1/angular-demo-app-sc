@@ -18,7 +18,7 @@ export interface TableAction {
   icon: string;                   // Material icon name
   label: string;                  // Tooltip text
   color?: 'primary' | 'accent' | 'warn';
-  action: (row: any) => void;     // Action callback
+  action: (row: any) => void;     // Action callback 
   show?: (row: any) => boolean;   // Conditional visibility
 }
 
