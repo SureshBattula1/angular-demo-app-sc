@@ -101,6 +101,10 @@
           <mat-icon>edit</mat-icon>
           Edit
         </button>
+        <button mat-button (click)="managePermissions(user.id)" *hasPermission="'users.manage_roles'">
+          <mat-icon>shield</mat-icon>
+          Permissions
+        </button>
         <button mat-button color="warn" (click)="deleteUser(user)" *hasPermission="'users.delete'">
           <mat-icon>delete</mat-icon>
           Delete
@@ -191,6 +195,13 @@
                 *hasPermission="'users.update'"
                 matTooltip="Edit User">
                 <mat-icon>edit</mat-icon>
+              </button>
+              <button 
+                mat-icon-button 
+                (click)="managePermissions(user.id)"
+                *hasPermission="'users.manage_roles'"
+                matTooltip="Manage Permissions">
+                <mat-icon>shield</mat-icon>
               </button>
               <button 
                 mat-icon-button 

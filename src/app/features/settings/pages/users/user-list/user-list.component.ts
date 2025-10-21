@@ -148,6 +148,10 @@ export class UserListComponent implements OnInit {
     this.router.navigate(['/settings/users/edit', id]);
   }
 
+  managePermissions(id: number): void {
+    this.router.navigate(['/settings/users', id, 'permissions']);
+  }
+
   deleteUser(user: User): void {
     if (confirm(`Are you sure you want to delete the user "${user.first_name} ${user.last_name}"?`)) {
       this.userService.deleteUser(user.id).subscribe({

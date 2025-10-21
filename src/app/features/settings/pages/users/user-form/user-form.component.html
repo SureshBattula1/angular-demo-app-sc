@@ -135,6 +135,127 @@
       </mat-card-content>
     </mat-card>
 
+    <!-- Permissions Section (Only in Edit Mode) -->
+    <mat-card class="form-card permissions-card" *ngIf="isEditMode && showPermissions">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>shield</mat-icon>
+          User Permissions
+        </mat-card-title>
+        <mat-card-subtitle>
+          Role-based permissions are populated by default. Add special permissions or override as needed.
+        </mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <!-- Global Action Buttons -->
+        <div class="global-actions">
+          <button type="button" mat-raised-button color="primary" (click)="allowAllPermissions()" [disabled]="isLoadingPermissions">
+            <mat-icon>check_circle</mat-icon>
+            Allow All
+          </button>
+          <button type="button" mat-raised-button color="warn" (click)="disableAllPermissions()" [disabled]="isLoadingPermissions">
+            <mat-icon>cancel</mat-icon>
+            Disable All
+          </button>
+          <button type="button" mat-stroked-button (click)="resetPermissions()" [disabled]="isLoadingPermissions">
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
+          <mat-chip *ngIf="hasPermissionModifications()" class="modified-chip">
+            <mat-icon>edit</mat-icon>
+            {{ getModifiedPermissions().length }} modified
+          </mat-chip>
+        </div>
+
+        <!-- Legend -->
+        <div class="permission-legend" *ngIf="!isLoadingPermissions">
+          <div class="legend-item">
+            <mat-icon class="from-role">shield</mat-icon>
+            <span>From Role</span>
+          </div>
+          <div class="legend-item">
+            <mat-icon class="overridden">edit</mat-icon>
+            <span>User Override</span>
+          </div>
+          <div class="legend-item">
+            <mat-icon class="modified">fiber_manual_record</mat-icon>
+            <span>Modified</span>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoadingPermissions" class="loading-permissions">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading permissions...</p>
+        </div>
+
+        <!-- Permissions by Module -->
+        <div *ngIf="!isLoadingPermissions" class="permissions-container">
+          <div *ngFor="let module of groupedPermissions" class="permission-module">
+            <!-- Module Header -->
+            <div class="module-header">
+              <div class="module-title-wrapper">
+                <mat-icon class="module-icon" [style.color]="module.allGranted ? '#4caf50' : '#9e9e9e'">
+                  {{ module.module_icon }}
+                </mat-icon>
+                <h3>{{ module.module_name }}</h3>
+                <mat-chip class="permission-count-chip">
+                  {{ getGrantedCount(module) }} / {{ module.permissions.length }}
+                </mat-chip>
+              </div>
+              <div class="module-actions">
+                <button
+                  type="button"
+                  mat-stroked-button
+                  (click)="toggleModule(module)"
+                  [color]="areAllPermissionsGranted(module) ? 'warn' : 'primary'">
+                  <mat-icon>{{ areAllPermissionsGranted(module) ? 'remove_circle' : 'add_circle' }}</mat-icon>
+                  {{ areAllPermissionsGranted(module) ? 'Disable All' : 'Allow All' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Permissions Grid -->
+            <div class="permission-grid">
+              <mat-checkbox
+                *ngFor="let permission of module.permissions"
+                [(ngModel)]="permission.granted"
+                (change)="togglePermission(permission)"
+                color="primary"
+                [ngModelOptions]="{standalone: true}"
+                [class.permission-modified]="permission.modified">
+                <div class="permission-item">
+                  <span class="permission-name">
+                    {{ permission.name }}
+                    <mat-icon 
+                      *ngIf="permission.from_role && !permission.overridden" 
+                      class="status-icon from-role-icon"
+                      matTooltip="Permission from role">
+                      shield
+                    </mat-icon>
+                    <mat-icon 
+                      *ngIf="permission.overridden && !permission.modified" 
+                      class="status-icon overridden-icon"
+                      matTooltip="User-specific override">
+                      edit
+                    </mat-icon>
+                    <mat-icon 
+                      *ngIf="permission.modified" 
+                      class="status-icon modified-icon"
+                      matTooltip="Modified (not saved)">
+                      fiber_manual_record
+                    </mat-icon>
+                  </span>
+                  <span class="permission-description">{{ permission.slug }}</span>
+                </div>
+              </mat-checkbox>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
     <div class="form-actions">
       <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
         <mat-icon>cancel</mat-icon>
@@ -144,6 +265,7 @@
         <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
         <mat-icon *ngIf="!isSubmitting">save</mat-icon>
         {{ isEditMode ? 'Update User' : 'Create User' }}
+        <span *ngIf="hasPermissionModifications()">(+{{ getModifiedPermissions().length }} permissions)</span>
       </button>
     </div>
   </form>
