@@ -6,7 +6,9 @@ import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../.
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { TeacherService } from '../../services/teacher.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Teacher } from '../../../../core/models/teacher.model';
 
 @Component({
@@ -42,14 +44,17 @@ export class TeacherListComponent implements OnInit {
   
   tableConfig: TableConfig = {
     columns: [
-      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
-      { key: 'email', header: 'Email', searchable: true },
-      { key: 'phone', header: 'Phone', width: '130px' },
-      { key: 'branch.name', header: 'Branch', width: '130px' },
-      { key: 'role', header: 'Role', type: 'badge', width: '100px', align: 'center' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      { key: 'employee_id', header: 'Employee ID', sortable: true, searchable: true, width: '140px' },
+      { key: 'user.first_name', header: 'First Name', sortable: true, searchable: true },
+      { key: 'user.last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'category_type', header: 'Category', sortable: true, type: 'badge', width: '130px', align: 'center' },
+      { key: 'designation', header: 'Designation', sortable: true, searchable: true },
+      { key: 'department.name', header: 'Department', sortable: true, width: '150px' },
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
+      { key: 'user.email', header: 'Email', searchable: true },
+      { key: 'user.phone', header: 'Phone', width: '130px' },
+      { key: 'teacher_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
+      { key: 'user.is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewTeacher(row) },
@@ -70,7 +75,7 @@ export class TeacherListComponent implements OnInit {
   
   advancedSearchConfig: AdvancedSearchConfig = {
     title: 'Advanced Teacher Search',
-    width: '450px',
+    width: '500px',
     showReset: true,
     showSaveSearch: false,
     fields: [
@@ -80,31 +85,86 @@ export class TeacherListComponent implements OnInit {
         type: 'select',
         placeholder: 'Select branch',
         icon: 'business',
-        options: [], // Will be populated dynamically
-        // group: 'Basic Information'
+        options: []
+      },
+      {
+        key: 'category_type',
+        label: 'Category Type',
+        type: 'select',
+        placeholder: 'Select category',
+        icon: 'category',
+        options: [
+          { value: 'Teaching', label: 'Teaching' },
+          { value: 'Non-Teaching', label: 'Non-Teaching' }
+        ]
+      },
+      {
+        key: 'department_id',
+        label: 'Department',
+        type: 'select',
+        placeholder: 'Select department',
+        icon: 'apartment',
+        options: []
+      },
+      {
+        key: 'designation',
+        label: 'Designation',
+        type: 'text',
+        placeholder: 'Enter designation',
+        icon: 'work'
+      },
+      {
+        key: 'employee_id',
+        label: 'Employee ID',
+        type: 'text',
+        placeholder: 'Enter employee ID',
+        icon: 'badge'
       },
       {
         key: 'email',
         label: 'Email',
         type: 'text',
         placeholder: 'Enter email',
-        icon: 'email',
-        // group: 'Basic'
+        icon: 'email'
       },
       {
         key: 'phone',
         label: 'Phone',
         type: 'text',
         placeholder: 'Enter phone number',
-        icon: 'phone',
-        // group: 'Basic'
+        icon: 'phone'
+      },
+      {
+        key: 'gender',
+        label: 'Gender',
+        type: 'select',
+        placeholder: 'Select gender',
+        icon: 'wc',
+        options: [
+          { value: 'Male', label: 'Male' },
+          { value: 'Female', label: 'Female' },
+          { value: 'Other', label: 'Other' }
+        ]
+      },
+      {
+        key: 'teacher_status',
+        label: 'Teacher Status',
+        type: 'select',
+        placeholder: 'Select status',
+        icon: 'person',
+        options: [
+          { value: 'Active', label: 'Active' },
+          { value: 'OnLeave', label: 'On Leave' },
+          { value: 'Resigned', label: 'Resigned' },
+          { value: 'Retired', label: 'Retired' },
+          { value: 'Terminated', label: 'Terminated' }
+        ]
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
-        icon: 'check_circle',
-        // group: 'Status'
+        icon: 'check_circle'
       }
     ]
   };
@@ -112,12 +172,15 @@ export class TeacherListComponent implements OnInit {
   constructor(
     private teacherService: TeacherService,
     private branchService: BranchService,
+    private departmentService: DepartmentService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
     this.loadBranches();
+    this.loadDepartments();
     this.loadTeachers();
   }
   
@@ -138,6 +201,28 @@ export class TeacherListComponent implements OnInit {
         }
       },
       error: (error) => {
+      }
+    });
+  }
+
+  /**
+   * Load departments dynamically for advanced search filter
+   */
+  loadDepartments(): void {
+    this.departmentService.getDepartments({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const deptField = this.advancedSearchConfig.fields.find(f => f.key === 'department_id');
+          if (deptField) {
+            deptField.options = response.data.map(dept => ({
+              value: dept.id.toString(),
+              label: dept.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
       }
     });
   }
@@ -179,13 +264,17 @@ export class TeacherListComponent implements OnInit {
    */
   onSortChange(event: SortEvent): void {
     const columnMapping: Record<string, string> = {
-      'first_name': 'users.first_name',
-      'last_name': 'users.last_name',
-      'email': 'users.email',
-      'phone': 'users.phone',
+      'user.first_name': 'users.first_name',
+      'user.last_name': 'users.last_name',
+      'user.email': 'users.email',
+      'user.phone': 'users.phone',
       'branch.name': 'branch_id',
-      'role': 'users.role',
-      'is_active': 'users.is_active'
+      'department.name': 'department_id',
+      'category_type': 'category_type',
+      'designation': 'designation',
+      'employee_id': 'employee_id',
+      'teacher_status': 'teacher_status',
+      'user.is_active': 'users.is_active'
     };
     
     const sortColumn = columnMapping[event.field] || event.field;
@@ -201,6 +290,15 @@ export class TeacherListComponent implements OnInit {
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
+      search: event.query,
+      page: 1
+    };
+    this.loadTeachers();
+  }
+
+  onSearchFieldChanged(event: SearchEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
       search: event.query,
       page: 1
     };
@@ -230,11 +328,12 @@ export class TeacherListComponent implements OnInit {
   }
   
   deleteTeacher(teacher: Teacher): void {
-    if (confirm(`Are you sure you want to deactivate teacher "${teacher.first_name} ${teacher.last_name}"?`)) {
+    const teacherName = teacher.user?.first_name + ' ' + teacher.user?.last_name;
+    if (confirm(`Are you sure you want to delete teacher "${teacherName}"?`)) {
       this.teacherService.deleteTeacher(teacher.id).subscribe({
         next: (response) => {
           if (response.success) {
-            this.errorHandler.showSuccess('Teacher deactivated successfully');
+            this.errorHandler.showSuccess('Teacher deleted successfully');
             this.loadTeachers();
           }
         },
@@ -245,8 +344,20 @@ export class TeacherListComponent implements OnInit {
     }
   }
   
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading state
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters
+    this.exportService.export(
+      {
+        endpoint: '/teachers/export',
+        filename: 'teachers'
+      },
+      {
+        format: format,
+        filters: this.currentFilters
+      }
+    );
   }
 }
-

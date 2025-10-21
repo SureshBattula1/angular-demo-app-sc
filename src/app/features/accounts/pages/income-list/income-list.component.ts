@@ -6,6 +6,7 @@ import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../.
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AccountService } from '../../services/account.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Transaction } from '../../../../core/models/account.model';
 
 @Component({
@@ -113,7 +114,8 @@ export class IncomeListComponent implements OnInit {
   constructor(
     private accountService: AccountService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
@@ -233,8 +235,24 @@ export class IncomeListComponent implements OnInit {
     }
   }
   
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export income as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading message
+    this.errorHandler.showInfo(`Exporting income transactions as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters and type
+    this.exportService.export(
+      {
+        endpoint: '/transactions/export',
+        filename: 'income_transactions'
+      },
+      {
+        format: format,
+        filters: {
+          ...this.currentFilters,
+          type: 'Income'  // Ensure we export income transactions only
+        }
+      }
+    );
   }
 }
 

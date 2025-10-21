@@ -1,17 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { TeacherService } from '../../services/teacher.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { Teacher } from '../../../../core/models/teacher.model';
+import { Teacher, TeacherFormData } from '../../../../core/models/teacher.model';
 
 @Component({
   selector: 'app-teacher-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, MaterialModule],
   templateUrl: './teacher-form.component.html',
   styleUrls: ['./teacher-form.component.scss']
 })
@@ -23,11 +24,71 @@ export class TeacherFormComponent implements OnInit {
   currentTeacher?: Teacher;
   
   branches: any[] = [];
+  departments: any[] = [];
+  reportingManagers: any[] = [];
+  profilePicturePreview: string | null = null;
+  sameAsPermanentAddress = false;
+  
+  // Form sections visibility
+  showPayrollDetails = false;
+  showBankDetails = false;
+  showSocialMedia = false;
+  showDocuments = false;
+  showHealthInfo = false;
+  showAdditionalInfo = false;
+
+  // Language options
+  languageOptions = [
+    'English', 'Hindi', 'Bengali', 'Telugu', 'Marathi', 'Tamil', 'Gujarati',
+    'Urdu', 'Kannada', 'Odia', 'Malayalam', 'Punjabi', 'Assamese', 'Nepali',
+    'Sanskrit', 'French', 'German', 'Spanish', 'Chinese', 'Japanese', 'Arabic'
+  ];
+
+  // Blood group options
+  bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  // Handicap status options
+  handicapStatusOptions = ['None', 'Physical', 'Visual', 'Hearing', 'Mental', 'Multiple'];
+
+  // Teaching designations
+  teachingDesignations = [
+    'Principal',
+    'Vice Principal',
+    'Head of Department',
+    'Senior Teacher',
+    'Teacher',
+    'Assistant Teacher',
+    'Subject Teacher',
+    'Lab Instructor',
+    'Physical Education Teacher',
+    'Art Teacher',
+    'Music Teacher',
+    'Librarian',
+    'Counselor'
+  ];
+
+  // Non-Teaching designations
+  nonTeachingDesignations = [
+    'Administrative Officer',
+    'Office Manager',
+    'Accountant',
+    'Clerk',
+    'Receptionist',
+    'Lab Assistant',
+    'Library Assistant',
+    'Peon',
+    'Security Guard',
+    'Janitor',
+    'Driver',
+    'IT Support',
+    'Maintenance Staff'
+  ];
 
   constructor(
     private fb: FormBuilder,
     private teacherService: TeacherService,
     private branchService: BranchService,
+    private departmentService: DepartmentService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -36,6 +97,19 @@ export class TeacherFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadDepartments();
+    
+    // Listen to category_type changes to update designation options
+    this.teacherForm.get('category_type')?.valueChanges.subscribe(() => {
+      this.teacherForm.get('designation')?.setValue('');
+    });
+
+    // Listen to branch changes to load reporting managers
+    this.teacherForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
+      if (branchId) {
+        this.loadReportingManagers(branchId);
+      }
+    });
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -48,13 +122,173 @@ export class TeacherFormComponent implements OnInit {
 
   private initForm(): void {
     this.teacherForm = this.fb.group({
+      // Basic Information
       first_name: ['', [Validators.required, Validators.maxLength(255)]],
+      middle_name: [''],
       last_name: ['', [Validators.required, Validators.maxLength(255)]],
+      preferred_name: [''],
+      title: [''],
+      suffix: [''],
       email: ['', [Validators.required, Validators.email]],
+      alternate_email: ['', Validators.email],
       phone: [''],
+      alternate_phone: [''],
+      whatsapp_number: [''],
+      landline_number: [''],
       password: ['', this.isEditMode ? [] : [Validators.required, Validators.minLength(8)]],
       branch_id: [null, Validators.required],
-      is_active: [true]
+      is_active: [true],
+      
+      // Teacher Specific
+      employee_id: ['', [Validators.required, Validators.maxLength(50)]],
+      category_type: ['Teaching', Validators.required],
+      designation: ['', [Validators.required, Validators.maxLength(255)]],
+      department_id: [null],
+      
+      // Identity Documents
+      gender: ['', Validators.required],
+      date_of_birth: ['', Validators.required],
+      place_of_birth: [''],
+      pan_number: ['', [Validators.required, Validators.maxLength(20), Validators.pattern(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/)]],
+      aadhaar_number: ['', [Validators.pattern(/^[0-9]{12}$/)]],
+      passport_number: [''],
+      passport_expiry: [''],
+      driving_license_number: [''],
+      driving_license_expiry: [''],
+      voter_id: [''],
+      
+      // Enhanced Personal Information
+      nationality: ['Indian'],
+      religion: [''],
+      caste: [''],
+      sub_caste: [''],
+      blood_group: [''],
+      mother_tongue: [''],
+      languages_known: [[]],
+      handicap_status: ['None'],
+      handicap_details: [''],
+      
+      // Family Information
+      father_name: [''],
+      mother_name: [''],
+      spouse_name: [''],
+      spouse_date_of_birth: [''],
+      spouse_occupation: [''],
+      spouse_phone: [''],
+      spouse_email: ['', Validators.email],
+      number_of_children: [0, [Validators.min(0), Validators.max(20)]],
+      children_details: [[]],
+      
+      // Address Details
+      current_address: [''],
+      current_city: [''],
+      current_state: [''],
+      current_pincode: [''],
+      current_country: ['India'],
+      permanent_address: [''],
+      permanent_city: [''],
+      permanent_state: [''],
+      permanent_pincode: [''],
+      permanent_country: ['India'],
+      
+      // Professional Details
+      joining_date: [''],
+      employee_type: ['Permanent'],
+      employee_type_detail: ['Full-time'],
+      employment_status: ['Active'],
+      probation_end_date: [''],
+      confirmation_date: [''],
+      reporting_manager: [''],
+      reporting_manager_id: [''],
+      
+      // Educational Background
+      qualification: [''],
+      educational_qualifications: [[]],
+      professional_certifications: [[]],
+      training_programs: [[]],
+      awards_recognitions: [[]],
+      publications: [[]],
+      research_projects: [[]],
+      
+      // Skills and Competencies
+      experience_years: [0, [Validators.min(0), Validators.max(50)]],
+      teaching_experience_years: [0, [Validators.min(0), Validators.max(50)]],
+      industry_experience_years: [0, [Validators.min(0), Validators.max(50)]],
+      technical_skills: [[]],
+      soft_skills: [[]],
+      subject_expertise: [[]],
+      teaching_methodologies: [[]],
+      
+      // Health and Medical
+      medical_history: [''],
+      allergies: [''],
+      current_medications: [''],
+      family_doctor_name: [''],
+      family_doctor_phone: [''],
+      family_doctor_address: [''],
+      last_medical_checkup: [''],
+      medical_insurance_details: [''],
+      
+      // Emergency Contacts
+      emergency_contact_name: [''],
+      emergency_contact_phone: [''],
+      emergency_contact_number: [''],
+      emergency_contact_relation: [''],
+      emergency_contact_2_name: [''],
+      emergency_contact_2_phone: [''],
+      emergency_contact_2_relation: [''],
+      emergency_contact_2_address: [''],
+      
+      // Financial Information
+      epf_number: [''],
+      pf_number: [''],
+      esi_number: [''],
+      uan_number: [''],
+      gratuity_number: [''],
+      basic_salary: [0, [Validators.min(0)]],
+      ctc: [0, [Validators.min(0)]],
+      salary_components: [[]],
+      deductions: [[]],
+      income_tax_pan: [''],
+      
+      // Bank Account Information
+      bank_name: [''],
+      bank_account_number: [''],
+      bank_ifsc_code: [''],
+      account_title: [''],
+      bank_branch_name: [''],
+      
+      // Additional Professional Information
+      previous_employers: [[]],
+      references: [[]],
+      professional_memberships: [''],
+      professional_license: [''],
+      
+      // Performance and Evaluation
+      performance_reviews: [[]],
+      appraisals: [[]],
+      goals_objectives: [[]],
+      training_needs: [[]],
+      
+      // Additional Information
+      notes: [''],
+      hobbies_interests: [''],
+      volunteer_work: [''],
+      community_involvement: [''],
+      personal_statement: [''],
+      career_objectives: [''],
+      additional_notes: [''],
+      
+      // Documents
+      profile_picture: [null],
+      resume_file: [null],
+      joining_letter_file: [null],
+      resignation_letter_file: [null],
+      other_documents_file: [null],
+      aadhaar_file: [null],
+      pan_file: [null],
+      passport_file: [null],
+      driving_license_file: [null]
     });
   }
 
@@ -65,7 +299,31 @@ export class TeacherFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           this.currentTeacher = response.data;
-          this.teacherForm.patchValue(response.data);
+          const teacher = response.data;
+          
+          // Patch form with teacher data
+          // Handle nested user data
+          const formData: any = {
+            ...teacher,
+            first_name: teacher.user?.first_name || teacher.first_name,
+            last_name: teacher.user?.last_name || teacher.last_name,
+            email: teacher.user?.email || teacher.email,
+            phone: teacher.user?.phone || teacher.phone,
+            is_active: teacher.user?.is_active ?? teacher.is_active
+          };
+          
+          this.teacherForm.patchValue(formData);
+          
+          // Load reporting managers for the current branch
+          if (teacher.branch_id) {
+            this.loadReportingManagers(teacher.branch_id);
+          }
+          
+          // Load profile picture preview if exists
+          if (teacher.profile_picture) {
+            this.profilePicturePreview = teacher.profile_picture;
+          }
+          
           // Remove password requirement for edit mode
           this.teacherForm.get('password')?.clearValidators();
           this.teacherForm.get('password')?.updateValueAndValidity();
@@ -92,6 +350,46 @@ export class TeacherFormComponent implements OnInit {
     });
   }
 
+  private loadDepartments(): void {
+    this.departmentService.getDepartments({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.departments = response.data;
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading departments:', error);
+      }
+    });
+  }
+
+  private loadReportingManagers(branchId: number): void {
+    // Load teachers from the same branch to populate reporting manager dropdown
+    this.teacherService.getTeachers({ branch_id: branchId, is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          // Filter out current teacher if in edit mode
+          this.reportingManagers = response.data.filter((teacher: any) => {
+            return !this.teacherId || teacher.id !== this.teacherId;
+          });
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading reporting managers:', error);
+      }
+    });
+  }
+
+  get designationOptions(): string[] {
+    const categoryType = this.teacherForm.get('category_type')?.value;
+    if (categoryType === 'Teaching') {
+      return this.teachingDesignations;
+    } else if (categoryType === 'Non-Teaching') {
+      return this.nonTeachingDesignations;
+    }
+    return [];
+  }
+
   onSubmit(): void {
     if (this.teacherForm.invalid) {
       this.markFormGroupTouched(this.teacherForm);
@@ -100,12 +398,26 @@ export class TeacherFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = { ...this.teacherForm.value };
+    
+    // Use getRawValue() to include disabled fields (like current_address when checkbox is checked)
+    const formData = { ...this.teacherForm.getRawValue() };
     
     // Remove password if empty in edit mode
     if (this.isEditMode && !formData.password) {
       delete formData.password;
     }
+
+    // Remove file objects for API call
+    const fileFields = ['resume_file', 'joining_letter_file', 'resignation_letter_file', 
+                       'other_documents_file', 'aadhaar_file', 'pan_file', 
+                       'passport_file', 'driving_license_file', 'profile_picture'];
+    
+    fileFields.forEach(field => {
+      if (formData[field]) {
+        // Handle file upload separately (future implementation)
+        delete formData[field];
+      }
+    });
 
     const request = this.isEditMode && this.teacherId
       ? this.teacherService.updateTeacher(this.teacherId, formData)
@@ -139,18 +451,6 @@ export class TeacherFormComponent implements OnInit {
     });
   }
 
-  private getFieldLabel(fieldName: string): string {
-    const labels: Record<string, string> = {
-      first_name: 'First Name',
-      last_name: 'Last Name',
-      email: 'Email',
-      phone: 'Phone',
-      password: 'Password',
-      branch_id: 'Branch'
-    };
-    return labels[fieldName] || fieldName;
-  }
-  
   getErrorMessage(fieldName: string): string {
     const control = this.teacherForm.get(fieldName);
     
@@ -170,7 +470,289 @@ export class TeacherFormComponent implements OnInit {
       return `${this.getFieldLabel(fieldName)} is too long`;
     }
     
+    if (control?.hasError('min')) {
+      return `${this.getFieldLabel(fieldName)} must be greater than or equal to ${control.errors?.['min'].min}`;
+    }
+    
+    if (control?.hasError('max')) {
+      return `${this.getFieldLabel(fieldName)} must be less than or equal to ${control.errors?.['max'].max}`;
+    }
+    
+    if (control?.hasError('pattern')) {
+      if (fieldName === 'pan_number') {
+        return 'PAN number must be in format ABCDE1234F';
+      }
+      if (fieldName === 'aadhaar_number') {
+        return 'Aadhaar number must be 12 digits';
+      }
+      return `${this.getFieldLabel(fieldName)} format is invalid`;
+    }
+    
     return '';
   }
-}
 
+  private getFieldLabel(fieldName: string): string {
+    const labels: Record<string, string> = {
+      first_name: 'First Name',
+      last_name: 'Last Name',
+      middle_name: 'Middle Name',
+      preferred_name: 'Preferred Name',
+      title: 'Title',
+      suffix: 'Suffix',
+      email: 'Email',
+      alternate_email: 'Alternate Email',
+      phone: 'Phone',
+      alternate_phone: 'Alternate Phone',
+      whatsapp_number: 'WhatsApp Number',
+      landline_number: 'Landline Number',
+      password: 'Password',
+      branch_id: 'Branch',
+      employee_id: 'Employee ID',
+      category_type: 'Category Type',
+      designation: 'Designation',
+      department_id: 'Department',
+      gender: 'Gender',
+      date_of_birth: 'Date of Birth',
+      place_of_birth: 'Place of Birth',
+      pan_number: 'PAN Number',
+      aadhaar_number: 'Aadhaar Number',
+      passport_number: 'Passport Number',
+      passport_expiry: 'Passport Expiry',
+      driving_license_number: 'Driving License Number',
+      driving_license_expiry: 'Driving License Expiry',
+      voter_id: 'Voter ID',
+      nationality: 'Nationality',
+      religion: 'Religion',
+      caste: 'Caste',
+      sub_caste: 'Sub Caste',
+      blood_group: 'Blood Group',
+      mother_tongue: 'Mother Tongue',
+      languages_known: 'Languages Known',
+      handicap_status: 'Handicap Status',
+      handicap_details: 'Handicap Details',
+      father_name: 'Father Name',
+      mother_name: 'Mother Name',
+      spouse_name: 'Spouse Name',
+      spouse_date_of_birth: 'Spouse Date of Birth',
+      spouse_occupation: 'Spouse Occupation',
+      spouse_phone: 'Spouse Phone',
+      spouse_email: 'Spouse Email',
+      number_of_children: 'Number of Children',
+      current_address: 'Current Address',
+      current_city: 'Current City',
+      current_state: 'Current State',
+      current_pincode: 'Current Pincode',
+      current_country: 'Current Country',
+      permanent_address: 'Permanent Address',
+      permanent_city: 'Permanent City',
+      permanent_state: 'Permanent State',
+      permanent_pincode: 'Permanent Pincode',
+      permanent_country: 'Permanent Country',
+      joining_date: 'Joining Date',
+      employee_type: 'Employee Type',
+      employee_type_detail: 'Employee Type Detail',
+      employment_status: 'Employment Status',
+      probation_end_date: 'Probation End Date',
+      confirmation_date: 'Confirmation Date',
+      reporting_manager: 'Reporting Manager',
+      reporting_manager_id: 'Reporting Manager ID',
+      qualification: 'Qualification',
+      experience_years: 'Experience Years',
+      teaching_experience_years: 'Teaching Experience Years',
+      industry_experience_years: 'Industry Experience Years',
+      medical_history: 'Medical History',
+      allergies: 'Allergies',
+      current_medications: 'Current Medications',
+      family_doctor_name: 'Family Doctor Name',
+      family_doctor_phone: 'Family Doctor Phone',
+      family_doctor_address: 'Family Doctor Address',
+      last_medical_checkup: 'Last Medical Checkup',
+      medical_insurance_details: 'Medical Insurance Details',
+      emergency_contact_name: 'Emergency Contact Name',
+      emergency_contact_phone: 'Emergency Contact Phone',
+      emergency_contact_number: 'Emergency Contact Number',
+      emergency_contact_relation: 'Emergency Contact Relation',
+      emergency_contact_2_name: 'Emergency Contact 2 Name',
+      emergency_contact_2_phone: 'Emergency Contact 2 Phone',
+      emergency_contact_2_relation: 'Emergency Contact 2 Relation',
+      emergency_contact_2_address: 'Emergency Contact 2 Address',
+      epf_number: 'EPF Number',
+      pf_number: 'PF Number',
+      esi_number: 'ESI Number',
+      uan_number: 'UAN Number',
+      gratuity_number: 'Gratuity Number',
+      basic_salary: 'Basic Salary',
+      ctc: 'CTC',
+      income_tax_pan: 'Income Tax PAN',
+      bank_name: 'Bank Name',
+      bank_account_number: 'Bank Account Number',
+      bank_ifsc_code: 'Bank IFSC Code',
+      account_title: 'Account Title',
+      bank_branch_name: 'Bank Branch Name',
+      professional_memberships: 'Professional Memberships',
+      professional_license: 'Professional License',
+      notes: 'Notes',
+      hobbies_interests: 'Hobbies and Interests',
+      volunteer_work: 'Volunteer Work',
+      community_involvement: 'Community Involvement',
+      personal_statement: 'Personal Statement',
+      career_objectives: 'Career Objectives',
+      additional_notes: 'Additional Notes'
+    };
+    return labels[fieldName] || fieldName;
+  }
+
+  onFileSelected(event: any, fieldName: string): void {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file size for profile picture (1MB = 1048576 bytes)
+      if (fieldName === 'profile_picture') {
+        const maxSize = 1048576; // 1MB in bytes
+        if (file.size > maxSize) {
+          this.errorHandler.showError('Profile picture must be less than 1MB');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp', 'image/bmp'];
+        if (!allowedTypes.includes(file.type)) {
+          this.errorHandler.showError('Invalid file type. Please upload an image file (JPG, PNG, GIF, SVG, WebP, BMP)');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+        
+        this.previewProfilePicture(file);
+      }
+      
+      this.teacherForm.get(fieldName)?.setValue(file);
+    }
+  }
+
+  previewProfilePicture(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.profilePicturePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeProfilePicture(): void {
+    this.teacherForm.get('profile_picture')?.setValue(null);
+    this.profilePicturePreview = null;
+  }
+
+  getFileName(fieldName: string): string {
+    const file = this.teacherForm.get(fieldName)?.value;
+    if (file && file instanceof File) {
+      return file.name;
+    }
+    return '';
+  }
+
+  // Toggle section visibility
+  toggleSection(section: string): void {
+    switch (section) {
+      case 'payroll':
+        this.showPayrollDetails = !this.showPayrollDetails;
+        break;
+      case 'bank':
+        this.showBankDetails = !this.showBankDetails;
+        break;
+      case 'social':
+        this.showSocialMedia = !this.showSocialMedia;
+        break;
+      case 'documents':
+        this.showDocuments = !this.showDocuments;
+        break;
+      case 'health':
+        this.showHealthInfo = !this.showHealthInfo;
+        break;
+      case 'additional':
+        this.showAdditionalInfo = !this.showAdditionalInfo;
+        break;
+    }
+  }
+
+  // Add language to languages_known array
+  addLanguage(language: string): void {
+    const currentLanguages = this.teacherForm.get('languages_known')?.value || [];
+    if (!currentLanguages.includes(language)) {
+      this.teacherForm.get('languages_known')?.setValue([...currentLanguages, language]);
+    }
+  }
+
+  // Remove language from languages_known array
+  removeLanguage(language: string): void {
+    const currentLanguages = this.teacherForm.get('languages_known')?.value || [];
+    const updatedLanguages = currentLanguages.filter((lang: string) => lang !== language);
+    this.teacherForm.get('languages_known')?.setValue(updatedLanguages);
+  }
+
+  // Get profile completion percentage
+  getProfileCompletionPercentage(): number {
+    const totalFields = 50; // Total important fields
+    let filledFields = 0;
+    
+    const importantFields = [
+      'employee_id', 'category_type', 'designation', 'gender', 'date_of_birth',
+      'pan_number', 'father_name', 'mother_name', 'current_address',
+      'permanent_address', 'qualification', 'basic_salary',
+      'emergency_contact_name', 'emergency_contact_phone', 'aadhaar_number', 
+      'blood_group', 'spouse_name', 'alternate_email', 'alternate_phone',
+      'whatsapp_number', 'current_city', 'current_state', 'current_pincode',
+      'permanent_city', 'permanent_state', 'permanent_pincode', 'epf_number',
+      'pf_number', 'esi_number', 'uan_number', 'ctc', 'medical_history',
+      'allergies', 'family_doctor_name', 'family_doctor_phone',
+      'emergency_contact_2_name', 'emergency_contact_2_phone',
+      'professional_memberships', 'hobbies_interests', 'volunteer_work',
+      'community_involvement', 'personal_statement', 'career_objectives',
+      'technical_skills', 'soft_skills', 'subject_expertise', 'notes'
+    ];
+
+    importantFields.forEach(field => {
+      const value = this.teacherForm.get(field)?.value;
+      if (value && value !== '' && value !== 0 && value !== null && value !== undefined) {
+        filledFields++;
+      }
+    });
+
+    return Math.round((filledFields / totalFields) * 100);
+  }
+
+  // Copy permanent address to current address
+  onSameAsPermanentAddressChange(checked: boolean): void {
+    this.sameAsPermanentAddress = checked;
+    
+    if (checked) {
+      // Copy permanent address to current address
+      const permanentAddress = this.teacherForm.get('permanent_address')?.value;
+      const permanentCity = this.teacherForm.get('permanent_city')?.value;
+      const permanentState = this.teacherForm.get('permanent_state')?.value;
+      const permanentPincode = this.teacherForm.get('permanent_pincode')?.value;
+      const permanentCountry = this.teacherForm.get('permanent_country')?.value;
+
+      this.teacherForm.patchValue({
+        current_address: permanentAddress,
+        current_city: permanentCity,
+        current_state: permanentState,
+        current_pincode: permanentPincode,
+        current_country: permanentCountry
+      });
+
+      // Disable current address fields when checkbox is checked
+      this.teacherForm.get('current_address')?.disable();
+      this.teacherForm.get('current_city')?.disable();
+      this.teacherForm.get('current_state')?.disable();
+      this.teacherForm.get('current_pincode')?.disable();
+      this.teacherForm.get('current_country')?.disable();
+    } else {
+      // Enable current address fields when checkbox is unchecked
+      this.teacherForm.get('current_address')?.enable();
+      this.teacherForm.get('current_city')?.enable();
+      this.teacherForm.get('current_state')?.enable();
+      this.teacherForm.get('current_pincode')?.enable();
+      this.teacherForm.get('current_country')?.enable();
+    }
+  }
+}

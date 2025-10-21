@@ -71,6 +71,10 @@
           *ngIf="advancedSearchConfig"
           class="advanced-search-btn"
           matTooltip="Advanced Search"
+          [matBadge]="getActiveFilterCount()"
+          [matBadgeHidden]="getActiveFilterCount() === 0"
+          matBadgeColor="primary"
+          matBadgeSize="small"
           (click)="openAdvancedSearch()">
           <mat-icon>tune</mat-icon>
         </button>
