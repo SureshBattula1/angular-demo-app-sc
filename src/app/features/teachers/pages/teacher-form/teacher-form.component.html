@@ -1,12 +1,13 @@
 <div class="teacher-form-container">
   <mat-card class="form-card">
+    <!-- Header -->
     <mat-card-header>
       <mat-card-title>
         <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'person_add' }}</mat-icon>
         {{ isEditMode ? 'Edit Teacher' : 'Add New Teacher' }}
       </mat-card-title>
       <mat-card-subtitle>
-        {{ isEditMode ? 'Update teacher information' : 'Register a new teacher' }}
+        {{ isEditMode ? 'Update teacher information' : 'Create a new teacher profile' }}
       </mat-card-subtitle>
     </mat-card-header>
 
@@ -14,25 +15,90 @@
 
     <mat-card-content>
       <form [formGroup]="teacherForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Profile Completion Progress -->
+        <div class="profile-completion" *ngIf="isEditMode">
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="getProfileCompletionPercentage()"
+            color="primary">
+          </mat-progress-bar>
+          <span class="completion-text">
+            Profile Completion: {{ getProfileCompletionPercentage() }}%
+          </span>
+        </div>
+
+        <!-- Basic Information -->
         <div class="form-section">
           <h3 class="section-title">
             <mat-icon>person</mat-icon>
             Basic Information
           </h3>
+
+          <!-- Profile Picture Upload -->
+          <div class="profile-picture-section">
+            <div class="profile-picture-upload">
+              <div class="profile-picture-preview">
+                <img *ngIf="profilePicturePreview" [src]="profilePicturePreview" alt="Profile Picture">
+                <div *ngIf="!profilePicturePreview" class="profile-placeholder">
+                  <mat-icon>account_circle</mat-icon>
+                  <span>No Photo</span>
+                </div>
+              </div>
+              <div class="profile-picture-actions">
+                <button mat-raised-button color="primary" type="button" (click)="profilePicFile.click()">
+                  <mat-icon>add_a_photo</mat-icon>
+                  {{ profilePicturePreview ? 'Change Photo' : 'Upload Photo' }}
+                </button>
+                <button mat-stroked-button color="warn" type="button" *ngIf="profilePicturePreview" (click)="removeProfilePicture()">
+                  <mat-icon>delete</mat-icon>
+                  Remove
+                </button>
+                <input #profilePicFile type="file" hidden (change)="onFileSelected($event, 'profile_picture')" accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp,image/bmp">
+                <p class="upload-hint">JPG, PNG, GIF, SVG, WebP, BMP. Max size 1MB</p>
+              </div>
+            </div>
+          </div>
           
           <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-quarter">
+              <mat-label>Title</mat-label>
+              <mat-select formControlName="title">
+                <mat-option value="Mr">Mr</mat-option>
+                <mat-option value="Mrs">Mrs</mat-option>
+                <mat-option value="Ms">Ms</mat-option>
+                <mat-option value="Dr">Dr</mat-option>
+                <mat-option value="Prof">Prof</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>First Name *</mat-label>
               <input matInput formControlName="first_name">
               <mat-icon matPrefix>person</mat-icon>
-              <mat-error *ngIf="teacherForm.get('first_name')?.invalid">{{ getErrorMessage('first_name') }}</mat-error>
+              <mat-error>{{ getErrorMessage('first_name') }}</mat-error>
             </mat-form-field>
 
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Middle Name</mat-label>
+              <input matInput formControlName="middle_name">
+              <mat-icon matPrefix>person_outline</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Last Name *</mat-label>
               <input matInput formControlName="last_name">
-              <mat-icon matPrefix>person_outline</mat-icon>
-              <mat-error *ngIf="teacherForm.get('last_name')?.invalid">{{ getErrorMessage('last_name') }}</mat-error>
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error>{{ getErrorMessage('last_name') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Preferred Name</mat-label>
+              <input matInput formControlName="preferred_name">
+              <mat-icon matPrefix>person_pin</mat-icon>
             </mat-form-field>
           </div>
 
@@ -41,17 +107,38 @@
               <mat-label>Email *</mat-label>
               <input matInput type="email" formControlName="email">
               <mat-icon matPrefix>email</mat-icon>
-              <mat-error *ngIf="teacherForm.get('email')?.invalid">{{ getErrorMessage('email') }}</mat-error>
+              <mat-error>{{ getErrorMessage('email') }}</mat-error>
             </mat-form-field>
 
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Alternate Email</mat-label>
+              <input matInput type="email" formControlName="alternate_email">
+              <mat-icon matPrefix>alternate_email</mat-icon>
+              <mat-error>{{ getErrorMessage('alternate_email') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Phone</mat-label>
               <input matInput formControlName="phone">
               <mat-icon matPrefix>phone</mat-icon>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Alternate Phone</mat-label>
+              <input matInput formControlName="alternate_phone">
+              <mat-icon matPrefix>phone_android</mat-icon>
+            </mat-form-field>
           </div>
 
           <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>WhatsApp Number</mat-label>
+              <input matInput formControlName="whatsapp_number">
+              <mat-icon matPrefix>chat</mat-icon>
+            </mat-form-field>
+
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
               <mat-select formControlName="branch_id">
@@ -60,42 +147,725 @@
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>business</mat-icon>
-              <mat-error *ngIf="teacherForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
+              <mat-error>{{ getErrorMessage('branch_id') }}</mat-error>
             </mat-form-field>
+          </div>
 
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="!isEditMode">
+          <mat-form-field appearance="outline" class="w-100" *ngIf="!isEditMode">
               <mat-label>Password *</mat-label>
               <input matInput type="password" formControlName="password">
               <mat-icon matPrefix>lock</mat-icon>
-              <mat-error *ngIf="teacherForm.get('password')?.invalid">{{ getErrorMessage('password') }}</mat-error>
+            <mat-error>{{ getErrorMessage('password') }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Teacher Specific Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>school</mat-icon>
+            Professional Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Employee ID *</mat-label>
+              <input matInput formControlName="employee_id">
+              <mat-icon matPrefix>badge</mat-icon>
+              <mat-error>{{ getErrorMessage('employee_id') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Category Type *</mat-label>
+              <mat-select formControlName="category_type">
+                <mat-option value="Teaching">Teaching</mat-option>
+                <mat-option value="Non-Teaching">Non-Teaching</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-error>{{ getErrorMessage('category_type') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Designation *</mat-label>
+              <mat-select formControlName="designation">
+                <mat-option *ngFor="let designation of designationOptions" [value]="designation">
+                  {{ designation }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>work</mat-icon>
+              <mat-error>{{ getErrorMessage('designation') }}</mat-error>
+              <mat-hint *ngIf="designationOptions.length === 0">Please select Category Type first</mat-hint>
             </mat-form-field>
           </div>
 
           <div class="form-row">
-            <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">
-              <mat-icon class="checkbox-icon">check_circle</mat-icon>
-              Teacher is Active
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Department</mat-label>
+              <mat-select formControlName="department_id">
+                <mat-option *ngFor="let department of departments" [value]="department.id">
+                  {{ department.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>apartment</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Joining Date</mat-label>
+              <input matInput type="date" formControlName="joining_date">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Employee Type</mat-label>
+              <mat-select formControlName="employee_type">
+                <mat-option value="Permanent">Permanent</mat-option>
+                <mat-option value="Contract">Contract</mat-option>
+                <mat-option value="Temporary">Temporary</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>work_outline</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Employment Status</mat-label>
+              <mat-select formControlName="employment_status">
+                <mat-option value="Active">Active</mat-option>
+                <mat-option value="On Leave">On Leave</mat-option>
+                <mat-option value="Suspended">Suspended</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>assignment_ind</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Reporting Manager</mat-label>
+              <mat-select formControlName="reporting_manager_id">
+                <mat-option [value]="null">None</mat-option>
+                <mat-option *ngFor="let manager of reportingManagers" [value]="manager.id">
+                  {{ manager.user?.first_name }} {{ manager.user?.last_name }} 
+                  ({{ manager.employee_id }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>supervisor_account</mat-icon>
+              <mat-hint *ngIf="reportingManagers.length === 0 && teacherForm.get('branch_id')?.value">
+                No teachers available in this branch
+              </mat-hint>
+              <mat-hint *ngIf="!teacherForm.get('branch_id')?.value">
+                Please select Branch first
+              </mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Experience (Years)</mat-label>
+              <input matInput type="number" formControlName="experience_years" min="0" max="50">
+              <mat-icon matPrefix>timeline</mat-icon>
+              <mat-error>{{ getErrorMessage('experience_years') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Teaching Experience (Years)</mat-label>
+              <input matInput type="number" formControlName="teaching_experience_years" min="0" max="50">
+              <mat-icon matPrefix>school</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Qualification</mat-label>
+              <input matInput formControlName="qualification">
+              <mat-icon matPrefix>workspace_premium</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>person_pin</mat-icon>
+            Personal Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Gender *</mat-label>
+              <mat-select formControlName="gender">
+                <mat-option value="Male">Male</mat-option>
+                <mat-option value="Female">Female</mat-option>
+                <mat-option value="Other">Other</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>wc</mat-icon>
+              <mat-error>{{ getErrorMessage('gender') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Date of Birth *</mat-label>
+              <input matInput type="date" formControlName="date_of_birth">
+              <mat-icon matPrefix>cake</mat-icon>
+              <mat-error>{{ getErrorMessage('date_of_birth') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Place of Birth</mat-label>
+              <input matInput formControlName="place_of_birth">
+              <mat-icon matPrefix>location_city</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-quarter">
+              <mat-label>Blood Group</mat-label>
+              <mat-select formControlName="blood_group">
+                <mat-option *ngFor="let group of bloodGroupOptions" [value]="group">
+                  {{ group }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>bloodtype</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-quarter">
+              <mat-label>Nationality</mat-label>
+              <input matInput formControlName="nationality">
+              <mat-icon matPrefix>flag</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-quarter">
+              <mat-label>Religion</mat-label>
+              <input matInput formControlName="religion">
+              <mat-icon matPrefix>temple_hindu</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-quarter">
+              <mat-label>Mother Tongue</mat-label>
+              <input matInput formControlName="mother_tongue">
+              <mat-icon matPrefix>language</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="languages-section">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Add Language</mat-label>
+              <mat-select (selectionChange)="addLanguage($event.value)">
+                <mat-option *ngFor="let lang of languageOptions" [value]="lang">
+                  {{ lang }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>translate</mat-icon>
+            </mat-form-field>
+            
+            <div class="selected-languages" *ngIf="teacherForm.get('languages_known')?.value?.length > 0">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let lang of teacherForm.get('languages_known')?.value" 
+                         (removed)="removeLanguage(lang)">
+                  {{ lang }}
+                  <button matChipRemove>
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-listbox>
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>family_restroom</mat-icon>
+            Family Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Father's Name</mat-label>
+              <input matInput formControlName="father_name">
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Mother's Name</mat-label>
+              <input matInput formControlName="mother_name">
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>favorite</mat-icon>
+              Spouse Information
+            </h4>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Spouse Name</mat-label>
+                <input matInput formControlName="spouse_name">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Spouse Date of Birth</mat-label>
+                <input matInput type="date" formControlName="spouse_date_of_birth">
+                <mat-icon matPrefix>cake</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Spouse Occupation</mat-label>
+                <input matInput formControlName="spouse_occupation">
+                <mat-icon matPrefix>work</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Spouse Phone</mat-label>
+                <input matInput formControlName="spouse_phone">
+                <mat-icon matPrefix>phone</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Number of Children</mat-label>
+                <input matInput type="number" formControlName="number_of_children" min="0" max="20">
+                <mat-icon matPrefix>child_care</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>location_on</mat-icon>
+            Address Information
+          </h3>
+
+          <!-- Same as Permanent Address Checkbox -->
+          <div class="subsection">
+            <div class="address-sync-card">
+              <div class="sync-card-content">
+                <div class="sync-icon-wrapper">
+                  <mat-icon class="sync-icon">sync_alt</mat-icon>
+                </div>
+                <div class="sync-text-wrapper">
+                  <mat-checkbox 
+                    [(ngModel)]="sameAsPermanentAddress" 
+                    [ngModelOptions]="{standalone: true}"
+                    (change)="onSameAsPermanentAddressChange($event.checked)"
+                    color="primary"
+                    class="sync-checkbox">
+                    <span class="checkbox-label">Current Address same as Permanent Address</span>
             </mat-checkbox>
+                  <p class="checkbox-description">
+                    <mat-icon class="info-icon">info_outline</mat-icon>
+                    Enable this to automatically copy permanent address to current address
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>home</mat-icon>
+              Current Address
+            </h4>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Current Address</mat-label>
+              <textarea matInput formControlName="current_address" rows="2"></textarea>
+              <mat-icon matPrefix>home</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>City</mat-label>
+                <input matInput formControlName="current_city">
+                <mat-icon matPrefix>location_city</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>State</mat-label>
+                <input matInput formControlName="current_state">
+                <mat-icon matPrefix>map</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>Pincode</mat-label>
+                <input matInput formControlName="current_pincode">
+                <mat-icon matPrefix>pin_drop</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>Country</mat-label>
+                <input matInput formControlName="current_country">
+                <mat-icon matPrefix>public</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>gite</mat-icon>
+              Permanent Address
+            </h4>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Permanent Address</mat-label>
+              <textarea matInput formControlName="permanent_address" rows="2"></textarea>
+              <mat-icon matPrefix>home_work</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>City</mat-label>
+                <input matInput formControlName="permanent_city">
+                <mat-icon matPrefix>location_city</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>State</mat-label>
+                <input matInput formControlName="permanent_state">
+                <mat-icon matPrefix>map</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>Pincode</mat-label>
+                <input matInput formControlName="permanent_pincode">
+                <mat-icon matPrefix>pin_drop</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>Country</mat-label>
+                <input matInput formControlName="permanent_country">
+                <mat-icon matPrefix>public</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Identity Documents -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>badge</mat-icon>
+            Identity Documents
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>PAN Number *</mat-label>
+              <input matInput formControlName="pan_number" style="text-transform: uppercase">
+              <mat-icon matPrefix>credit_card</mat-icon>
+              <mat-error>{{ getErrorMessage('pan_number') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Aadhaar Number</mat-label>
+              <input matInput formControlName="aadhaar_number" maxlength="12">
+              <mat-icon matPrefix>fingerprint</mat-icon>
+              <mat-error>{{ getErrorMessage('aadhaar_number') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Passport Number</mat-label>
+              <input matInput formControlName="passport_number">
+              <mat-icon matPrefix>flight</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Passport Expiry</mat-label>
+              <input matInput type="date" formControlName="passport_expiry">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Driving License Number</mat-label>
+              <input matInput formControlName="driving_license_number">
+              <mat-icon matPrefix>directions_car</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Voter ID</mat-label>
+              <input matInput formControlName="voter_id">
+              <mat-icon matPrefix>how_to_vote</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Emergency Contacts -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>emergency</mat-icon>
+            Emergency Contacts
+          </h3>
+
+          <div class="subsection">
+            <h4>Primary Contact</h4>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Contact Name</mat-label>
+                <input matInput formControlName="emergency_contact_name">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Phone Number</mat-label>
+                <input matInput formControlName="emergency_contact_phone">
+                <mat-icon matPrefix>phone</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Relation</mat-label>
+                <input matInput formControlName="emergency_contact_relation">
+                <mat-icon matPrefix>family_restroom</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>Secondary Contact</h4>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Contact Name</mat-label>
+                <input matInput formControlName="emergency_contact_2_name">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Phone Number</mat-label>
+                <input matInput formControlName="emergency_contact_2_phone">
+                <mat-icon matPrefix>phone</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Relation</mat-label>
+                <input matInput formControlName="emergency_contact_2_relation">
+                <mat-icon matPrefix>family_restroom</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payroll Details -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>account_balance</mat-icon>
+            Payroll & Financial Details
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>EPF Number</mat-label>
+              <input matInput formControlName="epf_number">
+              <mat-icon matPrefix>savings</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>PF Number</mat-label>
+              <input matInput formControlName="pf_number">
+              <mat-icon matPrefix>account_balance_wallet</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>ESI Number</mat-label>
+              <input matInput formControlName="esi_number">
+              <mat-icon matPrefix>health_and_safety</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>UAN Number</mat-label>
+              <input matInput formControlName="uan_number">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Basic Salary</mat-label>
+              <input matInput type="number" formControlName="basic_salary" min="0">
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+              <mat-error>{{ getErrorMessage('basic_salary') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>CTC</mat-label>
+              <input matInput type="number" formControlName="ctc" min="0">
+              <mat-icon matPrefix>payments</mat-icon>
+              <mat-error>{{ getErrorMessage('ctc') }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>account_balance</mat-icon>
+              Bank Account Details
+            </h4>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Bank Name</mat-label>
+                <input matInput formControlName="bank_name">
+                <mat-icon matPrefix>account_balance</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Account Number</mat-label>
+                <input matInput formControlName="bank_account_number">
+                <mat-icon matPrefix>numbers</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>IFSC Code</mat-label>
+                <input matInput formControlName="bank_ifsc_code" style="text-transform: uppercase">
+                <mat-icon matPrefix>qr_code</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Account Title</mat-label>
+                <input matInput formControlName="account_title">
+                <mat-icon matPrefix>account_circle</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Branch Name</mat-label>
+                <input matInput formControlName="bank_branch_name">
+                <mat-icon matPrefix>location_on</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health & Medical Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>local_hospital</mat-icon>
+            Health & Medical Information
+          </h3>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Medical History</mat-label>
+            <textarea matInput formControlName="medical_history" rows="2"></textarea>
+            <mat-icon matPrefix>medical_information</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Allergies</mat-label>
+            <textarea matInput formControlName="allergies" rows="2"></textarea>
+            <mat-icon matPrefix>warning</mat-icon>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Family Doctor Name</mat-label>
+              <input matInput formControlName="family_doctor_name">
+              <mat-icon matPrefix>medical_services</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Doctor Phone</mat-label>
+              <input matInput formControlName="family_doctor_phone">
+              <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Additional Information
+          </h3>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Hobbies & Interests</mat-label>
+            <textarea matInput formControlName="hobbies_interests" rows="2"></textarea>
+            <mat-icon matPrefix>interests</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Career Objectives</mat-label>
+            <textarea matInput formControlName="career_objectives" rows="2"></textarea>
+            <mat-icon matPrefix>trending_up</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="3"></textarea>
+            <mat-icon matPrefix>note</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Document Uploads -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>attach_file</mat-icon>
+            Document Uploads
+          </h3>
+
+          <div class="form-row">
+            <div class="file-input-wrapper">
+              <label class="file-label">Resume</label>
+              <button mat-stroked-button type="button" (click)="resumeFile.click()">
+                <mat-icon>upload_file</mat-icon>
+                Choose File
+              </button>
+              <span class="file-name" *ngIf="getFileName('resume_file')">{{ getFileName('resume_file') }}</span>
+              <input #resumeFile type="file" hidden (change)="onFileSelected($event, 'resume_file')" accept=".pdf,.doc,.docx">
+            </div>
+
+            <div class="file-input-wrapper">
+              <label class="file-label">Joining Letter</label>
+              <button mat-stroked-button type="button" (click)="joiningLetterFile.click()">
+                <mat-icon>upload_file</mat-icon>
+                Choose File
+              </button>
+              <span class="file-name" *ngIf="getFileName('joining_letter_file')">{{ getFileName('joining_letter_file') }}</span>
+              <input #joiningLetterFile type="file" hidden (change)="onFileSelected($event, 'joining_letter_file')" accept=".pdf,.doc,.docx">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="file-input-wrapper">
+              <label class="file-label">Aadhaar Card</label>
+              <button mat-stroked-button type="button" (click)="aadhaarFile.click()">
+                <mat-icon>upload_file</mat-icon>
+                Choose File
+              </button>
+              <span class="file-name" *ngIf="getFileName('aadhaar_file')">{{ getFileName('aadhaar_file') }}</span>
+              <input #aadhaarFile type="file" hidden (change)="onFileSelected($event, 'aadhaar_file')" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+
+            <div class="file-input-wrapper">
+              <label class="file-label">PAN Card</label>
+              <button mat-stroked-button type="button" (click)="panFile.click()">
+                <mat-icon>upload_file</mat-icon>
+                Choose File
+              </button>
+              <span class="file-name" *ngIf="getFileName('pan_file')">{{ getFileName('pan_file') }}</span>
+              <input #panFile type="file" hidden (change)="onFileSelected($event, 'pan_file')" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
           </div>
         </div>
       </form>
     </mat-card-content>
 
+    <!-- Form Actions -->
     <mat-card-actions align="end">
-      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+      <button mat-button type="button" (click)="onCancel()">
         <mat-icon>cancel</mat-icon>
         Cancel
       </button>
-      <button 
-        mat-raised-button 
+      
+      <button mat-raised-button 
         color="primary" 
-        type="submit" 
         (click)="onSubmit()"
-        [disabled]="isLoading || teacherForm.invalid"
-      >
+              [disabled]="teacherForm.invalid || isLoading">
         <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
-        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'person_add' }}</mat-icon>
-        <span>{{ isEditMode ? 'Update Teacher' : 'Add Teacher' }}</span>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        {{ isLoading ? 'Processing...' : (isEditMode ? 'Update Teacher' : 'Create Teacher') }}
       </button>
     </mat-card-actions>
   </mat-card>
