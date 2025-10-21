@@ -22,6 +22,8 @@ export interface TableAction {
   show?: (row: any) => boolean;   // Conditional visibility
 }
 
+export type ExportFormat = 'excel' | 'pdf' | 'csv';
+
 export interface TableConfig {
   columns: TableColumn[];
   actions?: TableAction[];

@@ -70,7 +70,6 @@ export class UserViewComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading role:', error);
       }
     });
   }

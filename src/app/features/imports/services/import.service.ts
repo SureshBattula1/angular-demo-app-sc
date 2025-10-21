@@ -66,18 +66,6 @@ export class ImportService {
       formData.append('section', context.section);
     }
 
-    // 🔥 Debug logging
-    console.log('📤 Uploading with context:', {
-      entity: entity,
-      file: file.name,
-      file_size: file.size,
-      file_type: file.type,
-      branch_id: context.branch_id,
-      grade: context.grade || '(not applicable)',
-      section: context.section || '(not selected)',
-      academic_year: context.academic_year || '(not applicable)'
-    });
-
     return this.http.post<{success: boolean; data: any}>(`${this.baseUrl}/${entity}/upload`, formData)
       .pipe(map(response => response.data));
   }

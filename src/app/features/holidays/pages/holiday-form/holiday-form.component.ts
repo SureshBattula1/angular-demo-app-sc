@@ -136,7 +136,6 @@ export class HolidayFormComponent implements OnInit {
         this.loadingBranches = false;
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
         this.loadingBranches = false;
       }
     });
@@ -169,7 +168,6 @@ export class HolidayFormComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading holiday:', error);
         this.errorHandler.showError('Failed to load holiday');
         this.loading = false;
       }
@@ -204,7 +202,6 @@ export class HolidayFormComponent implements OnInit {
         this.submitting = false;
       },
       error: (error) => {
-        console.error('Error saving holiday:', error);
         this.errorHandler.showError('Failed to save holiday');
         this.submitting = false;
       }

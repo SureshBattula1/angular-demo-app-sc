@@ -209,7 +209,6 @@ export class GradeListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -276,7 +275,6 @@ export class GradeListComponent implements OnInit {
   }
   
   onAction(event: { action: string, row: Grade | null }): void {
-    console.log('Action triggered:', event);
     
     // Handle add action
     if (event.action === 'add') {
@@ -290,7 +288,6 @@ export class GradeListComponent implements OnInit {
   
   onSelectionChange(selected: Grade[]): void {
     this.selectedGrades = selected;
-    console.log('Selected grades:', selected);
   }
   
   /**

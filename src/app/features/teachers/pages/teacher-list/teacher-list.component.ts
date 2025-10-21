@@ -199,7 +199,6 @@ export class TeacherListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }

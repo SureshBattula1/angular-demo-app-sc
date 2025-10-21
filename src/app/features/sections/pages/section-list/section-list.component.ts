@@ -149,7 +149,6 @@ export class SectionListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -172,7 +171,6 @@ export class SectionListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
         // Use fallback static grades if dynamic loading fails
         const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
         if (gradeField) {

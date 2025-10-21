@@ -73,7 +73,6 @@ export class FeeTypeFormComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
       }
     });
   }

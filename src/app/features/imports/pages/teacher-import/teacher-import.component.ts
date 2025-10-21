@@ -107,7 +107,6 @@ export class TeacherImportComponent implements OnInit {
       },
       error: (err) => {
         this.showError('Failed to load branches');
-        console.error('Error loading branches:', err);
       }
     });
   }
@@ -128,7 +127,6 @@ export class TeacherImportComponent implements OnInit {
       },
       error: (err) => {
         this.showError('Failed to download template');
-        console.error('Error downloading template:', err);
       }
     });
   }
@@ -144,15 +142,11 @@ export class TeacherImportComponent implements OnInit {
       branch_id: this.contextForm.get('branch_id')?.value
     };
 
-    console.log('📤 Uploading teacher file with context:', context);
-
     this.importService.uploadFile('teacher', this.selectedFile, context).subscribe({
       next: (response) => {
         this.currentBatchId = response.batch_id;
         this.isUploading = false;
         this.showSuccess('File uploaded successfully - validating...');
-        
-        console.log('✅ File uploaded, batch ID:', response.batch_id);
         
         // 🔥 Auto-advance to next step
         setTimeout(() => {
@@ -166,7 +160,6 @@ export class TeacherImportComponent implements OnInit {
       error: (err) => {
         this.isUploading = false;
         this.showError('File upload failed');
-        console.error('❌ Upload error:', err);
       }
     });
   }
@@ -176,22 +169,17 @@ export class TeacherImportComponent implements OnInit {
 
     this.isValidating = true;
 
-    console.log('🔍 Validating import, batch ID:', this.currentBatchId);
-
     this.importService.validateImport('teacher', this.currentBatchId).subscribe({
       next: (result) => {
         this.validationResult = result;
         this.isValidating = false;
         this.showSuccess(`Validation completed: ${result.valid_rows} valid, ${result.invalid_rows} invalid`);
         
-        console.log('✅ Validation complete:', result);
-        
         this.loadPreview();
       },
       error: (err) => {
         this.isValidating = false;
         this.showError('Validation failed');
-        console.error('❌ Validation error:', err);
       }
     });
   }
@@ -199,21 +187,15 @@ export class TeacherImportComponent implements OnInit {
   loadPreview(page: number = 1, status?: 'valid' | 'invalid' | 'all'): void {
     if (!this.currentBatchId) return;
 
-    console.log(`📊 Loading preview - Page: ${page}, Status: ${status || 'all'}`);
-
     this.importService.getPreview('teacher', this.currentBatchId, page, this.pageSize, status).subscribe({
       next: (preview) => {
         this.previewData = preview.data;
         this.previewSummary = preview.summary;
         this.totalRecords = preview.meta.total;
         this.currentPage = preview.meta.current_page;
-        
-        console.log(`✅ Preview loaded - ${preview.data.length} records (Total: ${preview.meta.total})`);
-        console.log('Summary:', preview.summary);
       },
       error: (err) => {
         this.showError('Failed to load preview');
-        console.error('❌ Preview error:', err);
       }
     });
   }
@@ -224,8 +206,6 @@ export class TeacherImportComponent implements OnInit {
     
     if (index === 1) status = 'valid';
     if (index === 2) status = 'invalid';
-    
-    console.log('📑 Tab changed to:', index, '| Status filter:', status);
     
     // Clear previous data before loading new
     this.previewData = [];
@@ -258,7 +238,6 @@ export class TeacherImportComponent implements OnInit {
       error: (err) => {
         this.isImporting = false;
         this.showError('Import failed');
-        console.error('Import error:', err);
       }
     });
   }
@@ -277,7 +256,6 @@ export class TeacherImportComponent implements OnInit {
         },
         error: (err) => {
           this.showError('Failed to cancel import');
-          console.error('Cancel error:', err);
         }
       });
     }

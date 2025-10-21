@@ -138,7 +138,6 @@ export class DepartmentListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }

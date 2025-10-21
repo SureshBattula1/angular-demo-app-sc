@@ -92,7 +92,6 @@ export class AttendanceViewComponent implements OnInit {
       to_date: now.toISOString().split('T')[0]
     }).subscribe({
       next: (response: any) => {
-        console.log('Student Attendance Response:', response);
         
         if (response.success) {
           // Backend returns: { success: true, data: [...], summary: {...}, student: {...} }
@@ -107,9 +106,6 @@ export class AttendanceViewComponent implements OnInit {
           };
           this.studentInfo = response.student || null;
           
-          console.log('Loaded history:', this.attendanceHistory.length, 'records');
-          console.log('Summary:', this.summary);
-          console.log('Student Info:', this.studentInfo);
         } else {
           this.attendanceHistory = [];
           this.summary = null;
@@ -118,7 +114,6 @@ export class AttendanceViewComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading student report:', error);
         this.errorHandler.showError(error);
         this.loading = false;
         this.attendanceHistory = [];
@@ -146,7 +141,6 @@ export class AttendanceViewComponent implements OnInit {
       to_date: now.toISOString().split('T')[0]
     }).subscribe({
       next: (response: any) => {
-        console.log('Teacher Attendance Response:', response);
         
         if (response.success) {
           // Backend returns: { success: true, data: [...], summary: {...}, teacher: {...} }
@@ -161,9 +155,6 @@ export class AttendanceViewComponent implements OnInit {
           };
           this.teacherInfo = response.teacher || null;
           
-          console.log('Loaded teacher history:', this.attendanceHistory.length, 'records');
-          console.log('Summary:', this.summary);
-          console.log('Teacher Info:', this.teacherInfo);
         } else {
           this.attendanceHistory = [];
           this.summary = null;
@@ -172,7 +163,6 @@ export class AttendanceViewComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading teacher report:', error);
         this.errorHandler.showError(error);
         this.loading = false;
         this.attendanceHistory = [];

@@ -47,7 +47,6 @@ export class DashboardComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading stats:', error);
         this.error = 'Failed to load dashboard statistics. Please try again.';
         this.loading = false;
       },
@@ -64,7 +63,6 @@ export class DashboardComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading attendance:', error);
       }
     });
 
@@ -76,7 +74,6 @@ export class DashboardComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading exams:', error);
       }
     });
 
@@ -88,7 +85,6 @@ export class DashboardComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading top performers:', error);
       }
     });
   }

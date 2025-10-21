@@ -80,7 +80,6 @@ export class GradeViewComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading stats:', error);
       }
     });
   }

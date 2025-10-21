@@ -99,7 +99,6 @@ export class FeeStructureFormComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -112,7 +111,6 @@ export class FeeStructureFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
       }
     });
   }
@@ -129,7 +127,6 @@ export class FeeStructureFormComponent implements OnInit {
         }
       },
       error: (error: any) => {
-        console.error('Error loading fee types:', error);
       }
     });
   }

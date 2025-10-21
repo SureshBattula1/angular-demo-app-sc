@@ -144,7 +144,6 @@ export class BranchFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading parent branches:', error);
       }
     });
   }

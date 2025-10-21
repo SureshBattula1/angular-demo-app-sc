@@ -186,7 +186,6 @@ export class ExpenseListComponent implements OnInit {
           }
         }
       },
-      error: (error) => console.error('Error loading categories:', error)
     });
   }
   

@@ -9,6 +9,7 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Student } from '../../../../core/models/student.model';
 import { Section } from '../../../../core/models/section.model';
 
@@ -161,7 +162,8 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     private sectionService: SectionService,
     private branchService: BranchService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
@@ -188,7 +190,6 @@ export class StudentListComponent implements OnInit, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -214,7 +215,6 @@ export class StudentListComponent implements OnInit, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
       }
     });
   }
@@ -230,7 +230,6 @@ export class StudentListComponent implements OnInit, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error loading sections:', error);
       }
     });
   }
@@ -374,8 +373,21 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     }
   }
   
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading state
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters
+    this.exportService.export(
+      {
+        endpoint: '/students/export',
+        filename: 'students'
+      },
+      {
+        format: format,
+        filters: this.currentFilters
+      }
+    );
   }
 }
 

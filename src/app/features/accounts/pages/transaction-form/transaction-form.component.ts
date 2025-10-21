@@ -128,7 +128,6 @@ export class TransactionFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -145,7 +144,6 @@ export class TransactionFormComponent implements OnInit {
         this.loadingCategories = false;
       },
       error: (error) => {
-        console.error('Error loading categories:', error);
         this.loadingCategories = false;
       }
     });

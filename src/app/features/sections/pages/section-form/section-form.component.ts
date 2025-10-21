@@ -92,7 +92,6 @@ export class SectionFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
@@ -108,12 +107,10 @@ export class SectionFormComponent implements OnInit {
         if (response.success && response.data) {
           // Filter only active grades and format for dropdown
           this.grades = response.data.filter(grade => grade.is_active);
-          console.log('Grades loaded:', this.grades);
         }
         this.loadingGrades = false;
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
         this.errorHandler.showError('Failed to load grades');
         this.loadingGrades = false;
       }
