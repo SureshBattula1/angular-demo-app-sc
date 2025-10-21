@@ -238,7 +238,7 @@
                 </span>
                 <span class="meta-item" *ngIf="holiday.branch">
                   <mat-icon>business</mat-icon>
-                  {{ holiday.branch?.name || 'All Branches' }}
+                  {{ holiday.branch ? holiday.branch.name : 'All Branches' }}
                 </span>
                 <span class="meta-item" *ngIf="holiday.duration && holiday.duration > 1">
                   <mat-icon>schedule</mat-icon>
