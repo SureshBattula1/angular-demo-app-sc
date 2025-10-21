@@ -8,6 +8,7 @@ import { SectionService } from '../../services/section.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Section } from '../../../../core/models/section.model';
 
 @Component({
@@ -123,7 +124,8 @@ export class SectionListComponent implements OnInit {
     private gradeService: GradeService,
     private branchService: BranchService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
@@ -297,8 +299,21 @@ export class SectionListComponent implements OnInit {
     }
   }
   
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading message
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters
+    this.exportService.export(
+      {
+        endpoint: '/sections/export',
+        filename: 'sections'
+      },
+      {
+        format: format,
+        filters: this.currentFilters
+      }
+    );
   }
 }
 

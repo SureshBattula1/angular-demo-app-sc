@@ -8,6 +8,7 @@ import { TeacherService } from '../../services/teacher.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Teacher } from '../../../../core/models/teacher.model';
 
 @Component({
@@ -173,7 +174,8 @@ export class TeacherListComponent implements OnInit {
     private branchService: BranchService,
     private departmentService: DepartmentService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
@@ -342,7 +344,20 @@ export class TeacherListComponent implements OnInit {
     }
   }
   
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading state
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters
+    this.exportService.export(
+      {
+        endpoint: '/teachers/export',
+        filename: 'teachers'
+      },
+      {
+        format: format,
+        filters: this.currentFilters
+      }
+    );
   }
 }

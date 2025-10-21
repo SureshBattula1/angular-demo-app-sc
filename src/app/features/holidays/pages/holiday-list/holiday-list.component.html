@@ -1,0 +1,294 @@
+<div class="holiday-page-container">
+  
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>event_note</mat-icon>
+        Holiday Management
+      </h1>
+      <p class="subtitle">Manage school holidays and academic calendar</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- View Toggle -->
+      <div class="view-toggle">
+        <button 
+          mat-button 
+          [class.active]="viewMode === 'calendar'"
+          (click)="switchView('calendar')">
+          <mat-icon>calendar_month</mat-icon>
+          Calendar
+        </button>
+        <button 
+          mat-button 
+          [class.active]="viewMode === 'list'"
+          (click)="switchView('list')">
+          <mat-icon>list</mat-icon>
+          List
+        </button>
+      </div>
+      
+      <!-- Export Button -->
+      <button mat-button class="export-btn" [matMenuTriggerFor]="exportMenu">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="onExport('excel')">
+          <mat-icon>table_chart</mat-icon>
+          Export as Excel
+        </button>
+        <button mat-menu-item (click)="onExport('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Export as PDF
+        </button>
+        <button mat-menu-item (click)="onExport('csv')">
+          <mat-icon>description</mat-icon>
+          Export as CSV
+        </button>
+      </mat-menu>
+      
+      <!-- Add Button -->
+      <button *ngIf="canCreate()" mat-raised-button color="primary" (click)="addHoliday()">
+        <mat-icon>add</mat-icon>
+        Add Holiday
+      </button>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div class="content-wrapper" *ngIf="viewMode === 'calendar'">
+    
+    <!-- Left Side: Full Calendar -->
+    <div class="calendar-container">
+      
+      <!-- Calendar Header -->
+      <mat-card class="calendar-card">
+        <div class="calendar-header">
+          <button mat-icon-button (click)="previousMonth()" [disabled]="loading" matTooltip="Previous Month">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          
+          <h2 class="current-month">
+            {{ monthNames[currentMonth] }} {{ currentYear }}
+          </h2>
+          
+          <button mat-icon-button (click)="nextMonth()" [disabled]="loading" matTooltip="Next Month">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+          
+          <div class="spacer"></div>
+          
+          <button mat-stroked-button (click)="goToToday()" class="today-btn">
+            <mat-icon>today</mat-icon>
+            Today
+          </button>
+        </div>
+
+        <!-- Legend -->
+        <div class="calendar-legend">
+          <div class="legend-item" *ngFor="let type of holidayTypes">
+            <span class="legend-dot" [style.background-color]="type.color"></span>
+            <mat-icon class="legend-icon">{{ type.icon }}</mat-icon>
+            <span>{{ type.type }}</span>
+          </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="calendar-body" *ngIf="!loading">
+          <!-- Weekday Headers -->
+          <div class="weekdays">
+            <div class="weekday" *ngFor="let day of weekDays">{{ day }}</div>
+          </div>
+
+          <!-- Days Grid -->
+          <div class="days-grid">
+            <div
+              *ngFor="let day of calendarDays"
+              class="day-cell"
+              [class.other-month]="!day.isCurrentMonth"
+              [class.today]="day.isToday"
+              [class.weekend]="day.isWeekend"
+              [class.has-holiday]="day.holidays.length > 0"
+              (click)="onDayClick(day)">
+              
+              <div class="day-number">{{ day.number }}</div>
+
+              <!-- Holiday Badges -->
+              <div class="holiday-badges" *ngIf="day.holidays.length > 0">
+                <div
+                  *ngFor="let holiday of day.holidays; let i = index"
+                  class="holiday-badge"
+                  [style.background-color]="holiday.color || getTypeColor(holiday.type)"
+                  [matTooltip]="holiday.title"
+                  (click)="viewHoliday(holiday, $event)">
+                  {{ holiday.title | slice:0:15 }}{{ holiday.title.length > 15 ? '...' : '' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="loading-state">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading calendar...</p>
+        </div>
+      </mat-card>
+
+      <!-- Upcoming Holidays Section (Below Calendar) -->
+      <mat-card class="upcoming-card">
+        <div class="upcoming-header">
+          <h3>
+            <mat-icon>event_upcoming</mat-icon>
+            Upcoming Holidays
+          </h3>
+          <span class="upcoming-count" *ngIf="upcomingHolidays.length > 0">
+            {{ upcomingHolidays.length }} upcoming
+          </span>
+        </div>
+
+        <div *ngIf="loadingUpcoming" class="loading-state-small">
+          <mat-spinner diameter="30"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingUpcoming && upcomingHolidays.length === 0" class="no-upcoming">
+          <mat-icon>event_busy</mat-icon>
+          <p>No upcoming holidays</p>
+        </div>
+
+        <div *ngIf="!loadingUpcoming && upcomingHolidays.length > 0" class="upcoming-grid">
+          <div
+            *ngFor="let holiday of upcomingHolidays"
+            class="upcoming-item"
+            (click)="viewHoliday(holiday)">
+            <div class="upcoming-indicator" [style.background-color]="holiday.color || getTypeColor(holiday.type)"></div>
+            <div class="upcoming-content">
+              <mat-icon class="upcoming-icon" [style.color]="holiday.color || getTypeColor(holiday.type)">
+                {{ getTypeIcon(holiday.type) }}
+              </mat-icon>
+              <div class="upcoming-details">
+                <h4>{{ holiday.title }}</h4>
+                <p class="upcoming-date">
+                  <mat-icon>event</mat-icon>
+                  {{ formatDateRange(holiday) }}
+                </p>
+                <span class="upcoming-type" [style.background-color]="holiday.color || getTypeColor(holiday.type)">
+                  {{ holiday.type }}
+                </span>
+              </div>
+            </div>
+            <button 
+              *ngIf="canEdit(holiday)"
+              mat-icon-button 
+              class="upcoming-edit-btn"
+              (click)="editHoliday(holiday, $event)"
+              matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Right Side: Holiday List -->
+    <div class="list-sidebar">
+      <mat-card class="list-card">
+        <div class="list-header">
+          <h3>
+            <mat-icon>format_list_bulleted</mat-icon>
+            All Holidays
+          </h3>
+          <span class="holiday-count" *ngIf="holidays.length > 0">
+            {{ holidays.length }} total
+          </span>
+        </div>
+
+        <div *ngIf="!loading && holidays.length === 0" class="no-holidays">
+          <mat-icon>event_busy</mat-icon>
+          <p>No holidays found</p>
+          <button *ngIf="canCreate()" mat-raised-button color="primary" (click)="addHoliday()">
+            <mat-icon>add</mat-icon>
+            Add First Holiday
+          </button>
+        </div>
+
+        <div *ngIf="!loading && holidays.length > 0" class="holiday-list">
+          <div
+            *ngFor="let holiday of holidays"
+            class="holiday-list-item"
+            (click)="viewHoliday(holiday)">
+            <div class="holiday-indicator" [style.background-color]="holiday.color || getTypeColor(holiday.type)"></div>
+            
+            <div class="holiday-info">
+              <div class="holiday-title-row">
+                <h4>{{ holiday.title }}</h4>
+                <mat-icon 
+                  class="holiday-type-icon" 
+                  [style.color]="holiday.color || getTypeColor(holiday.type)">
+                  {{ getTypeIcon(holiday.type) }}
+                </mat-icon>
+              </div>
+              
+              <div class="holiday-meta">
+                <span class="meta-item">
+                  <mat-icon>event</mat-icon>
+                  {{ formatDateRange(holiday) }}
+                </span>
+                <span class="meta-item" *ngIf="holiday.branch">
+                  <mat-icon>business</mat-icon>
+                  {{ holiday.branch?.name || 'All Branches' }}
+                </span>
+                <span class="meta-item" *ngIf="holiday.duration && holiday.duration > 1">
+                  <mat-icon>schedule</mat-icon>
+                  {{ holiday.duration }} days
+                </span>
+              </div>
+              
+              <span class="holiday-type-badge" [style.background-color]="holiday.color || getTypeColor(holiday.type)">
+                {{ holiday.type }}
+              </span>
+            </div>
+
+            <div class="holiday-actions">
+              <button 
+                *ngIf="canEdit(holiday)"
+                mat-icon-button 
+                color="primary"
+                (click)="editHoliday(holiday, $event)"
+                matTooltip="Edit Holiday">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button 
+                *ngIf="canDelete()"
+                mat-icon-button 
+                color="warn"
+                (click)="deleteHoliday(holiday)"
+                matTooltip="Delete Holiday">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- List View (Full Width Table) -->
+  <div class="list-view" *ngIf="viewMode === 'list'">
+    <app-data-table
+      [data]="holidays"
+      [config]="tableConfig"
+      [loading]="loading"
+      (actionClicked)="onAction($event)">
+    </app-data-table>
+  </div>
+
+</div>
+
+<!-- Required for export menu -->
+<div style="visibility: hidden; position: fixed;">
+  <mat-menu></mat-menu>
+</div>
+

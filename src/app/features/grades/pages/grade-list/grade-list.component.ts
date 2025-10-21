@@ -8,6 +8,7 @@ import { AdvancedSearchConfig } from '../../../../shared/components/advanced-sea
 import { GradeService } from '../../services/grade.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Grade } from '../../../../core/models/grade.model';
 
 @Component({
@@ -184,7 +185,8 @@ export class GradeListComponent implements OnInit {
     private branchService: BranchService,
     private router: Router,
     private dialog: MatDialog,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
@@ -334,8 +336,21 @@ export class GradeListComponent implements OnInit {
   /**
    * Export grades
    */
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading message
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    
+    // Call export service (grades don't have complex filters, so pass empty object)
+    this.exportService.export(
+      {
+        endpoint: '/grades/export',
+        filename: 'grades'
+      },
+      {
+        format: format,
+        filters: {}
+      }
+    );
   }
 }
 
