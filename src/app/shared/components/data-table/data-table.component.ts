@@ -411,6 +411,41 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
            Object.keys(this.currentFilters).length > 0;
   }
   
+  /**
+   * Get the count of active advanced search filters
+   * Excludes empty values and pagination/sorting parameters
+   */
+  getActiveFilterCount(): number {
+    if (!this.currentFilters) {
+      return 0;
+    }
+    
+    // List of keys to exclude from filter count (pagination, sorting, etc.)
+    const excludeKeys = ['page', 'per_page', 'sort_by', 'sort_direction', 'search'];
+    
+    // Count non-empty filter values
+    let count = 0;
+    for (const key in this.currentFilters) {
+      if (this.currentFilters.hasOwnProperty(key) && !excludeKeys.includes(key)) {
+        const value = this.currentFilters[key];
+        
+        // Only count non-empty, non-null values
+        if (value !== null && value !== undefined && value !== '') {
+          // For arrays, only count if not empty
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              count++;
+            }
+          } else {
+            count++;
+          }
+        }
+      }
+    }
+    
+    return count;
+  }
+  
   onSearchSaved(event: { name: string, criteria: SearchCriteria }): void {
     this.savedSearches.push(event);
     localStorage.setItem('savedSearches', JSON.stringify(this.savedSearches));
