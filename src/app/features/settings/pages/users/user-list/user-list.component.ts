@@ -1,143 +1,289 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { MaterialModule } from '../../../../../shared/modules/material/material.module';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { DataTableComponent } from '../../../../../shared/components/data-table/data-table.component';
+import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../../../shared/components/data-table/data-table.interface';
+import { AdvancedSearchConfig } from '../../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { UserService } from '../../../services/user.service';
 import { RoleService } from '../../../services/role.service';
-import { User } from '../../../../../core/models/user.model';
-import { Role, Permission } from '../../../../../core/models/role.model';
+import { BranchService } from '../../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../../core/services/error-handler.service';
-import { HasPermissionDirective } from '../../../../../core/directives/has-permission.directive';
-import { forkJoin } from 'rxjs';
-
-interface UserWithRole extends User {
-  roleDetails?: Role;
-  permissionsByModule?: Record<string, Permission[]>;
-}
+import { User } from '../../../../../core/models/user.model';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MaterialModule, HasPermissionDirective],
-  templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.scss']
+  imports: [CommonModule, DataTableComponent, MatButtonModule, MatIconModule],
+  template: `
+    <app-data-table
+      #dataTable
+      [data]="users"
+      [config]="tableConfig"
+      [advancedSearchConfig]="advancedSearchConfig"
+      [title]="'Users'"
+      [loading]="loading"
+      (actionClicked)="onAction($event)"
+      (rowClicked)="onRowClick($event)"
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
+      (searchChanged)="onSearchChange($event)"
+      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+    </app-data-table>
+  `,
+  styles: [`:host { display: block; }`]
 })
 export class UserListComponent implements OnInit {
-  users: UserWithRole[] = [];
-  displayedColumns: string[] = ['id', 'name', 'email', 'role', 'branch', 'status', 'actions'];
-  isLoading = false;
-  totalRecords = 0;
-  pageSize = 10;
-  currentPage = 1;
-  viewMode: 'table' | 'cards' = 'cards';
-  expandedUsers: Set<number> = new Set();
+  @ViewChild('dataTable') dataTable!: DataTableComponent;
+  
+  loading = false;
+  users: User[] = [];
+  roles: any[] = [];
+  branches: any[] = [];
+  currentFilters: Record<string, unknown> = {
+    page: 1,
+    per_page: 10
+  };
+
+  tableConfig: TableConfig = {
+    columns: [
+      {
+        key: 'id',
+        header: 'ID',
+        sortable: true,
+        width: '80px'
+      },
+      {
+        key: 'first_name',
+        header: 'First Name',
+        sortable: true
+      },
+      {
+        key: 'last_name',
+        header: 'Last Name',
+        sortable: true
+      },
+      {
+        key: 'email',
+        header: 'Email',
+        sortable: true
+      },
+      {
+        key: 'role',
+        header: 'Role',
+        sortable: true,
+        type: 'badge'
+      },
+      {
+        key: 'branch.name',
+        header: 'Branch',
+        sortable: false
+      },
+      {
+        key: 'is_active',
+        header: 'Status',
+        sortable: true,
+        type: 'badge',
+        cellClass: (row: any) => row.is_active ? 'text-success' : 'text-danger'
+      }
+    ],
+    actions: [
+      {
+        label: 'View',
+        icon: 'visibility',
+        action: (row: User) => this.viewUser(row.id),
+        color: 'primary'
+      },
+      {
+        label: 'Edit',
+        icon: 'edit',
+        action: (row: User) => this.editUser(row.id),
+        color: 'accent'
+      },
+      {
+        label: 'Permissions',
+        icon: 'shield',
+        action: (row: User) => this.managePermissions(row.id),
+        color: 'primary'
+      },
+      {
+        label: 'Delete',
+        icon: 'delete',
+        action: (row: User) => this.deleteUser(row),
+        color: 'warn'
+      }
+    ],
+    serverSide: true,
+    pagination: true,
+    defaultPageSize: 10,
+    pageSizeOptions: [5, 10, 25, 50, 100],
+    totalCount: 0,
+    searchable: true,
+    advancedSearch: true,
+    filterable: true,
+    exportable: true,
+    selectable: false,
+    responsive: true
+  };
+
+  advancedSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced User Search',
+    width: '400px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'role',
+        label: 'Role',
+        type: 'select',
+        placeholder: 'Select role',
+        icon: 'admin_panel_settings',
+        options: []
+      },
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'is_active',
+        label: 'Status',
+        type: 'select',
+        icon: 'toggle_on',
+        options: [
+          { value: '1', label: 'Active' },
+          { value: '0', label: 'Inactive' }
+        ]
+      },
+      {
+        key: 'email',
+        label: 'Email',
+        type: 'text',
+        placeholder: 'Enter email',
+        icon: 'email'
+      }
+    ]
+  };
 
   constructor(
     private userService: UserService,
     private roleService: RoleService,
+    private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
 
   ngOnInit(): void {
+    this.loadRolesAndBranches();
     this.loadUsers();
+  }
+
+  loadRolesAndBranches(): void {
+    // Load roles for filter
+    this.roleService.getAllRoles().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.roles = response.data;
+          const roleField = this.advancedSearchConfig.fields.find(f => f.key === 'role');
+          if (roleField) {
+            roleField.options = this.roles.map(r => ({
+              value: r.name,
+              label: r.name
+            }));
+          }
+        }
+      },
+      error: (error) => console.error('Error loading roles:', error)
+    });
+
+    // Load branches for filter
+    this.branchService.getBranches({}).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.branches = response.data || [];
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = this.branches.map(b => ({
+              value: b.id,
+              label: b.name
+            }));
+          }
+        }
+      },
+      error: (error) => console.error('Error loading branches:', error)
+    });
   }
 
   loadUsers(): void {
-    this.isLoading = true;
-    this.userService.getUsers({
-      page: this.currentPage,
-      per_page: this.pageSize
-    }).subscribe({
+    this.loading = true;
+    this.userService.getUsers(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.users = response.data.data;
-          this.totalRecords = response.data.total;
-          
-          // Load role details for each user
-          this.loadUserRoles();
+          this.users = response.data.data || [];
+          this.tableConfig = {
+            ...this.tableConfig,
+            totalCount: response.data.total || 0
+          };
         }
-        this.isLoading = false;
+        this.loading = false;
       },
       error: (error) => {
         this.errorHandler.handleError(error);
-        this.isLoading = false;
+        this.loading = false;
       }
     });
   }
 
-  loadUserRoles(): void {
-    const roleRequests = this.users
-      .filter(user => user.role_id)
-      .map(user => this.roleService.getRole(user.role_id!));
-
-    if (roleRequests.length === 0) return;
-
-    forkJoin(roleRequests).subscribe({
-      next: (responses) => {
-        responses.forEach((response, index) => {
-          if (response.success) {
-            const user = this.users.filter(u => u.role_id)[index];
-            if (user) {
-              user.roleDetails = response.data;
-              user.permissionsByModule = this.groupPermissionsByModule(response.data.permissions || []);
-            }
-          }
-        });
-      },
-      error: (error) => {
-      }
-    });
-  }
-
-  groupPermissionsByModule(permissions: Permission[]): Record<string, Permission[]> {
-    const grouped: Record<string, Permission[]> = {};
-    permissions.forEach(permission => {
-      const moduleKey = permission.module || 'general';
-      if (!grouped[moduleKey]) {
-        grouped[moduleKey] = [];
-      }
-      grouped[moduleKey].push(permission);
-    });
-    return grouped;
-  }
-
-  getModules(permissionsByModule: Record<string, Permission[]>): string[] {
-    return Object.keys(permissionsByModule).sort();
-  }
-
-  getModuleDisplayName(moduleKey: string): string {
-    if (!moduleKey) return 'General';
-    return moduleKey
-      .split(/[_-]/)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  }
-
-  getModuleIcon(moduleKey: string): string {
-    const iconMap: { [key: string]: string } = {
-      'dashboard': 'dashboard',
-      'students': 'school',
-      'teachers': 'person',
-      'branches': 'business',
-      'departments': 'domain',
-      'subjects': 'book',
-      'grades': 'grade',
-      'attendance': 'fact_check',
-      'fees': 'payments',
-      'accounts': 'account_balance',
-      'roles': 'admin_panel_settings',
-      'permissions': 'shield',
-      'users': 'people',
-      'general': 'folder'
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1,
+      per_page: event.pageSize
     };
-    return iconMap[moduleKey.toLowerCase()] || 'folder_special';
+    this.loadUsers();
   }
 
-  onPageChange(event: any): void {
-    this.currentPage = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
+  onSortChange(event: SortEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: event.field,
+      sort_direction: event.direction
+    };
     this.loadUsers();
+  }
+
+  onSearchChange(query: string): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      search: query,
+      page: 1
+    };
+    this.loadUsers();
+  }
+
+  onAdvancedSearchChange(event: SearchEvent): void {
+    this.currentFilters = {
+      page: 1,
+      per_page: this.currentFilters['per_page'] || 10,
+      search: event.query,
+      ...event.filters
+    };
+    this.loadUsers();
+  }
+
+  onAction(event: { action: string, row: any }): void {
+    // Handle 'add' action from the built-in Add button
+    if (event.action === 'add') {
+      this.createUser();
+    }
+  }
+
+  onRowClick(row: User): void {
+    this.viewUser(row.id);
   }
 
   viewUser(id: number): void {
@@ -153,7 +299,7 @@ export class UserListComponent implements OnInit {
   }
 
   deleteUser(user: User): void {
-    if (confirm(`Are you sure you want to delete the user "${user.first_name} ${user.last_name}"?`)) {
+    if (confirm(`Are you sure you want to delete ${user.first_name} ${user.last_name}?`)) {
       this.userService.deleteUser(user.id).subscribe({
         next: (response) => {
           if (response.success) {
@@ -168,38 +314,7 @@ export class UserListComponent implements OnInit {
     }
   }
 
-  toggleUserStatus(user: User): void {
-    this.userService.toggleUserStatus(user.id).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.errorHandler.showSuccess('User status updated successfully');
-          this.loadUsers();
-        }
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-      }
-    });
-  }
-
   createUser(): void {
     this.router.navigate(['/settings/users/create']);
   }
-
-  getUserFullName(user: User): string {
-    return `${user.first_name} ${user.last_name}`;
-  }
-
-  toggleUserExpanded(userId: number): void {
-    if (this.expandedUsers.has(userId)) {
-      this.expandedUsers.delete(userId);
-    } else {
-      this.expandedUsers.add(userId);
-    }
-  }
-
-  isUserExpanded(userId: number): boolean {
-    return this.expandedUsers.has(userId);
-  }
 }
-

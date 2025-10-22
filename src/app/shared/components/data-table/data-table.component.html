@@ -55,17 +55,6 @@
       
       <!-- Right Side: Filter Info and Export -->
       <div class="filter-actions-block">
-        <div class="filter-info" *ngIf="config.filterable">
-          <button mat-stroked-button class="add-filter-btn" (click)="openAdvancedSearch()">
-            <mat-icon>add</mat-icon>
-            ADD FILTER
-          </button>
-          <span class="member-count" *ngIf="data.length > 0">
-            {{ data.length }} (100%) of {{ data.length }} {{ title.toLowerCase() || 'items' }}
-          </span>
-        </div>
-        
-
         <!-- Advanced Search Button -->
         <button mat-icon-button 
           *ngIf="advancedSearchConfig"
@@ -73,7 +62,7 @@
           matTooltip="Advanced Search"
           [matBadge]="getActiveFilterCount()"
           [matBadgeHidden]="getActiveFilterCount() === 0"
-          matBadgeColor="primary"
+          matBadgeColor="warn"
           matBadgeSize="small"
           (click)="openAdvancedSearch()">
           <mat-icon>tune</mat-icon>
