@@ -17,6 +17,7 @@ export class TeacherViewComponent implements OnInit {
   teacher: Teacher | null = null;
   isLoading = false;
   teacherId!: number;
+  Array = Array; // Make Array available in template
 
   constructor(
     private route: ActivatedRoute,
