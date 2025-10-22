@@ -17,12 +17,13 @@ export class GradeService {
    * Get all grades
    */
   getGrades(params?: Record<string, unknown>): Observable<GradeListResponse> {
-    return this.apiService.get<Grade[]>(`${this.ENDPOINT}/grades`, params).pipe(
+    return this.apiService.get<Grade[]>(this.GRADE_ENDPOINT, params).pipe(
       map(response => ({
         success: response.success,
         data: response.data || [],
         count: response.data?.length || 0,
-        total: response.data?.length || 0
+        total: response.data?.length || 0,
+        meta: response.meta || undefined
       }))
     );
   }

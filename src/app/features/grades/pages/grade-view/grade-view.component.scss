@@ -1,5 +1,15 @@
 /* Component-specific overrides only - Main styles in global view-pages.css */
 
+/* Inline icon styling */
+.inline-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: var(--primary-color);
+}
+
 /* Sections chips styling */
 .sections-chips {
   display: flex;

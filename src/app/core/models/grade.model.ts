@@ -2,10 +2,14 @@ export interface Grade {
   value: string;
   label: string;
   description?: string;
+  order?: number;
+  category?: 'Pre-Primary' | 'Primary' | 'Middle' | 'Secondary' | 'Senior-Secondary';
   students_count?: number;
   sections?: string[];
   classes_count?: number;
   is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface GradeStats {
@@ -42,6 +46,8 @@ export interface GradeFormData {
   value: string;
   label: string;
   description?: string;
+  order?: number;
+  category?: 'Pre-Primary' | 'Primary' | 'Middle' | 'Secondary' | 'Senior-Secondary';
   is_active?: boolean;
 }
 

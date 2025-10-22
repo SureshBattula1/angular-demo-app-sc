@@ -52,6 +52,14 @@ export class GradeListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       { 
+        key: 'order', 
+        header: 'Order', 
+        sortable: true, 
+        type: 'number',
+        align: 'center',
+        width: '80px'
+      },
+      { 
         key: 'value', 
         header: 'Grade', 
         sortable: true, 
@@ -63,28 +71,29 @@ export class GradeListComponent implements OnInit {
         header: 'Name', 
         sortable: true, 
         searchable: true,
-        width: '120px'
+        width: '180px'
+      },
+      { 
+        key: 'category', 
+        header: 'Category', 
+        type: 'text',
+        sortable: true,
+        width: '150px',
+        searchable: true
       },
       { 
         key: 'students_count', 
         header: 'Students', 
         type: 'number',
         align: 'center',
-        width: '120px'
+        width: '100px'
       },
       { 
         key: 'sections', 
         header: 'Sections', 
-        width: '150px',
+        width: '120px',
         align: 'center'
       },
-      // { 
-      //   key: 'classes_count', 
-      //   header: 'Classes', 
-      //   type: 'number',
-      //   align: 'center',
-      //   width: '100px'
-      // },
       { 
         key: 'is_active', 
         header: 'Status', 
@@ -148,10 +157,10 @@ export class GradeListComponent implements OnInit {
       },
       {
         key: 'value',
-        label: 'Grade Number',
+        label: 'Grade Value',
         type: 'text',
-        placeholder: 'Enter grade (1-12)',
-        icon: 'filter_1',
+        placeholder: 'e.g., LKG, UKG, 1, 2...',
+        icon: 'tag',
         group: 'Basic Information'
       },
       {
@@ -163,20 +172,27 @@ export class GradeListComponent implements OnInit {
         group: 'Basic Information'
       },
       {
+        key: 'category',
+        label: 'Category',
+        type: 'select',
+        placeholder: 'Select category',
+        icon: 'category',
+        options: [
+          { value: 'Pre-Primary', label: 'Pre-Primary' },
+          { value: 'Primary', label: 'Primary' },
+          { value: 'Middle', label: 'Middle' },
+          { value: 'Secondary', label: 'Secondary' },
+          { value: 'Senior-Secondary', label: 'Senior-Secondary' }
+        ],
+        group: 'Basic Information'
+      },
+      {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-       group: 'Basic Information'
-      },
-      // {
-      //   key: 'min_students',
-      //   label: 'Minimum Students',
-      //   type: 'number',
-      //   placeholder: 'Min students count',
-      //   icon: 'people',
-      //   group: 'Basic Information'
-      // }
+       group: 'Status'
+      }
     ]
   };
   
