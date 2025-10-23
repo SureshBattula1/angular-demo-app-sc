@@ -6,6 +6,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { TeacherService } from '../../services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Teacher } from '../../../../core/models/teacher.model';
+import { AttendanceService } from '../../../attendance/services/attendance.service';
 
 @Component({
   selector: 'app-teacher-view',
@@ -50,6 +51,7 @@ export class TeacherViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private teacherService: TeacherService,
+    private attendanceService: AttendanceService,
     private errorHandler: ErrorHandlerService
   ) {
     // Initialize date filters to current month
@@ -85,6 +87,12 @@ export class TeacherViewComponent implements OnInit {
         if (response.success && response.data) {
           this.teacher = response.data;
           this.isLoading = false;
+          
+          // Load attendance after teacher data is loaded
+          // This ensures we have the user_id available
+          if (this.selectedTabIndex === 1) {
+            this.loadAttendanceData();
+          }
         }
       },
       error: (error) => {
@@ -168,41 +176,93 @@ export class TeacherViewComponent implements OnInit {
   
   // Attendance Analytics Methods
   loadAttendanceData(): void {
+    // Need to wait until teacher data is loaded to get user_id
+    if (!this.teacher || !this.teacher.user_id) {
+      console.log('Waiting for teacher data to load before fetching attendance...');
+      return;
+    }
+    
     this.attendanceLoading = true;
-    setTimeout(() => {
-      this.recentAttendance = this.generateMockAttendance();
-      this.applyDateFilter();
+    
+    // Calculate date range for last 90 days
+    const toDate = new Date();
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - 90);
+    
+    // IMPORTANT: Use user_id, not teacher table id
+    // teacher_attendance.teacher_id references users.id, not teachers.id
+    const userId = this.teacher.user_id || this.teacher.user?.id;
+    
+    if (!userId) {
+      console.error('Teacher user_id not found');
       this.attendanceLoading = false;
-    }, 500);
+      return;
+    }
+    
+    console.log(`Fetching attendance for teacher user_id: ${userId}`);
+    
+    // Call real API to fetch teacher attendance
+    this.attendanceService.getTeacherAttendance(userId, {
+      from_date: fromDate.toISOString().split('T')[0],
+      to_date: toDate.toISOString().split('T')[0]
+    }).subscribe({
+      next: (response) => {
+        // Backend returns: { success: true, data: [...], summary: {...} }
+        // So response.data is the attendance array directly
+        if (response.success && response.data && Array.isArray(response.data)) {
+          // Map API response to component format
+          this.recentAttendance = response.data.map((record: any) => ({
+            date: record.date,
+            dateObj: new Date(record.date),
+            status: this.capitalizeStatus(record.status),
+            markedBy: record.marked_by || 'System',
+            remarks: record.remarks || ''
+          }));
+          
+          console.log(`Loaded ${this.recentAttendance.length} attendance records for teacher`);
+          
+          // Apply initial filter
+          this.applyDateFilter();
+        } else {
+          // If no data, set empty array
+          console.log('No attendance data available for this teacher');
+          this.recentAttendance = [];
+          this.applyDateFilter();
+        }
+        this.attendanceLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading attendance data:', error);
+        // Don't show error toast if it's just missing data
+        if (error.status !== 404) {
+          this.errorHandler.showError('Failed to load attendance data');
+        }
+        this.recentAttendance = [];
+        this.applyDateFilter();
+        this.attendanceLoading = false;
+      }
+    });
   }
   
-  generateMockAttendance(): any[] {
-    const statuses = ['Present', 'Absent', 'Late', 'Excused'];
-    const attendance = [];
-    const today = new Date();
+  /**
+   * Capitalize status for consistency with UI
+   */
+  private capitalizeStatus(status: string): string {
+    if (!status) return 'Present';
     
-    // Generate last 90 days of data
-    for (let i = 0; i < 90; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      if (date.getDay() === 0 || date.getDay() === 6) continue; // Skip weekends
-      
-      const rand = Math.random();
-      let status = 'Present';
-      if (rand < 0.02) status = 'Absent';
-      else if (rand < 0.05) status = 'Late';
-      else if (rand < 0.07) status = 'Excused';
-      
-      attendance.push({
-        date: date.toISOString().split('T')[0],
-        dateObj: date,
-        status: status,
-        markedBy: 'Admin',
-        remarks: status === 'Absent' ? 'Sick leave' : status === 'Late' ? 'Traffic delay' : ''
-      });
-    }
-    return attendance.reverse();
+    // Map backend status to frontend display format
+    const statusMap: Record<string, string> = {
+      'present': 'Present',
+      'absent': 'Absent',
+      'late': 'Late',
+      'excused': 'Excused',
+      'Present': 'Present',
+      'Absent': 'Absent',
+      'Late': 'Late',
+      'Excused': 'Excused'
+    };
+    
+    return statusMap[status] || 'Present';
   }
   
   applyDateFilter(): void {

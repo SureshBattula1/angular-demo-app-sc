@@ -4,9 +4,21 @@
   <div class="view-action-bar">
     <h1 class="page-title">
       <mat-icon>event_available</mat-icon>
-      Mark Attendance
+      {{ isUpdateMode ? 'Update' : 'Mark' }} Attendance
     </h1>
-    <p class="page-subtitle">Mark daily attendance for {{ attendanceType === 'student' ? 'students' : 'teachers' }}</p>
+    <p class="page-subtitle">
+      {{ isUpdateMode ? 'Update existing attendance for' : 'Mark daily attendance for' }} 
+      {{ attendanceType === 'student' ? 'students' : 'teachers' }}
+    </p>
+  </div>
+  
+  <!-- Update Mode Indicator -->
+  <div *ngIf="isUpdateMode" class="update-mode-banner">
+    <mat-icon>edit</mat-icon>
+    <div class="banner-content">
+      <strong>Update Mode</strong>
+      <span>You are updating existing attendance marked for {{ selectedDate }}. Changes will be saved immediately.</span>
+    </div>
   </div>
 
   <!-- Attendance Type Selector -->
@@ -152,8 +164,8 @@
 
           <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let student">
+            <th mat-header-cell *matHeaderCellDef>Status *</th>
+            <td mat-cell *matCellDef="let student; let i = index" [ngClass]="{'row-error': hasRowError(i)}">
               <div class="status-checkboxes">
                 <mat-checkbox 
                   *ngFor="let option of statusOptions"
@@ -164,6 +176,10 @@
                   {{ option.label }}
                 </mat-checkbox>
               </div>
+              <mat-error *ngIf="hasRowError(i)" class="validation-error">
+                <mat-icon>error</mat-icon>
+                Please select attendance status
+              </mat-error>
             </td>
           </ng-container>
 
@@ -210,8 +226,8 @@
 
           <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let teacher">
+            <th mat-header-cell *matHeaderCellDef>Status *</th>
+            <td mat-cell *matCellDef="let teacher; let i = index" [ngClass]="{'row-error': hasRowError(i)}">
               <div class="status-checkboxes">
                 <mat-checkbox 
                   *ngFor="let option of statusOptions"
@@ -222,6 +238,10 @@
                   {{ option.label }}
                 </mat-checkbox>
               </div>
+              <mat-error *ngIf="hasRowError(i)" class="validation-error">
+                <mat-icon>error</mat-icon>
+                Please select attendance status
+              </mat-error>
             </td>
           </ng-container>
 
@@ -252,8 +272,8 @@
           (click)="onSubmit()" 
           [disabled]="submitting || (attendanceType === 'student' ? students.length === 0 : teachers.length === 0)">
           <mat-spinner *ngIf="submitting" diameter="20" class="button-spinner"></mat-spinner>
-          <mat-icon *ngIf="!submitting">save</mat-icon>
-          {{ submitting ? 'Saving...' : 'Submit Attendance' }}
+          <mat-icon *ngIf="!submitting">{{ isUpdateMode ? 'update' : 'save' }}</mat-icon>
+          {{ submitting ? 'Saving...' : (isUpdateMode ? 'Update Attendance' : 'Submit Attendance') }}
         </button>
       </div>
     </mat-card-content>

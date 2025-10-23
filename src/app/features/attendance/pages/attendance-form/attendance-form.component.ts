@@ -44,6 +44,14 @@ export class AttendanceFormComponent implements OnInit {
   selectedDate: string = this.getTodayDate();
   academicYear: string = this.getCurrentAcademicYear();
   
+  // Validation tracking
+  touchedRows = new Set<number>(); // Track which rows have been interacted with
+  showValidation = false; // Show validation errors on submit
+  
+  // Update mode tracking
+  isUpdateMode = false;
+  existingAttendanceLoaded = false;
+  
   statusOptions = [
     { value: 'Present', label: 'Present', icon: 'check_circle', color: 'success' },
     { value: 'Absent', label: 'Absent', icon: 'cancel', color: 'danger' },
@@ -163,6 +171,10 @@ export class AttendanceFormComponent implements OnInit {
     this.loading = true;
     this.studentsLoaded = false;
     
+    // Reset validation state
+    this.touchedRows.clear();
+    this.showValidation = false;
+    
     this.studentService.getStudents({
       branch_id: this.selectedBranch,
       grade: this.selectedGrade,
@@ -185,7 +197,7 @@ export class AttendanceFormComponent implements OnInit {
               roll_number: student.roll_number || '',
               grade: student.grade || '',
               section: student.section || '',
-              status: 'Present',
+              status: 'Present', // Default to Present
               remarks: ''
             };
           });
@@ -193,12 +205,21 @@ export class AttendanceFormComponent implements OnInit {
           // Filter out any students without IDs
           this.students = this.students.filter(s => s.id);
           
+          // Auto-mark all rows as touched since they all have default "Present" status
+          this.students.forEach((_, index) => {
+            this.touchedRows.add(index);
+          });
+          
           if (this.students.length === 0) {
             this.errorHandler.showWarning('No students found for selected class');
           } else {
+            console.log(`Loaded ${this.students.length} students`);
           }
           
           this.studentsLoaded = true;
+          
+          // Check for existing attendance after loading students
+          this.loadExistingAttendance();
         }
         this.loading = false;
       },
@@ -217,6 +238,10 @@ export class AttendanceFormComponent implements OnInit {
 
     this.loading = true;
     this.teachersLoaded = false;
+    
+    // Reset validation state
+    this.touchedRows.clear();
+    this.showValidation = false;
 
     this.teacherService.getTeachers({
       branch_id: this.selectedBranch,
@@ -238,7 +263,7 @@ export class AttendanceFormComponent implements OnInit {
               employee_id: teacher.employee_id || '',
               email: teacher.email || '',
               department: teacher.department?.name || 'N/A',
-              status: 'Present',
+              status: 'Present', // Default to Present
               remarks: ''
             };
           });
@@ -246,12 +271,21 @@ export class AttendanceFormComponent implements OnInit {
           // Filter out any teachers without IDs
           this.teachers = this.teachers.filter(t => t.id);
           
+          // Auto-mark all rows as touched since they all have default "Present" status
+          this.teachers.forEach((_, index) => {
+            this.touchedRows.add(index);
+          });
+          
           if (this.teachers.length === 0) {
             this.errorHandler.showWarning('No teachers found for selected branch');
           } else {
+            console.log(`Loaded ${this.teachers.length} teachers`);
           }
           
           this.teachersLoaded = true;
+          
+          // Check for existing attendance after loading teachers
+          this.loadExistingAttendance();
         }
         this.loading = false;
       },
@@ -267,6 +301,10 @@ export class AttendanceFormComponent implements OnInit {
     this.teachersLoaded = false;
     this.students = [];
     this.teachers = [];
+    this.isUpdateMode = false;
+    this.existingAttendanceLoaded = false;
+    this.touchedRows.clear();
+    this.showValidation = false;
   }
   
   loadAttendance(): void {
@@ -279,22 +317,125 @@ export class AttendanceFormComponent implements OnInit {
   
   setStatusForAll(status: string): void {
     if (this.attendanceType === 'student') {
-      this.students.forEach(student => {
+      this.students.forEach((student, index) => {
         student.status = status as any;
+        this.touchedRows.add(index); // Mark all rows as touched
       });
     } else {
-      this.teachers.forEach(teacher => {
+      this.teachers.forEach((teacher, index) => {
         teacher.status = status as any;
+        this.touchedRows.add(index); // Mark all rows as touched
       });
     }
   }
   
   setStudentStatus(student: AttendanceStudent, status: string): void {
-    student.status = status as any;
+    const index = this.students.indexOf(student);
+    
+    // If clicking the same status (unchecking), clear the status
+    if (student.status === status) {
+      student.status = '' as any;
+      // Remove from touched rows when unchecked
+      if (index !== -1) {
+        this.touchedRows.delete(index);
+      }
+    } else {
+      // Set new status
+      student.status = status as any;
+      // Mark row as touched
+      if (index !== -1) {
+        this.touchedRows.add(index);
+      }
+    }
   }
   
   setTeacherStatus(teacher: any, status: string): void {
-    teacher.status = status;
+    const index = this.teachers.indexOf(teacher);
+    
+    // If clicking the same status (unchecking), clear the status
+    if (teacher.status === status) {
+      teacher.status = '';
+      // Remove from touched rows when unchecked
+      if (index !== -1) {
+        this.touchedRows.delete(index);
+      }
+    } else {
+      // Set new status
+      teacher.status = status;
+      // Mark row as touched
+      if (index !== -1) {
+        this.touchedRows.add(index);
+      }
+    }
+  }
+  
+  /**
+   * Check if a row has validation errors
+   */
+  hasRowError(index: number): boolean {
+    if (!this.showValidation) return false;
+    
+    // Check if row is not touched OR has empty status
+    if (!this.touchedRows.has(index)) return true;
+    
+    // Also check if the status is actually selected
+    if (this.attendanceType === 'student') {
+      const student = this.students[index];
+      return !student || !student.status || student.status.trim() === '';
+    } else {
+      const teacher = this.teachers[index];
+      return !teacher || !teacher.status || teacher.status.trim() === '';
+    }
+  }
+  
+  /**
+   * Validate all rows before submission
+   */
+  validateRows(): boolean {
+    if (this.attendanceType === 'student') {
+      // Check each student has a valid status
+      for (let i = 0; i < this.students.length; i++) {
+        const student = this.students[i];
+        if (!student.status || student.status.trim() === '') {
+          return false;
+        }
+      }
+    } else {
+      // Check each teacher has a valid status
+      for (let i = 0; i < this.teachers.length; i++) {
+        const teacher = this.teachers[i];
+        if (!teacher.status || teacher.status.trim() === '') {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Get untouched rows for error message
+   */
+  getUntouchedRowsCount(): number {
+    let untouched = 0;
+    
+    if (this.attendanceType === 'student') {
+      for (let i = 0; i < this.students.length; i++) {
+        const student = this.students[i];
+        if (!student.status || student.status.trim() === '') {
+          untouched++;
+        }
+      }
+    } else {
+      for (let i = 0; i < this.teachers.length; i++) {
+        const teacher = this.teachers[i];
+        if (!teacher.status || teacher.status.trim() === '') {
+          untouched++;
+        }
+      }
+    }
+    
+    return untouched;
   }
   
   getCheckboxColor(status: string): 'primary' | 'accent' | 'warn' {
@@ -304,6 +445,10 @@ export class AttendanceFormComponent implements OnInit {
   }
   
   onSubmit(): void {
+    // Show validation errors
+    this.showValidation = true;
+    
+    // Basic validations
     if (!this.selectedBranch || !this.selectedDate) {
       this.errorHandler.showWarning('Please select Branch and Date');
       return;
@@ -316,6 +461,25 @@ export class AttendanceFormComponent implements OnInit {
     
     if (this.attendanceType === 'teacher' && this.teachers.length === 0) {
       this.errorHandler.showWarning('No teachers to mark attendance');
+      return;
+    }
+    
+    // Validate that all rows have been checked (status selected)
+    if (!this.validateRows()) {
+      const untouchedCount = this.getUntouchedRowsCount();
+      const entityType = this.attendanceType === 'student' ? 'student' : 'teacher';
+      this.errorHandler.showWarning(
+        `Please select attendance status for all ${entityType}s. ${untouchedCount} ${entityType}${untouchedCount > 1 ? 's' : ''} need attention.`
+      );
+      
+      // Scroll to first error
+      setTimeout(() => {
+        const firstError = document.querySelector('.row-error');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
       return;
     }
     
@@ -426,6 +590,121 @@ export class AttendanceFormComponent implements OnInit {
     } else {
       return `${year - 1}-${year}`;
     }
+  }
+  
+  /**
+   * Load existing attendance for the selected date
+   */
+  loadExistingAttendance(): void {
+    if (!this.selectedBranch || !this.selectedDate) return;
+    
+    if (this.attendanceType === 'student' && (!this.selectedGrade || !this.selectedSection)) {
+      return;
+    }
+    
+    const params: any = {
+      type: this.attendanceType,
+      date: this.selectedDate,
+      branch_id: this.selectedBranch
+    };
+    
+    if (this.attendanceType === 'student') {
+      params.grade = this.selectedGrade;
+      params.section = this.selectedSection;
+    }
+    
+    // Call attendance service to check existing
+    this.attendanceService.getAttendance(params).subscribe({
+      next: (response) => {
+        if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
+          this.isUpdateMode = true;
+          this.existingAttendanceLoaded = true;
+          
+          // Map existing attendance to students/teachers
+          if (this.attendanceType === 'student') {
+            this.mapExistingAttendanceToStudents(response.data);
+          } else {
+            this.mapExistingAttendanceToTeachers(response.data);
+          }
+          
+          this.errorHandler.showInfo(
+            `Found existing attendance for ${this.selectedDate}. You can update it now.`
+          );
+        } else {
+          this.isUpdateMode = false;
+          this.existingAttendanceLoaded = false;
+        }
+      },
+      error: (error) => {
+        console.log('No existing attendance found, creating new records');
+        this.isUpdateMode = false;
+        this.existingAttendanceLoaded = false;
+      }
+    });
+  }
+  
+  /**
+   * Map existing attendance to students array
+   */
+  private mapExistingAttendanceToStudents(existingData: any[]): void {
+    existingData.forEach((attendance: any) => {
+      const student = this.students.find(s => s.id === attendance.student_id);
+      if (student) {
+        student.status = this.capitalizeStatus(attendance.status);
+        student.remarks = attendance.remarks || '';
+        
+        // Mark as touched since it has existing data
+        const index = this.students.indexOf(student);
+        if (index !== -1) {
+          this.touchedRows.add(index);
+        }
+      }
+    });
+  }
+  
+  /**
+   * Map existing attendance to teachers array
+   */
+  private mapExistingAttendanceToTeachers(existingData: any[]): void {
+    existingData.forEach((attendance: any) => {
+      const teacher = this.teachers.find(t => t.id === attendance.teacher_id);
+      if (teacher) {
+        teacher.status = this.capitalizeStatus(attendance.status);
+        teacher.remarks = attendance.remarks || '';
+        
+        // Mark as touched since it has existing data
+        const index = this.teachers.indexOf(teacher);
+        if (index !== -1) {
+          this.touchedRows.add(index);
+        }
+      }
+    });
+  }
+  
+  /**
+   * Capitalize status for consistency with UI
+   */
+  private capitalizeStatus(status: string): 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'Sick Leave' | 'Leave' {
+    if (!status) return 'Present';
+    
+    const statusMap: Record<string, 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'Sick Leave' | 'Leave'> = {
+      'present': 'Present',
+      'absent': 'Absent',
+      'late': 'Late',
+      'excused': 'Late',
+      'half-day': 'Half-Day',
+      'sick leave': 'Sick Leave',
+      'leave': 'Leave',
+      'Present': 'Present',
+      'Absent': 'Absent',
+      'Late': 'Late',
+      'Excused': 'Late',
+      'Half-Day': 'Half-Day',
+      'Sick Leave': 'Sick Leave',
+      'Leave': 'Leave'
+    };
+    
+    return statusMap[status.toLowerCase()] || 'Present';
   }
 }
 
