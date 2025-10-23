@@ -17,10 +17,11 @@ export class GroupService {
    */
   getGroups(params?: Record<string, unknown>): Observable<GroupListResponse> {
     return this.apiService.get<StudentGroup[]>(this.ENDPOINT, params).pipe(
-      map(response => ({
+      map((response: any) => ({
         success: response.success,
         data: response.data || [],
-        count: response.data?.length || 0
+        count: response.data?.length || 0,
+        meta: response.meta
       }))
     );
   }

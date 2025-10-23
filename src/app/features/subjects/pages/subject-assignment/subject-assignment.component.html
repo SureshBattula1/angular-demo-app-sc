@@ -1,0 +1,201 @@
+<div class="view-container">
+  
+  <!-- Page Header -->
+  <div class="view-action-bar">
+    <h1 class="page-title">
+      <mat-icon>assignment</mat-icon>
+      Assign Subjects to Section
+    </h1>
+    <p class="page-subtitle">Assign subjects and teachers to a section</p>
+  </div>
+
+  <!-- Filter Section -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filters
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="filter-grid">
+        <!-- Branch -->
+        <mat-form-field appearance="outline">
+          <mat-label>Branch *</mat-label>
+          <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onBranchOrGradeChange()">
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>business</mat-icon>
+        </mat-form-field>
+
+        <!-- Grade -->
+        <mat-form-field appearance="outline">
+          <mat-label>Grade *</mat-label>
+          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onBranchOrGradeChange()">
+            <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>grade</mat-icon>
+        </mat-form-field>
+
+        <!-- Section -->
+        <mat-form-field appearance="outline">
+          <mat-label>Section *</mat-label>
+          <mat-select 
+            [(ngModel)]="selectedSection" 
+            (selectionChange)="onSectionChange()"
+            [disabled]="!selectedGrade || sections.length === 0">
+            <mat-option *ngFor="let section of sections" [value]="section">
+              {{ section.name }} {{ section.code ? '(' + section.code + ')' : '' }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>class</mat-icon>
+          <mat-hint *ngIf="sections.length === 0 && selectedGrade">No sections available</mat-hint>
+        </mat-form-field>
+
+        <!-- Academic Year -->
+        <mat-form-field appearance="outline">
+          <mat-label>Academic Year</mat-label>
+          <input matInput [(ngModel)]="academicYear" readonly>
+          <mat-icon matPrefix>event</mat-icon>
+        </mat-form-field>
+
+        <!-- Load Button -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="loadSubjects()" 
+          [disabled]="loading || !selectedBranch || !selectedGrade || !selectedSection"
+          class="load-button">
+          <mat-icon>search</mat-icon>
+          Load Subjects
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Subjects List -->
+  <mat-card class="detail-card" *ngIf="subjectsLoaded">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>menu_book</mat-icon>
+        Subjects for {{ selectedSection?.name }} - Grade {{ selectedGrade }} ({{ subjectAssignments.length }})
+      </mat-card-title>
+      <div class="header-stats">
+        <mat-chip class="stat-chip stat-success">
+          <mat-icon>check_circle</mat-icon>
+          Selected: {{ getSelectedCount() }}
+        </mat-chip>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>Quick Select:</h3>
+        <div class="quick-actions-buttons">
+          <button mat-stroked-button (click)="selectAllSubjects()" class="btn-success">
+            <mat-icon>done_all</mat-icon>
+            Select All
+          </button>
+          <button mat-stroked-button (click)="deselectAllSubjects()" class="btn-secondary">
+            <mat-icon>clear</mat-icon>
+            Deselect All
+          </button>
+        </div>
+      </div>
+
+      <!-- Subjects Table -->
+      <div class="table-responsive">
+        <table mat-table [dataSource]="subjectAssignments" class="subjects-table">
+          
+          <!-- Select Column -->
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef>Select</th>
+            <td mat-cell *matCellDef="let assignment">
+              <mat-checkbox 
+                [(ngModel)]="assignment.selected"
+                color="primary">
+              </mat-checkbox>
+            </td>
+          </ng-container>
+
+          <!-- Code Column -->
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>Code</th>
+            <td mat-cell *matCellDef="let assignment">
+              <span class="subject-code">{{ assignment.subject.code }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Subject Name</th>
+            <td mat-cell *matCellDef="let assignment">
+              <div class="subject-info">
+                <strong>{{ assignment.subject.name }}</strong>
+                <mat-chip class="type-badge type-{{ assignment.subject.type?.toLowerCase() }}">
+                  {{ assignment.subject.type }}
+                </mat-chip>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Credits Column -->
+          <ng-container matColumnDef="credits">
+            <th mat-header-cell *matHeaderCellDef>Credits</th>
+            <td mat-cell *matCellDef="let assignment">
+              <span class="credits-badge">{{ assignment.subject.credits || 0 }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Teacher Column -->
+          <ng-container matColumnDef="teacher">
+            <th mat-header-cell *matHeaderCellDef>Assign Teacher</th>
+            <td mat-cell *matCellDef="let assignment">
+              <mat-form-field appearance="outline" class="teacher-select">
+                <mat-label>Select Teacher</mat-label>
+                <mat-select [(ngModel)]="assignment.teacher_id">
+                  <mat-option [value]="null">Not Assigned</mat-option>
+                  <mat-option *ngFor="let teacher of teachers" [value]="teacher.id || teacher.user_id">
+                    {{ teacher.first_name }} {{ teacher.last_name }}
+                    <span *ngIf="teacher.employee_id"> ({{ teacher.employee_id }})</span>
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['select', 'code', 'name', 'credits', 'teacher']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['select', 'code', 'name', 'credits', 'teacher']"
+              [class.row-selected]="row.selected"></tr>
+        </table>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button mat-button (click)="onCancel()" [disabled]="submitting">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()" 
+          [disabled]="submitting || getSelectedCount() === 0">
+          <mat-spinner *ngIf="submitting" diameter="20" class="button-spinner"></mat-spinner>
+          <mat-icon *ngIf="!submitting">save</mat-icon>
+          {{ submitting ? 'Assigning...' : 'Assign ' + getSelectedCount() + ' Subject(s)' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div class="view-loading-container" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+    <p>Loading subjects...</p>
+  </div>
+
+</div>
