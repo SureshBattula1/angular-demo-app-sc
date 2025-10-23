@@ -193,7 +193,7 @@
         </div>
         <div class="detail-row" *ngIf="teacher.qualification">
           <span class="detail-label">Qualification:</span>
-          <span class="detail-value">{{ Array.isArray(teacher.qualification) ? teacher.qualification.join(', ') : teacher.qualification }}</span>
+          <span class="detail-value">{{ teacher.qualification }}</span>
         </div>
         <div class="detail-row" *ngIf="teacher.specialization">
           <span class="detail-label">Specialization:</span>
