@@ -84,5 +84,31 @@ export class UserService {
       password_confirmation: passwordConfirmation
     });
   }
+
+  /**
+   * Get user permissions
+   */
+  getUserPermissions(id: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/${id}/permissions`);
+  }
+
+  /**
+   * Update user permissions
+   */
+  updateUserPermissions(id: number, permissions: any[]): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${id}/permissions`, {
+      permissions
+    });
+  }
+
+  /**
+   * Assign roles to user
+   */
+  assignRoles(id: number, roleIds: number[], primaryRoleId?: number): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${id}/roles`, {
+      role_ids: roleIds,
+      primary_role_id: primaryRoleId
+    });
+  }
 }
 

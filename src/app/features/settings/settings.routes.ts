@@ -69,6 +69,12 @@ export const SETTINGS_ROUTES: Routes = [
         loadComponent: () => import('./pages/users/user-view/user-view.component').then(m => m.UserViewComponent),
         canActivate: [permissionGuard],
         data: { permissions: 'users.view' }
+      },
+      {
+        path: 'users/:id/permissions',
+        loadComponent: () => import('./pages/users/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent),
+        canActivate: [permissionGuard],
+        data: { permissions: 'users.manage_roles' }
       }
     ]
   }

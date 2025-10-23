@@ -21,21 +21,45 @@ export class GradeFormComponent implements OnInit {
   gradeValue?: string;
   currentGrade?: Grade;
   
-  // Grade options (1-12)
-  gradeOptions = [
-    { value: '1', label: 'Grade 1' },
-    { value: '2', label: 'Grade 2' },
-    { value: '3', label: 'Grade 3' },
-    { value: '4', label: 'Grade 4' },
-    { value: '5', label: 'Grade 5' },
-    { value: '6', label: 'Grade 6' },
-    { value: '7', label: 'Grade 7' },
-    { value: '8', label: 'Grade 8' },
-    { value: '9', label: 'Grade 9' },
-    { value: '10', label: 'Grade 10' },
-    { value: '11', label: 'Grade 11' },
-    { value: '12', label: 'Grade 12' }
+  // Predefined grade options
+  gradeValueOptions = [
+    // Pre-Primary
+    { value: 'PlaySchool', label: 'Play School', category: 'Pre-Primary', order: 1 },
+    { value: 'Nursery', label: 'Nursery', category: 'Pre-Primary', order: 2 },
+    { value: 'LKG', label: 'Lower Kindergarten (LKG)', category: 'Pre-Primary', order: 3 },
+    { value: 'UKG', label: 'Upper Kindergarten (UKG)', category: 'Pre-Primary', order: 4 },
+    // Primary
+    { value: '1', label: 'Grade 1', category: 'Primary', order: 5 },
+    { value: '2', label: 'Grade 2', category: 'Primary', order: 6 },
+    { value: '3', label: 'Grade 3', category: 'Primary', order: 7 },
+    { value: '4', label: 'Grade 4', category: 'Primary', order: 8 },
+    { value: '5', label: 'Grade 5', category: 'Primary', order: 9 },
+    // Middle
+    { value: '6', label: 'Grade 6', category: 'Middle', order: 10 },
+    { value: '7', label: 'Grade 7', category: 'Middle', order: 11 },
+    { value: '8', label: 'Grade 8', category: 'Middle', order: 12 },
+    // Secondary
+    { value: '9', label: 'Grade 9', category: 'Secondary', order: 13 },
+    { value: '10', label: 'Grade 10', category: 'Secondary', order: 14 },
+    // Senior-Secondary
+    { value: '11', label: 'Grade 11', category: 'Senior-Secondary', order: 15 },
+    { value: '12', label: 'Grade 12', category: 'Senior-Secondary', order: 16 },
+    // Custom option
+    { value: 'custom', label: '✏️ Custom Grade (Enter Manually)', category: '', order: 99 }
   ];
+
+  // Grade categories
+  categoryOptions = [
+    { value: 'Pre-Primary', label: 'Pre-Primary' },
+    { value: 'Primary', label: 'Primary' },
+    { value: 'Middle', label: 'Middle' },
+    { value: 'Secondary', label: 'Secondary' },
+    { value: 'Senior-Secondary', label: 'Senior-Secondary' }
+  ];
+
+  // Track if custom value is selected
+  isCustomValue = false;
+  existingGradeValues: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -47,6 +71,7 @@ export class GradeFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadExistingGrades();
     
     // Check if edit mode
     this.route.params.subscribe(params => {
@@ -60,16 +85,35 @@ export class GradeFormComponent implements OnInit {
     });
   }
 
+  private loadExistingGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.existingGradeValues = response.data.map(g => g.value);
+        }
+      },
+      error: () => {
+        // Silently fail
+      }
+    });
+  }
+
   private initForm(): void {
     this.gradeForm = this.fb.group({
       // Basic Information
-      value: ['', [Validators.required, Validators.pattern(/^[0-9]{1,2}$/)]],
+      gradeSelector: [''],  // For dropdown selection
+      value: ['', [Validators.required, Validators.maxLength(20)]],
       label: ['', [Validators.required, Validators.maxLength(100)]],
       description: ['', Validators.maxLength(500)],
+      order: [null, [Validators.min(0)]],
+      category: [''],
       
       // Status
       is_active: [true]
     });
+
+    // Initially hide the custom value field
+    this.gradeForm.get('value')?.disable();
   }
 
   private loadGrade(gradeValue: string): void {
@@ -81,13 +125,21 @@ export class GradeFormComponent implements OnInit {
           const grade = response.data.find(g => g.value === gradeValue);
           if (grade) {
             this.currentGrade = grade;
+            
+            // In edit mode, enable value field for display (but make it readonly)
+            this.gradeForm.get('value')?.enable();
+            
             this.gradeForm.patchValue({
+              gradeSelector: '', // Not used in edit mode
               value: grade.value,
               label: grade.label,
               description: grade.description,
-              is_active: grade.is_active
+              order: grade.order,
+              category: grade.category,
+              is_active: grade.is_active ?? true
             });
-            // Make value readonly in edit mode
+            
+            // Make value readonly (not disabled) in edit mode so it appears in the form
             this.gradeForm.get('value')?.disable();
           }
           this.isLoading = false;
@@ -110,6 +162,9 @@ export class GradeFormComponent implements OnInit {
 
     this.isLoading = true;
     const formData = this.gradeForm.getRawValue(); // getRawValue includes disabled fields
+    
+    // Remove gradeSelector from data (it's only for UI)
+    delete formData.gradeSelector;
 
     const request = this.isEditMode && this.gradeValue
       ? this.gradeService.updateGrade(this.gradeValue, formData)
@@ -136,14 +191,62 @@ export class GradeFormComponent implements OnInit {
     this.router.navigate(['/grades']);
   }
 
-  onGradeChange(event: any): void {
+  onGradeSelectorChange(event: any): void {
     const selectedValue = event.value;
-    const selectedGrade = this.gradeOptions.find(g => g.value === selectedValue);
-    if (selectedGrade && !this.isEditMode) {
+    
+    if (selectedValue === 'custom') {
+      // Enable custom input
+      this.isCustomValue = true;
+      this.gradeForm.get('value')?.enable();
       this.gradeForm.patchValue({
-        label: selectedGrade.label
+        value: '',
+        label: '',
+        category: '',
+        order: null
       });
+    } else {
+      // Use predefined grade
+      this.isCustomValue = false;
+      this.gradeForm.get('value')?.disable();
+      
+      const selectedGrade = this.gradeValueOptions.find(g => g.value === selectedValue);
+      if (selectedGrade) {
+        this.gradeForm.patchValue({
+          value: selectedGrade.value,
+          label: selectedGrade.label,
+          category: selectedGrade.category,
+          order: selectedGrade.order
+        });
+      }
     }
+  }
+
+  onCategoryChange(event: any): void {
+    // Helper function to suggest order based on category (only for custom grades)
+    if (!this.isCustomValue) return;
+    
+    const category = event.value;
+    const currentOrder = this.gradeForm.get('order')?.value;
+    
+    if (!currentOrder && !this.isEditMode) {
+      const suggestedOrders: Record<string, number> = {
+        'Pre-Primary': 1,
+        'Primary': 5,
+        'Middle': 10,
+        'Secondary': 13,
+        'Senior-Secondary': 15
+      };
+      
+      if (category && suggestedOrders[category]) {
+        this.gradeForm.patchValue({
+          order: suggestedOrders[category]
+        });
+      }
+    }
+  }
+
+  isGradeAlreadyExists(value: string): boolean {
+    return this.existingGradeValues.includes(value);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -177,11 +280,23 @@ export class GradeFormComponent implements OnInit {
 
   private getFieldLabel(fieldName: string): string {
     const labels: Record<string, string> = {
-      value: 'Grade Number',
+      gradeSelector: 'Select Grade',
+      value: 'Grade Value',
       label: 'Grade Label',
-      description: 'Description'
+      description: 'Description',
+      order: 'Display Order',
+      category: 'Category'
     };
     return labels[fieldName] || fieldName;
+  }
+
+  getAvailableGradeOptions() {
+    return this.gradeValueOptions.filter(option => {
+      // Always show custom option
+      if (option.value === 'custom') return true;
+      // Hide already existing grades (unless in edit mode)
+      return !this.existingGradeValues.includes(option.value);
+    });
   }
 }
 

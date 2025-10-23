@@ -23,38 +23,139 @@
             <mat-icon>info</mat-icon>
             Basic Information
           </h3>
-          
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Grade Number</mat-label>
-              <mat-select 
-                formControlName="value" 
-                placeholder="Select grade number"
-                (selectionChange)="onGradeChange($event)"
-                [disabled]="isEditMode">
-                <mat-option *ngFor="let grade of gradeOptions" [value]="grade.value">
-                  {{ grade.value }}
+
+          <!-- Step 1: Select Grade (Only shown when creating new) -->
+          <mat-form-field appearance="outline" class="w-100" *ngIf="!isEditMode">
+            <mat-label>Select Grade</mat-label>
+            <mat-select 
+              formControlName="gradeSelector" 
+              placeholder="Choose from standard grades or enter custom"
+              (selectionChange)="onGradeSelectorChange($event)">
+              <mat-optgroup label="Pre-Primary Grades">
+                <mat-option 
+                  *ngFor="let grade of getAvailableGradeOptions().slice(0, 4)" 
+                  [value]="grade.value"
+                  [disabled]="isGradeAlreadyExists(grade.value)">
+                  {{ grade.label }}
+                  <span *ngIf="isGradeAlreadyExists(grade.value)" style="color: #999;"> (Already exists)</span>
                 </mat-option>
-              </mat-select>
-              <mat-icon matPrefix>filter_1</mat-icon>
-              <mat-hint *ngIf="!isEditMode">Select the grade number (1-12)</mat-hint>
+              </mat-optgroup>
+              <mat-optgroup label="Primary Grades (1-5)">
+                <mat-option 
+                  *ngFor="let grade of getAvailableGradeOptions().slice(4, 9)" 
+                  [value]="grade.value"
+                  [disabled]="isGradeAlreadyExists(grade.value)">
+                  {{ grade.label }}
+                  <span *ngIf="isGradeAlreadyExists(grade.value)" style="color: #999;"> (Already exists)</span>
+                </mat-option>
+              </mat-optgroup>
+              <mat-optgroup label="Middle School (6-8)">
+                <mat-option 
+                  *ngFor="let grade of getAvailableGradeOptions().slice(9, 12)" 
+                  [value]="grade.value"
+                  [disabled]="isGradeAlreadyExists(grade.value)">
+                  {{ grade.label }}
+                  <span *ngIf="isGradeAlreadyExists(grade.value)" style="color: #999;"> (Already exists)</span>
+                </mat-option>
+              </mat-optgroup>
+              <mat-optgroup label="Secondary (9-10)">
+                <mat-option 
+                  *ngFor="let grade of getAvailableGradeOptions().slice(12, 14)" 
+                  [value]="grade.value"
+                  [disabled]="isGradeAlreadyExists(grade.value)">
+                  {{ grade.label }}
+                  <span *ngIf="isGradeAlreadyExists(grade.value)" style="color: #999;"> (Already exists)</span>
+                </mat-option>
+              </mat-optgroup>
+              <mat-optgroup label="Senior Secondary (11-12)">
+                <mat-option 
+                  *ngFor="let grade of getAvailableGradeOptions().slice(14, 16)" 
+                  [value]="grade.value"
+                  [disabled]="isGradeAlreadyExists(grade.value)">
+                  {{ grade.label }}
+                  <span *ngIf="isGradeAlreadyExists(grade.value)" style="color: #999;"> (Already exists)</span>
+                </mat-option>
+              </mat-optgroup>
+              <mat-divider></mat-divider>
+              <mat-optgroup label="Custom">
+                <mat-option value="custom">
+                  ✏️ Custom Grade (Enter Manually)
+                </mat-option>
+              </mat-optgroup>
+            </mat-select>
+            <mat-icon matPrefix>school</mat-icon>
+            <mat-hint>Select a standard grade or choose 'Custom' to create your own</mat-hint>
+          </mat-form-field>
+
+          <!-- Step 2: Grade Details (Shown after selection or in edit mode) -->
+          <div class="form-row" *ngIf="isEditMode || gradeForm.get('gradeSelector')?.value">
+            <!-- Custom Value Input (only for custom grades in create mode) -->
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="isCustomValue && !isEditMode">
+              <mat-label>Grade Value</mat-label>
+              <input 
+                matInput 
+                formControlName="value" 
+                placeholder="e.g., PreNursery, Bridge, etc.">
+              <mat-icon matPrefix>tag</mat-icon>
+              <mat-hint>Enter unique identifier (no spaces recommended)</mat-hint>
               <mat-error *ngIf="gradeForm.get('value')?.invalid && gradeForm.get('value')?.touched">
                 {{ getErrorMessage('value') }}
               </mat-error>
             </mat-form-field>
 
+            <!-- Value Display (for predefined grades or edit mode) -->
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="!isCustomValue || isEditMode">
+              <mat-label>Grade Value</mat-label>
+              <input matInput formControlName="value" readonly>
+              <mat-icon matPrefix>tag</mat-icon>
+              <mat-hint>{{ isEditMode ? 'Cannot be changed after creation' : 'Auto-filled from selection' }}</mat-hint>
+            </mat-form-field>
+
+            <!-- Grade Label -->
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Grade Label</mat-label>
-              <input matInput formControlName="label" placeholder="e.g., Grade 1">
+              <input matInput formControlName="label" placeholder="e.g., Lower Kindergarten (LKG)">
               <mat-icon matPrefix>label</mat-icon>
-              <mat-hint>Display name for the grade</mat-hint>
+              <mat-hint>{{ isEditMode ? 'Display name for the grade' : (isCustomValue ? 'Enter display name' : 'Auto-filled, you can edit') }}</mat-hint>
               <mat-error *ngIf="gradeForm.get('label')?.invalid && gradeForm.get('label')?.touched">
                 {{ getErrorMessage('label') }}
               </mat-error>
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="w-100">
+          <div class="form-row" *ngIf="isEditMode || gradeForm.get('gradeSelector')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Category</mat-label>
+              <mat-select 
+                formControlName="category" 
+                placeholder="Select category"
+                (selectionChange)="onCategoryChange($event)">
+                <mat-option [value]="''">None</mat-option>
+                <mat-option *ngFor="let cat of categoryOptions" [value]="cat.value">
+                  {{ cat.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-hint>{{ isEditMode ? 'Education level category' : (isCustomValue ? 'Select education level' : 'Auto-filled from selection') }}</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Display Order</mat-label>
+              <input 
+                matInput 
+                type="number" 
+                formControlName="order" 
+                placeholder="e.g., 1, 2, 3..."
+                min="0">
+              <mat-icon matPrefix>sort</mat-icon>
+              <mat-hint>{{ isEditMode ? 'Order in lists (lower = first)' : (isCustomValue ? 'Enter display order' : 'Auto-filled, you can adjust') }}</mat-hint>
+              <mat-error *ngIf="gradeForm.get('order')?.invalid && gradeForm.get('order')?.touched">
+                {{ getErrorMessage('order') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100" *ngIf="isEditMode || gradeForm.get('gradeSelector')?.value">
             <mat-label>Description</mat-label>
             <textarea 
               matInput 
@@ -70,7 +171,7 @@
         </div>
 
         <!-- Status Section -->
-        <div class="form-section">
+        <div class="form-section" *ngIf="isEditMode || gradeForm.get('gradeSelector')?.value">
           <h3 class="section-title">
             <mat-icon>toggle_on</mat-icon>
             Status
@@ -89,17 +190,36 @@
         </div>
 
         <!-- Info Card -->
-        <mat-card class="info-card" *ngIf="!isEditMode">
+        <mat-card class="info-card" *ngIf="!isEditMode && !gradeForm.get('gradeSelector')?.value">
           <mat-card-content>
             <div class="info-header">
               <mat-icon color="primary">lightbulb</mat-icon>
-              <strong>Quick Tips</strong>
+              <strong>How to Create a Grade</strong>
             </div>
             <ul class="tips-list">
-              <li>Grade numbers should be unique (1-12 for standard schools)</li>
-              <li>The grade label will be displayed throughout the system</li>
-              <li>Once created, the grade number cannot be changed</li>
-              <li>You can activate/deactivate grades at any time</li>
+              <li><strong>Step 1:</strong> Select a grade from the dropdown above</li>
+              <li><strong>Standard Grades:</strong> Choose from PlaySchool to Grade 12</li>
+              <li><strong>Custom Grade:</strong> Select "Custom" to create a unique grade</li>
+              <li><strong>Already Existing:</strong> Grades that are already created are marked and disabled</li>
+              <li><strong>Auto-Fill:</strong> When you select a standard grade, all fields are filled automatically</li>
+              <li><strong>Edit Anytime:</strong> You can modify the auto-filled values if needed</li>
+            </ul>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Custom Grade Tips -->
+        <mat-card class="info-card warning" *ngIf="!isEditMode && isCustomValue">
+          <mat-card-content>
+            <div class="info-header">
+              <mat-icon color="warn">warning</mat-icon>
+              <strong>Creating Custom Grade</strong>
+            </div>
+            <ul class="tips-list">
+              <li><strong>Value:</strong> Use short, unique names without spaces (e.g., PreNursery, Bridge)</li>
+              <li><strong>Label:</strong> The full display name (e.g., Pre-Nursery Class)</li>
+              <li><strong>Category:</strong> Select the appropriate education level</li>
+              <li><strong>Order:</strong> Lower numbers appear first in lists</li>
+              <li><strong>Important:</strong> Grade value cannot be changed after creation!</li>
             </ul>
           </mat-card-content>
         </mat-card>

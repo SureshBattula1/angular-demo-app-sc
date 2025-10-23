@@ -71,7 +71,8 @@ export interface Teacher {
   
   // Professional Details
   joining_date?: string;
-  employee_type?: 'Permanent' | 'Contract' | 'Temporary';
+  leaving_date?: string;
+  employee_type?: 'Permanent' | 'Contract' | 'Temporary' | 'Visiting';
   employee_type_detail?: 'Full-time' | 'Part-time' | 'Consultant';
   employment_status?: 'Active' | 'On Leave' | 'Suspended';
   probation_end_date?: string;
@@ -79,6 +80,16 @@ export interface Teacher {
   reporting_manager?: string;
   reporting_manager_id?: string;
   subordinates?: any[];
+  specialization?: string;
+  registration_number?: string;
+  salary_grade?: string;
+  
+  // Teaching Assignment
+  subjects?: string[];
+  classes_assigned?: any[];
+  is_class_teacher?: boolean;
+  class_teacher_of_grade?: string;
+  class_teacher_of_section?: string;
   
   // Educational Background
   qualification?: string;
