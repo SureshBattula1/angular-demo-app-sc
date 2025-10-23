@@ -7,6 +7,8 @@ import { TeacherService } from '../../services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Teacher } from '../../../../core/models/teacher.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
+import { LeaveService } from '../../../leaves/services/leave.service';
+import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 
 @Component({
   selector: 'app-teacher-view',
@@ -47,11 +49,17 @@ export class TeacherViewComponent implements OnInit {
   // View mode
   viewMode: 'list' | 'grid' = 'list';
 
+  // Leaves data
+  teacherLeaves: Leave[] = [];
+  leavesSummary?: LeaveSummary;
+  leavesLoading = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private teacherService: TeacherService,
     private attendanceService: AttendanceService,
+    private leaveService: LeaveService,
     private errorHandler: ErrorHandlerService
   ) {
     // Initialize date filters to current month
@@ -73,9 +81,14 @@ export class TeacherViewComponent implements OnInit {
   onTabChange(index: number): void {
     this.selectedTabIndex = index;
     
-    // Load attendance data when tab is selected
+    // Load attendance data when tab is selected (index 1)
     if (index === 1 && this.recentAttendance.length === 0) {
       this.loadAttendanceData();
+    }
+    
+    // Load leaves data when tab is selected (index 2)
+    if (index === 2 && this.teacherLeaves.length === 0) {
+      this.loadLeavesData();
     }
   }
 
@@ -454,5 +467,56 @@ export class TeacherViewComponent implements OnInit {
     }
     
     return tooltip;
+  }
+
+  /**
+   * Load leaves data for the teacher
+   */
+  loadLeavesData(): void {
+    if (!this.teacher || !this.teacher.user_id) {
+      console.log('Waiting for teacher data to load before fetching leaves...');
+      return;
+    }
+    
+    this.leavesLoading = true;
+    const userId = this.teacher.user_id || this.teacher.id;
+    
+    console.log(`Fetching leaves for teacher user_id: ${userId}`);
+    
+    this.leaveService.getTeacherLeaves(userId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.teacherLeaves = response.data as Leave[] || [];
+          this.leavesSummary = response.summary;
+          console.log(`Loaded ${this.teacherLeaves.length} leave records for teacher`);
+        } else {
+          this.teacherLeaves = [];
+          this.leavesSummary = undefined;
+        }
+        this.leavesLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading leaves data:', error);
+        if (error.status !== 404) {
+          this.errorHandler.showError('Failed to load leave data');
+        }
+        this.teacherLeaves = [];
+        this.leavesSummary = undefined;
+        this.leavesLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Get leave status color
+   */
+  getLeaveStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'Pending': '#ff9800',
+      'Approved': '#4caf50',
+      'Rejected': '#f44336',
+      'Cancelled': '#9e9e9e'
+    };
+    return colors[status] || '#9e9e9e';
   }
 }

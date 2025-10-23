@@ -72,6 +72,11 @@ export class SidebarComponent implements OnInit {
       permissionMode: 'any'
     },
     {
+      name: 'Leaves',
+      icon: 'event_busy',
+      route: '/leaves'
+    },
+    {
       name: 'Branches',
       icon: 'business',
       route: '/branches',

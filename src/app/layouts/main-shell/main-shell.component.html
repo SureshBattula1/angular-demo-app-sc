@@ -228,6 +228,18 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Attendance</span>
         </a>
 
+        <!-- Leaves -->
+        <a mat-list-item 
+           routerLink="/leaves" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Leaves' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>event_busy</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Leaves</span>
+        </a>
+
         <!-- Fees Management -->
         <a mat-list-item 
            *hasPermission="['fees.view', 'fees.collect']"

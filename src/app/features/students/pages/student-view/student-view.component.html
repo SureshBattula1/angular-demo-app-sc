@@ -670,6 +670,105 @@
 
         </div>
       </mat-tab>
+
+      <!-- Leaves Tab -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>event_busy</mat-icon>
+          <span>Leaves</span>
+        </ng-template>
+        <div class="tab-content leaves-tab">
+          <!-- Loading State -->
+          <div class="leaves-loading" *ngIf="leavesLoading">
+            <div class="loading-container">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Loading leave records...</p>
+            </div>
+          </div>
+
+          <!-- Leave Summary -->
+          <div class="leave-summary" *ngIf="!leavesLoading && leavesSummary">
+            <div class="summary-card">
+              <mat-icon>event_note</mat-icon>
+              <div class="summary-content">
+                <h4>Total Leaves</h4>
+                <p class="summary-value">{{ leavesSummary.total_leaves }}</p>
+              </div>
+            </div>
+            <div class="summary-card">
+              <mat-icon>calendar_today</mat-icon>
+              <div class="summary-content">
+                <h4>Total Days</h4>
+                <p class="summary-value">{{ leavesSummary.total_days_taken }}</p>
+              </div>
+            </div>
+            <div class="summary-card approved">
+              <mat-icon>check_circle</mat-icon>
+              <div class="summary-content">
+                <h4>Approved</h4>
+                <p class="summary-value">{{ leavesSummary.approved }}</p>
+              </div>
+            </div>
+            <div class="summary-card pending">
+              <mat-icon>schedule</mat-icon>
+              <div class="summary-content">
+                <h4>Pending</h4>
+                <p class="summary-value">{{ leavesSummary.pending }}</p>
+              </div>
+            </div>
+            <div class="summary-card rejected">
+              <mat-icon>cancel</mat-icon>
+              <div class="summary-content">
+                <h4>Rejected</h4>
+                <p class="summary-value">{{ leavesSummary.rejected }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leave Records List -->
+          <div class="leave-records" *ngIf="!leavesLoading && studentLeaves.length > 0">
+            <h3>Leave History</h3>
+            <div class="leave-list">
+              <div class="leave-item" *ngFor="let leave of studentLeaves">
+                <div class="leave-header">
+                  <div class="leave-type">
+                    <mat-icon>event_busy</mat-icon>
+                    <span>{{ leave.leave_type }}</span>
+                  </div>
+                  <mat-chip [style.background-color]="getLeaveStatusColor(leave.status)">
+                    {{ leave.status }}
+                  </mat-chip>
+                </div>
+                <div class="leave-dates">
+                  <div class="date-item">
+                    <mat-icon>date_range</mat-icon>
+                    <span>{{ leave.from_date | date: 'mediumDate' }} - {{ leave.to_date | date: 'mediumDate' }}</span>
+                  </div>
+                  <div class="days-count">
+                    <mat-icon>schedule</mat-icon>
+                    <span>{{ leave.total_days }} day(s)</span>
+                  </div>
+                </div>
+                <div class="leave-reason" *ngIf="leave.reason">
+                  <strong>Reason:</strong> {{ leave.reason }}
+                </div>
+                <div class="leave-remarks" *ngIf="leave.remarks">
+                  <strong>Remarks:</strong> {{ leave.remarks }}
+                </div>
+                <div class="leave-footer">
+                  <small>Applied: {{ leave.created_at | date: 'short' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Leaves Message -->
+          <div class="no-leaves" *ngIf="!leavesLoading && studentLeaves.length === 0">
+            <mat-icon>event_available</mat-icon>
+            <p>No leave records found for this student.</p>
+          </div>
+        </div>
+      </mat-tab>
     </mat-tab-group>
     </mat-card>
 </div>

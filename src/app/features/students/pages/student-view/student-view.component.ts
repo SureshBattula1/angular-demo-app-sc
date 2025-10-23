@@ -7,6 +7,8 @@ import { StudentCrudService } from '../../services/student-crud.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Student } from '../../../../core/models/student.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
+import { LeaveService } from '../../../leaves/services/leave.service';
+import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 
 @Component({
   selector: 'app-student-view',
@@ -51,9 +53,15 @@ export class StudentViewComponent implements OnInit {
   chartData: any[] = [];
   chartLabels: string[] = [];
 
+  // Leaves data
+  studentLeaves: Leave[] = [];
+  leavesSummary?: LeaveSummary;
+  leavesLoading = false;
+
   constructor(
     private studentCrudService: StudentCrudService,
     private attendanceService: AttendanceService,
+    private leaveService: LeaveService,
     private route: ActivatedRoute,
     private router: Router,
     private errorHandler: ErrorHandlerService
@@ -77,9 +85,14 @@ export class StudentViewComponent implements OnInit {
   onTabChange(index: number): void {
     this.selectedTabIndex = index;
     
-    // Load attendance data when tab is selected
+    // Load attendance data when tab is selected (index 1)
     if (index === 1 && this.recentAttendance.length === 0) {
       this.loadAttendanceData();
+    }
+    
+    // Load leaves data when tab is selected (index 2)
+    if (index === 2 && this.studentLeaves.length === 0) {
+      this.loadLeavesData();
     }
   }
 
@@ -472,6 +485,57 @@ export class StudentViewComponent implements OnInit {
     }
     
     return tooltip;
+  }
+
+  /**
+   * Load leaves data for the student
+   */
+  loadLeavesData(): void {
+    if (!this.student || !this.student.user_id) {
+      console.log('Waiting for student data to load before fetching leaves...');
+      return;
+    }
+    
+    this.leavesLoading = true;
+    const userId = this.student.user_id || this.student.id;
+    
+    console.log(`Fetching leaves for student user_id: ${userId}`);
+    
+    this.leaveService.getStudentLeaves(userId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.studentLeaves = response.data as Leave[] || [];
+          this.leavesSummary = response.summary;
+          console.log(`Loaded ${this.studentLeaves.length} leave records for student`);
+        } else {
+          this.studentLeaves = [];
+          this.leavesSummary = undefined;
+        }
+        this.leavesLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading leaves data:', error);
+        if (error.status !== 404) {
+          this.errorHandler.showError('Failed to load leave data');
+        }
+        this.studentLeaves = [];
+        this.leavesSummary = undefined;
+        this.leavesLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Get leave status color
+   */
+  getLeaveStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'Pending': '#ff9800',
+      'Approved': '#4caf50',
+      'Rejected': '#f44336',
+      'Cancelled': '#9e9e9e'
+    };
+    return colors[status] || '#9e9e9e';
   }
 }
 
