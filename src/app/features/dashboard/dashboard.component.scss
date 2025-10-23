@@ -333,6 +333,11 @@
   grid-template-columns: 2fr 1fr 1fr;
   gap: 24px;
   
+  // Full width class spans all columns on all screen sizes
+  .full-width {
+    grid-column: 1 / -1;
+  }
+  
   @include tablet-only {
     grid-template-columns: 1fr 1fr;
     
@@ -352,6 +357,148 @@
     
     ::ng-deep .mat-mdc-card-title mat-icon {
       color: var(--primary-color);
+    }
+    
+    // Add scrollbar for long charts (attendance and fee charts)
+    &.full-width {
+      overflow: visible;
+      
+      mat-card-content {
+        position: relative;
+        padding: 0; // Remove padding to allow full width scrolling
+        overflow-x: auto;
+        overflow-y: hidden;
+        
+        @include mobile-only {
+          max-width: calc(100vw - 32px); // Constrain to viewport width minus container padding
+          overflow-x: scroll !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (max-width: 480px) {
+          max-width: calc(100vw - 24px); // Smaller padding on very small screens
+        }
+        
+        // For Firefox - must come before pseudo-elements
+        & {
+          scrollbar-width: thin;
+          scrollbar-color: #00897b #f0f0f0;
+        }
+        
+        // Custom scrollbar styling
+        &::-webkit-scrollbar {
+          height: 10px;
+          
+          @include mobile-only {
+            height: 8px;
+          }
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: #f0f0f0;
+          border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: #00897b;
+          border-radius: 4px;
+          
+          &:hover {
+            background: #00695c;
+          }
+        }
+      }
+      
+      // Chart wrapper - force width for scrolling
+      ::ng-deep app-bar-chart {
+        display: block;
+        padding: 16px; // Move padding here instead of content
+        
+        @include mobile-only {
+          padding: 12px;
+          width: 900px !important; // Fixed width on mobile to force scroll
+          max-width: none !important;
+        }
+        
+        @include tablet-only {
+          width: 100%;
+          min-width: 800px; // Minimum width on tablet
+        }
+        
+        @media (min-width: 993px) {
+          width: 100%;
+        }
+        
+        .chart-container {
+          position: relative;
+          width: 100%;
+          height: 300px !important;
+          
+          @include mobile-only {
+            height: 280px !important;
+          }
+        }
+        
+        canvas {
+          display: block !important;
+          max-width: none !important;
+        }
+      }
+    }
+    
+    // Specific styling for fee-by-class chart
+    &.fee-by-class-card {
+      mat-card-subtitle {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+      
+      mat-card-content {
+        // Allow vertical scrolling if chart exceeds max height
+        max-height: 1000px;
+        overflow-y: auto;
+        
+        @include mobile-only {
+          max-height: 700px;
+        }
+        
+        // For Firefox - must come before pseudo-elements
+        & {
+          scrollbar-width: thin;
+          scrollbar-color: #00897b #f0f0f0;
+        }
+        
+        // Custom vertical scrollbar
+        &::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: #f0f0f0;
+          border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: #00897b;
+          border-radius: 4px;
+          
+          &:hover {
+            background: #00695c;
+          }
+        }
+      }
+      
+      ::ng-deep app-bar-chart {
+        @include mobile-only {
+          width: 700px !important; // Fixed width on mobile for horizontal scroll
+        }
+        
+        .chart-container {
+          width: 100%;
+          // Height is dynamic, set by component
+        }
+      }
     }
     
     .no-data {

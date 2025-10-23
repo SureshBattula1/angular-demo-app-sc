@@ -190,8 +190,12 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Fee Collection Breakdown -->
-      <mat-card class="chart-card">
+     
+
+    </div>
+    <div class="charts-grid">
+       <!-- Fee Collection Breakdown -->
+       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>pie_chart</mat-icon>
@@ -252,8 +256,33 @@
           </div>
         </mat-card-content>
       </mat-card>
-
     </div>
+
+    <!-- FEE COLLECTION BY CLASS & SECTION - Stacked Bar Chart (Full Width) -->
+    <mat-card class="chart-card full-width fee-by-class-card" *ngIf="feeByClassData">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>account_balance_wallet</mat-icon>
+          Fee Collection Status by Class & Section
+        </mat-card-title>
+        <mat-card-subtitle>Paid vs Unpaid fees across all grades and sections</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <app-bar-chart 
+          *ngIf="feeByClassData"
+          [data]="feeByClassData"
+          [height]="getDynamicFeeChartHeight()"
+          [responsive]="true"
+          [showLegend]="true"
+          [stacked]="true"
+          [horizontal]="true">
+        </app-bar-chart>
+        <div *ngIf="!feeByClassData" class="no-data">
+          <mat-icon>info</mat-icon>
+          <p>No fee data available by class</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
 
     <!-- QUICK STATS CARDS - Responsive Grid -->
     <div class="quick-stats-grid">

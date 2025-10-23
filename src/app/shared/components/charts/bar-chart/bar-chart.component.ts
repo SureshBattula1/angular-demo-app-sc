@@ -41,6 +41,7 @@ export class BarChartComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() responsive: boolean = true;
   @Input() showLegend: boolean = true;
   @Input() horizontal: boolean = false;
+  @Input() stacked: boolean = false; // Enable stacked mode
   
   @ViewChild('chartCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
   private chart: Chart | null = null;
@@ -73,7 +74,9 @@ export class BarChartComponent implements OnInit, OnChanges, AfterViewInit {
           backgroundColor: dataset.backgroundColor || '#2196F3',
           borderColor: dataset.borderColor || '#1976D2',
           borderWidth: 1,
-          borderRadius: 4
+          borderRadius: this.horizontal ? 6 : 4,
+          barPercentage: this.horizontal ? 0.7 : 0.8, // Reduce bar width for spacing
+          categoryPercentage: this.horizontal ? 0.8 : 0.9 // Add space between categories
         }))
       },
       options: {
@@ -95,36 +98,66 @@ export class BarChartComponent implements OnInit, OnChanges, AfterViewInit {
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             padding: 12,
-            cornerRadius: 4
+            cornerRadius: 4,
+            callbacks: {
+              label: function(context: any) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null || context.parsed.x !== null) {
+                  const value = context.parsed.y || context.parsed.x;
+                  label += '$' + value.toLocaleString();
+                }
+                return label;
+              }
+            }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
+            stacked: this.stacked,
             grid: {
+              color: this.horizontal ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              display: !this.horizontal // Hide grid on Y-axis for horizontal charts
+            },
+            ticks: {
+              font: {
+                size: this.horizontal ? 12 : 11
+              },
+              // For horizontal charts, Y-axis shows labels (not numbers)
+              ...(this.horizontal ? {
+                autoSkip: false,
+                padding: 10
+              } : {
+                stepSize: 1,
+                callback: function(value: any) {
+                  return Number.isInteger(value) ? value : null;
+                }
+              })
+            }
+          },
+          x: {
+            stacked: this.stacked,
+            grid: {
+              display: this.horizontal, // Show grid on X-axis for horizontal charts
               color: 'rgba(0, 0, 0, 0.05)'
             },
             ticks: {
               font: {
-                size: 11
+                size: this.horizontal ? 11 : 10
               },
-              stepSize: 1, // Force whole numbers
-              callback: function(value) {
-                return Number.isInteger(value) ? value : null; // Only show integers
-              }
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            },
-            ticks: {
-              font: {
-                size: 10
-              },
-              maxRotation: 45, // Rotate labels for better visibility
-              minRotation: 45,
-              autoSkip: false // Show all labels
+              // For horizontal charts, X-axis shows numbers
+              ...(this.horizontal ? {
+                callback: function(value: any) {
+                  return Number.isInteger(value) ? value : null;
+                }
+              } : {
+                maxRotation: 45,
+                minRotation: 45,
+                autoSkip: false
+              })
             }
           }
         }

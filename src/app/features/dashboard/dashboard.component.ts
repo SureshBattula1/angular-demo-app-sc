@@ -60,6 +60,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Chart data
   attendanceTrendData: any | null = null; // Changed to bar chart data
   feeBreakdownData: DoughnutChartData | null = null;
+  feeByClassData: any | null = null; // Stacked bar chart for fees by class
   
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -252,6 +253,50 @@ export class DashboardComponent implements OnInit, OnDestroy {
         backgroundColor: ['#4CAF50', '#FF9800', '#F44336']
       };
     }
+    
+    // Fee Collection by Class - Stacked Bar Chart
+    if (this.dashboardData.fees_by_class && this.dashboardData.fees_by_class.length > 0) {
+      const feeData = this.dashboardData.fees_by_class;
+      console.log('📊 Raw fee by class data:', feeData);
+      
+      // Extract and log the data
+      const paidAmounts = feeData.map((item: any) => item.total_paid);
+      const unpaidAmounts = feeData.map((item: any) => item.total_unpaid);
+      
+      console.log('💰 Paid amounts:', paidAmounts);
+      console.log('🔴 Unpaid amounts:', unpaidAmounts);
+      console.log('📊 Total expected:', feeData.map((item: any) => item.total_expected));
+      
+      this.feeByClassData = {
+        labels: feeData.map((item: any) => item.label), // e.g., "Grade 1 - A"
+        datasets: [
+          {
+            label: 'Paid',
+            data: paidAmounts,
+            backgroundColor: '#4CAF50', // Green
+            borderColor: '#388E3C',
+            borderWidth: 1,
+            barThickness: 25, // Fixed bar thickness
+            maxBarThickness: 30
+          },
+          {
+            label: 'Unpaid',
+            data: unpaidAmounts,
+            backgroundColor: '#FF5252', // Red
+            borderColor: '#D32F2F',
+            borderWidth: 1,
+            barThickness: 25, // Fixed bar thickness
+            maxBarThickness: 30
+          }
+        ]
+      };
+      
+      console.log('📈 Fee chart datasets prepared:', this.feeByClassData.datasets);
+      console.log('📊 Total classes:', feeData.length);
+    } else {
+      console.log('⚠️ No fee by class data available');
+      this.feeByClassData = null;
+    }
   }
   
   /**
@@ -302,5 +347,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
   calculateStrokeDashoffset(percentage: number): number {
     const circumference = 2 * Math.PI * 60; // r=60
     return circumference - (percentage / 100) * circumference;
+  }
+  
+  /**
+   * Calculate dynamic height for fee chart based on number of classes
+   * More classes = taller chart for better spacing
+   * Maximum 1000px to prevent excessive height
+   */
+  getDynamicFeeChartHeight(): string {
+    if (!this.dashboardData?.fees_by_class) {
+      return '400px';
+    }
+    
+    const numClasses = this.dashboardData.fees_by_class.length;
+    // Calculate height: 60px per class/section + 100px for legend/padding
+    // Minimum 400px, Maximum 1000px
+    const heightInPixels = Math.min(700, Math.max(400, (numClasses * 60) + 100));
+    
+    console.log(`📏 Chart height calculated: ${heightInPixels}px for ${numClasses} classes (max: 1000px)`);
+    
+    return `${heightInPixels}px`;
   }
 }
