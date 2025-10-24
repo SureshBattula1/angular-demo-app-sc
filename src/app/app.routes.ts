@@ -78,6 +78,10 @@ export const routes: Routes = [
         data: { permissions: ['attendance.view', 'attendance.mark'], permissionMode: 'any' }
       },
       {
+        path: 'leaves',
+        loadChildren: () => import('./features/leaves/leaves.routes').then(m => m.leavesRoutes)
+      },
+      {
         path: 'invoices',
         loadChildren: () => import('./features/invoices/invoices.routes').then(m => m.INVOICES_ROUTES),
         canActivate: [permissionGuard],

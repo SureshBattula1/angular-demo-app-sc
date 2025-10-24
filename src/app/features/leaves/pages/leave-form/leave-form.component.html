@@ -1,0 +1,176 @@
+<div class="form-container">
+  <!-- Header -->
+  <div class="form-header">
+    <button mat-icon-button (click)="onCancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>{{ isEditMode ? 'Edit Leave' : 'Apply for Leave' }}</h1>
+  </div>
+
+  <!-- Form Card -->
+  <mat-card class="form-card">
+    <mat-card-content>
+      <form #leaveForm="ngForm" (ngSubmit)="onSubmit()">
+        <!-- Leave Type Toggle -->
+        <div class="type-selector">
+          <mat-button-toggle-group [(ngModel)]="leaveType" name="leaveType" (change)="onTypeChange()">
+            <mat-button-toggle value="student">
+              <mat-icon>school</mat-icon>
+              Student Leave
+            </mat-button-toggle>
+            <mat-button-toggle value="teacher">
+              <mat-icon>person</mat-icon>
+              Teacher Leave
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <!-- Student Fields -->
+        <div *ngIf="leaveType === 'student'" class="form-section">
+          <h3>Student Information</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Branch</mat-label>
+              <mat-select [(ngModel)]="selectedBranch" name="branch" (selectionChange)="onGradeChange()">
+                <mat-option [value]="null">All Branches</mat-option>
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Grade</mat-label>
+              <mat-select [(ngModel)]="selectedGrade" name="grade" required (selectionChange)="onGradeChange()">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
+                </mat-option>
+              </mat-select>
+              <mat-error>Grade is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Section</mat-label>
+              <mat-select [(ngModel)]="selectedSection" name="section" required (selectionChange)="onSectionChange()">
+                <mat-option *ngFor="let section of sections" [value]="section.name">
+                  {{ section.name }} {{ section.code ? '(' + section.code + ')' : '' }}
+                </mat-option>
+              </mat-select>
+              <mat-error>Section is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Student</mat-label>
+            <mat-select [(ngModel)]="selectedUser" name="student" required>
+              <mat-option *ngFor="let student of students" [value]="student.user_id">
+                {{ getStudentName(student) }}
+              </mat-option>
+            </mat-select>
+            <mat-error>Student is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Teacher Fields -->
+        <div *ngIf="leaveType === 'teacher'" class="form-section">
+          <h3>Teacher Information</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Branch</mat-label>
+              <mat-select [(ngModel)]="selectedBranch" name="branch" (selectionChange)="onBranchChange()">
+                <mat-option [value]="null">All Branches</mat-option>
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Select Teacher</mat-label>
+              <mat-select [(ngModel)]="selectedUser" name="teacher" required>
+                <mat-option *ngFor="let teacher of teachers" [value]="teacher.user_id">
+                  {{ getTeacherName(teacher) }}
+                </mat-option>
+              </mat-select>
+              <mat-error>Teacher is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Substitute Teacher (Optional)</mat-label>
+            <mat-select [(ngModel)]="substituteTeacherId" name="substituteTeacher">
+              <mat-option [value]="null">None</mat-option>
+              <mat-option *ngFor="let teacher of teachers" [value]="teacher.user_id">
+                {{ getTeacherName(teacher) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Leave Details -->
+        <div class="form-section">
+          <h3>Leave Details</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>From Date</mat-label>
+              <input matInput type="date" [(ngModel)]="fromDate" name="fromDate" required>
+              <mat-error>From date is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>To Date</mat-label>
+              <input matInput type="date" [(ngModel)]="toDate" name="toDate" required>
+              <mat-error>To date is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Total Days</mat-label>
+              <input matInput [value]="getTotalDays()" readonly>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Leave Type</mat-label>
+            <mat-select [(ngModel)]="selectedLeaveType" name="leaveType" required>
+              <mat-option *ngFor="let type of (leaveType === 'student' ? studentLeaveTypes : teacherLeaveTypes)" [value]="type">
+                {{ type }}
+              </mat-option>
+            </mat-select>
+            <mat-error>Leave type is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reason</mat-label>
+            <textarea matInput [(ngModel)]="reason" name="reason" rows="4" required></textarea>
+            <mat-error>Reason is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Additional Remarks (Optional)</mat-label>
+            <textarea matInput [(ngModel)]="remarks" name="remarks" rows="3"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button mat-button type="button" (click)="onCancel()">
+            Cancel
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="submitting || !leaveForm.valid">
+            <mat-spinner *ngIf="submitting" diameter="20"></mat-spinner>
+            <span *ngIf="!submitting">{{ isEditMode ? 'Update Leave' : 'Submit Leave' }}</span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <mat-spinner></mat-spinner>
+  </div>
+</div>
+
