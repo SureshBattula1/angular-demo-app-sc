@@ -129,6 +129,13 @@ export class SidebarComponent implements OnInit {
       permissionMode: 'any'
     },
     {
+      name: 'Exams',
+      icon: 'assignment',
+      route: '/exams',
+      permission: ['exams.view', 'exams.create'],
+      permissionMode: 'any'
+    },
+    {
       name: 'Data Import',
       icon: 'cloud_upload',
       route: '/imports',

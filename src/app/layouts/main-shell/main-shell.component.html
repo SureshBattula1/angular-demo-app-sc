@@ -228,6 +228,19 @@
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Attendance</span>
         </a>
 
+        <!-- Exams -->
+        <a mat-list-item 
+           *hasPermission="['exams.view', 'exams.create']"
+           routerLink="/exams" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Exams' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>assignment</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Exams</span>
+        </a>
+
         <!-- Fees Management -->
         <a mat-list-item 
            *hasPermission="['fees.view', 'fees.collect']"

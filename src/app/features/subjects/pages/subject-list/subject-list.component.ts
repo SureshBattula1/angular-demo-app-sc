@@ -22,7 +22,6 @@ import { Subject } from '../../../../core/models/subject.model';
       [advancedSearchConfig]="advancedSearchConfig"
       [title]="'Subjects'"
       [loading]="loading"
-      [customActions]="customActions"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
