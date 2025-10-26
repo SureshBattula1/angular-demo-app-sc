@@ -121,8 +121,6 @@
 
 /* Filter Count Badge Styling */
 ::ng-deep .advanced-search-btn .mat-badge-content {
-  background-color: var(--danger-color);
-  color: var(--white);
   font-weight: 600;
   font-size: 10px;
   min-width: 18px;
