@@ -5,6 +5,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Branch, BranchStats } from '../../../../core/models/branch.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-branch-view',
@@ -124,6 +125,35 @@ export class BranchViewComponent implements OnInit {
       'SubBranch': 'store'
     };
     return type ? icons[type] || 'business' : 'business';
+  }
+
+  /**
+   * Get logo URL for display
+   */
+  getLogoUrl(): string {
+    if (!this.branch?.logo) {
+      return '';
+    }
+    
+    // If logo path already includes http, return as is
+    if (this.branch.logo.startsWith('http://') || this.branch.logo.startsWith('https://')) {
+      return this.branch.logo;
+    }
+    
+    // Construct full URL from logo path - storage is served from public directory
+    // Remove /api from the base URL for storage
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}/storage/${this.branch.logo}`;
+  }
+
+  /**
+   * Handle image load error
+   */
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+    }
   }
 }
 

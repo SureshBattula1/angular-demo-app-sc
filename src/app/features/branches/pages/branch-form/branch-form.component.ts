@@ -1,25 +1,33 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
+import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload.component';
+import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { FileUploadService } from '../../../../core/services/file-upload.service';
 import { Branch } from '../../../../core/models/branch.model';
 
 @Component({
   selector: 'app-branch-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, FileUploadComponent, UniversalAttachmentsComponent],
   templateUrl: './branch-form.component.html',
   styleUrls: ['./branch-form.component.scss']
 })
 export class BranchFormComponent implements OnInit {
+  @ViewChild(UniversalAttachmentsComponent) attachmentsComponent!: UniversalAttachmentsComponent;
   branchForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
   branchId?: number;
   currentBranch?: Branch;
+  logoUrl?: string;
+  
+  // For attachments - will be set after branch is created/updated
+  attachmentModuleId: number | null = null;
   
   // Dropdown options
   branchTypes = [
@@ -44,7 +52,8 @@ export class BranchFormComponent implements OnInit {
     private branchService: BranchService,
     private router: Router,
     private route: ActivatedRoute,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private fileUploadService: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -111,7 +120,10 @@ export class BranchFormComponent implements OnInit {
       
       // Status
       status: ['Active'],
-      is_active: [true]
+      is_active: [true],
+      
+      // Logo
+      logo: ['']
     });
   }
 
@@ -123,6 +135,8 @@ export class BranchFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentBranch = response.data;
           this.branchForm.patchValue(response.data);
+          this.logoUrl = response.data.logo; // Set logo URL if exists
+          this.attachmentModuleId = id; // Set module ID for attachments
           this.isLoading = false;
         }
       },
@@ -132,6 +146,16 @@ export class BranchFormComponent implements OnInit {
         this.router.navigate(['/branches']);
       }
     });
+  }
+
+  onLogoUploaded(event: any): void {
+    this.logoUrl = event.file_path;
+    this.branchForm.patchValue({ logo: event.file_path });
+    this.errorHandler.showSuccess('Logo uploaded successfully');
+  }
+
+  onLogoUploadError(error: string): void {
+    this.errorHandler.showError(error);
   }
 
   private loadParentBranches(): void {
@@ -166,6 +190,18 @@ export class BranchFormComponent implements OnInit {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
+          // Set attachment module ID after branch is created/updated
+          if (!this.isEditMode && response.data?.id) {
+            this.attachmentModuleId = response.data.id;
+          } else if (this.branchId) {
+            this.attachmentModuleId = this.branchId;
+          }
+          
+          // Upload any pending attachments
+          setTimeout(() => {
+            this.attachmentsComponent?.uploadPendingAttachments();
+          }, 500);
+          
           this.errorHandler.showSuccess(
             this.isEditMode ? 'Branch updated successfully' : 'Branch created successfully'
           );
@@ -236,5 +272,6 @@ export class BranchFormComponent implements OnInit {
     };
     return labels[fieldName] || fieldName;
   }
+
 }
 

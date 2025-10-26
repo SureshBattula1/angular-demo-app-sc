@@ -277,6 +277,59 @@
           </div>
         </div>
 
+        <!-- Branch Logo Upload Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>image</mat-icon>
+            Branch Logo
+          </h3>
+          
+          <div class="logo-upload-section">
+            <app-file-upload
+              fileType="logo"
+              module="branch"
+              label="Upload Branch Logo"
+              icon="image"
+              [config]="{
+                maxSize: 1,
+                allowedTypes: ['jpg', 'jpeg', 'png', 'svg', 'webp'],
+                multiple: false,
+                showPreview: true,
+                showProgress: true,
+                showFileList: true
+              }"
+              accept="image/*"
+              [disabled]="isLoading"
+              (uploadSuccess)="onLogoUploaded($event)"
+              (uploadError)="onLogoUploadError($event)">
+            </app-file-upload>
+            
+            <p class="help-text">
+              <mat-icon>info</mat-icon>
+              Upload your branch logo. Accepted formats: JPG, PNG, SVG, WebP. Max size: 1MB
+            </p>
+          </div>
+        </div>
+
+        <!-- Branch Attachments Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>attach_file</mat-icon>
+            Branch Attachments
+          </h3>
+          
+          <app-universal-attachments
+            module="branch"
+            [moduleId]="attachmentModuleId || branchId || 0"
+            mode="form">
+          </app-universal-attachments>
+          
+          <p class="help-text">
+            <mat-icon>info</mat-icon>
+            Upload multiple files with specific types (certifications, documents, certificates, etc.)
+          </p>
+        </div>
+
         <!-- Status Section -->
         <div class="form-section">
           <h3 class="section-title">

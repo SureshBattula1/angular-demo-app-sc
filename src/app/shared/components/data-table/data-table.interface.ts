@@ -6,7 +6,7 @@ export interface TableColumn {
   header: string;                 // Display header text
   sortable?: boolean;             // Enable sorting
   searchable?: boolean;           // Enable search for this column
-  type?: 'text' | 'number' | 'date' | 'badge' | 'avatar' | 'actions' | 'custom';
+  type?: 'text' | 'number' | 'date' | 'badge' | 'avatar' | 'image' | 'actions' | 'custom';
   width?: string;                 // Column width (e.g., '150px', '20%')
   align?: 'left' | 'center' | 'right';
   pipe?: string;                  // Pipe to format data (e.g., 'date', 'currency')

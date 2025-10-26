@@ -152,6 +152,29 @@
   }
 }
 
+.logo-upload-section {
+  background: var(--gray-50);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  
+  .help-text {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin: var(--spacing-md) 0 0 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--primary-color);
+    }
+  }
+}
+
 // Responsive
 @media (max-width: $breakpoint-md) {
   .branch-form-container {

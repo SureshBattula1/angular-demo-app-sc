@@ -29,7 +29,13 @@
     <mat-card-content>
       <div class="view-header">
         <div class="view-avatar">
-          <mat-icon class="avatar-icon">{{ getBranchTypeIcon(branch.branch_type) }}</mat-icon>
+          <!-- Show logo if exists, otherwise show icon -->
+          <img *ngIf="branch.logo && getLogoUrl()" 
+               [src]="getLogoUrl()" 
+               [alt]="branch.name + ' logo'" 
+               class="branch-logo-avatar"
+               (error)="onImageError($event)">
+          <mat-icon class="avatar-icon" [style.display]="(branch.logo && getLogoUrl()) ? 'none' : 'flex'">{{ getBranchTypeIcon(branch.branch_type) }}</mat-icon>
         </div>
         <div class="view-info">
           <h1 class="view-name">{{ branch.name }}</h1>

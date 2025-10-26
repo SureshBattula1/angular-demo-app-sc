@@ -95,3 +95,28 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Branch Logo Styling */
+.branch-logo-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+  border: 3px solid var(--primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.branch-logo-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  width: 100%;
+  height: 100%;
+}

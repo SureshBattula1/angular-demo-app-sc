@@ -175,6 +175,12 @@
               [src]="getCellValue(row, column)" 
               class="avatar"
               [alt]="row.name || 'Avatar'">
+            
+            <img *ngIf="column.type === 'image'" 
+              [src]="getCellValue(row, column)" 
+              class="cell-image"
+              [alt]="row.name || 'Image'"
+              onerror="this.onerror=null; this.src='/assets/images/placeholder.png';">
           </ng-container>
         </td>
       </ng-container>

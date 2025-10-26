@@ -9,6 +9,7 @@ import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { Branch } from '../../../../core/models/branch.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-branch-list',
@@ -50,6 +51,15 @@ export class BranchListComponent implements OnInit {
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
+      // { 
+      //   key: 'logo', 
+      //   header: 'Logo', 
+      //   sortable: false,
+      //   type: 'image',
+      //   width: '80px',
+      //   align: 'center',
+      //   cellClass: 'branch-logo-cell'
+      // },
       { 
         key: 'code', 
         header: 'Code', 
@@ -283,7 +293,10 @@ export class BranchListComponent implements OnInit {
     this.branchService.getAllBranches(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.branches = response.data;
+          this.branches = response.data.map(branch => ({
+            ...branch,
+            logo: this.getLogoUrl(branch.logo)
+          }));
           // Update total count from meta for server-side pagination
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
@@ -460,6 +473,25 @@ export class BranchListComponent implements OnInit {
         filters: this.currentFilters
       }
     );
+  }
+  
+  /**
+   * Get logo URL for display
+   */
+  getLogoUrl(logoPath: string | undefined): string {
+    if (!logoPath) {
+      return '/assets/images/branch-placeholder.png';
+    }
+    
+    // If logo path already includes http, return as is
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+    
+    // Construct full URL from logo path - storage is served from public directory
+    // Remove /api from the base URL for storage
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}/storage/${logoPath}`;
   }
 }
 

@@ -16,18 +16,6 @@
     <mat-card-content>
       <form [formGroup]="teacherForm" (ngSubmit)="onSubmit()">
         
-        <!-- Profile Completion Progress -->
-        <div class="profile-completion" *ngIf="isEditMode">
-          <mat-progress-bar 
-            mode="determinate" 
-            [value]="getProfileCompletionPercentage()"
-            color="primary">
-          </mat-progress-bar>
-          <span class="completion-text">
-            Profile Completion: {{ getProfileCompletionPercentage() }}%
-          </span>
-        </div>
-
         <!-- Basic Information -->
         <div class="form-section">
           <h3 class="section-title">
@@ -848,6 +836,25 @@
               <input #panFile type="file" hidden (change)="onFileSelected($event, 'pan_file')" accept=".pdf,.jpg,.jpeg,.png">
             </div>
           </div>
+        </div>
+
+        <!-- Teacher Attachments Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>attach_file</mat-icon>
+            Teacher Attachments
+          </h3>
+          
+          <app-universal-attachments
+            module="teacher"
+            [moduleId]="attachmentModuleId || teacherId || 0"
+            mode="form">
+          </app-universal-attachments>
+          
+          <p class="help-text">
+            <mat-icon>info</mat-icon>
+            Upload multiple files with specific types (certifications, documents, certificates, etc.)
+          </p>
         </div>
       </form>
     </mat-card-content>

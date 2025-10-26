@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -8,15 +8,19 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Teacher, TeacherFormData } from '../../../../core/models/teacher.model';
+import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
+import { FileUploadService } from '../../../../core/services/file-upload.service';
 
 @Component({
   selector: 'app-teacher-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, MaterialModule, UniversalAttachmentsComponent],
   templateUrl: './teacher-form.component.html',
   styleUrls: ['./teacher-form.component.scss']
 })
 export class TeacherFormComponent implements OnInit {
+  @ViewChild(UniversalAttachmentsComponent) attachmentsComponent!: UniversalAttachmentsComponent;
+  
   teacherForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
@@ -28,6 +32,9 @@ export class TeacherFormComponent implements OnInit {
   reportingManagers: any[] = [];
   profilePicturePreview: string | null = null;
   sameAsPermanentAddress = false;
+  
+  // For attachments - will be set after teacher is created/updated
+  attachmentModuleId: number | null = null;
   
   // Form sections visibility
   showPayrollDetails = false;
@@ -91,7 +98,8 @@ export class TeacherFormComponent implements OnInit {
     private departmentService: DepartmentService,
     private router: Router,
     private route: ActivatedRoute,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private fileUploadService: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -179,7 +187,8 @@ export class TeacherFormComponent implements OnInit {
       number_of_children: [0, [Validators.min(0), Validators.max(20)]],
       children_details: [[]],
       
-      // Address Details
+      // Address Details (address is a required field in database)
+      address: [''], // Main address field required by database
       current_address: [''],
       current_city: [''],
       current_state: [''],
@@ -312,6 +321,12 @@ export class TeacherFormComponent implements OnInit {
             is_active: teacher.user?.is_active ?? teacher.is_active
           };
           
+          // Remove computed/non-database fields
+          const fieldsToRemove = ['profile_completion_percentage', 'last_profile_update', 'user'];
+          fieldsToRemove.forEach(field => {
+            delete formData[field];
+          });
+          
           this.teacherForm.patchValue(formData);
           
           // Load reporting managers for the current branch
@@ -402,6 +417,15 @@ export class TeacherFormComponent implements OnInit {
     // Use getRawValue() to include disabled fields (like current_address when checkbox is checked)
     const formData = { ...this.teacherForm.getRawValue() };
     
+    // If "Same as Permanent Address" is checked, copy permanent address to current address fields
+    if (this.sameAsPermanentAddress) {
+      formData.current_address = formData.permanent_address || '';
+      formData.current_city = formData.permanent_city || '';
+      formData.current_state = formData.permanent_state || '';
+      formData.current_pincode = formData.permanent_pincode || '';
+      formData.current_country = formData.permanent_country || 'India';
+    }
+    
     // Remove password if empty in edit mode
     if (this.isEditMode && !formData.password) {
       delete formData.password;
@@ -419,6 +443,23 @@ export class TeacherFormComponent implements OnInit {
       }
     });
 
+    // Remove computed fields that don't exist in the database
+    const computedFields = ['profile_completion_percentage', 'last_profile_update'];
+    computedFields.forEach(field => {
+      if (formData[field] !== undefined) {
+        delete formData[field];
+      }
+    });
+
+    // Ensure address field is always set (required by database)
+    // This field is mandatory and cannot be NULL in the database
+    // Always set it explicitly, don't rely on existing value
+    const currentAddr = (formData.current_address || '').trim();
+    const permanentAddr = (formData.permanent_address || '').trim();
+    
+    // Set address with priority: current_address > permanent_address > 'N/A' as absolute fallback
+    formData.address = currentAddr || permanentAddr || 'N/A';
+
     const request = this.isEditMode && this.teacherId
       ? this.teacherService.updateTeacher(this.teacherId, formData)
       : this.teacherService.createTeacher(formData);
@@ -427,6 +468,18 @@ export class TeacherFormComponent implements OnInit {
       next: (response: any) => {
         this.isLoading = false;
         if (response.success) {
+          // Set attachment module ID after teacher is created/updated
+          if (!this.isEditMode && response.data?.id) {
+            this.attachmentModuleId = response.data.id;
+          } else if (this.teacherId) {
+            this.attachmentModuleId = this.teacherId;
+          }
+          
+          // Upload any pending attachments
+          setTimeout(() => {
+            this.attachmentsComponent?.uploadPendingAttachments();
+          }, 500);
+          
           this.errorHandler.showSuccess(
             this.isEditMode ? 'Teacher updated successfully' : 'Teacher created successfully'
           );
@@ -687,37 +740,6 @@ export class TeacherFormComponent implements OnInit {
     const currentLanguages = this.teacherForm.get('languages_known')?.value || [];
     const updatedLanguages = currentLanguages.filter((lang: string) => lang !== language);
     this.teacherForm.get('languages_known')?.setValue(updatedLanguages);
-  }
-
-  // Get profile completion percentage
-  getProfileCompletionPercentage(): number {
-    const totalFields = 50; // Total important fields
-    let filledFields = 0;
-    
-    const importantFields = [
-      'employee_id', 'category_type', 'designation', 'gender', 'date_of_birth',
-      'pan_number', 'father_name', 'mother_name', 'current_address',
-      'permanent_address', 'qualification', 'basic_salary',
-      'emergency_contact_name', 'emergency_contact_phone', 'aadhaar_number', 
-      'blood_group', 'spouse_name', 'alternate_email', 'alternate_phone',
-      'whatsapp_number', 'current_city', 'current_state', 'current_pincode',
-      'permanent_city', 'permanent_state', 'permanent_pincode', 'epf_number',
-      'pf_number', 'esi_number', 'uan_number', 'ctc', 'medical_history',
-      'allergies', 'family_doctor_name', 'family_doctor_phone',
-      'emergency_contact_2_name', 'emergency_contact_2_phone',
-      'professional_memberships', 'hobbies_interests', 'volunteer_work',
-      'community_involvement', 'personal_statement', 'career_objectives',
-      'technical_skills', 'soft_skills', 'subject_expertise', 'notes'
-    ];
-
-    importantFields.forEach(field => {
-      const value = this.teacherForm.get(field)?.value;
-      if (value && value !== '' && value !== 0 && value !== null && value !== undefined) {
-        filledFields++;
-      }
-    });
-
-    return Math.round((filledFields / totalFields) * 100);
   }
 
   // Copy permanent address to current address
