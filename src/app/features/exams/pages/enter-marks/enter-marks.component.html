@@ -59,6 +59,14 @@
           <span class="info-label"><mat-icon>schedule</mat-icon>Time:</span>
           <span class="info-value">{{ schedule.start_time }} - {{ schedule.end_time }}</span>
         </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>assessment</mat-icon>Total Marks:</span>
+          <span class="info-value">{{ schedule.total_marks }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>check_circle</mat-icon>Passing Marks:</span>
+          <span class="info-value">{{ schedule.passing_marks || 'Not set' }}</span>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>
