@@ -50,8 +50,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     columns: [
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'admission_number', header: 'Admission No.', sortable: true, searchable: true, width: '140px' },
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
       { key: 'gender', header: 'Gender', sortable: true, searchable: true },
       // { key: 'email', header: 'Email', searchable: true },
       { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
@@ -265,7 +264,10 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     this.studentCrudService.getStudents(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.students = response.data || [];
+          this.students = (response.data || []).map(student => ({
+            ...student,
+            full_name: this.getFullName(student)
+          }));
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           }
@@ -304,8 +306,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   onSortChange(event: SortEvent): void {
     // Map frontend column names to backend column names
     const columnMapping: Record<string, string> = {
-      'first_name': 'users.first_name',
-      'last_name': 'users.last_name',
+      'full_name': 'users.first_name',
       'admission_number': 'students.admission_number',
       'roll_number': 'students.roll_number',
       'gender': 'students.gender',
@@ -358,7 +359,8 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   }
   
   deleteStudent(student: Student): void {
-    if (confirm(`Are you sure you want to delete student "${student.first_name} ${student.last_name}"?`)) {
+    const studentName = this.getFullName(student);
+    if (confirm(`Are you sure you want to delete student "${studentName}"?`)) {
       this.studentCrudService.deleteStudent(student.id).subscribe({
         next: (response) => {
           if (response.success) {
@@ -388,6 +390,16 @@ export class StudentListComponent implements OnInit, AfterViewInit {
         filters: this.currentFilters
       }
     );
+  }
+
+  /**
+   * Get full name (first + last)
+   */
+  getFullName(student: Student): string {
+    const parts = [];
+    if (student.first_name) parts.push(student.first_name);
+    if (student.last_name) parts.push(student.last_name);
+    return parts.join(' ');
   }
 }
 

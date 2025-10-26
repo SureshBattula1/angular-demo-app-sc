@@ -45,8 +45,7 @@ export class TeacherListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       { key: 'employee_id', header: 'Employee ID', sortable: true, searchable: true, width: '140px' },
-      { key: 'user.first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'user.last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
       { key: 'category_type', header: 'Category', sortable: true, type: 'badge', width: '130px', align: 'center' },
       { key: 'designation', header: 'Designation', sortable: true, searchable: true },
       { key: 'department.name', header: 'Department', sortable: true, width: '150px' },
@@ -233,7 +232,10 @@ export class TeacherListComponent implements OnInit {
     this.teacherService.getTeachers(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.teachers = response.data || [];
+          this.teachers = (response.data || []).map(teacher => ({
+            ...teacher,
+            full_name: this.getFullName(teacher)
+          }));
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           }
@@ -264,8 +266,7 @@ export class TeacherListComponent implements OnInit {
    */
   onSortChange(event: SortEvent): void {
     const columnMapping: Record<string, string> = {
-      'user.first_name': 'users.first_name',
-      'user.last_name': 'users.last_name',
+      'full_name': 'first_name',
       'user.email': 'users.email',
       'user.phone': 'users.phone',
       'branch.name': 'branch_id',
@@ -328,7 +329,7 @@ export class TeacherListComponent implements OnInit {
   }
   
   deleteTeacher(teacher: Teacher): void {
-    const teacherName = teacher.user?.first_name + ' ' + teacher.user?.last_name;
+    const teacherName = this.getFullName(teacher);
     if (confirm(`Are you sure you want to delete teacher "${teacherName}"?`)) {
       this.teacherService.deleteTeacher(teacher.id).subscribe({
         next: (response) => {
@@ -359,5 +360,16 @@ export class TeacherListComponent implements OnInit {
         filters: this.currentFilters
       }
     );
+  }
+
+  /**
+   * Get full name (first + middle + last)
+   */
+  getFullName(teacher: Teacher): string {
+    const parts = [];
+    if (teacher.user?.first_name) parts.push(teacher.user.first_name);
+    if (teacher.middle_name) parts.push(teacher.middle_name);
+    if (teacher.user?.last_name) parts.push(teacher.user.last_name);
+    return parts.join(' ');
   }
 }

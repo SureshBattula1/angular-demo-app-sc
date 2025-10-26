@@ -148,14 +148,6 @@ export class BranchListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
-        key: 'code',
-        label: 'Branch Code',
-        type: 'text',
-        placeholder: 'Enter branch code',
-        icon: 'qr_code',
-        group: 'Basic Information'
-      },
-      {
         key: 'name',
         label: 'Branch Name',
         type: 'text',
@@ -163,6 +155,14 @@ export class BranchListComponent implements OnInit {
         icon: 'business',
         group: 'Basic Information'
       },
+      {
+        key: 'code',
+        label: 'Branch Code',
+        type: 'text',
+        placeholder: 'Enter branch code',
+        icon: 'qr_code',
+        group: 'Basic Information'
+      }, 
       {
         key: 'branch_type',
         label: 'Branch Type',
