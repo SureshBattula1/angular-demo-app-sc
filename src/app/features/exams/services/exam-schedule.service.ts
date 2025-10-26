@@ -6,25 +6,27 @@ export interface ExamSchedule {
   id: number;
   exam_id: string;
   subject_id: number;
-  branch_id: number;
-  grade_level: string;
+  branch_id?: number;
+  grade: string;
+  grade_level?: string;
   section: string | null;
   exam_date: string;
   start_time: string;
   end_time: string;
-  duration: number;
+  duration?: number;
   total_marks: number;
-  passing_marks: number;
-  room_number: string | null;
-  invigilator_id: number | null;
+  passing_marks?: number;
+  room_number?: string | null;
+  invigilator_id?: number | null;
   instructions?: string;
-  status: string;
-  is_active: boolean;
+  status?: string;
+  is_active?: boolean;
   exam?: any;
   subject?: any;
   branch?: any;
   invigilator?: any;
   created_at?: string;
+  updated_at?: string;
 }
 
 @Injectable({
@@ -53,6 +55,10 @@ export class ExamScheduleService {
 
   deleteSchedule(id: number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
+  }
+
+  getStudents(id: number): Observable<ApiResponse<any[]>> {
+    return this.apiService.get<any[]>(`${this.ENDPOINT}/${id}/students`);
   }
 }
 

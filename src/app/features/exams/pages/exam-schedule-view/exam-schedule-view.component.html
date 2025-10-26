@@ -1,0 +1,173 @@
+<div class="view-container" *ngIf="!loading && schedule">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">schedule</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ schedule.exam?.name || 'Exam Schedule' }}</h1>
+          <div class="view-meta">
+            <span *ngIf="schedule.subject">
+              <mat-icon>book</mat-icon>
+              {{ schedule.subject.name }}
+            </span>
+            <span *ngIf="schedule.grade">
+              <mat-icon>school</mat-icon>
+              Grade {{ schedule.grade }}
+            </span>
+            <span class="status-badge" [ngClass]="'status-' + schedule.status?.toLowerCase()">
+              <mat-icon>circle</mat-icon>
+              {{ schedule.status || 'Scheduled' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Schedule Details Cards -->
+  <div class="details-grid">
+    <!-- Exam Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Exam Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>assignment</mat-icon>
+              <span>Exam</span>
+            </div>
+            <div class="detail-value">{{ schedule.exam?.name || 'Not specified' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>book</mat-icon>
+              <span>Subject</span>
+            </div>
+            <div class="detail-value">{{ schedule.subject?.name || 'Not specified' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>qr_code</mat-icon>
+              <span>Subject Code</span>
+            </div>
+            <div class="detail-value">{{ schedule.subject?.code || 'N/A' }}</div>
+          </div>
+          
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Class & Grade Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>class</mat-icon>
+          Class & Grade
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>school</mat-icon>
+              <span>Grade</span>
+            </div>
+            <div class="detail-value">{{ schedule.grade || 'Not specified' }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Schedule & Timing -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          Schedule & Timing
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>Exam Date</span>
+            </div>
+            <div class="detail-value">{{ schedule.exam_date | date: 'mediumDate' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>schedule</mat-icon>
+              <span>Start Time</span>
+            </div>
+            <div class="detail-value">{{ schedule.start_time }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>schedule</mat-icon>
+              <span>End Time</span>
+            </div>
+            <div class="detail-value">{{ schedule.end_time }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Marks Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>score</mat-icon>
+          Marks Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>signal_cellular_alt</mat-icon>
+              <span>Total Marks</span>
+            </div>
+            <div class="detail-value">{{ schedule.total_marks || 'Not specified' }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+

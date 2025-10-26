@@ -8,6 +8,7 @@ import { ExamService } from '../../services/exam.service';
 import { SubjectService } from '../../../subjects/services/subject.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { TeacherService } from '../../../teachers/services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
@@ -86,8 +87,14 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 
                 <mat-form-field appearance="outline" class="half-width">
                   <mat-label>Section</mat-label>
-                  <input matInput formControlName="section" placeholder="e.g., A, B, C">
-                  <mat-hint>Optional - leave empty for all sections</mat-hint>
+                  <mat-select formControlName="section">
+                    <mat-option [value]="null">All Sections</mat-option>
+                    <mat-option *ngIf="loadingSections" disabled>Loading sections...</mat-option>
+                    <mat-option *ngFor="let section of sections" [value]="section.name">
+                      {{ section.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint>Select a section or choose "All Sections"</mat-hint>
                 </mat-form-field>
               </div>
             </div>
@@ -236,7 +243,9 @@ export class ExamScheduleFormComponent implements OnInit {
   subjects: any[] = [];
   branches: any[] = [];
   grades: any[] = [];
+  sections: any[] = [];
   teachers: any[] = [];
+  loadingSections = false;
 
   constructor(
     private fb: FormBuilder,
@@ -245,6 +254,7 @@ export class ExamScheduleFormComponent implements OnInit {
     private subjectService: SubjectService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private sectionService: SectionService,
     private teacherService: TeacherService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
@@ -267,6 +277,23 @@ export class ExamScheduleFormComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['exam_id'] && !this.isEditMode) {
         this.scheduleForm.patchValue({ exam_id: params['exam_id'] });
+        this.loadExamDetails(params['exam_id']);
+      }
+    });
+
+    // Load sections when grade_level or branch_id changes
+    this.scheduleForm.get('grade_level')?.valueChanges.subscribe(() => {
+      this.loadSections();
+    });
+
+    this.scheduleForm.get('branch_id')?.valueChanges.subscribe(() => {
+      this.loadSections();
+    });
+
+    // Watch for exam_id changes and auto-populate branch
+    this.scheduleForm.get('exam_id')?.valueChanges.subscribe((examId) => {
+      if (examId && !this.isEditMode) {
+        this.loadExamDetails(examId);
       }
     });
   }
@@ -330,13 +357,96 @@ export class ExamScheduleFormComponent implements OnInit {
     });
   }
 
+  loadExamDetails(examId: number): void {
+    const selectedExam = this.exams.find(exam => exam.id === examId);
+    if (selectedExam && selectedExam.branch_id) {
+      // Set branch_id and disable it
+      this.scheduleForm.patchValue({ 
+        branch_id: selectedExam.branch_id 
+      });
+      
+      // Disable branch field
+      this.scheduleForm.get('branch_id')?.disable();
+    }
+  }
+
+  loadSections(): void {
+    const gradeLevel = this.scheduleForm.get('grade_level')?.value;
+    const branchId = this.scheduleForm.get('branch_id')?.value;
+
+    if (!gradeLevel || !branchId) {
+      this.sections = [];
+      return;
+    }
+
+    this.loadingSections = true;
+    
+    const params: any = { 
+      grade_level: gradeLevel,
+      branch_id: branchId
+    };
+
+    this.sectionService.getSections(params).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.sections = response.data.filter((section: any) => section.is_active);
+        } else {
+          this.sections = [];
+        }
+        this.loadingSections = false;
+      },
+      error: (error) => {
+        this.sections = [];
+        this.loadingSections = false;
+      }
+    });
+  }
+
   loadSchedule(): void {
     if (!this.scheduleId) return;
     
     this.examScheduleService.getSchedule(this.scheduleId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.scheduleForm.patchValue(response.data);
+          const schedule = response.data;
+          // Get branch_id from exam if available
+          const branchId = schedule.exam?.branch_id || '';
+          
+          // Map database fields to form fields
+          const formData = {
+            exam_id: schedule.exam_id,
+            subject_id: schedule.subject_id,
+            branch_id: branchId,
+            grade_level: schedule.grade, // Map grade to grade_level
+            section: schedule.section || '',
+            exam_date: schedule.exam_date,
+            start_time: schedule.start_time,
+            end_time: schedule.end_time,
+            duration: schedule.duration || '',
+            total_marks: schedule.total_marks,
+            passing_marks: schedule.passing_marks || '',
+            room_number: schedule.room_number || '',
+            invigilator_id: schedule.invigilator_id || '',
+            instructions: '',
+            status: 'Scheduled',
+            is_active: true
+          };
+          
+          // Patch form values without emitting events
+          this.scheduleForm.patchValue(formData, { emitEvent: false });
+          
+          // Load sections after setting grade and branch
+          if (schedule.grade && branchId) {
+            // Use setTimeout to ensure form values are set
+            setTimeout(() => {
+              // Manually trigger sections load
+              const gradeValue = this.scheduleForm.get('grade_level')?.value;
+              const branchValue = this.scheduleForm.get('branch_id')?.value;
+              if (gradeValue && branchValue) {
+                this.loadSections();
+              }
+            }, 200);
+          }
         }
       },
       error: (error) => this.errorHandler.showError(error)
@@ -347,7 +457,14 @@ export class ExamScheduleFormComponent implements OnInit {
     if (this.scheduleForm.invalid) return;
 
     this.saving = true;
-    const formData = this.scheduleForm.value;
+    
+    // Get form value and include disabled fields
+    const formData = { ...this.scheduleForm.value };
+    
+    // If branch_id is disabled, get its raw value
+    if (this.scheduleForm.get('branch_id')?.disabled) {
+      formData.branch_id = this.scheduleForm.get('branch_id')?.value;
+    }
 
     const request = this.isEditMode
       ? this.examScheduleService.updateSchedule(this.scheduleId!, formData)

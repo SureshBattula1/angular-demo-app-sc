@@ -129,8 +129,8 @@ export class ExamListComponent implements OnInit {
       { key: 'name', header: 'Term Name', sortable: true },
       { key: 'branch.name', header: 'Branch', sortable: false, width: '150px' },
       { key: 'academic_year', header: 'Academic Year', sortable: true, width: '140px' },
-      { key: 'start_date', header: 'Start Date', sortable: true, width: '130px' },
-      { key: 'end_date', header: 'End Date', sortable: true, width: '130px' },
+      { key: 'start_date', header: 'Start Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
+      { key: 'end_date', header: 'End Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
       { key: 'weightage', header: 'Weightage %', sortable: true, width: '120px', align: 'center' },
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
@@ -153,8 +153,8 @@ export class ExamListComponent implements OnInit {
       { key: 'name', header: 'Exam Name', sortable: true },
       { key: 'exam_type', header: 'Type', type: 'badge', sortable: true, width: '120px' },
       { key: 'academic_year', header: 'Academic Year', sortable: true, width: '140px' },
-      { key: 'start_date', header: 'Start Date', sortable: true, width: '130px' },
-      { key: 'end_date', header: 'End Date', sortable: true, width: '130px' },
+      { key: 'start_date', header: 'Start Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
+      { key: 'end_date', header: 'End Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
@@ -176,13 +176,12 @@ export class ExamListComponent implements OnInit {
     columns: [
       { key: 'exam.name', header: 'Exam', sortable: false },
       { key: 'subject.name', header: 'Subject', sortable: false },
-      { key: 'grade_level', header: 'Grade', sortable: true, width: '100px' },
+      { key: 'grade', header: 'Grade', sortable: true, width: '120px', type: 'text' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
-      { key: 'exam_date', header: 'Date', sortable: true, width: '130px' },
-      { key: 'start_time', header: 'Time', sortable: false, width: '120px' },
-      { key: 'room_number', header: 'Room', sortable: false, width: '100px' },
-      { key: 'status', header: 'Status', type: 'badge', width: '120px' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px' }
+      { key: 'exam_date', header: 'Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
+      { key: 'start_time', header: 'Start Time', sortable: false, width: '120px' },
+      { key: 'end_time', header: 'End Time', sortable: false, width: '120px' },
+      { key: 'total_marks', header: 'Marks', sortable: false, width: '90px', align: 'center' }
     ],
     actions: [
       { icon: 'visibility', label: 'View', action: (row) => this.viewSchedule(row) },
@@ -243,7 +242,12 @@ export class ExamListComponent implements OnInit {
     this.examTermService.getExamTerms(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.examTerms = response.data || [];
+          // Format dates for display
+          this.examTerms = (response.data || []).map((term: any) => ({
+            ...term,
+            start_date: term.start_date ? new Date(term.start_date).toLocaleDateString() : '',
+            end_date: term.end_date ? new Date(term.end_date).toLocaleDateString() : ''
+          }));
           if (response.meta) {
             this.termsTableConfig = { ...this.termsTableConfig, totalCount: response.meta.total || 0 };
             this.termCount = response.meta.total || 0;
@@ -263,7 +267,12 @@ export class ExamListComponent implements OnInit {
     this.examService.getExams(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.exams = response.data || [];
+          // Format dates for display
+          this.exams = (response.data || []).map((exam: any) => ({
+            ...exam,
+            start_date: exam.start_date ? new Date(exam.start_date).toLocaleDateString() : '',
+            end_date: exam.end_date ? new Date(exam.end_date).toLocaleDateString() : ''
+          }));
           if (response.meta) {
             this.examsTableConfig = { ...this.examsTableConfig, totalCount: response.meta.total || 0 };
             this.examCount = response.meta.total || 0;
@@ -283,7 +292,13 @@ export class ExamListComponent implements OnInit {
     this.examScheduleService.getSchedules(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.schedules = response.data || [];
+          // Transform grade to show "Grade X" format and format dates
+          this.schedules = (response.data || []).map((schedule: any) => ({
+            ...schedule,
+            grade: schedule.grade ? `Grade ${schedule.grade}` : '',
+            section: schedule.section || '-',
+            exam_date: schedule.exam_date ? new Date(schedule.exam_date).toLocaleDateString() : ''
+          }));
           if (response.meta) {
             this.schedulesTableConfig = { ...this.schedulesTableConfig, totalCount: response.meta.total || 0 };
             this.scheduleCount = response.meta.total || 0;
@@ -457,7 +472,7 @@ export class ExamListComponent implements OnInit {
   }
 
   enterMarks(schedule: ExamSchedule): void {
-    this.router.navigate(['/exams/marks/entry'], { queryParams: { schedule_id: schedule.id } });
+    this.router.navigate(['/exams/marks/enter'], { queryParams: { schedule_id: schedule.id } });
   }
 }
 

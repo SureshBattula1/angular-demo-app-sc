@@ -20,7 +20,7 @@ export const EXAMS_ROUTES: Routes = [
   },
   {
     path: 'term/view/:id',
-    loadComponent: () => import('./pages/exam-term-form/exam-term-form.component').then(m => m.ExamTermFormComponent),
+    loadComponent: () => import('./pages/exam-term-view/exam-term-view.component').then(m => m.ExamTermViewComponent),
     canActivate: [authGuard]
   },
   // Exams
@@ -36,7 +36,7 @@ export const EXAMS_ROUTES: Routes = [
   },
   {
     path: 'view/:id',
-    loadComponent: () => import('./pages/exam-form/exam-form.component').then(m => m.ExamFormComponent),
+    loadComponent: () => import('./pages/exam-view/exam-view.component').then(m => m.ExamViewComponent),
     canActivate: [authGuard]
   },
   // Exam Schedules
@@ -52,7 +52,12 @@ export const EXAMS_ROUTES: Routes = [
   },
   {
     path: 'schedule/view/:id',
-    loadComponent: () => import('./pages/exam-schedule-form/exam-schedule-form.component').then(m => m.ExamScheduleFormComponent),
+    loadComponent: () => import('./pages/exam-schedule-view/exam-schedule-view.component').then(m => m.ExamScheduleViewComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'marks/enter',
+    loadComponent: () => import('./pages/enter-marks/enter-marks.component').then(m => m.EnterMarksComponent),
     canActivate: [authGuard]
   }
 ];
