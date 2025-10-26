@@ -11,6 +11,7 @@ import { LeaveService } from '../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 import { ExamScheduleService } from '../../../exams/services/exam-schedule.service';
 import { ApiService } from '../../../../core/services/api.service';
+import { FeeService } from '../../../fees/services/fee.service';
 
 @Component({
   selector: 'app-student-view',
@@ -65,12 +66,20 @@ export class StudentViewComponent implements OnInit {
   examResults: any[] = [];
   examsLoading = false;
 
+  // Fees data
+  feePayments: any[] = [];
+  pendingFees: any[] = [];
+  totalPaid = 0;
+  pendingCount = 0;
+  feesLoading = false;
+
   constructor(
     private studentCrudService: StudentCrudService,
     private attendanceService: AttendanceService,
     private leaveService: LeaveService,
     private examScheduleService: ExamScheduleService,
     private apiService: ApiService,
+    private feeService: FeeService,
     private route: ActivatedRoute,
     private router: Router,
     private errorHandler: ErrorHandlerService
@@ -112,6 +121,7 @@ export class StudentViewComponent implements OnInit {
           this.loadAttendanceData();
           this.loadExamsData();
           this.loadLeavesData();
+          this.loadFeesData();
         }
       },
       error: (error) => {
@@ -648,6 +658,95 @@ export class StudentViewComponent implements OnInit {
     if (diffDays === 1) return 'Tomorrow';
     if (diffDays <= 7) return `In ${diffDays} days`;
     return 'Upcoming';
+  }
+
+  /**
+   * Load fees data for the student
+   */
+  loadFeesData(): void {
+    if (!this.student || !this.student.id) {
+      console.log('Waiting for student data to load before fetching fees...');
+      return;
+    }
+    
+    this.feesLoading = true;
+    
+    console.log(`Fetching fees for student ID: ${this.student.id}`);
+    
+    this.feeService.getStudentFees(this.student.id).subscribe({
+      next: (response) => {
+        console.log('Fees API response:', response);
+        if (response.success && response.data) {
+          this.feePayments = response.data.payments || [];
+          this.pendingFees = response.data.pending_fees || [];
+          this.totalPaid = response.data.total_paid || 0;
+          this.pendingCount = response.data.pending_count || 0;
+          console.log('Loaded fees data:', {
+            payments: this.feePayments.length,
+            pending: this.pendingFees.length,
+            totalPaid: this.totalPaid
+          });
+        } else {
+          this.feePayments = [];
+          this.pendingFees = [];
+          this.totalPaid = 0;
+          this.pendingCount = 0;
+        }
+        this.feesLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading fees data:', error);
+        this.errorHandler.showError('Failed to load fee information');
+        this.feePayments = [];
+        this.pendingFees = [];
+        this.feesLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Get fee status color
+   */
+  getFeeStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'Pending': '#ff9800',
+      'Completed': '#4caf50',
+      'Failed': '#f44336',
+      'Refunded': '#9e9e9e'
+    };
+    return colors[status] || '#9e9e9e';
+  }
+
+  /**
+   * Get payment method icon
+   */
+  getPaymentMethodIcon(method: string): string {
+    const icons: Record<string, string> = {
+      'Cash': 'money',
+      'Card': 'credit_card',
+      'Online': 'payment',
+      'Cheque': 'receipt',
+      'Other': 'more_horiz'
+    };
+    return icons[method] || 'payment';
+  }
+
+  /**
+   * Check if fee is overdue
+   */
+  isOverdue(fee: any): boolean {
+    if (!fee.due_date) return false;
+    const dueDate = new Date(fee.due_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  }
+
+  /**
+   * Get count of overdue fees
+   */
+  getOverdueCount(): number {
+    return this.pendingFees.filter(f => this.isOverdue(f)).length;
   }
 
   /**
