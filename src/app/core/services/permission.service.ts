@@ -82,7 +82,16 @@ export class PermissionService {
    */
   hasPermission(permission: string): boolean {
     const permissions = this.userPermissions();
-    return permissions.includes(permission) || this.isSuperAdmin();
+    
+    const has = permissions.includes(permission);
+    
+    console.log(`📋 Permission Check: "${permission}" = ${has ? '✅ GRANTED' : '❌ DENIED'}`, {
+      has,
+      allPermissions: permissions.length,
+      samplePermissions: permissions.slice(0, 5)
+    });
+    
+    return has;
   }
 
   /**
@@ -123,9 +132,8 @@ export class PermissionService {
   getAccessibleModules(): Module[] {
     const modules = this.availableModules();
     
-    if (this.isSuperAdmin()) {
-      return modules;
-    }
+    // Don't bypass for SuperAdmin - enforce strict permissions
+    // SuperAdmin must have explicit permissions assigned
 
     return modules.filter(module => {
       // Check if user has at least one permission for this module
@@ -153,6 +161,15 @@ export class PermissionService {
    * Set user permissions
    */
   private setPermissions(permissions: string[]): void {
+    // Log for debugging
+    console.log('🎯 === PERMISSION SYSTEM - LOADING ===');
+    console.log('✅ Loaded user permissions:', permissions);
+    console.log('📊 Total permissions:', permissions.length);
+    console.log('📝 All permissions:', JSON.stringify(permissions, null, 2));
+    
+    // Clear old permissions from localStorage to avoid caching issues
+    localStorage.removeItem(this.PERMISSIONS_KEY);
+    
     this.userPermissions.set(permissions);
     this.permissionsSubject.next(permissions);
     localStorage.setItem(this.PERMISSIONS_KEY, JSON.stringify(permissions));

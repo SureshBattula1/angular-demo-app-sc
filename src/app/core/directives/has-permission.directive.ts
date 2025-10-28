@@ -8,7 +8,7 @@ import { PermissionService } from '../services/permission.service';
 })
 export class HasPermissionDirective implements OnInit, OnDestroy {
   @Input() hasPermission!: string | string[];
-  @Input() hasPermissionMode: 'any' | 'all' = 'any';
+  @Input() mode: 'any' | 'all' = 'any';
   
   private destroy$ = new Subject<void>();
   private hasView = false;
@@ -44,17 +44,23 @@ export class HasPermissionDirective implements OnInit, OnDestroy {
   }
 
   private checkPermission(): boolean {
-    if (!this.hasPermission) return true;
+    // If no permission specified, don't show by default
+    // This ensures security - only explicitly permitted items are shown
+    if (!this.hasPermission) return false;
 
     const permissions = Array.isArray(this.hasPermission) 
       ? this.hasPermission 
       : [this.hasPermission];
 
-    if (this.hasPermissionMode === 'all') {
-      return this.permissionService.hasAllPermissions(permissions);
+    let result: boolean;
+    if (this.mode === 'all') {
+      result = this.permissionService.hasAllPermissions(permissions);
     } else {
-      return this.permissionService.hasAnyPermission(permissions);
+      result = this.permissionService.hasAnyPermission(permissions);
     }
+    
+    // console.log(`Directive checking ${this.mode} for permissions:`, permissions, '| Result:', result);
+    return result;
   }
 
   ngOnDestroy(): void {

@@ -106,7 +106,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
+        // Error loading branches
       }
     });
   }
@@ -116,14 +116,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   onBranchChange(): void {
     const branchId = this.selectedBranch.value;
-    console.log('🏢 Branch changed:', branchId);
     if (branchId && branchId !== 'all') {
       const branch = this.branches.find(b => b.id === branchId);
       this.selectedBranchName = branch ? branch.name : '';
-      console.log('✅ Selected branch:', this.selectedBranchName);
     } else {
       this.selectedBranchName = 'All Branches';
-      console.log('✅ Selected: All Branches');
     }
     this.loadDashboard();
   }
@@ -154,9 +151,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Add branch filter if selected
     if (this.selectedBranch.value && this.selectedBranch.value !== 'all') {
       params.branch_id = this.selectedBranch.value;
-      console.log('📊 Loading dashboard WITH branch filter:', params.branch_id);
-    } else {
-      console.log('📊 Loading dashboard for ALL branches');
     }
     
     // Add custom date range if selected
@@ -169,21 +163,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     }
     
-    console.log('🚀 API Request params:', params);
-    
     // SINGLE API CALL - gets everything!
     const statsSub = this.dashboardService.getComprehensiveStats(params).subscribe({
       next: (response) => {
-        console.log('✅ Dashboard response received:', response);
         if (response.success && response.data) {
           this.dashboardData = response.data;
-          console.log('📈 Dashboard stats:', this.dashboardData);
           this.prepareChartData();
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('❌ Dashboard error:', error);
         this.error = 'Failed to load dashboard data. Please try again.';
         this.loading = false;
       }
@@ -201,7 +190,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Attendance by Grade/Section - Bar Chart
     if (this.dashboardData.trends?.attendance) {
       const trend = this.dashboardData.trends.attendance;
-      console.log('📊 Attendance trend data:', trend);
       
       this.attendanceTrendData = {
         labels: trend.map((item: any) => item.label), // e.g., "Grade 1 - A"
@@ -229,15 +217,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         ]
       };
-      
-      console.log('📈 Chart data prepared:', {
-        labels: this.attendanceTrendData.labels,
-        presentData: this.attendanceTrendData.datasets[0].data,
-        absentData: this.attendanceTrendData.datasets[1].data,
-        leaveData: this.attendanceTrendData.datasets[2].data
-      });
-    } else {
-      console.log('⚠️ No attendance trend data available');
     }
     
     // Fee Breakdown Doughnut Chart
@@ -257,15 +236,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Fee Collection by Class - Stacked Bar Chart
     if (this.dashboardData.fees_by_class && this.dashboardData.fees_by_class.length > 0) {
       const feeData = this.dashboardData.fees_by_class;
-      console.log('📊 Raw fee by class data:', feeData);
       
-      // Extract and log the data
+      // Extract the data
       const paidAmounts = feeData.map((item: any) => item.total_paid);
       const unpaidAmounts = feeData.map((item: any) => item.total_unpaid);
-      
-      console.log('💰 Paid amounts:', paidAmounts);
-      console.log('🔴 Unpaid amounts:', unpaidAmounts);
-      console.log('📊 Total expected:', feeData.map((item: any) => item.total_expected));
       
       this.feeByClassData = {
         labels: feeData.map((item: any) => item.label), // e.g., "Grade 1 - A"
@@ -290,11 +264,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         ]
       };
-      
-      console.log('📈 Fee chart datasets prepared:', this.feeByClassData.datasets);
-      console.log('📊 Total classes:', feeData.length);
     } else {
-      console.log('⚠️ No fee by class data available');
       this.feeByClassData = null;
     }
   }
@@ -363,8 +333,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Calculate height: 60px per class/section + 100px for legend/padding
     // Minimum 400px, Maximum 1000px
     const heightInPixels = Math.min(700, Math.max(400, (numClasses * 60) + 100));
-    
-    console.log(`📏 Chart height calculated: ${heightInPixels}px for ${numClasses} classes (max: 1000px)`);
     
     return `${heightInPixels}px`;
   }

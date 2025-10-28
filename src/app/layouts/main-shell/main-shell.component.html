@@ -117,7 +117,7 @@
 
         <!-- Branches -->
         <a mat-list-item 
-           *hasPermission="['branches.view', 'branches.create']"
+           *hasPermission="['branches.view', 'branches.create']; mode: 'any'"
            routerLink="/branches" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -242,6 +242,7 @@
         </a>
         <!-- Leaves -->
         <a mat-list-item 
+           *hasPermission="['leaves.view', 'leaves.create']"
            routerLink="/leaves" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -331,8 +332,8 @@
       </a>
 
         <!-- Settings -->
-        <!-- <a mat-list-item 
-           *hasPermission="['roles.view', 'permissions.view', 'users.view']"
+        <a mat-list-item 
+           *hasPermission="'settings.view'"
            routerLink="/settings" 
            routerLinkActive="active"
            (click)="onMenuItemClick()"
@@ -341,7 +342,7 @@
            [matTooltipDisabled]="isMobileOrTablet()">
           <mat-icon matListItemIcon>settings</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Settings</span>
-        </a> -->
+        </a>
       </mat-nav-list>
     </mat-sidenav>
 
