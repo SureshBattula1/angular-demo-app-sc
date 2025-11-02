@@ -94,7 +94,7 @@ export class AttendanceFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.branches = response.data;
-          console.log('Loaded branches:', this.branches);
+
         }
       },
       error: (error: any) => {
@@ -112,7 +112,7 @@ export class AttendanceFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.grades = response.data;
-          console.log('Loaded grades:', this.grades);
+
         }
       },
       error: (error) => {
@@ -129,7 +129,7 @@ export class AttendanceFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.allSections = response.data;
-          console.log('Loaded sections:', this.allSections);
+
         }
       },
       error: (error) => {
@@ -142,27 +142,12 @@ export class AttendanceFormComponent implements OnInit {
    * Update sections when grade or branch changes
    */
   onGradeOrBranchChange(): void {
-    console.log('Filtering sections with:', {
-      selectedGrade: this.selectedGrade,
-      selectedBranch: this.selectedBranch,
-      allSections: this.allSections.length
-    });
-
     if (this.selectedGrade && this.selectedBranch) {
       // Filter sections by selected grade and branch
       this.sections = this.allSections.filter(
         section => {
           const matchesGrade = section.grade_level === this.selectedGrade;
           const matchesBranch = section.branch_id === this.selectedBranch;
-          console.log('Section filtering:', {
-            sectionName: section.name,
-            sectionGradeLevel: section.grade_level,
-            sectionBranchId: section.branch_id,
-            selectedGrade: this.selectedGrade,
-            selectedBranch: this.selectedBranch,
-            matchesGrade,
-            matchesBranch
-          });
           return matchesGrade && matchesBranch;
         }
       );
@@ -180,7 +165,7 @@ export class AttendanceFormComponent implements OnInit {
       this.sections = [];
     }
     
-    console.log('Filtered sections:', this.sections);
+
     
     // Reset section selection if current selection is not in filtered list
     if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
@@ -239,7 +224,7 @@ export class AttendanceFormComponent implements OnInit {
           if (this.students.length === 0) {
             this.errorHandler.showWarning('No students found for selected class');
           } else {
-            console.log(`Loaded ${this.students.length} students`);
+
           }
           
           this.studentsLoaded = true;
@@ -305,7 +290,7 @@ export class AttendanceFormComponent implements OnInit {
           if (this.teachers.length === 0) {
             this.errorHandler.showWarning('No teachers found for selected branch');
           } else {
-            console.log(`Loaded ${this.teachers.length} teachers`);
+
           }
           
           this.teachersLoaded = true;
@@ -668,7 +653,7 @@ export class AttendanceFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.log('No existing attendance found, creating new records');
+
         this.isUpdateMode = false;
         this.existingAttendanceLoaded = false;
       }

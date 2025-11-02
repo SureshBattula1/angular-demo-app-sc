@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { UserPreferenceService } from './user-preference.service';
 
 export interface Theme {
   primary: string;
@@ -23,6 +24,7 @@ export class ThemeService {
   private readonly THEME_KEY = 'selectedTheme';
   public currentTheme = signal<string>('ocean-blue');
   public isDarkMode = signal<boolean>(false);
+  private userPreferenceService = inject(UserPreferenceService);
 
   themes: Record<string, Theme> = {
     "ocean-blue": {
@@ -51,8 +53,10 @@ export class ThemeService {
 
   /**
    * Apply theme to the application
+   * @param themeName - Theme name to apply
+   * @param saveToBackend - Whether to save to backend (default: false)
    */
-  applyTheme(themeName: string): void {
+  applyTheme(themeName: string, saveToBackend: boolean = false): void {
     const theme = this.themes[themeName];
     if (!theme) return;
 
@@ -77,12 +81,20 @@ export class ThemeService {
     localStorage.setItem(this.THEME_KEY, themeName);
     
     this.updateMaterialStyles(theme);
+
+    // Save to backend if requested
+    if (saveToBackend) {
+      this.userPreferenceService.updateTheme(themeName).subscribe({
+        error: (err) => console.error('Failed to save theme preference:', err)
+      });
+    }
   }
 
   /**
    * Toggle dark mode
+   * @param saveToBackend - Whether to save to backend (default: false)
    */
-  toggleDarkMode(): void {
+  toggleDarkMode(saveToBackend: boolean = false): void {
     const isDark = !this.isDarkMode();
     this.isDarkMode.set(isDark);
     
@@ -93,10 +105,18 @@ export class ThemeService {
     }
     
     localStorage.setItem('darkMode', isDark.toString());
+
+    // Save to backend if requested
+    if (saveToBackend) {
+      this.userPreferenceService.updatePreference('dark_mode', isDark).subscribe({
+        error: (err) => console.error('Failed to save dark mode preference:', err)
+      });
+    }
   }
 
   /**
    * Load saved theme from storage
+   * Priority: Backend preferences > localStorage
    */
   private loadTheme(): void {
     const savedTheme = localStorage.getItem(this.THEME_KEY);
@@ -109,6 +129,27 @@ export class ThemeService {
     if (savedDarkMode === 'true') {
       this.isDarkMode.set(true);
       document.body.classList.add('dark-theme');
+    }
+  }
+
+  /**
+   * Load theme from user preferences (backend)
+   * This should be called after user authentication
+   */
+  loadThemeFromPreferences(): void {
+    const preferences = this.userPreferenceService.getCurrentPreferences();
+    
+    if (preferences.theme) {
+      this.applyTheme(preferences.theme, false); // Don't save back to backend
+    }
+    
+    if (preferences.dark_mode) {
+      this.isDarkMode.set(preferences.dark_mode);
+      if (preferences.dark_mode) {
+        document.body.classList.add('dark-theme');
+      } else {
+        document.body.classList.remove('dark-theme');
+      }
     }
   }
 

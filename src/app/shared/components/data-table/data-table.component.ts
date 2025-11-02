@@ -777,13 +777,6 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         ? this.permissionService.hasAllPermissions(permissions)
         : this.permissionService.hasAnyPermission(permissions);
       
-      console.log('🔐 Add Button Permission Check:', {
-        required: permissions,
-        mode,
-        hasPermission,
-        action: hasPermission ? 'SHOW' : 'HIDE'
-      });
-      
       return hasPermission;
     }
     

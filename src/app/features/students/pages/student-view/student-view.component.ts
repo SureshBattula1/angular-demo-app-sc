@@ -191,7 +191,7 @@ export class StudentViewComponent implements OnInit {
   loadAttendanceData(): void {
     // Need to wait until student data is loaded to get user_id
     if (!this.student || !this.student.user_id) {
-      console.log('Waiting for student data to load before fetching attendance...');
+
       return;
     }
     
@@ -206,7 +206,7 @@ export class StudentViewComponent implements OnInit {
     // student_attendance.student_id references users.id, not students.id
     const userId = this.student.user_id || this.student.id;
     
-    console.log(`Fetching attendance for student user_id: ${userId}`);
+
     
     // Call real API to fetch student attendance
     this.attendanceService.getStudentAttendance(userId, {
@@ -226,13 +226,13 @@ export class StudentViewComponent implements OnInit {
             remarks: record.remarks || ''
           }));
           
-          console.log(`Loaded ${this.recentAttendance.length} attendance records for student`);
+
           
           // Apply initial filter
           this.applyDateFilter();
         } else {
           // If no data, set empty array
-          console.log('No attendance data available for this student');
+
           this.recentAttendance = [];
           this.applyDateFilter();
         }
@@ -505,21 +505,21 @@ export class StudentViewComponent implements OnInit {
    */
   loadLeavesData(): void {
     if (!this.student || !this.student.user_id) {
-      console.log('Waiting for student data to load before fetching leaves...');
+
       return;
     }
     
     this.leavesLoading = true;
     const userId = this.student.user_id || this.student.id;
     
-    console.log(`Fetching leaves for student user_id: ${userId}`);
+
     
     this.leaveService.getStudentLeaves(userId).subscribe({
       next: (response) => {
         if (response.success) {
           this.studentLeaves = response.data as Leave[] || [];
           this.leavesSummary = response.summary;
-          console.log(`Loaded ${this.studentLeaves.length} leave records for student`);
+
         } else {
           this.studentLeaves = [];
           this.leavesSummary = undefined;
@@ -557,7 +557,7 @@ export class StudentViewComponent implements OnInit {
   loadExamsData(): void {
     // Wait until student data is loaded to get user_id
     if (!this.student || !this.student.user_id) {
-      console.log('Waiting for student data to load before fetching exam results...');
+
       return;
     }
     
@@ -595,12 +595,12 @@ export class StudentViewComponent implements OnInit {
     });
 
     // Load exam results - use user_id for the API call
-    console.log(`Fetching exam results for user_id: ${userId}`);
+
     this.apiService.get(`/exam-marks/student/${userId}`).subscribe({
       next: (response: any) => {
-        console.log('Exam results API response:', response);
+
         if (response.success && response.data) {
-          console.log('Processing exam results data:', response.data);
+
           this.examResults = response.data.map((result: any) => ({
             exam_name: result.exam_name || 'Exam',
             subject_name: result.subject_name || 'Subject',
@@ -612,10 +612,10 @@ export class StudentViewComponent implements OnInit {
             grade: result.grade,
             is_pass: result.is_pass
           }));
-          console.log('Final mapped exam results:', this.examResults);
+
         } else {
           this.examResults = [];
-          console.log('No exam results found - response.data is null or empty');
+
         }
         this.examsLoading = false;
       },
@@ -666,27 +666,22 @@ export class StudentViewComponent implements OnInit {
    */
   loadFeesData(): void {
     if (!this.student || !this.student.id) {
-      console.log('Waiting for student data to load before fetching fees...');
+
       return;
     }
     
     this.feesLoading = true;
     
-    console.log(`Fetching fees for student ID: ${this.student.id}`);
+
     
     this.feeService.getStudentFees(this.student.id).subscribe({
       next: (response) => {
-        console.log('Fees API response:', response);
+
         if (response.success && response.data) {
           this.feePayments = response.data.payments || [];
           this.pendingFees = response.data.pending_fees || [];
           this.totalPaid = response.data.total_paid || 0;
           this.pendingCount = response.data.pending_count || 0;
-          console.log('Loaded fees data:', {
-            payments: this.feePayments.length,
-            pending: this.pendingFees.length,
-            totalPaid: this.totalPaid
-          });
         } else {
           this.feePayments = [];
           this.pendingFees = [];

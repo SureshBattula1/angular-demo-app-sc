@@ -211,7 +211,7 @@ export class TeacherViewComponent implements OnInit {
   loadAttendanceData(): void {
     // Need to wait until teacher data is loaded to get user_id
     if (!this.teacher || !this.teacher.user_id) {
-      console.log('Waiting for teacher data to load before fetching attendance...');
+
       return;
     }
     
@@ -232,7 +232,7 @@ export class TeacherViewComponent implements OnInit {
       return;
     }
     
-    console.log(`Fetching attendance for teacher user_id: ${userId}`);
+
     
     // Call real API to fetch teacher attendance
     this.attendanceService.getTeacherAttendance(userId, {
@@ -252,13 +252,13 @@ export class TeacherViewComponent implements OnInit {
             remarks: record.remarks || ''
           }));
           
-          console.log(`Loaded ${this.recentAttendance.length} attendance records for teacher`);
+
           
           // Apply initial filter
           this.applyDateFilter();
         } else {
           // If no data, set empty array
-          console.log('No attendance data available for this teacher');
+
           this.recentAttendance = [];
           this.applyDateFilter();
         }
@@ -494,21 +494,21 @@ export class TeacherViewComponent implements OnInit {
    */
   loadLeavesData(): void {
     if (!this.teacher || !this.teacher.user_id) {
-      console.log('Waiting for teacher data to load before fetching leaves...');
+
       return;
     }
     
     this.leavesLoading = true;
     const userId = this.teacher.user_id || this.teacher.id;
     
-    console.log(`Fetching leaves for teacher user_id: ${userId}`);
+
     
     this.leaveService.getTeacherLeaves(userId).subscribe({
       next: (response) => {
         if (response.success) {
           this.teacherLeaves = response.data as Leave[] || [];
           this.leavesSummary = response.summary;
-          console.log(`Loaded ${this.teacherLeaves.length} leave records for teacher`);
+
         } else {
           this.teacherLeaves = [];
           this.leavesSummary = undefined;

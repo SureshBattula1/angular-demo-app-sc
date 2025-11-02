@@ -41,13 +41,6 @@ export class TeacherService {
     const formData = new FormData();
     formData.append('profile_picture', file);
     
-    console.log('Uploading profile picture:', {
-      teacherId: id,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
-    });
-    
     // Use the POST method without extra headers to let browser set Content-Type with boundary
     return this.apiService.post<{file_path: string, file_url: string}>(`${this.ENDPOINT}/${id}/upload-profile-picture`, formData);
   }

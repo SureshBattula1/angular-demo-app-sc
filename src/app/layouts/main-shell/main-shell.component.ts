@@ -8,6 +8,8 @@ import { map } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { PermissionService } from '../../core/services/permission.service';
+import { UserPreferenceService } from '../../core/services/user-preference.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 
 @Component({
@@ -437,7 +439,9 @@ export class MainShellComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private userPreferenceService: UserPreferenceService,
+    private themeService: ThemeService
   ) {
     this.isHandset$ = this.breakpointObserver.observe(Breakpoints.Handset)
       .pipe(map(result => result.matches));
@@ -461,7 +465,40 @@ export class MainShellComponent implements OnInit {
       }
     });
     
-    // Load saved theme
+    // Load user preferences from backend
+    this.loadUserPreferences();
+  }
+  
+  /**
+   * Load user preferences from backend and apply theme
+   */
+  private loadUserPreferences() {
+    this.userPreferenceService.loadPreferences().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Apply the theme from backend preferences
+          this.selectedTheme = response.data.theme;
+          this.applyTheme(response.data.theme);
+          
+          // Load theme using theme service (this will handle all theme logic)
+          this.themeService.loadThemeFromPreferences();
+        } else {
+          // Fallback to localStorage if backend fails
+          this.loadThemeFromLocalStorage();
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load preferences from backend:', err);
+        // Fallback to localStorage
+        this.loadThemeFromLocalStorage();
+      }
+    });
+  }
+  
+  /**
+   * Fallback: Load theme from localStorage
+   */
+  private loadThemeFromLocalStorage() {
     const savedTheme = localStorage.getItem('selectedTheme');
     if (savedTheme) {
       this.selectedTheme = savedTheme;
@@ -504,8 +541,14 @@ export class MainShellComponent implements OnInit {
   }
   
   onThemeChange(theme: string) {
+    this.selectedTheme = theme;
     this.applyTheme(theme);
+    
+    // Save to localStorage (instant feedback)
     localStorage.setItem('selectedTheme', theme);
+    
+    // Save to backend (persistent across devices)
+    this.themeService.applyTheme(theme, true);
   }
   
   applyTheme(themeName: string) {

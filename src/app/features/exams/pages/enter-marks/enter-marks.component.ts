@@ -72,8 +72,8 @@ export class EnterMarksComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.schedule = response.data;
-          console.log('Loaded schedule:', this.schedule);
-          console.log('Passing marks from schedule:', this.schedule.passing_marks);
+
+
           this.loadStudents();
         }
         this.loading = false;
@@ -92,11 +92,11 @@ export class EnterMarksComponent implements OnInit {
     }
     
     this.loading = true;
-    console.log('Loading students for schedule:', this.scheduleId);
+
     
     this.examScheduleService.getStudents(this.scheduleId).subscribe({
       next: (response) => {
-        console.log('Students response:', response);
+
         if (response.success && response.data && response.data.length > 0) {
           // Transform student data
           this.students = response.data.map((student: any, index: number) => ({
@@ -111,7 +111,7 @@ export class EnterMarksComponent implements OnInit {
             remarks: ''
           }));
           
-          console.log('Students loaded:', this.students.length);
+
           this.initMarksForm();
           this.totalStudents = this.students.length;
           this.updateStatistics();
@@ -285,7 +285,7 @@ export class EnterMarksComponent implements OnInit {
     let studentsWithMarks = 0;
     const passingMarks = Number(this.schedule?.passing_marks) || 0;
     
-    console.log('Calculating statistics with passing marks:', passingMarks);
+
 
     this.students.forEach(student => {
       const control = this.marksForm.get(`student_${student.student_id}`);
@@ -298,7 +298,7 @@ export class EnterMarksComponent implements OnInit {
         this.absentStudents++;
       } else if (marks !== null && marks !== undefined && marks !== '') {
         const numericMarks = Number(marks);
-        console.log(`Student ${student.name}: marks=${numericMarks}, passing=${passingMarks}, isAbsent=${isAbsent}`);
+
         
         if (!isNaN(numericMarks) && numericMarks >= 0) {
           totalMarks += numericMarks;
@@ -306,17 +306,16 @@ export class EnterMarksComponent implements OnInit {
           
           if (numericMarks >= passingMarks) {
             this.passedStudents++;
-            console.log(`Student ${student.name} PASSED`);
+
           } else {
             this.failedStudents++;
-            console.log(`Student ${student.name} FAILED (${numericMarks} < ${passingMarks})`);
           }
         }
       }
     });
 
     this.averageMarks = studentsWithMarks > 0 ? Math.round((totalMarks / studentsWithMarks) * 100) / 100 : 0;
-    console.log('Final statistics - Total:', this.totalStudents, 'Passed:', this.passedStudents, 'Failed:', this.failedStudents, 'Absent:', this.absentStudents);
+
   }
 
   markAllAbsent(): void {

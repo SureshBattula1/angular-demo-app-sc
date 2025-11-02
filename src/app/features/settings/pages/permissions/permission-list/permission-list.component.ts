@@ -239,7 +239,7 @@ export class PermissionListComponent implements OnInit {
   }
 
   onAction(event: { action: string, row: any }): void {
-    console.log('Action:', event);
+
   }
 
   onRowClick(row: Permission): void {

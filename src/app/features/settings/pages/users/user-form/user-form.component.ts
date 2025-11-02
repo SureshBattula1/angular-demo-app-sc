@@ -217,16 +217,6 @@ export class UserFormComponent implements OnInit {
     
     // Update module states
     this.updateModuleStates();
-    
-    // Log for debugging
-    console.log('Permission changed:', {
-      name: permission.name,
-      granted: permission.granted,
-      from_role: permission.from_role,
-      overridden: permission.overridden,
-      modified: permission.modified,
-      isDifferentFromRole: permission.granted !== permission.from_role
-    });
   }
 
   toggleModule(module: GroupedPermissions): void {
@@ -415,8 +405,8 @@ export class UserFormComponent implements OnInit {
 
     const modifiedPermissions = this.getModifiedPermissions();
     
-    console.log('Modified permissions count:', modifiedPermissions.length);
-    console.log('Modified permissions:', modifiedPermissions);
+
+
     
     // Build list of all permissions that need user-specific overrides
     // We need to send ALL overrides (both old and new) because backend deletes all first
@@ -439,17 +429,6 @@ export class UserFormComponent implements OnInit {
           permission_id: p.id,
           granted: p.granted  // Can be true (grant) or false (deny)
         });
-        
-        console.log('Including permission:', {
-          name: p.name,
-          id: p.id,
-          granted: p.granted,
-          from_role: p.from_role,
-          modified: p.modified,
-          overridden: p.overridden,
-          isDifferentFromRole,
-          wasOverridden
-        });
       }
     });
 
@@ -461,13 +440,10 @@ export class UserFormComponent implements OnInit {
       return;
     }
 
-    console.log('=== SAVING PERMISSIONS ===');
-    console.log('Total permissions to save:', permissionsToSave.length);
-    console.log('Permissions payload:', JSON.stringify(permissionsToSave, null, 2));
 
     this.userService.updateUserPermissions(this.userId, permissionsToSave).subscribe({
       next: (response) => {
-        console.log('Save response:', response);
+
         if (response.success) {
           this.errorHandler.showSuccess(`User and ${permissionsToSave.length} permissions updated successfully`);
           this.router.navigate(['/settings/users']);

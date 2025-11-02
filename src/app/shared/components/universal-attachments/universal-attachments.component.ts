@@ -64,7 +64,6 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
 
   loadAttachments(): void {
     if (!this.moduleId || this.moduleId === 0) {
-      console.log('No moduleId provided, cannot load attachments', this.moduleId);
       return;
     }
     
@@ -72,14 +71,11 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
     
     // Load attachments from the database using the attachments API
     const apiUrl = `${environment.apiUrl}/attachments/${this.module}/${this.moduleId}`;
-    console.log('Loading attachments from:', apiUrl);
     
     this.http.get(apiUrl).subscribe({
       next: (response: any) => {
-        console.log('Attachments API response:', response);
         this.isLoading = false;
         if (response.success && response.data) {
-          console.log('Attachments data:', response.data);
           // Map the response data to our Attachment interface
           this.attachments = response.data.map((file: any) => ({
             id: file.id || Date.now() + Math.random(),
@@ -92,9 +88,7 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
             description: file.description || '',
             created_at: file.created_at || new Date().toISOString()
           }));
-          console.log('Mapped attachments:', this.attachments);
         } else {
-          console.log('No attachments in response or response not successful');
           this.attachments = [];
         }
       },
@@ -370,7 +364,6 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
     // Laravel public storage files are accessible at: http://localhost:8004/storage/{file_path}
     const baseUrl = environment.apiUrl.replace('/api', '');
     const fileUrl = `${baseUrl}/storage/${attachment.file_path}`;
-    console.log('Preview file URL:', fileUrl);
     
     // Check if it's an image
     if (fileType.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/)) {

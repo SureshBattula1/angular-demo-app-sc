@@ -465,7 +465,7 @@ export class TeacherFormComponent implements OnInit {
   }
 
   saveTeacher(formData: any): void {
-    console.log('Saving teacher with data:', formData);
+
     
     const request = this.isEditMode && this.teacherId
       ? this.teacherService.updateTeacher(this.teacherId, formData)
@@ -473,7 +473,7 @@ export class TeacherFormComponent implements OnInit {
 
     request.subscribe({
       next: (response: any) => {
-        console.log('Teacher saved:', response);
+
         if (response.success) {
           this.handleSuccess(response);
         } else {
@@ -517,12 +517,12 @@ export class TeacherFormComponent implements OnInit {
   uploadProfilePictureForNewTeacher(teacherId: number): void {
     if (!this.profilePictureFile) return;
     
-    console.log('Uploading profile picture for new teacher:', teacherId);
+
     const uploadPath = `teachers/${teacherId}/profile_picture`;
     
     this.fileUploadService.uploadFile(this.profilePictureFile, uploadPath).subscribe({
       next: (uploadResponse: any) => {
-        console.log('Profile picture uploaded:', uploadResponse);
+
         
         if (uploadResponse.success && uploadResponse.data?.file_path) {
           // Update teacher with profile picture path
@@ -530,7 +530,7 @@ export class TeacherFormComponent implements OnInit {
           
           this.teacherService.updateTeacher(teacherId, updateData).subscribe({
             next: (updateResponse: any) => {
-              console.log('Teacher updated with profile picture:', updateResponse);
+
               
               // Upload any pending attachments
               setTimeout(() => {
@@ -749,26 +749,26 @@ export class TeacherFormComponent implements OnInit {
     
     // Upload immediately if we have a teacher ID (edit mode)
     if (this.isEditMode && this.teacherId) {
-      console.log('Edit mode: Uploading image immediately...');
+
       this.uploadProfilePictureImmediately(file);
     } else {
       // Create mode: store file, will upload after teacher is created
-      console.log('Create mode: Storing file for later upload...');
+
       this.teacherForm.get('profile_picture')?.setValue(file);
       this.profilePictureFile = file; // Store for later upload
     }
   }
 
   uploadProfilePictureImmediately(file: File): void {
-    console.log('Starting immediate upload for teacher ID:', this.teacherId);
+
     this.isLoading = true;
     
     const uploadPath = `teachers/${this.teacherId}/profile_picture`;
-    console.log('Upload path:', uploadPath);
+
     
     this.fileUploadService.uploadFile(file, uploadPath).subscribe({
       next: (uploadResponse: any) => {
-        console.log('Profile picture uploaded successfully:', uploadResponse);
+
         this.isLoading = false;
         
         if (uploadResponse.success && uploadResponse.data?.file_path) {
@@ -778,11 +778,11 @@ export class TeacherFormComponent implements OnInit {
           
           // Update teacher record with the new path
           const updateData = { profile_picture: uploadResponse.data.file_path };
-          console.log('Updating teacher with profile picture path...');
+
           
           this.teacherService.updateTeacher(this.teacherId!, updateData).subscribe({
             next: (updateResponse: any) => {
-              console.log('Teacher profile picture updated in database:', updateResponse);
+
               this.errorHandler.showSuccess('Profile picture uploaded successfully');
             },
             error: (error: any) => {
@@ -812,16 +812,16 @@ export class TeacherFormComponent implements OnInit {
     
     // If in edit mode, update teacher to remove profile picture
     if (this.isEditMode && this.teacherId) {
-      console.log('Removing profile picture from teacher:', this.teacherId);
+
       
       const updateData: any = { profile_picture: '' }; // Empty string to clear the field
       
       this.teacherService.updateTeacher(this.teacherId, updateData).subscribe({
         next: (response: any) => {
-          console.log('Profile picture removed:', response);
+
           if (response.success) {
             // Optionally show success message
-            console.log('Profile picture deleted successfully');
+
           }
         },
         error: (error: any) => {
