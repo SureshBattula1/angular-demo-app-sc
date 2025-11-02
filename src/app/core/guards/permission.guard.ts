@@ -10,6 +10,12 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
 
   const requiredPermissions = route.data['permissions'] as string | string[];
   const mode = route.data['permissionMode'] as 'any' | 'all' || 'any';
+  
+  // console.log('Permission guard check:', {
+  //   route: route.url.join('/'),
+  //   requiredPermissions,
+  //   mode
+  // });
 
   // If no permissions required, allow access
   if (!requiredPermissions) {
@@ -23,10 +29,15 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
   // Get current user permissions
   const userPermissions = permissionService.userPermissions();
   
-  // If permissions are still loading (empty array but user is logged in),
-  // temporarily allow access. The sidebar will filter the menu anyway.
+  // Check if user is logged in
   const user = authService.currentUser();
+  
+  // If permissions are still loading (empty array but user is logged in),
+  // allow access temporarily so page can load. Permissions will be enforced once loaded.
   if (user && userPermissions.length === 0) {
+    // Logged in but no permissions loaded yet - allow access temporarily
+    // The directive will hide menu items and buttons if user doesn't have permissions
+    console.warn('Permissions not loaded yet, allowing temporary access');
     return true;
   }
 

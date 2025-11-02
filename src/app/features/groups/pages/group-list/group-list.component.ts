@@ -7,6 +7,7 @@ import { AdvancedSearchConfig } from '../../../../shared/components/advanced-sea
 import { GroupService } from '../../services/group.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentGroup } from '../../../../core/models/class-section.model';
+import { BranchService, Branch } from '../../../../core/services/branch.service';
 
 @Component({
   selector: 'app-group-list',
@@ -42,16 +43,11 @@ export class GroupListComponent implements OnInit {
   groups: StudentGroup[] = [];
   selectedGroups: StudentGroup[] = [];
   currentFilters: Record<string, unknown> = {};
+  branches: Branch[] = [];
   
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
-      { 
-        key: 'id', 
-        header: 'ID', 
-        sortable: true, 
-        width: '80px'
-      },
       { 
         key: 'code', 
         header: 'Code', 
@@ -64,6 +60,12 @@ export class GroupListComponent implements OnInit {
         header: 'Group Name', 
         sortable: true, 
         searchable: true
+      },
+      { 
+        key: 'branch.name', 
+        header: 'Branch', 
+        sortable: false,
+        width: '180px'
       },
       { 
         key: 'type', 
@@ -144,7 +146,7 @@ export class GroupListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter group code',
         icon: 'qr_code',
-        group: 'Basic Information'
+        // group: 'Basic Information'
       },
       {
         key: 'name',
@@ -152,7 +154,16 @@ export class GroupListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter group name',
         icon: 'groups',
-        group: 'Basic Information'
+        // group: 'Basic Information'
+      },
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: [],
+        placeholder: 'Select branch'
+        // group: 'Basic Information'
       },
       {
         key: 'type',
@@ -165,7 +176,7 @@ export class GroupListComponent implements OnInit {
           { value: 'Cultural', label: 'Cultural' },
           { value: 'Club', label: 'Club' }
         ],
-        group: 'Type'
+        // group: 'Type'
       },
       {
         key: 'academic_year',
@@ -173,14 +184,14 @@ export class GroupListComponent implements OnInit {
         type: 'text',
         placeholder: 'e.g., 2024-2025',
         icon: 'event',
-        group: 'Academic'
+        // group: 'Academic'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
@@ -188,11 +199,35 @@ export class GroupListComponent implements OnInit {
   constructor(
     private groupService: GroupService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private branchService: BranchService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadGroups();
+  }
+  
+  loadBranches(): void {
+    this.branchService.getAccessibleBranches().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.branches = response.data || [];
+          
+          // Update advanced search config with branch options
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = this.branches.map(branch => ({
+              value: branch.id,
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   loadGroups(): void {

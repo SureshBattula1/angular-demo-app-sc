@@ -62,20 +62,39 @@ export class StudentListComponent implements OnInit, AfterViewInit {
       // { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewStudent(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editStudent(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteStudent(row) }
+      { 
+        icon: 'visibility', 
+        label: 'View Details', 
+        action: (row) => this.viewStudent(row),
+        permission: 'students.view'
+      },
+      { 
+        icon: 'edit', 
+        label: 'Edit', 
+        color: 'primary', 
+        action: (row) => this.editStudent(row),
+        permission: ['students.edit', 'students.update'] // Support both permission names
+      },
+      { 
+        icon: 'delete', 
+        label: 'Delete', 
+        color: 'warn', 
+        action: (row) => this.deleteStudent(row),
+        permission: 'students.delete'
+      }
     ],
     selectable: true,
     pagination: true,
     searchable: true,
     advancedSearch: true,
     exportable: true,
+    exportButtonPermission: 'students.export', // Permission required for export button
     responsive: true,
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'students.create' // Permission required for add button
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {

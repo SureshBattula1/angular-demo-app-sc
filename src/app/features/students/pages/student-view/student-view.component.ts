@@ -9,6 +9,9 @@ import { Student } from '../../../../core/models/student.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { LeaveService } from '../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
+import { ExamScheduleService } from '../../../exams/services/exam-schedule.service';
+import { ApiService } from '../../../../core/services/api.service';
+import { FeeService } from '../../../fees/services/fee.service';
 
 @Component({
   selector: 'app-student-view',
@@ -58,10 +61,25 @@ export class StudentViewComponent implements OnInit {
   leavesSummary?: LeaveSummary;
   leavesLoading = false;
 
+  // Exams data
+  upcomingExams: any[] = [];
+  examResults: any[] = [];
+  examsLoading = false;
+
+  // Fees data
+  feePayments: any[] = [];
+  pendingFees: any[] = [];
+  totalPaid = 0;
+  pendingCount = 0;
+  feesLoading = false;
+
   constructor(
     private studentCrudService: StudentCrudService,
     private attendanceService: AttendanceService,
     private leaveService: LeaveService,
+    private examScheduleService: ExamScheduleService,
+    private apiService: ApiService,
+    private feeService: FeeService,
     private route: ActivatedRoute,
     private router: Router,
     private errorHandler: ErrorHandlerService
@@ -77,7 +95,6 @@ export class StudentViewComponent implements OnInit {
       if (params['id']) {
         this.studentId = +params['id'];
         this.loadStudent();
-        this.loadAttendanceData();
       }
     });
   }
@@ -85,15 +102,9 @@ export class StudentViewComponent implements OnInit {
   onTabChange(index: number): void {
     this.selectedTabIndex = index;
     
-    // Load attendance data when tab is selected (index 1)
-    if (index === 1 && this.recentAttendance.length === 0) {
-      this.loadAttendanceData();
-    }
-    
-    // Load leaves data when tab is selected (index 2)
-    if (index === 2 && this.studentLeaves.length === 0) {
-      this.loadLeavesData();
-    }
+    // Lazy load data when tabs are selected
+    // Data is now loaded automatically in loadStudent()
+    // This just handles the tab switching
   }
 
   loadStudent(): void {
@@ -105,11 +116,12 @@ export class StudentViewComponent implements OnInit {
           this.student = response.data;
           this.isLoading = false;
           
-          // Load attendance after student data is loaded
+          // Load data after student is loaded
           // This ensures we have the user_id available
-          if (this.selectedTabIndex === 1) {
-            this.loadAttendanceData();
-          }
+          this.loadAttendanceData();
+          this.loadExamsData();
+          this.loadLeavesData();
+          this.loadFeesData();
         }
       },
       error: (error) => {
@@ -536,6 +548,231 @@ export class StudentViewComponent implements OnInit {
       'Cancelled': '#9e9e9e'
     };
     return colors[status] || '#9e9e9e';
+  }
+
+  /**
+   * Load exams data
+   */
+  loadExamsData(): void {
+    // Wait until student data is loaded to get user_id
+    if (!this.student || !this.student.user_id) {
+      console.log('Waiting for student data to load before fetching exam results...');
+      return;
+    }
+    
+    this.examsLoading = true;
+    
+    // Use user_id (from users table) for API calls, not student table id
+    const userId = this.student.user_id || this.student.id;
+    
+    // Load upcoming exam schedules
+    this.examScheduleService.getSchedules({
+      student_id: this.studentId,
+      upcoming: true
+    }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.upcomingExams = response.data.map((schedule: any) => ({
+            exam_name: schedule.exam?.name || 'Exam',
+            subject_name: schedule.subject?.name || 'Subject',
+            exam_date: schedule.exam_date,
+            start_time: schedule.start_time,
+            end_time: schedule.end_time,
+            duration: schedule.duration,
+            room_number: schedule.room_number,
+            total_marks: schedule.total_marks,
+            passing_marks: schedule.passing_marks
+          }));
+        } else {
+          this.upcomingExams = [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading upcoming exams:', error);
+        this.upcomingExams = [];
+      }
+    });
+
+    // Load exam results - use user_id for the API call
+    console.log(`Fetching exam results for user_id: ${userId}`);
+    this.apiService.get(`/exam-marks/student/${userId}`).subscribe({
+      next: (response: any) => {
+        console.log('Exam results API response:', response);
+        if (response.success && response.data) {
+          console.log('Processing exam results data:', response.data);
+          this.examResults = response.data.map((result: any) => ({
+            exam_name: result.exam_name || 'Exam',
+            subject_name: result.subject_name || 'Subject',
+            exam_date: result.exam_date,
+            marks_obtained: result.marks_obtained,
+            total_marks: result.total_marks,
+            passing_marks: result.passing_marks,
+            percentage: result.percentage,
+            grade: result.grade,
+            is_pass: result.is_pass
+          }));
+          console.log('Final mapped exam results:', this.examResults);
+        } else {
+          this.examResults = [];
+          console.log('No exam results found - response.data is null or empty');
+        }
+        this.examsLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading exam results:', error);
+        this.errorHandler.showError('Failed to load exam results');
+        this.examResults = [];
+        this.examsLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Get exam status class
+   */
+  getExamStatusClass(examDate: string): string {
+    const examDateTime = new Date(examDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    examDateTime.setHours(0, 0, 0, 0);
+    
+    if (examDateTime < today) return 'status-past';
+    if (examDateTime.getTime() === today.getTime()) return 'status-today';
+    return 'status-upcoming';
+  }
+
+  /**
+   * Get exam status text
+   */
+  getExamStatusText(examDate: string): string {
+    const examDateTime = new Date(examDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    examDateTime.setHours(0, 0, 0, 0);
+    
+    const diffTime = examDateTime.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'Past';
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays <= 7) return `In ${diffDays} days`;
+    return 'Upcoming';
+  }
+
+  /**
+   * Load fees data for the student
+   */
+  loadFeesData(): void {
+    if (!this.student || !this.student.id) {
+      console.log('Waiting for student data to load before fetching fees...');
+      return;
+    }
+    
+    this.feesLoading = true;
+    
+    console.log(`Fetching fees for student ID: ${this.student.id}`);
+    
+    this.feeService.getStudentFees(this.student.id).subscribe({
+      next: (response) => {
+        console.log('Fees API response:', response);
+        if (response.success && response.data) {
+          this.feePayments = response.data.payments || [];
+          this.pendingFees = response.data.pending_fees || [];
+          this.totalPaid = response.data.total_paid || 0;
+          this.pendingCount = response.data.pending_count || 0;
+          console.log('Loaded fees data:', {
+            payments: this.feePayments.length,
+            pending: this.pendingFees.length,
+            totalPaid: this.totalPaid
+          });
+        } else {
+          this.feePayments = [];
+          this.pendingFees = [];
+          this.totalPaid = 0;
+          this.pendingCount = 0;
+        }
+        this.feesLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading fees data:', error);
+        this.errorHandler.showError('Failed to load fee information');
+        this.feePayments = [];
+        this.pendingFees = [];
+        this.feesLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Get fee status color
+   */
+  getFeeStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'Pending': '#ff9800',
+      'Completed': '#4caf50',
+      'Failed': '#f44336',
+      'Refunded': '#9e9e9e'
+    };
+    return colors[status] || '#9e9e9e';
+  }
+
+  /**
+   * Get payment method icon
+   */
+  getPaymentMethodIcon(method: string): string {
+    const icons: Record<string, string> = {
+      'Cash': 'money',
+      'Card': 'credit_card',
+      'Online': 'payment',
+      'Cheque': 'receipt',
+      'Other': 'more_horiz'
+    };
+    return icons[method] || 'payment';
+  }
+
+  /**
+   * Check if fee is overdue
+   */
+  isOverdue(fee: any): boolean {
+    if (!fee.due_date) return false;
+    const dueDate = new Date(fee.due_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  }
+
+  /**
+   * Get count of overdue fees
+   */
+  getOverdueCount(): number {
+    return this.pendingFees.filter(f => this.isOverdue(f)).length;
+  }
+
+  /**
+   * Get result class based on performance
+   */
+  getResultClass(obtained: number, total: number, passing: number): string {
+    const percentage = (obtained / total) * 100;
+    if (percentage >= 90) return 'score-excellent';
+    if (percentage >= 75) return 'score-good';
+    if (percentage >= 60) return 'score-average';
+    if (obtained >= passing) return 'score-pass';
+    return 'score-fail';
+  }
+
+  /**
+   * Get percentage
+   */
+  getPercentage(obtained: number, total: number): number {
+    return Math.round((obtained / total) * 100);
+  }
+
+  /**
+   * Get status class
+   */
+  getStatusClass(isPass: boolean): string {
+    return isPass ? 'status-pass' : 'status-fail';
   }
 }
 

@@ -20,6 +20,8 @@ export interface TableAction {
   color?: 'primary' | 'accent' | 'warn';
   action: (row: any) => void;     // Action callback 
   show?: (row: any) => boolean;   // Conditional visibility
+  permission?: string | string[];  // Required permission to show this action
+  permissionMode?: 'any' | 'all'; // How to check multiple permissions
 }
 
 export type ExportFormat = 'excel' | 'pdf' | 'csv';
@@ -36,10 +38,13 @@ export interface TableConfig {
   advancedSearch?: boolean;       // Enable advanced search
   filterable?: boolean;           // Enable filter functionality
   exportable?: boolean;           // Enable export functionality
+  exportButtonPermission?: string | string[]; // Permission required for export button
   responsive?: boolean;           // Mobile/tablet responsive
   serverSide?: boolean;           // Enable server-side operations
   totalCount?: number;            // Total count for server-side pagination
   showAddButton?: boolean;        // Show/hide the add button (default: true)
+  addButtonPermission?: string | string[]; // Permission required for add button
+  addButtonPermissionMode?: 'any' | 'all'; // How to check multiple permissions for add button
 }
 
 export interface SearchCriteria {

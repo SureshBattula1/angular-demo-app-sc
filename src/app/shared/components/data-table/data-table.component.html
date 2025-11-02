@@ -12,7 +12,7 @@
         <button mat-raised-button 
           color="primary"
           class="primary-action-btn"
-          *ngIf="config.showAddButton !== false"
+          *ngIf="shouldShowAddButton()"
           (click)="onAdd()">
           <mat-icon>add</mat-icon>
            {{ (title || 'ITEM').toUpperCase() }}
@@ -78,7 +78,7 @@
         </button>
         <!-- Export Button -->
         <app-export-button
-          *ngIf="config.exportable"
+          *ngIf="shouldShowExportButton()"
           (export)="onExport($event)"
           [disabled]="loading"
           [loading]="false">
@@ -100,7 +100,7 @@
       <p *ngIf="!searchQuery && !hasActiveFilters()">
         No {{ title.toLowerCase() || 'records' }} available yet.
       </p>
-      <button mat-raised-button color="primary" *ngIf="config.showAddButton !== false" (click)="onAdd()">
+      <button mat-raised-button color="primary" *ngIf="shouldShowAddButton()" (click)="onAdd()">
         <mat-icon>add</mat-icon>
         Add {{ title || 'Item' }}
       </button>
@@ -223,7 +223,7 @@
         <p *ngIf="!searchQuery && !hasActiveFilters()">
           No {{ title.toLowerCase() || 'records' }} available yet.
         </p>
-        <button mat-raised-button color="primary" *ngIf="config.showAddButton !== false" (click)="onAdd()">
+        <button mat-raised-button color="primary" *ngIf="shouldShowAddButton()" (click)="onAdd()">
           <mat-icon>add</mat-icon>
           Add {{ title || 'Item' }}
         </button>

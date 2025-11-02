@@ -41,6 +41,15 @@ export class SubjectListComponent implements OnInit {
   selectedSubjects: Subject[] = [];
   currentFilters: Record<string, unknown> = {};
   
+  customActions = [
+    {
+      label: 'Assign Subjects',
+      icon: 'assignment',
+      color: 'accent' as const,
+      action: () => this.router.navigate(['/subjects/assign'])
+    }
+  ];
+  
   tableConfig: TableConfig = {
     columns: [
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
@@ -55,6 +64,7 @@ export class SubjectListComponent implements OnInit {
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewSubject(row) },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editSubject(row) },
+      { icon: 'assignment', label: 'Assign to Sections', color: 'accent', action: (row) => this.assignToSections(row) },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteSubject(row) }
     ],
     selectable: true,
@@ -281,6 +291,11 @@ export class SubjectListComponent implements OnInit {
         }
       });
     }
+  }
+  
+  assignToSections(subject: Subject): void {
+    // Navigate to assignment page
+    this.router.navigate(['/subjects/assign']);
   }
   
   onExport(format: string): void {

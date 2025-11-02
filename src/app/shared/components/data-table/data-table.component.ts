@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, AfterViewInit, OnChanges, SimpleChanges, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '../../shared.module';
 import { TableColumn, TableAction, TableConfig, SearchCriteria, PaginationEvent, SortEvent, SearchEvent } from './data-table.interface';
@@ -10,6 +10,7 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Subscription } from 'rxjs';
+import { PermissionService } from '../../../core/services/permission.service';
 
 @Component({
   selector: 'app-data-table',
@@ -51,6 +52,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   private resizeListener: (() => void) | null = null;
   private sortSubscribed = false;
   private paginatorSubscribed = false;
+  private permissionService = inject(PermissionService);
   
   constructor(private cdr: ChangeDetectorRef) {
     // Initialize dataSource to prevent undefined errors
@@ -733,14 +735,83 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     }
     
     return this.config.actions.filter(action => {
-      // If no show function defined, always show
-      if (!action.show) {
-        return true;
+      // First check permission requirement
+      if (action.permission) {
+        const permissions = Array.isArray(action.permission) ? action.permission : [action.permission];
+        const mode = action.permissionMode || 'any';
+        
+        const hasPermission = mode === 'all'
+          ? this.permissionService.hasAllPermissions(permissions)
+          : this.permissionService.hasAnyPermission(permissions);
+        
+        if (!hasPermission) {
+          return false;
+        }
       }
       
-      // Otherwise, call the show function
-      return action.show(row);
+      // Then check show function if defined
+      if (action.show) {
+        return action.show(row);
+      }
+      
+      return true;
     });
+  }
+
+  /**
+   * Check if add button should be visible based on permissions
+   */
+  shouldShowAddButton(): boolean {
+    if (this.config.showAddButton === false) {
+      return false;
+    }
+    
+    // Check if there's a permission requirement for add button
+    if (this.config.addButtonPermission) {
+      const permissions = Array.isArray(this.config.addButtonPermission) 
+        ? this.config.addButtonPermission 
+        : [this.config.addButtonPermission];
+      const mode = this.config.addButtonPermissionMode || 'any';
+      
+      const hasPermission = mode === 'all'
+        ? this.permissionService.hasAllPermissions(permissions)
+        : this.permissionService.hasAnyPermission(permissions);
+      
+      console.log('🔐 Add Button Permission Check:', {
+        required: permissions,
+        mode,
+        hasPermission,
+        action: hasPermission ? 'SHOW' : 'HIDE'
+      });
+      
+      return hasPermission;
+    }
+    
+    // Default: show if no permission requirement
+    return true;
+  }
+
+  /**
+   * Check if export button should be visible based on permissions
+   */
+  shouldShowExportButton(): boolean {
+    if (this.config.exportable === false) {
+      return false;
+    }
+    
+    // Check if there's a permission requirement for export button
+    if (this.config.exportButtonPermission) {
+      const permissions = Array.isArray(this.config.exportButtonPermission) 
+        ? this.config.exportButtonPermission 
+        : [this.config.exportButtonPermission];
+      
+      const hasPermission = this.permissionService.hasAnyPermission(permissions);
+      
+      return hasPermission;
+    }
+    
+    // Default: show if no permission requirement
+    return true;
   }
 }
 

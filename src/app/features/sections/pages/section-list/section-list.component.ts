@@ -9,6 +9,7 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Section } from '../../../../core/models/section.model';
 
 @Component({
@@ -54,9 +55,26 @@ export class SectionListComponent implements OnInit {
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewSection(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editSection(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteSection(row) }
+      { 
+        icon: 'visibility', 
+        label: 'View Details', 
+        action: (row) => this.viewSection(row),
+        permission: 'sections.view'
+      },
+      { 
+        icon: 'edit', 
+        label: 'Edit', 
+        color: 'primary', 
+        action: (row) => this.editSection(row),
+        permission: 'sections.edit'
+      },
+      { 
+        icon: 'delete', 
+        label: 'Delete', 
+        color: 'warn', 
+        action: (row) => this.deleteSection(row),
+        permission: 'sections.delete'
+      }
     ],
     selectable: true,
     pagination: true,
@@ -67,7 +85,9 @@ export class SectionListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'sections.create',
+    exportButtonPermission: 'sections.export'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -125,7 +145,8 @@ export class SectionListComponent implements OnInit {
     private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private permissionService: PermissionService
   ) {}
   
   ngOnInit(): void {
@@ -263,7 +284,12 @@ export class SectionListComponent implements OnInit {
   
   onAction(event: { action: string, row: Section | null }): void {
     if (event.action === 'add') {
-      this.router.navigate(['/sections/create']);
+      // Check permission before allowing create
+      if (this.permissionService.hasPermission('sections.create')) {
+        this.router.navigate(['/sections/create']);
+      } else {
+        this.errorHandler.showError('You do not have permission to create sections');
+      }
     }
   }
   
@@ -300,6 +326,12 @@ export class SectionListComponent implements OnInit {
   }
   
   onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Check permission before allowing export
+    if (!this.permissionService.hasPermission('sections.export')) {
+      this.errorHandler.showError('You do not have permission to export sections');
+      return;
+    }
+    
     // Show loading message
     this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
     

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { SectionService } from '../../services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Section } from '../../../../core/models/section.model';
 
 @Component({
@@ -18,12 +19,21 @@ export class SectionViewComponent implements OnInit {
   isLoading = true;
   sectionId!: number;
 
+  // Permission checks
+  canEdit = false;
+  canDelete = false;
+
   constructor(
     private sectionService: SectionService,
     private route: ActivatedRoute,
     private router: Router,
-    private errorHandler: ErrorHandlerService
-  ) {}
+    private errorHandler: ErrorHandlerService,
+    private permissionService: PermissionService
+  ) {
+    // Check permissions
+    this.canEdit = this.permissionService.hasPermission('sections.edit');
+    this.canDelete = this.permissionService.hasPermission('sections.delete');
+  }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -53,10 +63,19 @@ export class SectionViewComponent implements OnInit {
   }
 
   onEdit(): void {
+    if (!this.canEdit) {
+      this.errorHandler.showError('You do not have permission to edit sections');
+      return;
+    }
     this.router.navigate(['/sections/edit', this.sectionId]);
   }
 
   onDelete(): void {
+    if (!this.canDelete) {
+      this.errorHandler.showError('You do not have permission to delete sections');
+      return;
+    }
+    
     if (confirm(`Are you sure you want to delete section "${this.sectionData?.name}"?`)) {
       this.sectionService.deleteSection(this.sectionId).subscribe({
         next: (response) => {
