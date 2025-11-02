@@ -216,7 +216,7 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
     </div>
   `,
   styles: [`
-    .page-container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .page-container {  margin: 0 auto; padding: 24px; }
     .page-header { margin-bottom: 24px; }
     .page-header h1 { display: flex; align-items: center; gap: 12px; margin: 0 0 8px 0; font-size: 28px; font-weight: 600; color: var(--text-primary); }
     .page-header h1 mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--primary-color); }
