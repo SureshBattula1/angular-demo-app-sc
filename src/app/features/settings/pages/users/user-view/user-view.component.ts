@@ -9,6 +9,13 @@ import { Role, Permission } from '../../../../../core/models/role.model';
 import { ErrorHandlerService } from '../../../../../core/services/error-handler.service';
 import { HasPermissionDirective } from '../../../../../core/directives/has-permission.directive';
 
+interface GroupedPermissions {
+  module_name: string;
+  module_slug: string;
+  module_icon: string;
+  permissions: any[];
+}
+
 @Component({
   selector: 'app-user-view',
   standalone: true,
@@ -22,6 +29,9 @@ export class UserViewComponent implements OnInit {
   isLoading = false;
   userRole: Role | null = null;
   permissionsByModule: Record<string, Permission[]> = {};
+  groupedRolePermissions: GroupedPermissions[] = [];
+  groupedUserPermissions: GroupedPermissions[] = [];
+  userPermissions: any[] = []; // Initialized as empty array
 
   constructor(
     private userService: UserService,
@@ -51,6 +61,8 @@ export class UserViewComponent implements OnInit {
           if (this.user.role_id) {
             this.loadUserRole(this.user.role_id);
           }
+          // Load user-specific permissions
+          this.loadUserPermissions();
         }
         this.isLoading = false;
       },
@@ -59,6 +71,54 @@ export class UserViewComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  loadUserPermissions(): void {
+    if (!this.userId) return;
+    
+    this.userService.getUserPermissions(this.userId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Ensure it's always an array
+          this.userPermissions = Array.isArray(response.data) ? response.data : [];
+          if (this.userPermissions.length > 0) {
+            this.groupUserPermissions();
+          }
+        } else {
+          this.userPermissions = [];
+        }
+      },
+      error: (error) => {
+        // Silently fail - user might not have custom permissions
+        this.userPermissions = [];
+        console.log('No user-specific permissions found');
+      }
+    });
+  }
+
+  groupUserPermissions(): void {
+    if (!this.userPermissions || !Array.isArray(this.userPermissions) || this.userPermissions.length === 0) return;
+
+    this.groupedUserPermissions = [];
+    const moduleMap = new Map<string, GroupedPermissions>();
+
+    this.userPermissions.forEach((perm: any) => {
+      const moduleSlug = perm.module_slug || perm.module || 'general';
+      const moduleName = perm.module_name || this.getModuleDisplayName(moduleSlug);
+      
+      if (!moduleMap.has(moduleSlug)) {
+        moduleMap.set(moduleSlug, {
+          module_name: moduleName,
+          module_slug: moduleSlug,
+          module_icon: this.getModuleIcon(moduleSlug),
+          permissions: []
+        });
+      }
+      
+      moduleMap.get(moduleSlug)?.permissions.push(perm);
+    });
+
+    this.groupedUserPermissions = Array.from(moduleMap.values());
   }
 
   loadUserRole(roleId: number): void {
@@ -86,6 +146,28 @@ export class UserViewComponent implements OnInit {
       }
       this.permissionsByModule[moduleKey].push(permission);
     });
+
+    // Create grouped permissions for the new template
+    this.groupedRolePermissions = [];
+    const moduleMap = new Map<string, GroupedPermissions>();
+
+    this.userRole.permissions.forEach((perm: any) => {
+      const moduleSlug = perm.module_slug || perm.module || 'general';
+      const moduleName = perm.module_name || this.getModuleDisplayName(moduleSlug);
+      
+      if (!moduleMap.has(moduleSlug)) {
+        moduleMap.set(moduleSlug, {
+          module_name: moduleName,
+          module_slug: moduleSlug,
+          module_icon: this.getModuleIcon(moduleSlug),
+          permissions: []
+        });
+      }
+      
+      moduleMap.get(moduleSlug)?.permissions.push(perm);
+    });
+
+    this.groupedRolePermissions = Array.from(moduleMap.values());
   }
 
   getModules(): string[] {
@@ -186,6 +268,17 @@ export class UserViewComponent implements OnInit {
 
   getStatusText(): string {
     return this.user?.is_active ? 'Active' : 'Inactive';
+  }
+
+  getTotalPermissionsCount(): number {
+    let count = 0;
+    if (this.userRole && this.userRole.permissions) {
+      count += this.userRole.permissions.length;
+    }
+    if (this.userPermissions) {
+      count += this.userPermissions.length;
+    }
+    return count;
   }
 }
 

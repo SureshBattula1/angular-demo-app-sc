@@ -71,7 +71,6 @@ export class UserFormComponent implements OnInit {
       first_name: ['', [Validators.required, Validators.minLength(2)]],
       last_name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      username: [''],
       password: [''],
       password_confirmation: [''],
       role_id: ['', Validators.required],
@@ -134,22 +133,38 @@ export class UserFormComponent implements OnInit {
         if (response.success) {
           const user = response.data;
           
-          // Find role_id if only role name is provided
+          // Find role_id - need to map enum values to role table names
           let roleId = user.role_id;
           if (!roleId && user.role && this.roles.length > 0) {
-            const role = this.roles.find(r => r.name === user.role);
+            // Map users table enum values to roles table names
+            const enumToRoleMapping: Record<string, string> = {
+              'SuperAdmin': 'Super Admin',
+              'BranchAdmin': 'Branch Admin',
+              'Teacher': 'Teacher',
+              'Student': 'Student',
+              'Parent': 'Parent',
+              'Staff': 'Staff'
+            };
+            
+            const roleName = enumToRoleMapping[user.role] || user.role;
+            const role = this.roles.find(r => r.name === roleName);
             roleId = role?.id;
+            
+            console.log('User role enum:', user.role);
+            console.log('Mapped to role name:', roleName);
+            console.log('Found role ID:', roleId);
           }
           
           this.userForm.patchValue({
             first_name: user.first_name,
             last_name: user.last_name,
             email: user.email,
-            username: user.username,
             role_id: roleId,
             branch_id: user.branch_id,
             is_active: user.is_active ?? true
           });
+
+          console.log('Form patched with values:', this.userForm.value);
 
           // Load permissions for edit mode
           this.loadUserPermissions();
@@ -190,7 +205,7 @@ export class UserFormComponent implements OnInit {
             return {
               ...g,
               permissions: modulePerms,
-              expanded: false
+              expanded: true // Default to expanded so all permissions are visible
             };
           });
           
@@ -206,10 +221,13 @@ export class UserFormComponent implements OnInit {
     });
   }
 
-  togglePermission(permission: PermissionItem): void {
-    // DON'T toggle here - ngModel already did it!
-    // Just mark as modified and update override status
+  togglePermission(permission: PermissionItem | any, checked?: boolean): void {
+    // If checked parameter is provided, set the granted state
+    if (checked !== undefined) {
+      permission.granted = checked;
+    }
     
+    // Mark as modified and update override status
     permission.modified = true;
     
     // Mark as overridden if different from role permission
@@ -220,6 +238,11 @@ export class UserFormComponent implements OnInit {
   }
 
   toggleModule(module: GroupedPermissions): void {
+    // Toggle the expanded state to show/hide permissions
+    module.expanded = !module.expanded;
+  }
+
+  toggleAllModulePermissions(module: GroupedPermissions): void {
     // Toggle: if all are granted, disable all; otherwise enable all
     const newState = !this.areAllPermissionsGranted(module);
     
@@ -460,6 +483,51 @@ export class UserFormComponent implements OnInit {
 
   onCancel(): void {
     this.router.navigate(['/settings/users']);
+  }
+
+  getSelectedCountInModule(moduleKey: string): number {
+    return this.permissions.filter(p => p.module_slug === moduleKey && p.granted).length;
+  }
+
+  // Alias methods for new HTML template
+  grantAllPermissions(): void {
+    this.allowAllPermissions();
+  }
+
+  revokeAllPermissions(): void {
+    this.disableAllPermissions();
+  }
+
+  resetToRolePermissions(): void {
+    this.resetPermissions();
+  }
+
+  hasModifiedPermissions(): boolean {
+    return this.getModifiedPermissions().length > 0;
+  }
+
+  grantAllInModule(permissions: any[]): void {
+    permissions.forEach(perm => {
+      const targetPerm = this.permissions.find(p => p.id === perm.id);
+      if (targetPerm) {
+        targetPerm.granted = true;
+        targetPerm.modified = true;
+        targetPerm.overridden = !targetPerm.from_role;
+      }
+    });
+    this.updateModuleStates();
+  }
+
+  revokeAllInModule(permissions: any[]): void {
+    permissions.forEach(perm => {
+      const targetPerm = this.permissions.find(p => p.id === perm.id);
+      if (targetPerm) {
+        targetPerm.granted = false;
+        targetPerm.modified = true;
+        targetPerm.overridden = targetPerm.from_role;
+      }
+    });
+    this.updateModuleStates();
   }
 }
 

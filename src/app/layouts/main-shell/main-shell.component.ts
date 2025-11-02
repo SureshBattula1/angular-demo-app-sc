@@ -549,6 +549,41 @@ export class MainShellComponent implements OnInit {
     
     // Save to backend (persistent across devices)
     this.themeService.applyTheme(theme, true);
+    
+    // Show success message with theme name
+    const themeName = this.getThemeDisplayName(theme);
+    this.errorHandler.showSuccess(`Theme changed to ${themeName} successfully!`);
+  }
+
+  getThemeDisplayName(themeKey: string): string {
+    const displayNames: Record<string, string> = {
+      'ocean-blue': 'Ocean Blue',
+      'corporate-blue-gray': 'Corporate Blue & Gray',
+      'sunset-orange': 'Sunset Orange',
+      'forest-green': 'Forest Green',
+      'royal-purple': 'Royal Purple',
+      'ruby-red': 'Ruby Red',
+      'teal-mint': 'Teal Mint',
+      'amber-gold': 'Amber Gold',
+      'slate-gray': 'Slate Gray',
+      'midnight-blue': 'Midnight Blue',
+      'lavender-dream': 'Lavender Dream',
+      'coral-reef': 'Coral Reef',
+      'emerald-city': 'Emerald City',
+      'graphite': 'Graphite',
+      'cobalt-sky': 'Cobalt Sky',
+      'flamingo': 'Flamingo',
+      'coffee-cream': 'Coffee Cream',
+      'moss': 'Moss',
+      'indigo-night': 'Indigo Night',
+      'arctic-ice': 'Arctic Ice',
+      'desert-sand': 'Desert Sand',
+      'wine-berry': 'Wine Berry',
+      'aqua-splash': 'Aqua Splash',
+      'lime-zest': 'Lime Zest',
+      'plum': 'Plum'
+    };
+    return displayNames[themeKey] || themeKey;
   }
   
   applyTheme(themeName: string) {

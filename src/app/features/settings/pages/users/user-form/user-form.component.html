@@ -1,273 +1,271 @@
-<div class="page-container">
-  <div class="page-header">
-    <h1 class="page-title">
-      <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
-      {{ isEditMode ? 'Edit User' : 'Create User' }}
-    </h1>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner diameter="50"></mat-spinner>
-  </div>
-
-  <form [formGroup]="userForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
-    <mat-card class="form-card">
-      <mat-card-header>
-        <mat-card-title>Personal Information</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>First Name</mat-label>
-            <input matInput formControlName="first_name" placeholder="John" required>
-            <mat-icon matPrefix>person</mat-icon>
-            <mat-error *ngIf="userForm.get('first_name')?.hasError('required')">
-              First name is required
-            </mat-error>
-            <mat-error *ngIf="userForm.get('first_name')?.hasError('minlength')">
-              First name must be at least 2 characters
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Last Name</mat-label>
-            <input matInput formControlName="last_name" placeholder="Doe" required>
-            <mat-icon matPrefix>person</mat-icon>
-            <mat-error *ngIf="userForm.get('last_name')?.hasError('required')">
-              Last name is required
-            </mat-error>
-            <mat-error *ngIf="userForm.get('last_name')?.hasError('minlength')">
-              Last name must be at least 2 characters
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" placeholder="john@example.com" required>
-            <mat-icon matPrefix>email</mat-icon>
-            <mat-error *ngIf="userForm.get('email')?.hasError('required')">
-              Email is required
-            </mat-error>
-            <mat-error *ngIf="userForm.get('email')?.hasError('email')">
-              Please enter a valid email
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Username</mat-label>
-            <input matInput formControlName="username" placeholder="johndoe">
-            <mat-icon matPrefix>account_circle</mat-icon>
-          </mat-form-field>
+<div class="user-form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'person_add' }}</mat-icon>
+        <div>
+          {{ isEditMode ? 'Edit User' : 'Create User' }}
         </div>
-      </mat-card-content>
-    </mat-card>
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update user information and permissions' : 'Add a new user to the system' }}
+      </mat-card-subtitle>
+    </mat-card-header>
 
-    <mat-card class="form-card" *ngIf="!isEditMode">
-      <mat-card-header>
-        <mat-card-title>Password</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Password</mat-label>
-            <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required>
-            <mat-icon matPrefix>vpn_key</mat-icon>
-            <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
-              <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-            </button>
-            <mat-error *ngIf="userForm.get('password')?.hasError('required')">
-              Password is required
-            </mat-error>
-            <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">
-              Password must be at least 8 characters
-            </mat-error>
-          </mat-form-field>
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-overlay">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading user data...</p>
+      </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Confirm Password</mat-label>
-            <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="password_confirmation" required>
-            <mat-icon matPrefix>vpn_key</mat-icon>
-            <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
-              <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-            </button>
-            <mat-error *ngIf="userForm.get('password_confirmation')?.hasError('required')">
-              Please confirm your password
-            </mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card-content>
-    </mat-card>
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+        <!-- Personal Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>person</mat-icon>
+            Personal Information
+          </h3>
 
-    <mat-card class="form-card">
-      <mat-card-header>
-        <mat-card-title>Role & Branch</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Role</mat-label>
-            <mat-select formControlName="role_id" required>
-              <mat-option *ngFor="let role of roles" [value]="role.id">
-                {{ role.name }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>admin_panel_settings</mat-icon>
-            <mat-error *ngIf="userForm.get('role_id')?.hasError('required')">
-              Role is required
-            </mat-error>
-          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="first_name" placeholder="John">
+              <mat-icon matPrefix>badge</mat-icon>
+              <mat-error *ngIf="userForm.get('first_name')?.hasError('required')">
+                First name is required
+              </mat-error>
+              <mat-error *ngIf="userForm.get('first_name')?.hasError('minlength')">
+                First name must be at least 2 characters
+              </mat-error>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Branch</mat-label>
-            <mat-select formControlName="branch_id">
-              <mat-option [value]="null">None</mat-option>
-              <mat-option *ngFor="let branch of branches" [value]="branch.id">
-                {{ branch.name }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>business</mat-icon>
-          </mat-form-field>
-
-          <mat-slide-toggle formControlName="is_active" color="primary" class="status-toggle">
-            Active User
-          </mat-slide-toggle>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Permissions Section (Only in Edit Mode) -->
-    <mat-card class="form-card permissions-card" *ngIf="isEditMode && showPermissions">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>shield</mat-icon>
-          User Permissions
-        </mat-card-title>
-        <mat-card-subtitle>
-          Role-based permissions are populated by default. Add special permissions or override as needed.
-        </mat-card-subtitle>
-      </mat-card-header>
-      
-      <mat-card-content>
-        <!-- Global Action Buttons -->
-        <div class="global-actions">
-          <button type="button" mat-raised-button color="primary" (click)="allowAllPermissions()" [disabled]="isLoadingPermissions">
-            <mat-icon>check_circle</mat-icon>
-            Allow All
-          </button>
-          <button type="button" mat-raised-button color="warn" (click)="disableAllPermissions()" [disabled]="isLoadingPermissions">
-            <mat-icon>cancel</mat-icon>
-            Disable All
-          </button>
-          <button type="button" mat-stroked-button (click)="resetPermissions()" [disabled]="isLoadingPermissions">
-            <mat-icon>refresh</mat-icon>
-            Reset
-          </button>
-          <mat-chip *ngIf="hasPermissionModifications()" class="modified-chip">
-            <mat-icon>edit</mat-icon>
-            {{ getModifiedPermissions().length }} modified
-          </mat-chip>
-        </div>
-
-        <!-- Legend -->
-        <div class="permission-legend" *ngIf="!isLoadingPermissions">
-          <div class="legend-item">
-            <mat-icon class="from-role">shield</mat-icon>
-            <span>From Role</span>
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="last_name" placeholder="Doe">
+              <mat-icon matPrefix>badge</mat-icon>
+              <mat-error *ngIf="userForm.get('last_name')?.hasError('required')">
+                Last name is required
+              </mat-error>
+              <mat-error *ngIf="userForm.get('last_name')?.hasError('minlength')">
+                Last name must be at least 2 characters
+              </mat-error>
+            </mat-form-field>
           </div>
-          <div class="legend-item">
-            <mat-icon class="overridden">edit</mat-icon>
-            <span>User Override</span>
-          </div>
-          <div class="legend-item">
-            <mat-icon class="modified">fiber_manual_record</mat-icon>
-            <span>Modified</span>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="john@example.com">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="userForm.get('email')?.hasError('required')">
+                Email is required
+              </mat-error>
+              <mat-error *ngIf="userForm.get('email')?.hasError('email')">
+                Please enter a valid email
+              </mat-error>
+            </mat-form-field>
           </div>
         </div>
 
-        <!-- Loading State -->
-        <div *ngIf="isLoadingPermissions" class="loading-permissions">
-          <mat-spinner diameter="40"></mat-spinner>
-          <p>Loading permissions...</p>
+        <!-- Password Section (Create Mode Only) -->
+        <div class="form-section" *ngIf="!isEditMode">
+          <h3 class="section-title">
+            <mat-icon>vpn_key</mat-icon>
+            Password
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Password</mat-label>
+              <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button" tabindex="-1">
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              <mat-hint>Minimum 8 characters</mat-hint>
+              <mat-error *ngIf="userForm.get('password')?.hasError('required')">
+                Password is required
+              </mat-error>
+              <mat-error *ngIf="userForm.get('password')?.hasError('minlength')">
+                Password must be at least 8 characters
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Confirm Password</mat-label>
+              <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="password_confirmation">
+              <mat-icon matPrefix>lock_outline</mat-icon>
+              <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button" tabindex="-1">
+                <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="userForm.get('password_confirmation')?.hasError('required')">
+                Please confirm your password
+              </mat-error>
+            </mat-form-field>
+          </div>
         </div>
 
-        <!-- Permissions by Module -->
-        <div *ngIf="!isLoadingPermissions" class="permissions-container">
-          <div *ngFor="let module of groupedPermissions" class="permission-module">
-            <!-- Module Header -->
-            <div class="module-header">
-              <div class="module-title-wrapper">
-                <mat-icon class="module-icon" [style.color]="module.allGranted ? '#4caf50' : '#9e9e9e'">
-                  {{ module.module_icon }}
-                </mat-icon>
-                <h3>{{ module.module_name }}</h3>
-                <mat-chip class="permission-count-chip">
-                  {{ getGrantedCount(module) }} / {{ module.permissions.length }}
-                </mat-chip>
-              </div>
-              <div class="module-actions">
-                <button
-                  type="button"
-                  mat-stroked-button
-                  (click)="toggleModule(module)"
-                  [color]="areAllPermissionsGranted(module) ? 'warn' : 'primary'">
-                  <mat-icon>{{ areAllPermissionsGranted(module) ? 'remove_circle' : 'add_circle' }}</mat-icon>
-                  {{ areAllPermissionsGranted(module) ? 'Disable All' : 'Allow All' }}
-                </button>
-              </div>
+        <!-- Role & Branch Assignment -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>assignment_ind</mat-icon>
+            Role & Branch Assignment
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Role</mat-label>
+              <mat-select formControlName="role_id">
+                <mat-option *ngFor="let role of roles" [value]="role.id">
+                  {{ role.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>security</mat-icon>
+              <mat-error *ngIf="userForm.get('role_id')?.hasError('required')">
+                Role is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option [value]="null">-- No Branch --</mat-option>
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-hint>Optional: Assign user to a specific branch</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <div class="toggle-container">
+              <mat-slide-toggle formControlName="is_active" color="primary">
+                <span class="toggle-label">
+                  <mat-icon>{{ userForm.get('is_active')?.value ? 'check_circle' : 'cancel' }}</mat-icon>
+                  Active Status
+                </span>
+              </mat-slide-toggle>
+              <span class="toggle-hint">
+                {{ userForm.get('is_active')?.value ? 'User account is active' : 'User account is inactive' }}
+              </span>
             </div>
+          </div>
+        </div>
 
-            <!-- Permissions Grid -->
-            <div class="permission-grid">
-              <mat-checkbox
-                *ngFor="let permission of module.permissions"
-                [(ngModel)]="permission.granted"
-                (change)="togglePermission(permission)"
-                color="primary"
-                [ngModelOptions]="{standalone: true}"
-                [class.permission-modified]="permission.modified">
-                <div class="permission-item">
-                  <span class="permission-name">
-                    {{ permission.name }}
-                    <mat-icon 
-                      *ngIf="permission.from_role && !permission.overridden" 
-                      class="status-icon from-role-icon"
-                      matTooltip="Permission from role">
-                      shield
-                    </mat-icon>
-                    <mat-icon 
-                      *ngIf="permission.overridden && !permission.modified" 
-                      class="status-icon overridden-icon"
-                      matTooltip="User-specific override">
-                      edit
-                    </mat-icon>
-                    <mat-icon 
-                      *ngIf="permission.modified" 
-                      class="status-icon modified-icon"
-                      matTooltip="Modified (not saved)">
-                      fiber_manual_record
-                    </mat-icon>
-                  </span>
-                  <span class="permission-description">{{ permission.slug }}</span>
+        <!-- Permission Overrides Section (Edit Mode Only) -->
+        <div class="form-section permissions-section" *ngIf="isEditMode && showPermissions">
+          <h3 class="section-title">
+            <mat-icon>admin_panel_settings</mat-icon>
+            Permission Overrides
+          </h3>
+
+          <!-- Global Actions -->
+          <div class="global-actions">
+            <button mat-stroked-button type="button" (click)="grantAllPermissions()">
+              <mat-icon>check_circle</mat-icon>
+              Grant All
+            </button>
+            <button mat-stroked-button type="button" (click)="revokeAllPermissions()">
+              <mat-icon>cancel</mat-icon>
+              Revoke All
+            </button>
+            <button mat-stroked-button type="button" (click)="resetToRolePermissions()">
+              <mat-icon>refresh</mat-icon>
+              Reset to Role
+            </button>
+            <mat-chip *ngIf="hasModifiedPermissions()" class="modified-chip">
+              <mat-icon>warning</mat-icon>
+              Modified
+            </mat-chip>
+          </div>
+
+          <!-- Legend -->
+          <div class="permission-legend">
+            <div class="legend-item">
+              <mat-icon class="from-role">verified_user</mat-icon>
+              <span>From Role</span>
+            </div>
+            <div class="legend-item">
+              <mat-icon class="overridden">edit</mat-icon>
+              <span>Overridden</span>
+            </div>
+            <div class="legend-item">
+              <mat-icon class="modified">fiber_manual_record</mat-icon>
+              <span>Modified</span>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoadingPermissions" class="loading-permissions">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading permissions...</p>
+          </div>
+
+          <!-- Permissions Container -->
+          <div class="permissions-container" *ngIf="!isLoadingPermissions">
+            <div *ngFor="let module of groupedPermissions" class="permission-module">
+              <div class="module-header">
+                <div class="module-title-wrapper">
+                  <mat-icon class="module-icon" [style.color]="'var(--primary-color)'">{{ module.module_icon }}</mat-icon>
+                  <h3>{{ module.module_name }}</h3>
+                  <mat-chip class="permission-count-chip">
+                    {{ getSelectedCountInModule(module.module_slug) }} / {{ module.permissions.length }}
+                  </mat-chip>
                 </div>
-              </mat-checkbox>
+                <div class="module-actions">
+                  <button mat-button type="button" (click)="toggleModule(module)">
+                    <mat-icon>{{ module.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                    {{ module.expanded ? 'Collapse' : 'Expand' }}
+                  </button>
+                  <button mat-button type="button" (click)="grantAllInModule(module.permissions)">
+                    <mat-icon>check_circle</mat-icon>
+                    Grant All
+                  </button>
+                  <button mat-button type="button" (click)="revokeAllInModule(module.permissions)">
+                    <mat-icon>cancel</mat-icon>
+                    Revoke All
+                  </button>
+                </div>
+              </div>
+
+              <div class="permission-grid" *ngIf="module.expanded">
+                <mat-checkbox
+                  *ngFor="let perm of module.permissions"
+                  [checked]="perm.granted"
+                  (change)="togglePermission(perm, $event.checked)"
+                  [class.permission-modified]="perm.modified">
+                  <div class="permission-item">
+                    <div class="permission-name">
+                      {{ perm.name }}
+                      <mat-icon *ngIf="perm.from_role && !perm.overridden" class="status-icon from-role-icon" matTooltip="From Role">verified_user</mat-icon>
+                      <mat-icon *ngIf="perm.overridden" class="status-icon overridden-icon" matTooltip="Overridden">edit</mat-icon>
+                      <mat-icon *ngIf="perm.modified" class="status-icon modified-icon" matTooltip="Modified">fiber_manual_record</mat-icon>
+                    </div>
+                    <div class="permission-description">{{ perm.slug }}</div>
+                  </div>
+                </mat-checkbox>
+              </div>
             </div>
           </div>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </form>
+    </mat-card-content>
 
-    <div class="form-actions">
-      <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isSubmitting">
+    <mat-card-actions>
+      <button mat-stroked-button type="button" (click)="onCancel()" [disabled]="isSubmitting">
         <mat-icon>cancel</mat-icon>
         Cancel
       </button>
-      <button type="submit" mat-raised-button color="primary" [disabled]="isSubmitting || userForm.invalid">
-        <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
-        <mat-icon *ngIf="!isSubmitting">save</mat-icon>
-        {{ isEditMode ? 'Update User' : 'Create User' }}
-        <span *ngIf="hasPermissionModifications()">(+{{ getModifiedPermissions().length }} permissions)</span>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onSubmit()" 
+        [disabled]="userForm.invalid || isSubmitting">
+        <mat-icon>{{ isSubmitting ? 'hourglass_empty' : 'save' }}</mat-icon>
+        {{ isSubmitting ? 'Saving...' : (isEditMode ? 'Update User' : 'Create User') }}
       </button>
-    </div>
-  </form>
+    </mat-card-actions>
+  </mat-card>
 </div>
-

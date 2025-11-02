@@ -187,17 +187,32 @@ export class UserListComponent implements OnInit {
     this.roleService.getAllRoles().subscribe({
       next: (response) => {
         if (response.success) {
-          this.roles = response.data;
+          this.roles = response.data || [];
           const roleField = this.advancedSearchConfig.fields.find(f => f.key === 'role');
-          if (roleField) {
+          if (roleField && this.roles.length > 0) {
+            // Map role names to match users table enum values
+            const roleMapping: Record<string, string> = {
+              'Super Admin': 'SuperAdmin',
+              'Branch Admin': 'BranchAdmin',
+              'Admin': 'SuperAdmin',
+              'Teacher': 'Teacher',
+              'Student': 'Student',
+              'Parent': 'Parent',
+              'Staff': 'Staff'
+            };
+            
             roleField.options = this.roles.map(r => ({
-              value: r.name,
-              label: r.name
+              value: roleMapping[r.name] || r.name,  // Use mapped enum value
+              label: r.name  // Display the friendly name
             }));
+            console.log('Roles loaded for filter:', roleField.options);
           }
         }
       },
-      error: (error) => console.error('Error loading roles:', error)
+      error: (error) => {
+        console.error('Error loading roles:', error);
+        this.errorHandler.handleError(error);
+      }
     });
 
     // Load branches for filter
@@ -220,10 +235,12 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
+    console.log('Loading users with filters:', this.currentFilters);
     this.userService.getUsers(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
           this.users = response.data.data || [];
+          console.log('Users loaded:', this.users.length);
           this.tableConfig = {
             ...this.tableConfig,
             totalCount: response.data.total || 0
@@ -232,6 +249,7 @@ export class UserListComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
+        console.error('Error loading users:', error);
         this.errorHandler.handleError(error);
         this.loading = false;
       }
@@ -266,12 +284,14 @@ export class UserListComponent implements OnInit {
   }
 
   onAdvancedSearchChange(event: SearchEvent): void {
+    console.log('Advanced search event:', event);
     this.currentFilters = {
       page: 1,
       per_page: this.currentFilters['per_page'] || 10,
       search: event.query,
       ...event.filters
     };
+    console.log('Current filters being sent to API:', this.currentFilters);
     this.loadUsers();
   }
 

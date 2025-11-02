@@ -1,21 +1,244 @@
-<div class="page-container">
-  <div class="page-header">
-    <h1 class="page-title">
-      <mat-icon>person</mat-icon>
-      User Details
-    </h1>
-    <div class="header-actions">
+<div class="user-view-container">
+  <mat-card class="view-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">person</mat-icon>
+        <div>
+          User Details
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>
+        View user information and permissions
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-overlay">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading user details...</p>
+      </div>
+
+      <div *ngIf="!isLoading && user">
+        <!-- Personal Information Section -->
+        <div class="view-section">
+          <h3 class="section-title">
+            <mat-icon>badge</mat-icon>
+            Personal Information
+          </h3>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>fingerprint</mat-icon>
+                User ID
+              </div>
+              <div class="info-value">{{ user.id }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>person</mat-icon>
+                Full Name
+              </div>
+              <div class="info-value">{{ getUserFullName() }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>email</mat-icon>
+                Email
+              </div>
+              <div class="info-value">{{ user.email }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>toggle_on</mat-icon>
+                Status
+              </div>
+              <div class="info-value">
+                <mat-chip [style.background-color]="getStatusColor()" [style.color]="'white'">
+                  <mat-icon>{{ user.is_active ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ getStatusText() }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>verified</mat-icon>
+                Email Verified
+              </div>
+              <div class="info-value">
+                <mat-chip [style.background-color]="user.email_verified_at ? 'var(--success-color)' : 'var(--gray-400)'" [style.color]="'white'">
+                  <mat-icon>{{ user.email_verified_at ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ user.email_verified_at ? 'Verified' : 'Not Verified' }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role & Branch Assignment Section -->
+        <div class="view-section">
+          <h3 class="section-title">
+            <mat-icon>assignment_ind</mat-icon>
+            Role & Branch Assignment
+          </h3>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>security</mat-icon>
+                Role
+              </div>
+              <div class="info-value">
+                <mat-chip color="primary">
+                  <mat-icon>shield</mat-icon>
+                  {{ user.role || 'N/A' }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>business</mat-icon>
+                Branch
+              </div>
+              <div class="info-value">
+                <mat-chip *ngIf="user.branch" color="accent">
+                  <mat-icon>location_on</mat-icon>
+                  {{ user.branch.name }}
+                </mat-chip>
+                <span *ngIf="!user.branch" class="na-text">No branch assigned</span>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>admin_panel_settings</mat-icon>
+                Total Permissions
+              </div>
+              <div class="info-value">
+                <mat-chip class="count-chip">
+                  <mat-icon>verified_user</mat-icon>
+                  {{ getTotalPermissionsCount() }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timestamps Section -->
+        <div class="view-section">
+          <h3 class="section-title">
+            <mat-icon>schedule</mat-icon>
+            Timestamps
+          </h3>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>add_circle</mat-icon>
+                Created At
+              </div>
+              <div class="info-value">{{ user.created_at | date:'medium' }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>update</mat-icon>
+                Last Updated
+              </div>
+              <div class="info-value">{{ user.updated_at | date:'medium' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Role Permissions Section -->
+        <div class="view-section" *ngIf="userRole">
+          <h3 class="section-title">
+            <mat-icon>lock</mat-icon>
+            Role Permissions ({{ userRole.name }})
+          </h3>
+
+          <div *ngIf="groupedRolePermissions.length === 0" class="empty-state">
+            <mat-icon>shield_off</mat-icon>
+            <p>No permissions assigned to this role</p>
+          </div>
+
+          <div class="modules-grid" *ngIf="groupedRolePermissions.length > 0">
+            <div *ngFor="let module of groupedRolePermissions" class="module-card">
+              <div class="module-card-header">
+                <mat-icon class="module-icon">{{ module.module_icon }}</mat-icon>
+                <div class="module-title">
+                  <h4>{{ module.module_name }}</h4>
+                  <span class="permission-count">{{ module.permissions.length }} permissions</span>
+                </div>
+              </div>
+              <div class="module-card-content">
+                <div *ngFor="let perm of module.permissions" class="permission-item">
+                  <mat-icon class="check-icon">check_circle</mat-icon>
+                  <div class="permission-info">
+                    <div class="permission-name">{{ perm.name }}</div>
+                    <div class="permission-slug">{{ perm.slug }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User-Specific Permission Overrides -->
+        <div class="view-section" *ngIf="userPermissions && userPermissions.length > 0">
+          <h3 class="section-title">
+            <mat-icon>edit_note</mat-icon>
+            User Permission Overrides
+          </h3>
+
+          <div class="info-box">
+            <mat-icon>info</mat-icon>
+            <span>These permissions override the role permissions for this user specifically.</span>
+          </div>
+
+          <div class="modules-grid">
+            <div *ngFor="let module of groupedUserPermissions" class="module-card override-card">
+              <div class="module-card-header">
+                <mat-icon class="module-icon">{{ module.module_icon }}</mat-icon>
+                <div class="module-title">
+                  <h4>{{ module.module_name }}</h4>
+                  <span class="permission-count">{{ module.permissions.length }} overrides</span>
+                </div>
+              </div>
+              <div class="module-card-content">
+                <div *ngFor="let perm of module.permissions" class="permission-item">
+                  <mat-icon [class.granted-icon]="perm.granted" [class.denied-icon]="!perm.granted">
+                    {{ perm.granted ? 'check_circle' : 'cancel' }}
+                  </mat-icon>
+                  <div class="permission-info">
+                    <div class="permission-name">{{ perm.name }}</div>
+                    <div class="permission-slug">{{ perm.slug }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
       <button mat-stroked-button (click)="goBack()">
         <mat-icon>arrow_back</mat-icon>
-        Back
+        Back to List
       </button>
       <button 
         mat-raised-button 
-        color="accent" 
+        color="primary" 
         (click)="editUser()"
         *hasPermission="'users.update'">
         <mat-icon>edit</mat-icon>
-        Edit
+        Edit User
       </button>
       <button 
         mat-raised-button 
@@ -23,169 +246,8 @@
         (click)="deleteUser()"
         *hasPermission="'users.delete'">
         <mat-icon>delete</mat-icon>
-        Delete
+        Delete User
       </button>
-    </div>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner diameter="50"></mat-spinner>
-  </div>
-
-  <div *ngIf="!isLoading && user">
-    <!-- User Info Card -->
-    <mat-card class="info-card">
-      <mat-card-header>
-        <mat-card-title>Personal Information</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">ID:</span>
-            <span class="value">{{ user.id }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Full Name:</span>
-            <span class="value">{{ getUserFullName() }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">First Name:</span>
-            <span class="value">{{ user.first_name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Last Name:</span>
-            <span class="value">{{ user.last_name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Email:</span>
-            <span class="value">{{ user.email }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Username:</span>
-            <span class="value">{{ user.username || 'N/A' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Role:</span>
-            <span class="value">
-              <mat-chip color="primary">{{ user.role || 'N/A' }}</mat-chip>
-            </span>
-          </div>
-          <div class="info-item">
-            <span class="label">Branch:</span>
-            <span class="value">{{ user.branch?.name || 'N/A' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Status:</span>
-            <span class="value">
-              <mat-chip [color]="getStatusColor()">{{ getStatusText() }}</mat-chip>
-            </span>
-          </div>
-          <div class="info-item">
-            <span class="label">Email Verified:</span>
-            <span class="value">{{ user.email_verified_at ? 'Yes' : 'No' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Created:</span>
-            <span class="value">{{ user.created_at | date:'medium' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Updated:</span>
-            <span class="value">{{ user.updated_at | date:'medium' }}</span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Role & Permissions Section -->
-    <div class="permissions-section" *ngIf="userRole">
-      <div class="section-header">
-        <h2>
-          <mat-icon>admin_panel_settings</mat-icon>
-          Role & Permissions
-        </h2>
-      </div>
-
-      <!-- Role Info Card -->
-      <mat-card class="role-info-card">
-        <mat-card-header>
-          <mat-card-title>Assigned Role</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="role-badge">
-            <mat-icon class="role-icon">admin_panel_settings</mat-icon>
-            <div class="role-details">
-              <h3>{{ userRole.name }}</h3>
-              <p *ngIf="userRole.description">{{ userRole.description }}</p>
-              <span class="permissions-count">
-                {{ userRole.permissions?.length || 0 }} 
-                {{ (userRole.permissions?.length === 1) ? 'Permission' : 'Permissions' }}
-              </span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Permissions Grid -->
-      <div class="section-header">
-        <h2>Assigned Permissions ({{ userRole.permissions?.length || 0 }})</h2>
-      </div>
-
-      <div *ngIf="!userRole.permissions || userRole.permissions.length === 0" class="no-permissions-message">
-        <mat-card class="empty-state-card">
-          <mat-card-content>
-            <mat-icon>shield_off</mat-icon>
-            <h3>No Permissions Assigned</h3>
-            <p>This role currently has no permissions assigned.</p>
-          </mat-card-content>
-        </mat-card>
-      </div>
-
-      <div *ngIf="userRole.permissions && userRole.permissions.length > 0" class="permissions-grid">
-        <mat-card *ngFor="let moduleKey of getModules()" class="module-card">
-          <mat-card-header>
-            <div class="module-header-content">
-              <mat-icon class="module-icon">{{ getModuleIcon(moduleKey) }}</mat-icon>
-              <div class="module-info">
-                <h3 class="module-title">{{ getModuleDisplayName(moduleKey) }}</h3>
-                <p class="module-subtitle">
-                  {{ permissionsByModule[moduleKey].length }} 
-                  {{ permissionsByModule[moduleKey].length === 1 ? 'Permission' : 'Permissions' }}
-                </p>
-              </div>
-            </div>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="permissions-list">
-              <div *ngFor="let permission of permissionsByModule[moduleKey]; let isLast = last" 
-                   class="permission-row"
-                   [class.last]="isLast">
-                <mat-icon class="check-icon">check_circle</mat-icon>
-                <span class="permission-text">{{ permission.display_name || permission.name }}</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </div>
-
-    <!-- Actions Card -->
-    <mat-card class="actions-card" *hasPermission="'users.update'">
-      <mat-card-header>
-        <mat-card-title>Quick Actions</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="actions-grid">
-          <button mat-raised-button color="primary" (click)="toggleStatus()">
-            <mat-icon>{{ user.is_active ? 'block' : 'check_circle' }}</mat-icon>
-            {{ user.is_active ? 'Deactivate User' : 'Activate User' }}
-          </button>
-          <button mat-raised-button (click)="editUser()">
-            <mat-icon>vpn_key</mat-icon>
-            Reset Password
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+    </mat-card-actions>
+  </mat-card>
 </div>
-
