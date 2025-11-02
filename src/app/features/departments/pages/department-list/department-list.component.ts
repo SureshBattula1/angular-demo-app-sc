@@ -7,6 +7,7 @@ import { AdvancedSearchConfig } from '../../../../shared/components/advanced-sea
 import { DepartmentService } from '../../services/department.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Department } from '../../../../core/models/department.model';
 
 @Component({
@@ -52,9 +53,9 @@ export class DepartmentListComponent implements OnInit {
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewDepartment(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editDepartment(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteDepartment(row) }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewDepartment(row), permission: 'departments.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editDepartment(row), permission: 'departments.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteDepartment(row), permission: 'departments.delete' }
     ],
     selectable: true,
     pagination: true,
@@ -65,7 +66,8 @@ export class DepartmentListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'departments.create'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {

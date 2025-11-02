@@ -12,6 +12,7 @@ import { SectionService } from '../../../sections/services/section.service';
 import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { StudentAttendance, TeacherAttendance } from '../../../../core/models/attendance.model';
 import { Section } from '../../../../core/models/section.model';
 
@@ -149,10 +150,10 @@ export class AttendanceListComponent implements OnInit {
   studentTableConfig: TableConfig = {
     columns: this.getStudentColumns(),
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row) },
-      { icon: 'assessment', label: 'Student Report', color: 'accent', action: (row) => this.viewStudentReport(row) }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'attendance.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'attendance.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'attendance.edit' },
+      { icon: 'assessment', label: 'Student Report', color: 'accent', action: (row) => this.viewStudentReport(row), permission: 'attendance.report' }
     ],
     selectable: true,
     pagination: true,
@@ -169,10 +170,10 @@ export class AttendanceListComponent implements OnInit {
   teacherTableConfig: TableConfig = {
     columns: this.getTeacherColumns(),
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row) },
-      { icon: 'assessment', label: 'Teacher Report', color: 'accent', action: (row) => this.viewTeacherReport(row) }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'attendance.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'attendance.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'attendance.edit' },
+      { icon: 'assessment', label: 'Teacher Report', color: 'accent', action: (row) => this.viewTeacherReport(row), permission: 'attendance.report' }
     ],
     selectable: true,
     pagination: true,

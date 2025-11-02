@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { StudentCrudService } from '../../services/student-crud.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Student } from '../../../../core/models/student.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { LeaveService } from '../../../leaves/services/leave.service';

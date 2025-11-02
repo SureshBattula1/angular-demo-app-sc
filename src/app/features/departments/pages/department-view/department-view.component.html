@@ -5,11 +5,19 @@
       Back to List
     </button>
     <div class="action-buttons">
-      <button mat-raised-button color="primary" (click)="onEdit()">
+      <button 
+        *ngIf="hasEditPermission"
+        mat-raised-button 
+        color="primary" 
+        (click)="onEdit()">
         <mat-icon>edit</mat-icon>
         Edit
       </button>
-      <button mat-raised-button color="warn" (click)="onDelete()">
+      <button 
+        *ngIf="hasDeletePermission"
+        mat-raised-button 
+        color="warn" 
+        (click)="onDelete()">
         <mat-icon>delete</mat-icon>
         Delete
       </button>

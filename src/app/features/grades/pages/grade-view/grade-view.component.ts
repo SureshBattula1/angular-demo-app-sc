@@ -9,6 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { GradeService } from '../../services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Grade, GradeStats } from '../../../../core/models/grade.model';
 
 @Component({
@@ -32,12 +33,18 @@ export class GradeViewComponent implements OnInit {
   grade?: Grade;
   stats?: GradeStats;
   
+  // Permission checks
+  hasEditPermission = false;
+  
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private gradeService: GradeService,
-    private errorHandler: ErrorHandlerService
-  ) {}
+    private errorHandler: ErrorHandlerService,
+    private permissionService: PermissionService
+  ) {
+    this.hasEditPermission = this.permissionService.hasPermission('grades.edit');
+  }
   
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -89,6 +96,10 @@ export class GradeViewComponent implements OnInit {
   }
   
   onEdit(): void {
+    if (!this.hasEditPermission) {
+      this.errorHandler.showError('You do not have permission to edit grades');
+      return;
+    }
     if (this.gradeValue) {
       this.router.navigate(['/grades/edit', this.gradeValue]);
     }

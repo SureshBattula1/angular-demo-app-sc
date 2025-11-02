@@ -8,6 +8,7 @@ import { SubjectService } from '../../services/subject.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Subject } from '../../../../core/models/subject.model';
 
 @Component({
@@ -62,10 +63,10 @@ export class SubjectListComponent implements OnInit {
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewSubject(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editSubject(row) },
-      { icon: 'assignment', label: 'Assign to Sections', color: 'accent', action: (row) => this.assignToSections(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteSubject(row) }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewSubject(row), permission: 'subjects.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editSubject(row), permission: 'subjects.edit' },
+      { icon: 'assignment', label: 'Assign to Sections', color: 'accent', action: (row) => this.assignToSections(row), permission: 'subjects.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteSubject(row), permission: 'subjects.delete' }
     ],
     selectable: true,
     pagination: true,
@@ -76,7 +77,8 @@ export class SubjectListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'subjects.create'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {

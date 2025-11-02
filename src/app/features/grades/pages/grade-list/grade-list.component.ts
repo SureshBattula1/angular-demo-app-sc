@@ -9,6 +9,7 @@ import { GradeService } from '../../services/grade.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Grade } from '../../../../core/models/grade.model';
 
 @Component({
@@ -106,24 +107,28 @@ export class GradeListComponent implements OnInit {
       {
         icon: 'visibility',
         label: 'View Details',
-        action: (row) => this.viewGrade(row)
+        action: (row) => this.viewGrade(row),
+        permission: 'grades.view'
       },
       {
         icon: 'edit',
         label: 'Edit Grade',
         color: 'primary',
-        action: (row) => this.editGrade(row)
+        action: (row) => this.editGrade(row),
+        permission: 'grades.edit'
       },
       {
         icon: 'people',
         label: 'View Students',
         color: 'accent',
-        action: (row) => this.viewStudents(row)
+        action: (row) => this.viewStudents(row),
+        permission: 'students.view'
       },
       {
         icon: 'bar_chart',
         label: 'Statistics',
-        action: (row) => this.viewStats(row)
+        action: (row) => this.viewStats(row),
+        permission: 'grades.view'
       }
     ],
     selectable: true,
@@ -136,7 +141,8 @@ export class GradeListComponent implements OnInit {
     totalCount: 0,
     pageSizeOptions: [5, 10, 25, 50],
     defaultPageSize: 25,
-    showAddButton: true  // Enable add button for creating new grades
+    showAddButton: true,
+    addButtonPermission: 'grades.create'
   };
   
   // Advanced Search Configuration
@@ -202,7 +208,8 @@ export class GradeListComponent implements OnInit {
     private router: Router,
     private dialog: MatDialog,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private permissionService: PermissionService
   ) {}
   
   ngOnInit(): void {
