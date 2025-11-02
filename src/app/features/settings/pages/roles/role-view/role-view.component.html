@@ -1,110 +1,155 @@
-<div class="page-container">
-  <div class="page-header">
-    <h1 class="page-title">
-      <mat-icon>admin_panel_settings</mat-icon>
-      Role Details
-    </h1>
-    <div class="header-actions">
-      <button mat-stroked-button (click)="goBack()">
-        <mat-icon>arrow_back</mat-icon>
-        Back
-      </button>
-      <button 
-        mat-raised-button 
-        color="accent" 
-        (click)="editRole()"
-        *hasPermission="'roles.update'">
-        <mat-icon>edit</mat-icon>
-        Edit
-      </button>
-      <button 
-        mat-raised-button 
-        color="warn" 
-        (click)="deleteRole()"
-        *hasPermission="'roles.delete'">
-        <mat-icon>delete</mat-icon>
-        Delete
-      </button>
-    </div>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-container">
+<div class="role-view-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay">
     <mat-spinner diameter="50"></mat-spinner>
   </div>
 
+  <!-- Content -->
   <div *ngIf="!isLoading && role">
-    <mat-card class="info-card">
+    <!-- Basic Information Card -->
+    <mat-card class="view-card">
       <mat-card-header>
-        <mat-card-title>Basic Information</mat-card-title>
+        <mat-card-title>
+          <mat-icon class="header-icon">admin_panel_settings</mat-icon>
+          <div>
+            Role Details
+          </div>
+        </mat-card-title>
+        <mat-card-subtitle>
+          View and manage role information and permissions
+        </mat-card-subtitle>
       </mat-card-header>
+
       <mat-card-content>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">ID:</span>
-            <span class="value">{{ role.id }}</span>
+        <!-- Basic Information Section -->
+        <div class="info-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">
+                <mat-icon>tag</mat-icon>
+                Role ID
+              </span>
+              <span class="info-value">{{ role.id }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                <mat-icon>label</mat-icon>
+                Role Name
+              </span>
+              <span class="info-value">{{ role.name }}</span>
+            </div>
+
+            <div class="info-item full-width">
+              <span class="info-label">
+                <mat-icon>description</mat-icon>
+                Description
+              </span>
+              <span class="info-value">{{ role.description || 'No description provided' }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                <mat-icon>schedule</mat-icon>
+                Created
+              </span>
+              <span class="info-value">{{ role.created_at | date:'medium' }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                <mat-icon>update</mat-icon>
+                Last Updated
+              </span>
+              <span class="info-value">{{ role.updated_at | date:'medium' }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">
+                <mat-icon>shield</mat-icon>
+                Total Permissions
+              </span>
+              <span class="info-value badge">{{ role.permissions?.length || 0 }}</span>
+            </div>
           </div>
-          <div class="info-item">
-            <span class="label">Name:</span>
-            <span class="value">{{ role.name }}</span>
+        </div>
+
+        <!-- Permissions Section -->
+        <div class="permissions-section">
+          <h3 class="section-title">
+            <mat-icon>lock</mat-icon>
+            Assigned Permissions
+            <span class="permission-count">({{ role.permissions?.length || 0 }} total)</span>
+          </h3>
+
+          <!-- Empty State -->
+          <div *ngIf="!role.permissions || role.permissions.length === 0" class="empty-state">
+            <mat-icon>shield_off</mat-icon>
+            <h4>No Permissions Assigned</h4>
+            <p>This role currently has no permissions. Click Edit to assign permissions.</p>
           </div>
-          <div class="info-item full-width">
-            <span class="label">Description:</span>
-            <span class="value">{{ role.description || 'N/A' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Created:</span>
-            <span class="value">{{ role.created_at | date:'medium' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Updated:</span>
-            <span class="value">{{ role.updated_at | date:'medium' }}</span>
+
+          <!-- Permissions by Module -->
+          <div *ngIf="role.permissions && role.permissions.length > 0" class="modules-grid">
+            <div *ngFor="let moduleKey of getModules()" class="module-card">
+              <div class="module-header">
+                <mat-icon class="module-icon">{{ getModuleIcon(moduleKey) }}</mat-icon>
+                <div class="module-info">
+                  <h4 class="module-title">{{ getModuleDisplayName(moduleKey) }}</h4>
+                  <span class="module-subtitle">
+                    {{ permissionsByModule[moduleKey].length }} 
+                    {{ permissionsByModule[moduleKey].length === 1 ? 'Permission' : 'Permissions' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="permissions-list">
+                <div *ngFor="let permission of permissionsByModule[moduleKey]" class="permission-item">
+                  <mat-icon class="check-icon">check_circle</mat-icon>
+                  <div class="permission-details">
+                    <span class="permission-name">{{ permission.display_name || permission.name }}</span>
+                    <span class="permission-description" *ngIf="permission.description">
+                      {{ permission.description }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </mat-card-content>
+
+      <mat-card-actions>
+        <button 
+          mat-stroked-button 
+          (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Back to List
+        </button>
+        <div class="action-buttons">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="editRole()"
+            *hasPermission="'roles.update'">
+            <mat-icon>edit</mat-icon>
+            Edit Role
+          </button>
+          <button 
+            mat-raised-button 
+            color="warn" 
+            (click)="deleteRole()"
+            *hasPermission="'roles.delete'">
+            <mat-icon>delete</mat-icon>
+            Delete
+          </button>
+        </div>
+      </mat-card-actions>
     </mat-card>
-
-    <div class="permissions-section">
-      <div class="section-header">
-        <h2>Assigned Permissions ({{ role.permissions?.length || 0 }})</h2>
-      </div>
-
-      <div *ngIf="!role.permissions || role.permissions.length === 0" class="no-permissions-message">
-        <mat-card class="empty-state-card">
-          <mat-card-content>
-            <mat-icon>shield_off</mat-icon>
-            <h3>No Permissions Assigned</h3>
-            <p>This role currently has no permissions assigned.</p>
-          </mat-card-content>
-        </mat-card>
-      </div>
-
-      <div *ngIf="role.permissions && role.permissions.length > 0" class="permissions-grid">
-        <mat-card *ngFor="let moduleKey of getModules()" class="module-card">
-          <mat-card-header>
-            <div class="module-header-content">
-              <mat-icon class="module-icon">{{ getModuleIcon(moduleKey) }}</mat-icon>
-              <div class="module-info">
-                <h3 class="module-title">{{ getModuleDisplayName(moduleKey) }}</h3>
-                <p class="module-subtitle">
-                  {{ permissionsByModule[moduleKey].length }} 
-                  {{ permissionsByModule[moduleKey].length === 1 ? 'Permission' : 'Permissions' }}
-                </p>
-              </div>
-            </div>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="permissions-list">
-              <div *ngFor="let permission of permissionsByModule[moduleKey]; let isLast = last" 
-                   class="permission-row"
-                   [class.last]="isLast">
-                <mat-icon class="check-icon">check_circle</mat-icon>
-                <span class="permission-text">{{ permission.display_name || permission.name }}</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </div>
   </div>
 </div>
-

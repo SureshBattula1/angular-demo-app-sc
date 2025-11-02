@@ -242,6 +242,19 @@ export class RoleFormComponent implements OnInit {
     });
   }
 
+  /**
+   * Get count of selected permissions in a module
+   */
+  getSelectedCountInModule(moduleKey: string): number {
+    if (!this.permissionsByModule[moduleKey]) {
+      return 0;
+    }
+    
+    return this.permissionsByModule[moduleKey].filter(permission => 
+      this.selectedPermissionIds.includes(permission.id)
+    ).length;
+  }
+
   onCancel(): void {
     this.router.navigate(['/settings/roles']);
   }
