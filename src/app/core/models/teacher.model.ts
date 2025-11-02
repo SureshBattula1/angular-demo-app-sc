@@ -184,7 +184,10 @@ export interface Teacher {
     last_name: string;
     email: string;
     phone?: string;
+    avatar?: string;
+    avatar_url?: string;
     is_active: boolean;
+    [key: string]: any;
   };
   
   branch?: {

@@ -1,34 +1,69 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
-import { Teacher, TeacherFormData } from '../../../core/models/teacher.model';
+import { Teacher } from '../../../core/models/teacher.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TeacherService {
-  private readonly ENDPOINT = '/teachers';
+  private readonly ENDPOINT = 'teachers';
 
   constructor(private apiService: ApiService) {}
 
-  getTeachers(params?: Record<string, unknown>): Observable<ApiResponse<Teacher[]>> {
-    return this.apiService.get<Teacher[]>(this.ENDPOINT, params);
+  // Get paginated teachers
+  getTeachers(params: any): Observable<ApiResponse<any>> {
+    return this.apiService.get(this.ENDPOINT, params);
   }
 
-  getTeacher(id: number): Observable<ApiResponse<Teacher>> {
-    return this.apiService.get<Teacher>(`${this.ENDPOINT}/${id}`);
+  // Get single teacher by ID
+  getTeacher(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.get(`${this.ENDPOINT}/${id}`);
   }
 
-  createTeacher(teacherData: TeacherFormData): Observable<ApiResponse<Teacher>> {
-    return this.apiService.post<Teacher>(this.ENDPOINT, teacherData);
+  // Create teacher
+  createTeacher(data: any): Observable<ApiResponse<Teacher>> {
+    return this.apiService.post<Teacher>(this.ENDPOINT, data);
   }
 
-  updateTeacher(id: number, teacherData: Partial<TeacherFormData>): Observable<ApiResponse<Teacher>> {
-    return this.apiService.put<Teacher>(`${this.ENDPOINT}/${id}`, teacherData);
+  // Update teacher
+  updateTeacher(id: number, data: any): Observable<ApiResponse<Teacher>> {
+    return this.apiService.put<Teacher>(`${this.ENDPOINT}/${id}`, data);
   }
 
-  deleteTeacher(id: number): Observable<ApiResponse> {
+  // Delete teacher
+  deleteTeacher(id: number): Observable<ApiResponse<any>> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
-}
 
+  // Upload profile picture
+  uploadProfilePicture(id: number, file: File): Observable<ApiResponse<{file_path: string, file_url: string}>> {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    
+    console.log('Uploading profile picture:', {
+      teacherId: id,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+    
+    // Use the POST method without extra headers to let browser set Content-Type with boundary
+    return this.apiService.post<{file_path: string, file_url: string}>(`${this.ENDPOINT}/${id}/upload-profile-picture`, formData);
+  }
+
+  // Get teacher assignments
+  getAssignments(teacherId: number): Observable<ApiResponse<any>> {
+    return this.apiService.get(`${this.ENDPOINT}/${teacherId}/assignments`);
+  }
+
+  // Get teacher attendance
+  getAttendance(teacherId: number, params: any): Observable<ApiResponse<any>> {
+    return this.apiService.get(`${this.ENDPOINT}/${teacherId}/attendance`, params);
+  }
+
+  // Get teacher leaves
+  getLeaves(teacherId: number, params: any): Observable<ApiResponse<any>> {
+    return this.apiService.get(`${this.ENDPOINT}/${teacherId}/leaves`, params);
+  }
+}

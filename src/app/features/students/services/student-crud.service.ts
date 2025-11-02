@@ -47,6 +47,23 @@ export class StudentCrudService {
   }
 
   /**
+   * Upload profile picture
+   */
+  uploadProfilePicture(id: number, file: File): Observable<ApiResponse<{file_path: string, file_url: string}>> {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    
+    console.log('Uploading profile picture:', {
+      studentId: id,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+    
+    return this.apiService.post<{file_path: string, file_url: string}>(`${this.ENDPOINT}/${id}/upload-profile-picture`, formData);
+  }
+
+  /**
    * Promote students
    */
   promoteStudents(data: {

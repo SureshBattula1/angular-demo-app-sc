@@ -230,9 +230,9 @@ export class TeacherListComponent implements OnInit {
     this.loading = true;
     
     this.teacherService.getTeachers(this.currentFilters).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         if (response.success) {
-          this.teachers = (response.data || []).map(teacher => ({
+          this.teachers = (response.data || []).map((teacher: any) => ({
             ...teacher,
             full_name: this.getFullName(teacher)
           }));

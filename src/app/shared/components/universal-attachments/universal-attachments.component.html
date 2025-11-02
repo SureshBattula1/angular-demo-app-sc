@@ -130,6 +130,9 @@
           </div>
         </div>
         <div class="attachment-actions" *ngIf="attachment.file_path">
+          <button type="button" mat-icon-button (click)="previewUploadedFile(attachment)" matTooltip="Preview">
+            <mat-icon>visibility</mat-icon>
+          </button>
           <button type="button" mat-icon-button (click)="downloadAttachment(attachment)" matTooltip="Download">
             <mat-icon>download</mat-icon>
           </button>
@@ -152,9 +155,15 @@
     <p>Uploading attachment...</p>
   </div>
 
-  <!-- Empty state -->
+  <!-- Empty state for form mode -->
   <div class="empty-state" *ngIf="attachmentInputs.length === 0 && attachments.length === 0 && !isLoading && mode === 'form'">
     <mat-icon>cloud_upload</mat-icon>
     <p>Click the + button to add attachments</p>
+  </div>
+
+  <!-- Empty state for view mode -->
+  <div class="empty-state" *ngIf="!isLoading && mode === 'view' && attachments.length === 0">
+    <mat-icon>attach_file</mat-icon>
+    <p>No attachments available</p>
   </div>
 </div>

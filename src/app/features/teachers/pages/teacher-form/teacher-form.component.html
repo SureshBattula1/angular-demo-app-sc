@@ -23,31 +23,49 @@
             Basic Information
           </h3>
 
-          <!-- Profile Picture Upload -->
-          <div class="profile-picture-section">
-            <div class="profile-picture-upload">
-              <div class="profile-picture-preview">
+          <!-- Profile Picture Upload Section -->
+          <div class="profile-upload-row">
+            <!-- Circular Profile Picture -->
+            <div class="profile-picture-circle">
+              <div class="profile-picture-inner">
                 <img *ngIf="profilePicturePreview" [src]="profilePicturePreview" alt="Profile Picture">
                 <div *ngIf="!profilePicturePreview" class="profile-placeholder">
                   <mat-icon>account_circle</mat-icon>
-                  <span>No Photo</span>
                 </div>
               </div>
-              <div class="profile-picture-actions">
-                <button mat-raised-button color="primary" type="button" (click)="profilePicFile.click()">
-                  <mat-icon>add_a_photo</mat-icon>
-                  {{ profilePicturePreview ? 'Change Photo' : 'Upload Photo' }}
-                </button>
-                <button mat-stroked-button color="warn" type="button" *ngIf="profilePicturePreview" (click)="removeProfilePicture()">
-                  <mat-icon>delete</mat-icon>
-                  Remove
-                </button>
-                <input #profilePicFile type="file" hidden (change)="onFileSelected($event, 'profile_picture')" accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp,image/bmp">
-                <p class="upload-hint">JPG, PNG, GIF, SVG, WebP, BMP. Max size 1MB</p>
-              </div>
+              <!-- Delete Button Overlay -->
+              <button 
+                *ngIf="profilePicturePreview" 
+                type="button"
+                mat-icon-button 
+                class="delete-profile-btn"
+                (click)="removeProfilePicture()"
+                [disabled]="isLoading">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            
+            <!-- Upload Button -->
+            <div class="profile-upload-button">
+              <input 
+                #fileInput 
+                type="file" 
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp,image/bmp"
+                (change)="onProfileFileSelected($event)"
+                style="display: none">
+              <button 
+                type="button"
+                mat-raised-button 
+                color="primary"
+                (click)="fileInput.click()"
+                [disabled]="isLoading">
+                <mat-icon>upload</mat-icon>
+                Upload Image
+              </button>
             </div>
           </div>
           
+          <!-- Basic Info Fields -->
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-quarter">
               <mat-label>Title</mat-label>
@@ -139,10 +157,10 @@
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="w-100" *ngIf="!isEditMode">
-              <mat-label>Password *</mat-label>
-              <input matInput type="password" formControlName="password">
-              <mat-icon matPrefix>lock</mat-icon>
+          <mat-form-field appearance="outline" class="form-field-full" *ngIf="!isEditMode">
+            <mat-label>Password *</mat-label>
+            <input matInput type="password" formControlName="password">
+            <mat-icon matPrefix>lock</mat-icon>
             <mat-error>{{ getErrorMessage('password') }}</mat-error>
           </mat-form-field>
         </div>
@@ -784,58 +802,6 @@
             <textarea matInput formControlName="notes" rows="3"></textarea>
             <mat-icon matPrefix>note</mat-icon>
           </mat-form-field>
-        </div>
-
-        <!-- Document Uploads -->
-        <div class="form-section">
-          <h3 class="section-title">
-            <mat-icon>attach_file</mat-icon>
-            Document Uploads
-          </h3>
-
-          <div class="form-row">
-            <div class="file-input-wrapper">
-              <label class="file-label">Resume</label>
-              <button mat-stroked-button type="button" (click)="resumeFile.click()">
-                <mat-icon>upload_file</mat-icon>
-                Choose File
-              </button>
-              <span class="file-name" *ngIf="getFileName('resume_file')">{{ getFileName('resume_file') }}</span>
-              <input #resumeFile type="file" hidden (change)="onFileSelected($event, 'resume_file')" accept=".pdf,.doc,.docx">
-            </div>
-
-            <div class="file-input-wrapper">
-              <label class="file-label">Joining Letter</label>
-              <button mat-stroked-button type="button" (click)="joiningLetterFile.click()">
-                <mat-icon>upload_file</mat-icon>
-                Choose File
-              </button>
-              <span class="file-name" *ngIf="getFileName('joining_letter_file')">{{ getFileName('joining_letter_file') }}</span>
-              <input #joiningLetterFile type="file" hidden (change)="onFileSelected($event, 'joining_letter_file')" accept=".pdf,.doc,.docx">
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="file-input-wrapper">
-              <label class="file-label">Aadhaar Card</label>
-              <button mat-stroked-button type="button" (click)="aadhaarFile.click()">
-                <mat-icon>upload_file</mat-icon>
-                Choose File
-              </button>
-              <span class="file-name" *ngIf="getFileName('aadhaar_file')">{{ getFileName('aadhaar_file') }}</span>
-              <input #aadhaarFile type="file" hidden (change)="onFileSelected($event, 'aadhaar_file')" accept=".pdf,.jpg,.jpeg,.png">
-            </div>
-
-            <div class="file-input-wrapper">
-              <label class="file-label">PAN Card</label>
-              <button mat-stroked-button type="button" (click)="panFile.click()">
-                <mat-icon>upload_file</mat-icon>
-                Choose File
-              </button>
-              <span class="file-name" *ngIf="getFileName('pan_file')">{{ getFileName('pan_file') }}</span>
-              <input #panFile type="file" hidden (change)="onFileSelected($event, 'pan_file')" accept=".pdf,.jpg,.jpeg,.png">
-            </div>
-          </div>
         </div>
 
         <!-- Teacher Attachments Section -->

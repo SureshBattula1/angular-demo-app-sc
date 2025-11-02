@@ -64,6 +64,23 @@ export interface Student {
   // Status
   student_status: 'Active' | 'Graduated' | 'Left' | 'Suspended' | 'Expelled';
   
+  // Profile picture
+  profile_picture?: string;
+  profile_picture_url?: string;
+  
+  // User relationship
+  user?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    avatar?: string;
+    avatar_url?: string;
+    is_active: boolean;
+    [key: string]: any;
+  };
+  
   is_active: boolean;
   
   created_at?: string;

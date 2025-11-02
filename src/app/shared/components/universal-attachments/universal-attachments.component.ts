@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { MaterialModule } from '../../modules/material/material.module';
 import { FileUploadService } from '../../../core/services/file-upload.service';
 import { environment } from '../../../../environments/environment';
@@ -44,7 +45,10 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
   attachmentInputs: AttachmentInput[] = [];
   maxAttachments = 5;
 
-  constructor(private fileUploadService: FileUploadService) {}
+  constructor(
+    private fileUploadService: FileUploadService,
+    private http: HttpClient
+  ) {}
 
   ngOnInit(): void {
     if (this.moduleId) {
@@ -59,8 +63,47 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
   }
 
   loadAttachments(): void {
-    if (!this.moduleId || this.moduleId === 0) return;
-    this.isLoading = false;
+    if (!this.moduleId || this.moduleId === 0) {
+      console.log('No moduleId provided, cannot load attachments', this.moduleId);
+      return;
+    }
+    
+    this.isLoading = true;
+    
+    // Load attachments from the database using the attachments API
+    const apiUrl = `${environment.apiUrl}/attachments/${this.module}/${this.moduleId}`;
+    console.log('Loading attachments from:', apiUrl);
+    
+    this.http.get(apiUrl).subscribe({
+      next: (response: any) => {
+        console.log('Attachments API response:', response);
+        this.isLoading = false;
+        if (response.success && response.data) {
+          console.log('Attachments data:', response.data);
+          // Map the response data to our Attachment interface
+          this.attachments = response.data.map((file: any) => ({
+            id: file.id || Date.now() + Math.random(),
+            attachment_type: file.attachment_type || this.module,
+            file_name: file.file_name || file.name,
+            file_path: file.file_path || file.path,
+            file_type: file.file_type || file.type,
+            file_size: file.file_size || file.size || 0,
+            original_name: file.original_name || file.file_name || file.name,
+            description: file.description || '',
+            created_at: file.created_at || new Date().toISOString()
+          }));
+          console.log('Mapped attachments:', this.attachments);
+        } else {
+          console.log('No attachments in response or response not successful');
+          this.attachments = [];
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading attachments:', error);
+        this.isLoading = false;
+        this.attachments = [];
+      }
+    });
   }
 
   canAddMore(): boolean {
@@ -142,31 +185,71 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
     this.fileUploadService.uploadFile(input.file, uploadPath).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
-          const newAttachment: Attachment = {
-            id: Date.now() + Math.random(),
+          // Now save to database
+          this.saveAttachmentToDatabase({
             attachment_type: this.module,
             file_name: response.data.file_name,
             file_path: response.data.file_path,
             file_type: response.data.file_type,
             file_size: response.data.file_size,
             original_name: input.file!.name,
-            description: input.description,
-            created_at: new Date().toISOString()
-          };
-          
-          this.attachments.push(newAttachment);
-          this.attachmentsUploaded.emit([newAttachment]);
+            description: input.description
+          });
           
           // Mark as completed
           input.isCompleted = true;
+          input.name = '';
+          input.description = '';
+          input.file = null;
           this.isLoading = false;
-          alert('Attachment uploaded successfully');
         }
       },
       error: (error: any) => {
         console.error('Upload error:', error);
         alert('Failed to upload attachment');
         this.isLoading = false;
+      }
+    });
+  }
+
+  saveAttachmentToDatabase(attachmentData: any): void {
+    const apiUrl = `${environment.apiUrl}/attachments/save`;
+    const payload = {
+      module: this.module,
+      module_id: this.moduleId,
+      ...attachmentData
+    };
+    
+    this.http.post(apiUrl, payload).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          const newAttachment: Attachment = {
+            id: response.data.id,
+            attachment_type: response.data.attachment_type,
+            file_name: response.data.file_name,
+            file_path: response.data.file_path,
+            file_type: response.data.file_type,
+            file_size: response.data.file_size,
+            original_name: response.data.original_name,
+            description: response.data.description,
+            created_at: response.data.created_at
+          };
+          
+          // Update attachments list if this is a reload, otherwise add new
+          const existingIndex = this.attachments.findIndex(a => !a.id || a.id === response.data.id);
+          if (existingIndex >= 0) {
+            this.attachments[existingIndex] = newAttachment;
+          } else {
+            this.attachments.push(newAttachment);
+          }
+          
+          this.attachmentsUploaded.emit([newAttachment]);
+          alert('Attachment saved successfully');
+        }
+      },
+      error: (error: any) => {
+        console.error('Error saving attachment to database:', error);
+        alert('Attachment uploaded but not saved to database');
       }
     });
   }
@@ -188,12 +271,21 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
       this.fileUploadService.uploadFile(file, uploadPath).subscribe({
         next: (response: any) => {
           if (response.success && response.data) {
-            // Update attachment with file path and remove pending flag
+            // Now save to database
+            this.saveAttachmentToDatabase({
+              attachment_type: this.module,
+              file_name: response.data.file_name,
+              file_path: response.data.file_path,
+              file_type: response.data.file_type,
+              file_size: response.data.file_size,
+              original_name: file.name,
+              description: attachment.description || ''
+            });
+            
+            // Remove from pending list
             const index = this.attachments.findIndex(a => a.id === attachment.id);
             if (index >= 0) {
-              this.attachments[index].file_path = response.data.file_path;
-              this.attachments[index].file_name = response.data.file_name;
-              delete this.attachments[index].pendingFile; // Remove pending flag
+              this.attachments.splice(index, 1);
             }
           }
         },
@@ -265,6 +357,60 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
     alert(`Preview not available for ${file.name}.\nFile size: ${this.formatFileSize(file.size)}\nFile type: ${file.type || 'Unknown'}`);
   }
 
+  previewUploadedFile(attachment: Attachment): void {
+    if (!attachment.file_path) {
+      alert('Attachment is pending upload. Please save the ' + this.module + ' first.');
+      return;
+    }
+    
+    const fileName = attachment.original_name?.toLowerCase() || attachment.file_name?.toLowerCase() || '';
+    const fileType = attachment.file_type?.toLowerCase() || '';
+    
+    // Construct the public URL for the file
+    // Laravel public storage files are accessible at: http://localhost:8004/storage/{file_path}
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const fileUrl = `${baseUrl}/storage/${attachment.file_path}`;
+    console.log('Preview file URL:', fileUrl);
+    
+    // Check if it's an image
+    if (fileType.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/)) {
+      const previewWindow = window.open('', '_blank');
+      if (previewWindow) {
+        previewWindow.document.write(`
+          <html>
+            <head><title>Preview - ${attachment.original_name}</title></head>
+            <body style="margin:0; padding:20px; font-family:Arial; background:#f5f5f5;">
+              <h2>${attachment.original_name}</h2>
+              <img src="${fileUrl}" style="max-width:100%; height:auto; border:1px solid #ddd; padding:10px; background:white;" onerror="alert('Failed to load image. Please check if the file exists.')" />
+            </body>
+          </html>
+        `);
+        previewWindow.document.close();
+      }
+      return;
+    }
+    
+    // Check if it's a PDF
+    if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+      const previewWindow = window.open('', '_blank');
+      if (previewWindow) {
+        previewWindow.document.write(`
+          <html>
+            <head><title>Preview - ${attachment.original_name}</title></head>
+            <body style="margin:0; padding:0;">
+              <iframe src="${fileUrl}" style="width:100%; height:100vh; border:none;" onerror="alert('Failed to load PDF. Please download the file to view it.')"></iframe>
+            </body>
+          </html>
+        `);
+        previewWindow.document.close();
+      }
+      return;
+    }
+    
+    // For other file types, show file info or download
+    alert(`Preview not available for ${attachment.original_name}.\nFile size: ${this.formatFileSize(attachment.file_size)}\nFile type: ${fileType || 'Unknown'}\n\nYou can download this file to view it.`);
+  }
+
   downloadAttachment(attachment: Attachment): void {
     // If pending, can't download yet
     if (!attachment.file_path) {
@@ -272,9 +418,16 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
       return;
     }
     
-    // Download using file path from upload service
-    const downloadUrl = `${environment.apiUrl.replace('/api', '')}/storage/${attachment.file_path}`;
-    window.open(downloadUrl, '_blank');
+    // Download using the attachments API
+    const downloadUrl = `${environment.apiUrl}/attachments/${this.module}/${this.moduleId}/${attachment.id}/download`;
+    
+    // Create a temporary anchor element and trigger download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = attachment.original_name || attachment.file_name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   deleteAttachment(attachment: Attachment): void {
@@ -285,11 +438,13 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
         return;
       }
       
-      // Delete using FileUploadService
-      this.fileUploadService.deleteFile(attachment.file_path).subscribe({
+      // Delete using the attachments API
+      const deleteUrl = `${environment.apiUrl}/attachments/${this.module}/${this.moduleId}/${attachment.id}`;
+      this.http.delete(deleteUrl).subscribe({
         next: (response: any) => {
           if (response.success) {
             this.attachments = this.attachments.filter(a => a.id !== attachment.id);
+            alert('Attachment deleted successfully');
           }
         },
         error: (error: any) => {

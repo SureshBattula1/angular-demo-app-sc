@@ -9,11 +9,12 @@ import { Teacher } from '../../../../core/models/teacher.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { LeaveService } from '../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
+import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
 
 @Component({
   selector: 'app-teacher-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule],
+  imports: [CommonModule, FormsModule, MaterialModule, UniversalAttachmentsComponent],
   templateUrl: './teacher-view.component.html',
   styleUrls: ['./teacher-view.component.scss']
 })

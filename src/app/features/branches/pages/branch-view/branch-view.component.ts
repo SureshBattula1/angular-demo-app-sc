@@ -6,11 +6,12 @@ import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Branch, BranchStats } from '../../../../core/models/branch.model';
 import { environment } from '../../../../../environments/environment';
+import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
 
 @Component({
   selector: 'app-branch-view',
   standalone: true,
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MaterialModule, UniversalAttachmentsComponent],
   templateUrl: './branch-view.component.html',
   styleUrls: ['./branch-view.component.scss']
 })

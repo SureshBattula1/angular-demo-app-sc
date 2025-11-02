@@ -26,7 +26,16 @@
   <mat-card class="view-header-card">
     <div class="view-header">
       <div class="view-avatar">
-        {{ getFullName().charAt(0).toUpperCase() }}
+        <img *ngIf="teacher.profile_picture || teacher.user?.avatar" 
+             [src]="teacher.profile_picture || teacher.user?.avatar" 
+             alt="{{ getFullName() }}"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="avatar-fallback" style="display: none;">
+          {{ getFullName().charAt(0).toUpperCase() }}
+        </div>
+        <div *ngIf="!teacher.profile_picture && !teacher.user?.avatar" class="avatar-fallback">
+          {{ getFullName().charAt(0).toUpperCase() }}
+        </div>
       </div>
       <div class="view-info">
         <h1 class="view-name">{{ getFullName() }}</h1>
@@ -614,6 +623,23 @@
           <span class="detail-label">Notes:</span>
           <span class="detail-value">{{ teacher.notes }}</span>
         </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Teacher Attachments -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>attach_file</mat-icon>
+          Teacher Attachments
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-universal-attachments
+          module="teacher"
+          [moduleId]="teacher.id"
+          mode="view">
+        </app-universal-attachments>
       </mat-card-content>
     </mat-card>
           </div>

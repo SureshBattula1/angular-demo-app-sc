@@ -431,17 +431,21 @@ export class TeacherFormComponent implements OnInit {
       delete formData.password;
     }
 
-    // Remove file objects for API call
+    // Remove File objects for API call
     const fileFields = ['resume_file', 'joining_letter_file', 'resignation_letter_file', 
                        'other_documents_file', 'aadhaar_file', 'pan_file', 
-                       'passport_file', 'driving_license_file', 'profile_picture'];
+                       'passport_file', 'driving_license_file'];
     
     fileFields.forEach(field => {
       if (formData[field]) {
-        // Handle file upload separately (future implementation)
         delete formData[field];
       }
     });
+    
+    // Remove profile_picture File object if exists (already uploaded)
+    if (formData.profile_picture instanceof File) {
+      delete formData.profile_picture;
+    }
 
     // Remove computed fields that don't exist in the database
     const computedFields = ['profile_completion_percentage', 'last_profile_update'];
@@ -452,43 +456,114 @@ export class TeacherFormComponent implements OnInit {
     });
 
     // Ensure address field is always set (required by database)
-    // This field is mandatory and cannot be NULL in the database
-    // Always set it explicitly, don't rely on existing value
     const currentAddr = (formData.current_address || '').trim();
     const permanentAddr = (formData.permanent_address || '').trim();
-    
-    // Set address with priority: current_address > permanent_address > 'N/A' as absolute fallback
     formData.address = currentAddr || permanentAddr || 'N/A';
 
+    // Save the teacher (profile picture already uploaded if it was a file)
+    this.saveTeacher(formData);
+  }
+
+  saveTeacher(formData: any): void {
+    console.log('Saving teacher with data:', formData);
+    
     const request = this.isEditMode && this.teacherId
       ? this.teacherService.updateTeacher(this.teacherId, formData)
       : this.teacherService.createTeacher(formData);
 
     request.subscribe({
       next: (response: any) => {
-        this.isLoading = false;
+        console.log('Teacher saved:', response);
         if (response.success) {
-          // Set attachment module ID after teacher is created/updated
-          if (!this.isEditMode && response.data?.id) {
-            this.attachmentModuleId = response.data.id;
-          } else if (this.teacherId) {
-            this.attachmentModuleId = this.teacherId;
-          }
-          
-          // Upload any pending attachments
-          setTimeout(() => {
-            this.attachmentsComponent?.uploadPendingAttachments();
-          }, 500);
-          
-          this.errorHandler.showSuccess(
-            this.isEditMode ? 'Teacher updated successfully' : 'Teacher created successfully'
-          );
-          this.router.navigate(['/teachers']);
+          this.handleSuccess(response);
+        } else {
+          this.errorHandler.showError('Failed to save teacher');
+          this.isLoading = false;
         }
       },
       error: (error: any) => {
-        this.isLoading = false;
+        console.error('Teacher save error:', error);
         this.errorHandler.showError(error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  handleSuccess(response: any): void {
+    // Set attachment module ID after teacher is created/updated
+    if (!this.isEditMode && response.data?.id) {
+      this.attachmentModuleId = response.data.id;
+      
+      // Upload profile picture if exists (for create mode)
+      if (this.profilePictureFile) {
+        this.uploadProfilePictureForNewTeacher(response.data.id);
+        return; // Don't navigate yet, wait for upload
+      }
+    } else if (this.teacherId) {
+      this.attachmentModuleId = this.teacherId;
+    }
+    
+    // Upload any pending attachments
+    setTimeout(() => {
+      this.attachmentsComponent?.uploadPendingAttachments();
+    }, 500);
+    
+    this.errorHandler.showSuccess(
+      this.isEditMode ? 'Teacher updated successfully' : 'Teacher created successfully'
+    );
+    this.router.navigate(['/teachers']);
+  }
+
+  uploadProfilePictureForNewTeacher(teacherId: number): void {
+    if (!this.profilePictureFile) return;
+    
+    console.log('Uploading profile picture for new teacher:', teacherId);
+    const uploadPath = `teachers/${teacherId}/profile_picture`;
+    
+    this.fileUploadService.uploadFile(this.profilePictureFile, uploadPath).subscribe({
+      next: (uploadResponse: any) => {
+        console.log('Profile picture uploaded:', uploadResponse);
+        
+        if (uploadResponse.success && uploadResponse.data?.file_path) {
+          // Update teacher with profile picture path
+          const updateData = { profile_picture: uploadResponse.data.file_path };
+          
+          this.teacherService.updateTeacher(teacherId, updateData).subscribe({
+            next: (updateResponse: any) => {
+              console.log('Teacher updated with profile picture:', updateResponse);
+              
+              // Upload any pending attachments
+              setTimeout(() => {
+                this.attachmentsComponent?.uploadPendingAttachments();
+              }, 500);
+              
+              this.errorHandler.showSuccess('Teacher created successfully');
+              this.router.navigate(['/teachers']);
+            },
+            error: (error: any) => {
+              console.error('Failed to update teacher with profile picture:', error);
+              this.errorHandler.showWarning('Teacher created but profile picture update failed');
+              
+              // Still navigate to teachers list
+              setTimeout(() => {
+                this.attachmentsComponent?.uploadPendingAttachments();
+              }, 500);
+              
+              this.router.navigate(['/teachers']);
+            }
+          });
+        }
+      },
+      error: (error: any) => {
+        console.error('Profile picture upload error:', error);
+        this.errorHandler.showWarning('Teacher created but profile picture upload failed');
+        
+        // Still navigate to teachers list
+        setTimeout(() => {
+          this.attachmentsComponent?.uploadPendingAttachments();
+        }, 500);
+        
+        this.router.navigate(['/teachers']);
       }
     });
   }
@@ -655,44 +730,105 @@ export class TeacherFormComponent implements OnInit {
     return labels[fieldName] || fieldName;
   }
 
-  onFileSelected(event: any, fieldName: string): void {
+  onProfileFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) {
-      // Validate file size for profile picture (1MB = 1048576 bytes)
-      if (fieldName === 'profile_picture') {
-        const maxSize = 1048576; // 1MB in bytes
-        if (file.size > maxSize) {
-          this.errorHandler.showError('Profile picture must be less than 1MB');
-          event.target.value = ''; // Clear the input
-          return;
-        }
-        
-        // Validate file type
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp', 'image/bmp'];
-        if (!allowedTypes.includes(file.type)) {
-          this.errorHandler.showError('Invalid file type. Please upload an image file (JPG, PNG, GIF, SVG, WebP, BMP)');
-          event.target.value = ''; // Clear the input
-          return;
-        }
-        
-        this.previewProfilePicture(file);
-      }
-      
-      this.teacherForm.get(fieldName)?.setValue(file);
+    if (!file) return;
+    
+    // Validate file size (1MB)
+    if (file.size > 1048576) {
+      this.errorHandler.showError('Profile picture must be less than 1MB');
+      return;
     }
-  }
-
-  previewProfilePicture(file: File): void {
+    
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e: any) => {
       this.profilePicturePreview = e.target.result;
     };
     reader.readAsDataURL(file);
+    
+    // Upload immediately if we have a teacher ID (edit mode)
+    if (this.isEditMode && this.teacherId) {
+      console.log('Edit mode: Uploading image immediately...');
+      this.uploadProfilePictureImmediately(file);
+    } else {
+      // Create mode: store file, will upload after teacher is created
+      console.log('Create mode: Storing file for later upload...');
+      this.teacherForm.get('profile_picture')?.setValue(file);
+      this.profilePictureFile = file; // Store for later upload
+    }
   }
 
+  uploadProfilePictureImmediately(file: File): void {
+    console.log('Starting immediate upload for teacher ID:', this.teacherId);
+    this.isLoading = true;
+    
+    const uploadPath = `teachers/${this.teacherId}/profile_picture`;
+    console.log('Upload path:', uploadPath);
+    
+    this.fileUploadService.uploadFile(file, uploadPath).subscribe({
+      next: (uploadResponse: any) => {
+        console.log('Profile picture uploaded successfully:', uploadResponse);
+        this.isLoading = false;
+        
+        if (uploadResponse.success && uploadResponse.data?.file_path) {
+          // Store the file path in the form
+          this.teacherForm.get('profile_picture')?.setValue(uploadResponse.data.file_path);
+          this.profilePicturePreview = uploadResponse.data.file_path;
+          
+          // Update teacher record with the new path
+          const updateData = { profile_picture: uploadResponse.data.file_path };
+          console.log('Updating teacher with profile picture path...');
+          
+          this.teacherService.updateTeacher(this.teacherId!, updateData).subscribe({
+            next: (updateResponse: any) => {
+              console.log('Teacher profile picture updated in database:', updateResponse);
+              this.errorHandler.showSuccess('Profile picture uploaded successfully');
+            },
+            error: (error: any) => {
+              console.error('Failed to update teacher with profile picture:', error);
+              this.errorHandler.showWarning('Image uploaded but update failed');
+            }
+          });
+        }
+      },
+      error: (error: any) => {
+        console.error('Profile picture upload error:', error);
+        this.isLoading = false;
+        this.errorHandler.showError('Failed to upload profile picture');
+      }
+    });
+  }
+
+  // Property to store profile picture file for create mode
+  profilePictureFile: File | null = null;
+
   removeProfilePicture(): void {
-    this.teacherForm.get('profile_picture')?.setValue(null);
+    // Clear preview
     this.profilePicturePreview = null;
+    
+    // Clear form value (set to null to delete the image from database)
+    this.teacherForm.get('profile_picture')?.setValue(null);
+    
+    // If in edit mode, update teacher to remove profile picture
+    if (this.isEditMode && this.teacherId) {
+      console.log('Removing profile picture from teacher:', this.teacherId);
+      
+      const updateData: any = { profile_picture: '' }; // Empty string to clear the field
+      
+      this.teacherService.updateTeacher(this.teacherId, updateData).subscribe({
+        next: (response: any) => {
+          console.log('Profile picture removed:', response);
+          if (response.success) {
+            // Optionally show success message
+            console.log('Profile picture deleted successfully');
+          }
+        },
+        error: (error: any) => {
+          console.error('Failed to remove profile picture:', error);
+        }
+      });
+    }
   }
 
   getFileName(fieldName: string): string {

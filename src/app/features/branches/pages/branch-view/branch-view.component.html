@@ -306,6 +306,23 @@
         </div>
       </mat-card-content>
     </mat-card>
+
+    <!-- Branch Attachments -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>attach_file</mat-icon>
+          Branch Attachments
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-universal-attachments
+          module="branch"
+          [moduleId]="branchId"
+          mode="view">
+        </app-universal-attachments>
+      </mat-card-content>
+    </mat-card>
   </div>
 </div>
 

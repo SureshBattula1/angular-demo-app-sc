@@ -480,3 +480,121 @@
     }
   }
 }
+
+// Profile Upload Row
+.profile-upload-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+// Circular Profile Picture
+.profile-picture-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  
+  // Inner container for image overflow
+  // Inner container for image
+  .profile-picture-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: var(--text-secondary);
+      
+      mat-icon {
+        font-size: 60px;
+        width: 60px;
+        height: 60px;
+      }
+    }
+  }
+  
+  .delete-profile-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f44336 !important;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #d32f2f !important;
+      transform: scale(1.1);
+    }
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+}
+
+// Profile Upload Button
+.profile-upload-button {
+  flex: 1;
+  
+  ::ng-deep {
+    .file-upload-container {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      min-height: auto !important;
+    }
+    
+    .file-upload-button {
+      padding: var(--spacing-sm) var(--spacing-md) !important;
+      background: var(--primary-color) !important;
+      color: white !important;
+      border-radius: var(--radius-sm) !important;
+      font-weight: 500 !important;
+      
+      &:hover {
+        background: var(--primary-dark) !important;
+      }
+    }
+  }
+}
