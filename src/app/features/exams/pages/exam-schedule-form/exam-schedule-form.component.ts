@@ -349,7 +349,7 @@ export class ExamScheduleFormComponent implements OnInit {
       error: (error) => this.errorHandler.showError(error)
     });
 
-    this.teacherService.getTeachers().subscribe({
+    this.teacherService.getTeachers({}).subscribe({
       next: (response) => {
         if (response.success) this.teachers = response.data || [];
       },

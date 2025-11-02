@@ -86,8 +86,7 @@ export class SectionListComponent implements OnInit {
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25,
-    addButtonPermission: 'sections.create',
-    exportButtonPermission: 'sections.export'
+    addButtonPermission: 'sections.create'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
