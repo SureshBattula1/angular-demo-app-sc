@@ -41,10 +41,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    font-size: 32px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
+      font-size: 32px;
+      font-weight: 700;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
   
   .view-info {
       flex: 1;
@@ -2053,4 +2054,30 @@
       gap: var(--spacing-sm);
     }
   }
+}
+
+// Student Profile Avatar Styling (matching branch logo styling)
+.student-profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+  border: 3px solid var(--primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.student-profile-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  width: 100%;
+  height: 100%;
+  color: white;
 }

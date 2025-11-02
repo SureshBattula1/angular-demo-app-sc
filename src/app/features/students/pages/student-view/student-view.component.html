@@ -22,7 +22,14 @@
     <mat-card-content>
       <div class="view-header">
         <div class="view-avatar">
-          <mat-icon class="avatar-icon">person</mat-icon>
+          <!-- Show profile picture if exists, otherwise show icon -->
+          <img *ngIf="showProfilePicture" 
+               [src]="profilePictureUrl" 
+               [alt]="getFullName()"
+               class="student-profile-avatar"
+               (load)="onImageLoad()"
+               (error)="onImageError()">
+          <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
         </div>
         <div class="view-info">
           <h1 class="view-name">{{ getFullName() }}</h1>

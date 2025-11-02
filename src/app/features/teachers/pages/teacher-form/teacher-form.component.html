@@ -28,7 +28,10 @@
             <!-- Circular Profile Picture -->
             <div class="profile-picture-circle">
               <div class="profile-picture-inner">
-                <img *ngIf="profilePicturePreview" [src]="profilePicturePreview" alt="Profile Picture">
+                <img *ngIf="profilePicturePreview" 
+                     [src]="profilePicturePreview" 
+                     alt="Profile Picture"
+                     (error)="onProfilePictureError()">
                 <div *ngIf="!profilePicturePreview" class="profile-placeholder">
                   <mat-icon>account_circle</mat-icon>
                 </div>

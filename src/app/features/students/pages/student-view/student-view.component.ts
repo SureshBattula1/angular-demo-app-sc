@@ -25,6 +25,8 @@ export class StudentViewComponent implements OnInit {
   student?: Student;
   isLoading = true;
   studentId!: number;
+  showProfilePicture = false;
+  profilePictureUrl = '';
   
   // Tab management
   selectedTabIndex = 0;
@@ -115,6 +117,20 @@ export class StudentViewComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.student = response.data;
+          
+          // Initialize profile picture
+          if (response.data.profile_picture) {
+            // The backend already returns a full URL, use it directly
+            this.profilePictureUrl = response.data.profile_picture;
+            this.showProfilePicture = true;
+          } else if (response.data.user?.avatar) {
+            // The backend already returns a full URL, use it directly
+            this.profilePictureUrl = response.data.user.avatar;
+            this.showProfilePicture = true;
+          } else {
+            this.showProfilePicture = false;
+          }
+          
           this.isLoading = false;
           
           // Load data after student is loaded
@@ -755,6 +771,20 @@ export class StudentViewComponent implements OnInit {
     if (percentage >= 60) return 'score-average';
     if (obtained >= passing) return 'score-pass';
     return 'score-fail';
+  }
+
+  /**
+   * Handle image load success
+   */
+  onImageLoad(): void {
+    this.showProfilePicture = true;
+  }
+
+  /**
+   * Handle image load error
+   */
+  onImageError(): void {
+    this.showProfilePicture = false;
   }
 
   /**

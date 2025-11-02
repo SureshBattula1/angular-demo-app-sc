@@ -21,6 +21,7 @@ export class BranchViewComponent implements OnInit {
   stats?: BranchStats;
   isLoading = true;
   branchId!: number;
+  showLogo = false;
 
   // Permission checks
   canEdit = false;
@@ -57,6 +58,8 @@ export class BranchViewComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.branch = response.data;
+          // Check if branch has a logo
+          this.showLogo = !!(this.branch.logo && this.getLogoUrl());
           this.isLoading = false;
         }
       },
@@ -165,17 +168,26 @@ export class BranchViewComponent implements OnInit {
     // Construct full URL from logo path - storage is served from public directory
     // Remove /api from the base URL for storage
     const baseUrl = environment.apiUrl.replace('/api', '');
-    return `${baseUrl}/storage/${this.branch.logo}`;
+    const fullUrl = `${baseUrl}/storage/${this.branch.logo}`;
+    
+    return fullUrl;
+  }
+
+  /**
+   * Handle image load success
+   */
+  onImageLoad(): void {
+    this.showLogo = true;
   }
 
   /**
    * Handle image load error
    */
   onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    if (img) {
-      img.style.display = 'none';
-    }
+    console.error('Failed to load branch logo:', this.getLogoUrl());
+    console.error('Image error event:', event);
+    // Hide image and show icon instead
+    this.showLogo = false;
   }
 }
 

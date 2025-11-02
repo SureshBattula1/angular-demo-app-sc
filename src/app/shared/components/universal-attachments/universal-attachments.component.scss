@@ -210,13 +210,13 @@
   align-items: center;
   gap: var(--spacing-md, 16px);
   padding: var(--spacing-md, 16px);
-  background: var(--primary-light, #e3f2fd);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   
   .attachment-type-icon {
     font-size: 36px;
     width: 36px;
     height: 36px;
-    color: var(--primary-color, #1976d2);
+    color: white !important;
   }
   
   .attachment-title {
@@ -226,13 +226,13 @@
       display: block;
       font-weight: 600;
       font-size: 16px;
-      color: var(--text-primary, #333);
+      color: white;
       margin-bottom: 4px;
     }
     
     .attachment-size {
       font-size: 12px;
-      color: var(--text-secondary, #666);
+      color: rgba(255, 255, 255, 0.9);
     }
     
     .pending-badge {

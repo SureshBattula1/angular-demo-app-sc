@@ -9,6 +9,7 @@ import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FileUploadService } from '../../../../core/services/file-upload.service';
 import { Branch } from '../../../../core/models/branch.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-branch-form',
@@ -25,6 +26,7 @@ export class BranchFormComponent implements OnInit {
   branchId?: number;
   currentBranch?: Branch;
   logoUrl?: string;
+  currentLogoUrl?: string;
   
   // For attachments - will be set after branch is created/updated
   attachmentModuleId: number | null = null;
@@ -134,8 +136,17 @@ export class BranchFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.currentBranch = response.data;
+          
           this.branchForm.patchValue(response.data);
           this.logoUrl = response.data.logo; // Set logo URL if exists
+          
+          // Set full logo URL for preview
+          if (response.data.logo) {
+            this.currentLogoUrl = this.getFullLogoUrl(response.data.logo);
+          } else {
+            this.currentLogoUrl = undefined;
+          }
+          
           this.attachmentModuleId = id; // Set module ID for attachments
           this.isLoading = false;
         }
@@ -151,11 +162,53 @@ export class BranchFormComponent implements OnInit {
   onLogoUploaded(event: any): void {
     this.logoUrl = event.file_path;
     this.branchForm.patchValue({ logo: event.file_path });
+    // Update current logo preview
+    this.currentLogoUrl = this.getFullLogoUrl(event.file_path);
     this.errorHandler.showSuccess('Logo uploaded successfully');
   }
 
   onLogoUploadError(error: string): void {
     this.errorHandler.showError(error);
+  }
+
+  /**
+   * Get full URL for logo display
+   */
+  getFullLogoUrl(logoPath: string): string {
+    if (!logoPath) {
+      return '';
+    }
+    
+    // If already a full URL, return as is
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+    
+    // Construct full URL - remove /api from base URL
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const fullUrl = `${baseUrl}/storage/${logoPath}`;
+    
+    return fullUrl;
+  }
+
+  /**
+   * Remove current logo
+   */
+  removeLogo(): void {
+    if (confirm('Are you sure you want to remove the current logo?')) {
+      this.currentLogoUrl = undefined;
+      this.logoUrl = undefined;
+      this.branchForm.patchValue({ logo: null });
+      this.errorHandler.showSuccess('Logo will be removed when you save');
+    }
+  }
+
+  /**
+   * Handle logo preview error
+   */
+  onLogoPreviewError(): void {
+    console.error('Failed to load logo preview');
+    this.currentLogoUrl = undefined;
   }
 
   private loadParentBranches(): void {

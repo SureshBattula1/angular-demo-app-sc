@@ -10,6 +10,7 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 import { Teacher, TeacherFormData } from '../../../../core/models/teacher.model';
 import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
 import { FileUploadService } from '../../../../core/services/file-upload.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-teacher-form',
@@ -336,6 +337,7 @@ export class TeacherFormComponent implements OnInit {
           
           // Load profile picture preview if exists
           if (teacher.profile_picture) {
+            // The backend already returns a full URL, use it directly
             this.profilePicturePreview = teacher.profile_picture;
           }
           
@@ -774,7 +776,8 @@ export class TeacherFormComponent implements OnInit {
         if (uploadResponse.success && uploadResponse.data?.file_path) {
           // Store the file path in the form
           this.teacherForm.get('profile_picture')?.setValue(uploadResponse.data.file_path);
-          this.profilePicturePreview = uploadResponse.data.file_path;
+          // Use the file_url from the upload response for preview
+          this.profilePicturePreview = uploadResponse.data.file_url || this.getFullImageUrl(uploadResponse.data.file_path);
           
           // Update teacher record with the new path
           const updateData = { profile_picture: uploadResponse.data.file_path };
@@ -876,6 +879,41 @@ export class TeacherFormComponent implements OnInit {
     const currentLanguages = this.teacherForm.get('languages_known')?.value || [];
     const updatedLanguages = currentLanguages.filter((lang: string) => lang !== language);
     this.teacherForm.get('languages_known')?.setValue(updatedLanguages);
+  }
+
+  /**
+   * Get full URL for image display
+   */
+  getFullImageUrl(imagePath: string): string {
+    if (!imagePath) {
+      return '';
+    }
+    
+    // If already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // If it's a data URL (base64), return as is
+    if (imagePath.startsWith('data:')) {
+      return imagePath;
+    }
+    
+    // Remove storage/ prefix if it exists (we'll add it back)
+    imagePath = imagePath.replace(/^storage\//, '');
+    
+    // Construct full URL - remove /api from base URL
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const fullUrl = `${baseUrl}/storage/${imagePath}`;
+    
+    return fullUrl;
+  }
+
+  /**
+   * Handle image preview error
+   */
+  onProfilePictureError(): void {
+    this.profilePicturePreview = null;
   }
 
   // Copy permanent address to current address

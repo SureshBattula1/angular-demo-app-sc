@@ -11,6 +11,7 @@ import { AttendanceService } from '../../../attendance/services/attendance.servi
 import { LeaveService } from '../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-teacher-view',
@@ -23,6 +24,8 @@ export class TeacherViewComponent implements OnInit {
   teacher: Teacher | null = null;
   isLoading = false;
   teacherId!: number;
+  showProfilePicture = false;
+  profilePictureUrl = '';
   
   // Tab management
   selectedTabIndex = 0;
@@ -110,6 +113,20 @@ export class TeacherViewComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.teacher = response.data;
+          
+          // Initialize profile picture
+          if (response.data.profile_picture) {
+            // The backend already returns a full URL, use it directly
+            this.profilePictureUrl = response.data.profile_picture;
+            this.showProfilePicture = true;
+          } else if (response.data.user?.avatar) {
+            // The backend already returns a full URL, use it directly
+            this.profilePictureUrl = response.data.user.avatar;
+            this.showProfilePicture = true;
+          } else {
+            this.showProfilePicture = false;
+          }
+          
           this.isLoading = false;
           
           // Load attendance after teacher data is loaded
@@ -125,6 +142,43 @@ export class TeacherViewComponent implements OnInit {
         this.router.navigate(['/teachers']);
       }
     });
+  }
+
+  /**
+   * Get full URL for image display
+   */
+  getFullImageUrl(imagePath: string): string {
+    if (!imagePath) {
+      return '';
+    }
+    
+    // If already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // Remove storage/ prefix if it exists (we'll add it back)
+    imagePath = imagePath.replace(/^storage\//, '');
+    
+    // Construct full URL - remove /api from base URL
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const fullUrl = `${baseUrl}/storage/${imagePath}`;
+    
+    return fullUrl;
+  }
+
+  /**
+   * Handle image load success
+   */
+  onImageLoad(): void {
+    this.showProfilePicture = true;
+  }
+
+  /**
+   * Handle image load error
+   */
+  onImageError(): void {
+    this.showProfilePicture = false;
   }
 
   getFullName(): string {

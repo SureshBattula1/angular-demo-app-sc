@@ -284,11 +284,33 @@
             Branch Logo
           </h3>
           
+          <!-- Current Logo Preview (Edit Mode) -->
+          <div *ngIf="isEditMode && currentLogoUrl" class="current-logo-preview">
+            <div class="preview-card">
+              <div class="preview-header">
+                <span class="preview-label">
+                  <mat-icon>image</mat-icon>
+                  Current Logo
+                </span>
+                <button mat-icon-button color="warn" (click)="removeLogo()" type="button" matTooltip="Remove logo">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <div class="preview-image-container">
+                <img [src]="currentLogoUrl" 
+                     [alt]="branchForm.get('name')?.value + ' logo'" 
+                     class="preview-image"
+                     (error)="onLogoPreviewError()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload New Logo -->
           <div class="logo-upload-section">
             <app-file-upload
               fileType="logo"
               module="branch"
-              label="Upload Branch Logo"
+              [label]="isEditMode && currentLogoUrl ? 'Replace Branch Logo' : 'Upload Branch Logo'"
               icon="image"
               [config]="{
                 maxSize: 1,

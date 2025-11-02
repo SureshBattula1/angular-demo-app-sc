@@ -34,16 +34,14 @@
   <mat-card class="view-header-card">
     <div class="view-header">
       <div class="view-avatar">
-        <img *ngIf="teacher.profile_picture || teacher.user?.avatar" 
-             [src]="teacher.profile_picture || teacher.user?.avatar" 
-             alt="{{ getFullName() }}"
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-        <div class="avatar-fallback" style="display: none;">
-          {{ getFullName().charAt(0).toUpperCase() }}
-        </div>
-        <div *ngIf="!teacher.profile_picture && !teacher.user?.avatar" class="avatar-fallback">
-          {{ getFullName().charAt(0).toUpperCase() }}
-        </div>
+        <!-- Show profile picture if exists, otherwise show initials -->
+        <img *ngIf="showProfilePicture" 
+             [src]="profilePictureUrl" 
+             [alt]="getFullName()"
+             class="teacher-profile-avatar"
+             (load)="onImageLoad()"
+             (error)="onImageError()">
+        <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
       </div>
       <div class="view-info">
         <h1 class="view-name">{{ getFullName() }}</h1>
