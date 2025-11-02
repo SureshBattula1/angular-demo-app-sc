@@ -79,19 +79,11 @@ export class PermissionService {
 
   /**
    * Check if user has a specific permission
+   * NO CACHING - Checks against loaded permissions from API
    */
   hasPermission(permission: string): boolean {
     const permissions = this.userPermissions();
-    
-    const has = permissions.includes(permission);
-    
-    console.log(`📋 Permission Check: "${permission}" = ${has ? '✅ GRANTED' : '❌ DENIED'}`, {
-      has,
-      allPermissions: permissions.length,
-      samplePermissions: permissions.slice(0, 5)
-    });
-    
-    return has;
+    return permissions.includes(permission);
   }
 
   /**
@@ -159,17 +151,9 @@ export class PermissionService {
 
   /**
    * Set user permissions
+   * Stores in memory (Signal) and localStorage for persistence
    */
   private setPermissions(permissions: string[]): void {
-    // Log for debugging
-    console.log('🎯 === PERMISSION SYSTEM - LOADING ===');
-    console.log('✅ Loaded user permissions:', permissions);
-    console.log('📊 Total permissions:', permissions.length);
-    console.log('📝 All permissions:', JSON.stringify(permissions, null, 2));
-    
-    // Clear old permissions from localStorage to avoid caching issues
-    localStorage.removeItem(this.PERMISSIONS_KEY);
-    
     this.userPermissions.set(permissions);
     this.permissionsSubject.next(permissions);
     localStorage.setItem(this.PERMISSIONS_KEY, JSON.stringify(permissions));

@@ -187,17 +187,33 @@ export class UserPermissionsComponent implements OnInit {
       return;
     }
 
-    const permissionsToSave = modifiedPermissions.map(p => ({
-      permission_id: p.id,
-      granted: p.granted
-    }));
+    // Only save permissions that are different from role permissions (overrides)
+    // This includes both additions (granted=true) and removals (granted=false)
+    const permissionOverrides = modifiedPermissions
+      .filter(p => {
+        // Save if:
+        // 1. User granted but NOT from role (addition)
+        // 2. User denied but IS from role (removal)
+        return (p.granted && !p.from_role) || (!p.granted && p.from_role);
+      })
+      .map(p => ({
+        permission_id: p.id,
+        granted: p.granted  // true = grant override, false = revoke override
+      }));
+
+    if (permissionOverrides.length === 0) {
+      this.errorHandler.showError('No permission overrides to save. Changes match role permissions.');
+      return;
+    }
 
     this.isSaving = true;
-    this.userService.updateUserPermissions(this.userId, permissionsToSave).subscribe({
+    this.userService.updateUserPermissions(this.userId, permissionOverrides).subscribe({
       next: (response) => {
         if (response.success) {
-          this.errorHandler.showSuccess('Permissions updated successfully');
-          this.loadUserPermissions(); // Reload to get fresh state
+          this.errorHandler.showSuccess(
+            `Permission overrides saved successfully! (${permissionOverrides.length} override(s))`
+          );
+          this.loadUserPermissions(); // Reload to get fresh state from server
         }
         this.isSaving = false;
       },
