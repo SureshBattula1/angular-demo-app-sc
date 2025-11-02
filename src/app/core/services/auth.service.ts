@@ -154,10 +154,10 @@ export class AuthService {
   }
 
   /**
-   * Reset password
+   * Reset password with token
    */
-  resetPassword(token: string, password: string, password_confirmation: string): Observable<ApiResponse> {
-    return this.apiService.post('/reset-password', { token, password, password_confirmation });
+  resetPassword(data: { token: string, password: string, password_confirmation: string }): Observable<ApiResponse> {
+    return this.apiService.post('/reset-password', data);
   }
 
   /**

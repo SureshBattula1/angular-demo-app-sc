@@ -19,6 +19,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   hidePassword = true;
   returnUrl = '/dashboard';
+  currentYear = new Date().getFullYear();
 
   constructor(
     private fb: FormBuilder,

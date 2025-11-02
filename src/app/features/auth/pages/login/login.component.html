@@ -81,30 +81,12 @@
         <span *ngIf="!isLoading">Sign In</span>
         <span *ngIf="isLoading">Signing In...</span>
       </button>
-
-      <!-- Divider -->
-      <div class="divider">
-        <span>OR</span>
-      </div>
-
-      <!-- Register Link -->
-      <div class="register-section">
-        <p class="register-text">Don't have an account?</p>
-        <button 
-          type="button" 
-          mat-stroked-button 
-          color="primary" 
-          (click)="navigateToRegister()"
-          class="register-btn w-100"
-        >
-          Create Account
-        </button>
-      </div>
+   
     </form>
 
     <!-- Footer -->
     <div class="login-footer">
-      <p>&copy; 2024 School Management System. All rights reserved.</p>
+      <p>&copy; {{ currentYear }} School Management System. All rights reserved.</p>
     </div>
   </div>
 
