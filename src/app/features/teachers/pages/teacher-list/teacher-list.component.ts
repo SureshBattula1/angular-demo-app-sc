@@ -9,6 +9,7 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { DepartmentService } from '../../../departments/services/department.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Teacher } from '../../../../core/models/teacher.model';
 
 @Component({
@@ -56,9 +57,26 @@ export class TeacherListComponent implements OnInit {
       { key: 'user.is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewTeacher(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTeacher(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteTeacher(row) }
+      { 
+        icon: 'visibility', 
+        label: 'View Details', 
+        action: (row) => this.viewTeacher(row),
+        permission: 'teachers.view'
+      },
+      { 
+        icon: 'edit', 
+        label: 'Edit', 
+        color: 'primary', 
+        action: (row) => this.editTeacher(row),
+        permission: 'teachers.edit'
+      },
+      { 
+        icon: 'delete', 
+        label: 'Delete', 
+        color: 'warn', 
+        action: (row) => this.deleteTeacher(row),
+        permission: 'teachers.delete'
+      }
     ],
     selectable: true,
     pagination: true,
@@ -69,7 +87,8 @@ export class TeacherListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'teachers.create'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -174,7 +193,8 @@ export class TeacherListComponent implements OnInit {
     private departmentService: DepartmentService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private permissionService: PermissionService
   ) {}
   
   ngOnInit(): void {
@@ -308,7 +328,11 @@ export class TeacherListComponent implements OnInit {
   
   onAction(event: { action: string, row: Teacher | null }): void {
     if (event.action === 'add') {
-      this.router.navigate(['/teachers/create']);
+      if (this.permissionService.hasPermission('teachers.create')) {
+        this.router.navigate(['/teachers/create']);
+      } else {
+        this.errorHandler.showError('You do not have permission to create teachers');
+      }
     }
   }
   
@@ -346,6 +370,12 @@ export class TeacherListComponent implements OnInit {
   }
   
   onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Check permission before exporting
+    if (!this.permissionService.hasPermission('teachers.export')) {
+      this.errorHandler.showError('You do not have permission to export teachers');
+      return;
+    }
+    
     // Show loading state
     this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
     

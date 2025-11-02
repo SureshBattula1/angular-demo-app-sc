@@ -6,15 +6,24 @@
       Back to List
     </button>
     <div class="action-buttons">
-      <button mat-raised-button color="primary" (click)="onEdit()">
+      <button 
+        *ngIf="canEdit"
+        mat-raised-button 
+        color="primary" 
+        (click)="onEdit()">
         <mat-icon>edit</mat-icon>
         Edit
       </button>
-      <button mat-raised-button color="warn" (click)="onDelete()">
+      <button 
+        *ngIf="canDelete"
+        mat-raised-button 
+        color="warn" 
+        (click)="onDelete()">
         <mat-icon>delete</mat-icon>
         Delete
       </button>
       <mat-slide-toggle 
+        *ngIf="canEdit"
         [checked]="branch.is_active" 
         (change)="toggleStatus()"
         color="primary"

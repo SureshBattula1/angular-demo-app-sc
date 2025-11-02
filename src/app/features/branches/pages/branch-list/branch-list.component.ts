@@ -8,6 +8,7 @@ import { AdvancedSearchConfig } from '../../../../shared/components/advanced-sea
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Branch } from '../../../../core/models/branch.model';
 import { environment } from '../../../../../environments/environment';
 
@@ -117,25 +118,29 @@ export class BranchListComponent implements OnInit {
       {
         icon: 'visibility',
         label: 'View Details',
-        action: (row) => this.viewBranch(row)
+        action: (row) => this.viewBranch(row),
+        permission: 'branches.view'
       },
       {
         icon: 'edit',
         label: 'Edit',
         color: 'primary',
-        action: (row) => this.editBranch(row)
+        action: (row) => this.editBranch(row),
+        permission: 'branches.edit'
       },
       {
         icon: 'bar_chart',
         label: 'Statistics',
         color: 'accent',
-        action: (row) => this.viewStats(row)
+        action: (row) => this.viewStats(row),
+        permission: 'branches.stats'
       },
       {
         icon: 'delete',
         label: 'Delete',
         color: 'warn',
-        action: (row) => this.deleteBranch(row)
+        action: (row) => this.deleteBranch(row),
+        permission: 'branches.delete'
       }
     ],
     selectable: true,
@@ -147,7 +152,8 @@ export class BranchListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'branches.create'
   };
   
   // Advanced Search Configuration
@@ -276,7 +282,8 @@ export class BranchListComponent implements OnInit {
     private router: Router,
     private dialog: MatDialog,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private permissionService: PermissionService
   ) {}
   
   ngOnInit(): void {
@@ -362,10 +369,13 @@ export class BranchListComponent implements OnInit {
   }
   
   onAction(event: { action: string, row: Branch | null }): void {
-    
     // Handle add action
     if (event.action === 'add') {
-      this.router.navigate(['/branches/create']);
+      if (this.permissionService.hasPermission('branches.create')) {
+        this.router.navigate(['/branches/create']);
+      } else {
+        this.errorHandler.showError('You do not have permission to create branches');
+      }
     }
   }
   
@@ -459,6 +469,12 @@ export class BranchListComponent implements OnInit {
    * Export branches
    */
   onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Check permission before exporting
+    if (!this.permissionService.hasPermission('branches.export')) {
+      this.errorHandler.showError('You do not have permission to export branches');
+      return;
+    }
+    
     // Show loading message
     this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
     

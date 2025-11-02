@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Branch, BranchStats } from '../../../../core/models/branch.model';
 import { environment } from '../../../../../environments/environment';
 import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
@@ -21,12 +22,23 @@ export class BranchViewComponent implements OnInit {
   isLoading = true;
   branchId!: number;
 
+  // Permission checks
+  canEdit = false;
+  canDelete = false;
+  canViewStats = false;
+
   constructor(
     private branchService: BranchService,
     private route: ActivatedRoute,
     private router: Router,
-    private errorHandler: ErrorHandlerService
-  ) {}
+    private errorHandler: ErrorHandlerService,
+    private permissionService: PermissionService
+  ) {
+    // Check permissions
+    this.canEdit = this.permissionService.hasPermission('branches.edit');
+    this.canDelete = this.permissionService.hasPermission('branches.delete');
+    this.canViewStats = this.permissionService.hasPermission('branches.stats');
+  }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -69,10 +81,19 @@ export class BranchViewComponent implements OnInit {
   }
 
   onEdit(): void {
+    if (!this.canEdit) {
+      this.errorHandler.showError('You do not have permission to edit branches');
+      return;
+    }
     this.router.navigate(['/branches/edit', this.branchId]);
   }
 
   onDelete(): void {
+    if (!this.canDelete) {
+      this.errorHandler.showError('You do not have permission to delete branches');
+      return;
+    }
+    
     if (confirm(`Are you sure you want to delete branch "${this.branch?.name}"?`)) {
       this.branchService.deleteBranch(this.branchId).subscribe({
         next: (response) => {

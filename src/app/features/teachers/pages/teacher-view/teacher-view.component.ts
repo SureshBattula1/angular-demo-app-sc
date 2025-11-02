@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { TeacherService } from '../../services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Teacher } from '../../../../core/models/teacher.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { LeaveService } from '../../../leaves/services/leave.service';
@@ -55,18 +56,27 @@ export class TeacherViewComponent implements OnInit {
   leavesSummary?: LeaveSummary;
   leavesLoading = false;
 
+  // Permission checks
+  hasEditPermission = false;
+  hasDeletePermission = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private teacherService: TeacherService,
     private attendanceService: AttendanceService,
     private leaveService: LeaveService,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private permissionService: PermissionService
   ) {
     // Initialize date filters to current month
     const now = new Date();
     this.filterStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
     this.filterEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    // Check permissions
+    this.hasEditPermission = this.permissionService.hasPermission('teachers.edit');
+    this.hasDeletePermission = this.permissionService.hasPermission('teachers.delete');
   }
 
   ngOnInit(): void {
@@ -168,10 +178,19 @@ export class TeacherViewComponent implements OnInit {
   }
 
   onEdit(): void {
+    if (!this.hasEditPermission) {
+      this.errorHandler.showError('You do not have permission to edit teachers');
+      return;
+    }
     this.router.navigate(['/teachers/edit', this.teacherId]);
   }
 
   onDelete(): void {
+    if (!this.hasDeletePermission) {
+      this.errorHandler.showError('You do not have permission to delete teachers');
+      return;
+    }
+    
     const teacherName = this.getFullName();
     if (confirm(`Are you sure you want to delete teacher "${teacherName}"?`)) {
       this.teacherService.deleteTeacher(this.teacherId).subscribe({
