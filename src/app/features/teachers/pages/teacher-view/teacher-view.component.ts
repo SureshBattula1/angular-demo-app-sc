@@ -27,8 +27,9 @@ export class TeacherViewComponent implements OnInit {
   showProfilePicture = false;
   profilePictureUrl = '';
   
-  // Tab management
-  selectedTabIndex = 0;
+  // Menu management
+  activeMenu: 'info' | 'attendance' | 'leaves' = 'info';
+  loadedMenus = new Set<string>(['info']); // Track which menus have been loaded
   
   // Attendance data
   attendanceStats = {
@@ -87,22 +88,33 @@ export class TeacherViewComponent implements OnInit {
       if (params['id']) {
         this.teacherId = +params['id'];
         this.loadTeacher();
-        this.loadAttendanceData();
+        // Don't load attendance automatically - wait for user interaction
       }
     });
   }
   
-  onTabChange(index: number): void {
-    this.selectedTabIndex = index;
+  /**
+   * Handle menu click - implement lazy loading
+   * Only load data when user clicks on a menu item for the first time
+   */
+  onMenuClick(menu: 'info' | 'attendance' | 'leaves'): void {
+    this.activeMenu = menu;
     
-    // Load attendance data when tab is selected (index 1)
-    if (index === 1 && this.recentAttendance.length === 0) {
-      this.loadAttendanceData();
-    }
-    
-    // Load leaves data when tab is selected (index 2)
-    if (index === 2 && this.teacherLeaves.length === 0) {
-      this.loadLeavesData();
+    // Lazy load data only if not already loaded
+    if (!this.loadedMenus.has(menu)) {
+      this.loadedMenus.add(menu);
+      
+      switch(menu) {
+        case 'attendance':
+          this.loadAttendanceData();
+          break;
+        case 'leaves':
+          this.loadLeavesData();
+          break;
+        case 'info':
+          // Info is always loaded with teacher data
+          break;
+      }
     }
   }
 
@@ -129,11 +141,8 @@ export class TeacherViewComponent implements OnInit {
           
           this.isLoading = false;
           
-          // Load attendance after teacher data is loaded
-          // This ensures we have the user_id available
-          if (this.selectedTabIndex === 1) {
-            this.loadAttendanceData();
-          }
+          // Don't auto-load attendance or leaves
+          // They will be loaded when user clicks on the menu
         }
       },
       error: (error) => {

@@ -1,0 +1,151 @@
+// Teacher Info Grid
+.teacher-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-md);
+  
+  .detail-card {
+    background: var(--card-background);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    
+    ::ng-deep .mat-mdc-card-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      padding: var(--spacing-md) var(--spacing-lg);
+      margin: calc(var(--spacing-md) * -1);
+      margin-bottom: var(--spacing-md);
+      overflow: hidden;
+      
+      .mat-mdc-card-title {
+        color: white;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        word-wrap: break-word;
+        max-width: 100%;
+        padding-top: 15px;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          color: white;
+          flex-shrink: 0;
+        }
+      }
+    }
+    
+    ::ng-deep .mat-mdc-card-content {
+      padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--spacing-xs) 0;
+      border-bottom: 1px solid var(--divider-color);
+      gap: var(--spacing-md);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .detail-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      
+      .detail-value {
+        color: var(--text-primary);
+        font-size: 13px;
+        font-weight: 500;
+        text-align: right;
+        
+        .badge {
+          display: inline-block;
+          padding: 2px 8px;
+          border-radius: var(--radius-full);
+          font-size: 11px;
+          font-weight: 600;
+          
+          &.category-teaching {
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+          }
+          
+          &.category-non-teaching {
+            background: rgba(var(--info-rgb), 0.1);
+            color: var(--info-color);
+            border: 1px solid var(--info-color);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Override universal-attachments styling
+::ng-deep .uploaded-attachments-section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}
+
+// Mobile responsive
+@media (max-width: 768px) {
+  .teacher-info-grid {
+    grid-template-columns: 1fr;
+    
+    .detail-card {
+      ::ng-deep .mat-mdc-card-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+        overflow: hidden;
+        
+        .mat-mdc-card-title {
+          font-size: 14px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+          }
+        }
+      }
+      
+      ::ng-deep .mat-mdc-card-content {
+        padding: var(--spacing-sm) var(--spacing-md);
+      }
+      
+      .detail-row {
+        flex-direction: column;
+        gap: 4px;
+        padding: var(--spacing-xs) 0;
+        
+        .detail-label {
+          font-size: 11px;
+          text-align: left;
+        }
+        
+        .detail-value {
+          font-size: 12px;
+          text-align: left;
+        }
+      }
+    }
+  }
+}
+

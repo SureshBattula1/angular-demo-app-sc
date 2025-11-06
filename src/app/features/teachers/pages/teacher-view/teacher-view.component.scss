@@ -77,31 +77,78 @@
   }
 }
 
-// Tabs
-::ng-deep .teacher-tabs {
-  .mat-mdc-tab-group {
-    background: var(--card-background);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
+// Toolbar Navigation
+.teacher-toolbar {
+  background: linear-gradient(to right, var(--gray-50), var(--gray-100));
+  border-top: 1px solid var(--divider-color);
+  padding: 0 !important;
+  min-height: 56px;
+  height: 56px;
+  display: flex;
+  gap: 0;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.05);
   
-  .mat-mdc-tab-header { border-bottom: 1px solid var(--divider-color); }
-  
-  .mat-mdc-tab .mat-mdc-tab-label {
+  .toolbar-menu-item {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    font-weight: 600;
+    padding: 0 var(--spacing-xl);
+    height: 56px;
+    border-radius: 0;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all var(--transition-fast);
+    position: relative;
     
     mat-icon {
       font-size: 20px;
       width: 20px;
       height: 20px;
+      color: var(--text-secondary);
+      transition: color var(--transition-fast);
+    }
+    
+    &:hover:not(.active) {
+      background: rgba(var(--primary-rgb), 0.05);
+      color: var(--primary-color);
+      
+      mat-icon {
+        color: var(--primary-color);
+      }
+    }
+    
+    &.active {
+      background: white;
+      color: var(--primary-color);
+      font-weight: 700;
+      border-bottom-color: var(--primary-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      
+      mat-icon {
+        color: var(--primary-color);
+      }
     }
   }
 }
 
-.tab-content { padding: var(--spacing-md); }
+.menu-content { 
+  padding: var(--spacing-md); 
+  background: white;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 // Teacher Info Grid (supports old mat-card structure)
 .teacher-info-grid {
@@ -114,12 +161,14 @@
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
+    overflow: hidden;
     
     ::ng-deep .mat-mdc-card-header {
       background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
       padding: var(--spacing-md) var(--spacing-lg);
       margin: calc(var(--spacing-md) * -1);
       margin-bottom: var(--spacing-md);
+      overflow: hidden;
       
       .mat-mdc-card-title {
         color: white;
@@ -128,12 +177,19 @@
         display: flex;
         align-items: center;
         gap: var(--spacing-sm);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        word-wrap: break-word;
+        max-width: 100%;
+        padding-top: 15px;
         
         mat-icon {
           font-size: 20px;
           width: 20px;
           height: 20px;
           color: white;
+          flex-shrink: 0;
         }
       }
     }
@@ -262,6 +318,7 @@
         background: rgba(255, 255, 255, 0.1);
         border-radius: var(--radius-sm);
         backdrop-filter: blur(10px);
+        min-width: 200px;
         transition: all var(--transition-fast);
         
         &:hover {
@@ -605,14 +662,19 @@
     .detail-card {
       ::ng-deep .mat-mdc-card-header {
         padding: var(--spacing-sm) var(--spacing-md);
+        overflow: hidden;
         
         .mat-mdc-card-title {
           font-size: 14px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
           
           mat-icon {
             font-size: 18px;
             width: 18px;
             height: 18px;
+            flex-shrink: 0;
           }
         }
       }
@@ -788,11 +850,13 @@
     }
   }
   
-  // Tab labels - icon only on mobile
-  ::ng-deep .teacher-tabs {
-    .mat-mdc-tab .mat-mdc-tab-label {
-      min-width: 60px;
+  // Toolbar menu - icon only on mobile
+  .teacher-toolbar {
+    .toolbar-menu-item {
+      flex: 1;
       padding: 0 var(--spacing-sm);
+      min-width: 0;
+      justify-content: center;
       
       span {
         display: none;
@@ -1075,4 +1139,11 @@
   width: 100%;
   height: 100%;
   color: white;
+}
+
+// Override universal-attachments styling in teacher view
+::ng-deep .uploaded-attachments-section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
 }

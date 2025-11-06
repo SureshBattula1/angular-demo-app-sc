@@ -1,0 +1,188 @@
+<!-- Professional Teacher Information Layout -->
+<div class="teacher-info-grid">
+  <!-- Personal Information -->
+  <mat-card class="detail-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>person</mat-icon>
+        Personal Information
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="detail-row" *ngIf="teacher.title">
+        <span class="detail-label">Title:</span>
+        <span class="detail-value">{{ teacher.title }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Full Name:</span>
+        <span class="detail-value">{{ getFullName() }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.preferred_name">
+        <span class="detail-label">Preferred Name:</span>
+        <span class="detail-value">{{ teacher.preferred_name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Email:</span>
+        <span class="detail-value">{{ teacher.user?.email || teacher.email }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.alternate_email">
+        <span class="detail-label">Alternate Email:</span>
+        <span class="detail-value">{{ teacher.alternate_email }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Phone:</span>
+        <span class="detail-value">{{ teacher.user?.phone || teacher.phone || 'N/A' }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.alternate_phone">
+        <span class="detail-label">Alternate Phone:</span>
+        <span class="detail-value">{{ teacher.alternate_phone }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.whatsapp_number">
+        <span class="detail-label">WhatsApp:</span>
+        <span class="detail-value">{{ teacher.whatsapp_number }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date of Birth:</span>
+        <span class="detail-value">{{ teacher.date_of_birth | date }} (Age: {{ getAge() }})</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.place_of_birth">
+        <span class="detail-label">Place of Birth:</span>
+        <span class="detail-value">{{ teacher.place_of_birth }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Gender:</span>
+        <span class="detail-value">{{ teacher.gender }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.blood_group">
+        <span class="detail-label">Blood Group:</span>
+        <span class="detail-value">{{ teacher.blood_group }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.nationality">
+        <span class="detail-label">Nationality:</span>
+        <span class="detail-value">{{ teacher.nationality }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.religion">
+        <span class="detail-label">Religion:</span>
+        <span class="detail-value">{{ teacher.religion }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.mother_tongue">
+        <span class="detail-label">Mother Tongue:</span>
+        <span class="detail-value">{{ teacher.mother_tongue }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.languages_known && teacher.languages_known.length > 0">
+        <span class="detail-label">Languages Known:</span>
+        <span class="detail-value">
+          <mat-chip-set>
+            <mat-chip *ngFor="let lang of teacher.languages_known">{{ lang }}</mat-chip>
+          </mat-chip-set>
+        </span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Professional Information -->
+  <mat-card class="detail-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>school</mat-icon>
+        Professional Information
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="detail-row">
+        <span class="detail-label">Employee ID:</span>
+        <span class="detail-value">{{ teacher.employee_id }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Category Type:</span>
+        <span class="detail-value">
+          <span class="badge" [ngClass]="getCategoryColor(teacher.category_type)">
+            {{ teacher.category_type }}
+          </span>
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Designation:</span>
+        <span class="detail-value">{{ teacher.designation }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.department">
+        <span class="detail-label">Department:</span>
+        <span class="detail-value">{{ teacher.department.name }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.branch">
+        <span class="detail-label">Branch:</span>
+        <span class="detail-value">{{ teacher.branch.name }} ({{ teacher.branch.code }})</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.joining_date">
+        <span class="detail-label">Joining Date:</span>
+        <span class="detail-value">{{ teacher.joining_date | date }} ({{ getYearsOfService() }} years)</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.leaving_date">
+        <span class="detail-label">Leaving Date:</span>
+        <span class="detail-value">{{ teacher.leaving_date | date }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Employee Type:</span>
+        <span class="detail-value">{{ teacher.employee_type || 'N/A' }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.employment_status">
+        <span class="detail-label">Employment Status:</span>
+        <span class="detail-value">{{ teacher.employment_status }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.reporting_manager_id">
+        <span class="detail-label">Reporting Manager:</span>
+        <span class="detail-value">{{ teacher.reporting_manager_id }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.qualification">
+        <span class="detail-label">Qualification:</span>
+        <span class="detail-value">{{ teacher.qualification }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.specialization">
+        <span class="detail-label">Specialization:</span>
+        <span class="detail-value">{{ teacher.specialization }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.experience_years">
+        <span class="detail-label">Total Experience:</span>
+        <span class="detail-value">{{ teacher.experience_years }} years</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.teaching_experience_years">
+        <span class="detail-label">Teaching Experience:</span>
+        <span class="detail-value">{{ teacher.teaching_experience_years }} years</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.registration_number">
+        <span class="detail-label">Registration Number:</span>
+        <span class="detail-value">{{ teacher.registration_number }}</span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.subjects && teacher.subjects.length > 0">
+        <span class="detail-label">Subjects:</span>
+        <span class="detail-value">
+          <mat-chip-set>
+            <mat-chip *ngFor="let subject of teacher.subjects">{{ subject }}</mat-chip>
+          </mat-chip-set>
+        </span>
+      </div>
+      <div class="detail-row" *ngIf="teacher.is_class_teacher">
+        <span class="detail-label">Class Teacher:</span>
+        <span class="detail-value">Grade {{ teacher.class_teacher_of_grade }} - {{ teacher.class_teacher_of_section }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Teacher Attachments -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>attach_file</mat-icon>
+        Teacher Attachments
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <app-universal-attachments
+        module="teacher"
+        [moduleId]="teacher.id"
+        mode="view">
+      </app-universal-attachments>
+    </mat-card-content>
+  </mat-card>
+</div>
+
