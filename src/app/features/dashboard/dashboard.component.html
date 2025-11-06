@@ -2,7 +2,7 @@
   
   <!-- Dashboard Header with Date Range Selector -->
   <div class="dashboard-header">
-    <div class="header-content">
+    <!-- <div class="header-content">
       <div class="header-text">
         <h1 class="dashboard-title">Dashboard</h1>
         <p class="dashboard-subtitle" *ngIf="dashboardData?.period">
@@ -15,7 +15,7 @@
           <mat-icon>refresh</mat-icon>
         </button>
       </div>
-    </div>
+    </div> -->
     
     <!-- Filters Row: Branch + Date Range -->
     <div class="filters-container">
@@ -149,7 +149,7 @@
       </div>
       
       <!-- Fees Collected Card -->
-      <div class="stat-card warning">
+      <!-- <div class="stat-card warning">
         <div class="card-icon">
           <mat-icon>payments</mat-icon>
         </div>
@@ -160,14 +160,14 @@
             ₹{{ dashboardData.fees.total_pending | number:'1.0-0' }} Pending
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <!-- CHARTS SECTION - Responsive Grid -->
     <div class="charts-grid">
       
       <!-- Attendance by Grade & Section Chart -->
-      <mat-card class="chart-card full-width">
+      <!-- <mat-card class="chart-card full-width">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>school</mat-icon>
@@ -188,7 +188,7 @@
             <p>No attendance data available for the selected period</p>
           </div>
         </mat-card-content>
-      </mat-card>
+      </mat-card> -->
 
      
 
@@ -259,7 +259,7 @@
     </div>
 
     <!-- FEE COLLECTION BY CLASS & SECTION - Stacked Bar Chart (Full Width) -->
-    <mat-card class="chart-card full-width fee-by-class-card" *ngIf="feeByClassData">
+    <!-- <mat-card class="chart-card full-width fee-by-class-card" *ngIf="feeByClassData">
       <mat-card-header>
         <mat-card-title>
           <mat-icon>account_balance_wallet</mat-icon>
@@ -282,7 +282,7 @@
           <p>No fee data available by class</p>
         </div>
       </mat-card-content>
-    </mat-card>
+    </mat-card> -->
 
     <!-- QUICK STATS CARDS - Responsive Grid -->
     <div class="quick-stats-grid">
@@ -329,35 +329,6 @@
 
     </div>
 
-    <!-- QUICK ACTIONS - Responsive -->
-    <mat-card class="actions-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>bolt</mat-icon>
-          Quick Actions
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="action-buttons">
-          <button mat-raised-button color="primary" routerLink="/students/create">
-            <mat-icon>person_add</mat-icon>
-            <span>Add Student</span>
-          </button>
-          <button mat-raised-button color="accent" routerLink="/attendance">
-            <mat-icon>fact_check</mat-icon>
-            <span>Mark Attendance</span>
-          </button>
-          <button mat-raised-button routerLink="/fees">
-            <mat-icon>payment</mat-icon>
-            <span>Collect Fees</span>
-          </button>
-          <button mat-raised-button routerLink="/reports">
-            <mat-icon>assessment</mat-icon>
-            <span>View Reports</span>
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
 
   </div>
 </div>
