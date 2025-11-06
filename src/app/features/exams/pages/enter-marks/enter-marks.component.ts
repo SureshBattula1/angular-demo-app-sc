@@ -33,6 +33,7 @@ export class EnterMarksComponent implements OnInit {
   schedule: any = null;
   students: StudentMark[] = [];
   marksForm!: FormGroup;
+  returnTab?: string;
   
   // Statistics
   totalStudents = 0;
@@ -55,6 +56,7 @@ export class EnterMarksComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       this.scheduleId = +params['schedule_id'];
+      this.returnTab = params['returnTab'] || 'schedules';
       if (this.scheduleId) {
         this.loadScheduleData();
       }
@@ -377,7 +379,7 @@ export class EnterMarksComponent implements OnInit {
   }
 
   onBack(): void {
-    this.router.navigate(['/exams'], { queryParams: { tab: 'schedules' } });
+    this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 }
 

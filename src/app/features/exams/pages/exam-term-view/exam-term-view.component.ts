@@ -17,6 +17,7 @@ export class ExamTermViewComponent implements OnInit {
   term: any = null;
   loading = false;
   termId?: number;
+  returnTab?: string;
 
   constructor(
     private examTermService: ExamTermService,
@@ -32,6 +33,11 @@ export class ExamTermViewComponent implements OnInit {
         this.termId = +params['id'];
         this.loadTerm();
       }
+    });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
     });
   }
 
@@ -55,7 +61,9 @@ export class ExamTermViewComponent implements OnInit {
 
   onEdit(): void {
     if (this.termId) {
-      this.router.navigate(['/exams/term/edit', this.termId]);
+      this.router.navigate(['/exams/term/edit', this.termId], {
+        queryParams: { returnTab: this.returnTab }
+      });
     }
   }
 
@@ -67,7 +75,7 @@ export class ExamTermViewComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             this.errorHandler.showSuccess('Exam term deleted successfully');
-            this.router.navigate(['/exams']);
+            this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
           }
         },
         error: (error) => this.errorHandler.showError(error)
@@ -76,7 +84,7 @@ export class ExamTermViewComponent implements OnInit {
   }
 
   onBack(): void {
-    this.router.navigate(['/exams']);
+    this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 
   getDuration(): string {

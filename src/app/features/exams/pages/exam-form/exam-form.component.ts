@@ -22,6 +22,7 @@ export class ExamFormComponent implements OnInit {
   examId?: string;
   branches: any[] = [];
   examTerms: ExamTerm[] = [];
+  returnTab?: string;
 
   constructor(
     private fb: FormBuilder,
@@ -54,6 +55,11 @@ export class ExamFormComponent implements OnInit {
         // Creating a new exam
         this.isEditMode = true;
       }
+    });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'] || 'exams';
     });
   }
 
@@ -148,7 +154,7 @@ export class ExamFormComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.errorHandler.showSuccess(`Exam ${this.examId ? 'updated' : 'created'} successfully`);
-          this.router.navigate(['/exams'], { queryParams: { tab: 'exams' } });
+          this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
         }
         this.saving = false;
       },
@@ -160,12 +166,14 @@ export class ExamFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/exams'], { queryParams: { tab: 'exams' } });
+    this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 
   onEditMode(): void {
     if (this.examId) {
-      this.router.navigate(['/exams/edit', this.examId]);
+      this.router.navigate(['/exams/edit', this.examId], {
+        queryParams: { returnTab: this.returnTab }
+      });
     }
   }
 

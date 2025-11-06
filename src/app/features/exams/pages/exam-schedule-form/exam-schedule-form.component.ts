@@ -238,6 +238,7 @@ export class ExamScheduleFormComponent implements OnInit {
   isEditMode = false;
   saving = false;
   scheduleId?: number;
+  returnTab?: string;
   
   exams: any[] = [];
   subjects: any[] = [];
@@ -274,11 +275,14 @@ export class ExamScheduleFormComponent implements OnInit {
     });
 
     // Pre-fill exam_id from query params if creating from exam
+    // Also capture returnTab from query parameters
     this.route.queryParams.subscribe(params => {
       if (params['exam_id'] && !this.isEditMode) {
         this.scheduleForm.patchValue({ exam_id: params['exam_id'] });
         this.loadExamDetails(params['exam_id']);
       }
+      
+      this.returnTab = params['returnTab'] || 'schedules';
     });
 
     // Load sections when grade_level or branch_id changes
@@ -474,7 +478,7 @@ export class ExamScheduleFormComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.errorHandler.showSuccess(`Exam schedule ${this.isEditMode ? 'updated' : 'created'} successfully`);
-          this.router.navigate(['/exams'], { queryParams: { tab: 'schedules' } });
+          this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
         }
         this.saving = false;
       },
@@ -486,7 +490,7 @@ export class ExamScheduleFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/exams'], { queryParams: { tab: 'schedules' } });
+    this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 }
 

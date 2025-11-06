@@ -1,0 +1,75 @@
+<div class="page-container">
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="exam-toolbar">
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'terms'"
+        (click)="switchTab('terms')">
+        <mat-icon>calendar_today</mat-icon>
+        <span>Exam Terms</span>
+        <span class="tab-badge" *ngIf="termCount > 0">{{ termCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'exams'"
+        (click)="switchTab('exams')">
+        <mat-icon>assignment</mat-icon>
+        <span>Exams</span>
+        <span class="tab-badge" *ngIf="examCount > 0">{{ examCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'schedules'"
+        (click)="switchTab('schedules')">
+        <mat-icon>schedule</mat-icon>
+        <span>Exam Schedules</span>
+        <span class="tab-badge" *ngIf="scheduleCount > 0">{{ scheduleCount }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Exam Terms Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'terms' && isTabLoaded('terms')"
+    #termsTable
+    [data]="examTerms"
+    [config]="termsTableConfig"
+    [title]="'Exam Terms'"
+    [loading]="loading"
+    (actionClicked)="onTermAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)">
+  </app-data-table>
+
+  <!-- Exams Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'exams' && isTabLoaded('exams')"
+    #examsTable
+    [data]="exams"
+    [config]="examsTableConfig"
+    [title]="'Exams'"
+    [loading]="loading"
+    (actionClicked)="onExamAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)">
+  </app-data-table>
+
+  <!-- Exam Schedules Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'schedules' && isTabLoaded('schedules')"
+    #schedulesTable
+    [data]="schedules"
+    [config]="schedulesTableConfig"
+    [title]="'Exam Schedules'"
+    [loading]="loading"
+    (actionClicked)="onScheduleAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)">
+  </app-data-table>
+</div>

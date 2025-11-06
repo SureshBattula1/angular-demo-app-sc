@@ -13,97 +13,8 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
   selector: 'app-exam-list',
   standalone: true,
   imports: [CommonModule, MaterialModule, DataTableComponent],
-  template: `
-    <div class="page-container">
-      <div class="tabs-container">
-        <div class="tabs-header">
-          <button class="tab-item" [class.active]="activeTab === 'terms'" (click)="switchTab('terms')">
-            <div class="tab-label-full">
-              <mat-icon>calendar_today</mat-icon>
-              Exam Terms
-              <span class="tab-badge" *ngIf="termCount > 0">{{ termCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>calendar_today</mat-icon>
-              Terms
-            </div>
-          </button>
-          
-          <button class="tab-item" [class.active]="activeTab === 'exams'" (click)="switchTab('exams')">
-            <div class="tab-label-full">
-              <mat-icon>assignment</mat-icon>
-              Exams
-              <span class="tab-badge" *ngIf="examCount > 0">{{ examCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>assignment</mat-icon>
-              Exams
-            </div>
-          </button>
-          
-          <button class="tab-item" [class.active]="activeTab === 'schedules'" (click)="switchTab('schedules')">
-            <div class="tab-label-full">
-              <mat-icon>schedule</mat-icon>
-              Exam Schedules
-              <span class="tab-badge" *ngIf="scheduleCount > 0">{{ scheduleCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>schedule</mat-icon>
-              Schedules
-            </div>
-          </button>
-        </div>
-
-        <div class="tabs-content">
-          <!-- Exam Terms Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'terms'">
-            <app-data-table
-              #termsTable
-              [data]="examTerms"
-              [config]="termsTableConfig"
-              [title]="'Exam Terms'"
-              [loading]="loading"
-              (actionClicked)="onTermAction($event)"
-              (paginationChanged)="onPaginationChange($event)"
-              (sortChanged)="onSortChange($event)">
-            </app-data-table>
-          </div>
-
-          <!-- Exams Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'exams'">
-            <app-data-table
-              #examsTable
-              [data]="exams"
-              [config]="examsTableConfig"
-              [title]="'Exams'"
-              [loading]="loading"
-              (actionClicked)="onExamAction($event)"
-              (paginationChanged)="onPaginationChange($event)"
-              (sortChanged)="onSortChange($event)">
-            </app-data-table>
-          </div>
-
-          <!-- Schedules Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'schedules'">
-            <app-data-table
-              #schedulesTable
-              [data]="schedules"
-              [config]="schedulesTableConfig"
-              [title]="'Exam Schedules'"
-              [loading]="loading"
-              (actionClicked)="onScheduleAction($event)"
-              (paginationChanged)="onPaginationChange($event)"
-              (sortChanged)="onSortChange($event)">
-            </app-data-table>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host { display: block; }
-    .page-container { max-width: 1600px; margin: 0 auto; }
-  `]
+  templateUrl: './exam-list.component.html',
+  styleUrls: ['./exam-list.component.scss']
 })
 export class ExamListComponent implements OnInit {
   @ViewChild('termsTable') termsTable!: DataTableComponent;
@@ -112,6 +23,9 @@ export class ExamListComponent implements OnInit {
 
   loading = false;
   activeTab: 'terms' | 'exams' | 'schedules' = 'terms';
+  
+  // Track which tabs have been loaded for lazy loading
+  private loadedTabs = new Set<string>();
 
   examTerms: ExamTerm[] = [];
   exams: Exam[] = [];
@@ -209,20 +123,35 @@ export class ExamListComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      if (params['tab'] === 'exams') {
+      // Check for returnTab first (when coming back from view/edit), then tab
+      const targetTab = params['returnTab'] || params['tab'];
+      
+      if (targetTab === 'exams') {
         this.activeTab = 'exams';
-      } else if (params['tab'] === 'schedules') {
+      } else if (targetTab === 'schedules') {
         this.activeTab = 'schedules';
       } else {
         this.activeTab = 'terms';
       }
+      
+      // Mark the initial tab as loaded
+      this.loadedTabs.add(this.activeTab);
     });
     
     this.loadData();
   }
+  
+  // Check if a tab has been loaded (for lazy loading)
+  isTabLoaded(tab: string): boolean {
+    return this.loadedTabs.has(tab);
+  }
 
   switchTab(tab: 'terms' | 'exams' | 'schedules'): void {
     this.activeTab = tab;
+    
+    // Mark tab as loaded for lazy loading
+    this.loadedTabs.add(tab);
+    
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab },
@@ -350,11 +279,15 @@ export class ExamListComponent implements OnInit {
   }
 
   viewTerm(term: ExamTerm): void {
-    this.router.navigate(['/exams/term/view', term.id]);
+    this.router.navigate(['/exams/term/view', term.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
 
   editTerm(term: ExamTerm): void {
-    this.router.navigate(['/exams/term/edit', term.id]);
+    this.router.navigate(['/exams/term/edit', term.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
 
   deleteTerm(term: ExamTerm): void {
@@ -399,11 +332,15 @@ export class ExamListComponent implements OnInit {
   }
 
   viewExam(exam: Exam): void {
-    this.router.navigate(['/exams/view', exam.id]);
+    this.router.navigate(['/exams/view', exam.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
 
   editExam(exam: Exam): void {
-    this.router.navigate(['/exams/edit', exam.id]);
+    this.router.navigate(['/exams/edit', exam.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
 
   deleteExam(exam: Exam): void {
@@ -452,11 +389,15 @@ export class ExamListComponent implements OnInit {
   }
 
   viewSchedule(schedule: ExamSchedule): void {
-    this.router.navigate(['/exams/schedule/view', schedule.id]);
+    this.router.navigate(['/exams/schedule/view', schedule.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
 
   editSchedule(schedule: ExamSchedule): void {
-    this.router.navigate(['/exams/schedule/edit', schedule.id]);
+    this.router.navigate(['/exams/schedule/edit', schedule.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
 
   deleteSchedule(schedule: ExamSchedule): void {
@@ -472,7 +413,12 @@ export class ExamListComponent implements OnInit {
   }
 
   enterMarks(schedule: ExamSchedule): void {
-    this.router.navigate(['/exams/marks/enter'], { queryParams: { schedule_id: schedule.id } });
+    this.router.navigate(['/exams/marks/enter'], { 
+      queryParams: { 
+        schedule_id: schedule.id,
+        returnTab: this.activeTab
+      } 
+    });
   }
 }
 

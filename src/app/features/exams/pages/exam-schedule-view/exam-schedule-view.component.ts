@@ -17,6 +17,7 @@ export class ExamScheduleViewComponent implements OnInit {
   schedule: any = null;
   loading = false;
   scheduleId?: number;
+  returnTab?: string;
 
   constructor(
     private examScheduleService: ExamScheduleService,
@@ -32,6 +33,11 @@ export class ExamScheduleViewComponent implements OnInit {
         this.scheduleId = +params['id'];
         this.loadSchedule();
       }
+    });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
     });
   }
 
@@ -55,7 +61,9 @@ export class ExamScheduleViewComponent implements OnInit {
 
   onEdit(): void {
     if (this.scheduleId) {
-      this.router.navigate(['/exams/schedule/edit', this.scheduleId]);
+      this.router.navigate(['/exams/schedule/edit', this.scheduleId], {
+        queryParams: { returnTab: this.returnTab }
+      });
     }
   }
 
@@ -67,7 +75,7 @@ export class ExamScheduleViewComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             this.errorHandler.showSuccess('Exam schedule deleted successfully');
-            this.router.navigate(['/exams']);
+            this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
           }
         },
         error: (error) => this.errorHandler.showError(error)
@@ -76,7 +84,7 @@ export class ExamScheduleViewComponent implements OnInit {
   }
 
   onBack(): void {
-    this.router.navigate(['/exams']);
+    this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 
 }

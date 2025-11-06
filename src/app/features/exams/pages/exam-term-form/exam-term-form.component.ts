@@ -20,6 +20,7 @@ export class ExamTermFormComponent implements OnInit {
   saving = false;
   termId: number | undefined = undefined;
   branches: any[] = [];
+  returnTab?: string;
 
   constructor(
     private fb: FormBuilder,
@@ -44,6 +45,11 @@ export class ExamTermFormComponent implements OnInit {
         this.isEditMode = !isViewMode; // Only edit mode if NOT view mode
         this.loadTerm();
       }
+    });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
     });
   }
 
@@ -99,7 +105,7 @@ export class ExamTermFormComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.errorHandler.showSuccess(`Exam term ${this.isEditMode ? 'updated' : 'created'} successfully`);
-          this.router.navigate(['/exams']);
+          this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
         }
         this.saving = false;
       },
@@ -111,12 +117,14 @@ export class ExamTermFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/exams']);
+    this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 
   onEditMode(): void {
     if (this.termId) {
-      this.router.navigate(['/exams/term/edit', this.termId]);
+      this.router.navigate(['/exams/term/edit', this.termId], {
+        queryParams: { returnTab: this.returnTab }
+      });
     }
   }
 
