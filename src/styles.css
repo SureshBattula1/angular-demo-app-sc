@@ -45,18 +45,28 @@
   --success-color: #4caf50;
   --success-light: #81c784;
   --success-dark: #388e3c;
+  --success-rgb: 76, 175, 80;
 
   --warning-color: #ff9800;
   --warning-light: #ffb74d;
   --warning-dark: #f57c00;
+  --warning-rgb: 255, 152, 0;
 
   --error-color: #f44336;
   --error-light: #e57373;
   --error-dark: #d32f2f;
+  --error-rgb: 244, 67, 54;
+  
+  /* Alternative names for error */
+  --danger-color: #f44336;
+  --danger-light: #e57373;
+  --danger-dark: #d32f2f;
+  --danger-rgb: 244, 67, 54;
 
   --info-color: #2196f3;
   --info-light: #64b5f6;
   --info-dark: #1976d2;
+  --info-rgb: 33, 150, 243;
 
   /* Background Colors */
   --background-color: #fafafa;
@@ -66,6 +76,7 @@
   /* Text Colors */
   --text-primary: rgba(0, 0, 0, 0.87);
   --text-secondary: rgba(0, 0, 0, 0.60);
+  --text-tertiary: rgba(0, 0, 0, 0.50);
   --text-disabled: rgba(0, 0, 0, 0.38);
   --text-hint: rgba(0, 0, 0, 0.38);
 

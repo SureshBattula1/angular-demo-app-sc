@@ -1,0 +1,387 @@
+// Professional Student Leaves Component Styles
+// Uses global CSS variables for dynamic theming
+
+// Loading State
+.leaves-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  padding: var(--spacing-xl);
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    
+    p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+}
+
+// Leave Summary Cards
+.leave-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  animation: fadeIn 0.3s ease-in-out;
+  
+  .summary-card {
+    background: var(--card-background);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: all var(--transition-fast);
+    
+    &:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: var(--primary-color);
+      flex-shrink: 0;
+    }
+    
+    &.approved mat-icon { color: var(--success-color); }
+    &.pending mat-icon { color: var(--warning-color); }
+    &.rejected mat-icon { color: var(--danger-color); }
+    
+    .summary-content {
+      flex: 1;
+      
+      h4 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      
+      .summary-value {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+      }
+    }
+  }
+}
+
+// Leave Records
+.leave-records {
+  animation: fadeIn 0.3s ease-in-out;
+  
+  h3 {
+    margin: 0 0 var(--spacing-md);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  .leave-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    
+    .leave-item {
+      background: var(--card-background);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary-color);
+      transition: all var(--transition-fast);
+      
+      &:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateX(4px);
+      }
+      
+      .leave-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-sm);
+        
+        .leave-type {
+          display: flex;
+          align-items: center;
+          gap: var(--spacing-xs);
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 16px;
+          
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+            color: var(--primary-color);
+          }
+        }
+        
+        mat-chip {
+          color: white;
+          font-weight: 600;
+          font-size: 12px;
+          height: 24px;
+          padding: 0 8px;
+        }
+      }
+      
+      .leave-dates {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-sm);
+        flex-wrap: wrap;
+        
+        .date-item, .days-count {
+          display: flex;
+          align-items: center;
+          gap: var(--spacing-xs);
+          color: var(--text-secondary);
+          font-size: 14px;
+          
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            color: var(--primary-color);
+          }
+        }
+      }
+      
+      .leave-reason, .leave-remarks {
+        margin-bottom: var(--spacing-sm);
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        
+        strong {
+          color: var(--text-primary);
+          font-weight: 600;
+        }
+      }
+      
+      .leave-footer {
+        padding-top: var(--spacing-sm);
+        border-top: 1px solid var(--divider-color);
+        
+        small {
+          color: var(--text-tertiary);
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+// No Leaves Message
+.no-leaves {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  min-height: 250px;
+  text-align: center;
+  
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--text-disabled);
+    opacity: 0.5;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+// Animation
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ========================================
+// RESPONSIVE DESIGN
+// ========================================
+
+// Tablet (768px and below)
+@media (max-width: 768px) {
+  .leave-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    
+    .summary-card {
+      padding: var(--spacing-sm);
+      
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+      
+      .summary-content {
+        h4 {
+          font-size: 10px;
+        }
+        
+        .summary-value {
+          font-size: 20px;
+        }
+      }
+    }
+  }
+  
+  .leave-records {
+    .leave-list {
+      gap: var(--spacing-sm);
+      
+      .leave-item {
+        padding: var(--spacing-sm);
+        
+        .leave-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--spacing-xs);
+          
+          .leave-type {
+            font-size: 14px;
+            
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+            }
+          }
+        }
+        
+        .leave-dates {
+          flex-direction: column;
+          gap: var(--spacing-xs);
+          
+          .date-item, .days-count {
+            font-size: 13px;
+            
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+        }
+        
+        .leave-reason, .leave-remarks {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+// Mobile (480px and below)
+@media (max-width: 480px) {
+  .leave-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xs);
+    
+    .summary-card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: var(--spacing-xs);
+      
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+      
+      .summary-content {
+        h4 {
+          font-size: 9px;
+        }
+        
+        .summary-value {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+  
+  .leave-records {
+    h3 {
+      font-size: 16px;
+    }
+    
+    .leave-list {
+      .leave-item {
+        padding: var(--spacing-xs);
+        
+        .leave-header {
+          .leave-type {
+            font-size: 13px;
+            gap: 4px;
+            
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .no-leaves {
+    padding: var(--spacing-md);
+    min-height: 200px;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+    
+    p {
+      font-size: 14px;
+    }
+  }
+}
+
+// Print styles
+@media print {
+  .leave-item {
+    page-break-inside: avoid;
+  }
+}
+

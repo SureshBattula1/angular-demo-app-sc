@@ -1,0 +1,422 @@
+<!-- Professional Student Information Layout -->
+<div class="student-info-grid" *ngIf="student">
+  <!-- Personal Information -->
+  <div class="info-section personal-info">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>person</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Personal Information</h3>
+        <p>Basic student details and contact information</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>badge</mat-icon>
+            <span>Full Name</span>
+          </div>
+          <div class="info-value">{{ getFullName() }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>email</mat-icon>
+            <span>Email Address</span>
+          </div>
+          <div class="info-value">{{ student.email }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>phone</mat-icon>
+            <span>Phone Number</span>
+          </div>
+          <div class="info-value">{{ student.phone || 'Not provided' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>cake</mat-icon>
+            <span>Date of Birth</span>
+          </div>
+          <div class="info-value">
+            {{ student.date_of_birth | date:'MMM d, y' }}
+            <span class="age-badge">Age: {{ getAge() }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>person_outline</mat-icon>
+            <span>Gender</span>
+          </div>
+          <div class="info-value">
+            <span class="gender-badge" [class]="'gender-' + (student.gender || 'other').toLowerCase()">
+              {{ student.gender }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.blood_group">
+          <div class="info-label">
+            <mat-icon>favorite</mat-icon>
+            <span>Blood Group</span>
+          </div>
+          <div class="info-value">
+            <span class="blood-group-badge">{{ student.blood_group }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Academic Information -->
+  <div class="info-section academic-info">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>school</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Academic Information</h3>
+        <p>Educational details and enrollment information</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>confirmation_number</mat-icon>
+            <span>Admission Number</span>
+          </div>
+          <div class="info-value">
+            <span class="admission-badge">{{ student.admission_number }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>Admission Date</span>
+          </div>
+          <div class="info-value">{{ student.admission_date | date:'MMM d, y' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>grade</mat-icon>
+            <span>Grade</span>
+          </div>
+          <div class="info-value">
+            <span class="grade-badge">{{ getGradeLabel() }}</span>
+            <span class="grade-code">({{ student.grade }})</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>group</mat-icon>
+            <span>Section</span>
+          </div>
+          <div class="info-value">
+            <span class="section-badge" *ngIf="student.section">{{ student.section }}</span>
+            <span class="not-assigned" *ngIf="!student.section">Not Assigned</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>format_list_numbered</mat-icon>
+            <span>Roll Number</span>
+          </div>
+          <div class="info-value">
+            <span class="roll-badge" *ngIf="student.roll_number">{{ student.roll_number }}</span>
+            <span class="not-assigned" *ngIf="!student.roll_number">Not Assigned</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>calendar_today</mat-icon>
+            <span>Academic Year</span>
+          </div>
+          <div class="info-value">
+            <span class="academic-year-badge">{{ student.academic_year }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.stream">
+          <div class="info-label">
+            <mat-icon>stream</mat-icon>
+            <span>Stream</span>
+          </div>
+          <div class="info-value">
+            <span class="stream-badge">{{ student.stream }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.branch">
+          <div class="info-label">
+            <mat-icon>business</mat-icon>
+            <span>Branch</span>
+          </div>
+          <div class="info-value">
+            <span class="branch-name">{{ student.branch.name }}</span>
+            <span class="branch-code">({{ student.branch.code }})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Address Information -->
+  <div class="info-section address-info">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>home</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Address Information</h3>
+        <p>Residential address and location details</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>location_on</mat-icon>
+            <span>Complete Address</span>
+          </div>
+          <div class="info-value address-text">{{ student.current_address }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>location_city</mat-icon>
+            <span>City</span>
+          </div>
+          <div class="info-value">{{ student.city }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>map</mat-icon>
+            <span>State</span>
+          </div>
+          <div class="info-value">{{ student.state }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>markunread_mailbox</mat-icon>
+            <span>PIN Code</span>
+          </div>
+          <div class="info-value">
+            <span class="pincode-badge">{{ student.pincode }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>public</mat-icon>
+            <span>Country</span>
+          </div>
+          <div class="info-value">{{ student.country }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parent Information -->
+  <div class="info-section parent-info">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>family_restroom</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Parent Information</h3>
+        <p>Guardian details and emergency contacts</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <!-- Father Information -->
+      <div class="parent-group">
+        <div class="parent-header">
+          <mat-icon>man</mat-icon>
+          <h4>Father</h4>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>person</mat-icon>
+              <span>Name</span>
+            </div>
+            <div class="info-value">{{ student.father_name }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>phone</mat-icon>
+              <span>Phone</span>
+            </div>
+            <div class="info-value">{{ student.father_phone }}</div>
+          </div>
+          
+          <div class="info-item" *ngIf="student.father_email">
+            <div class="info-label">
+              <mat-icon>email</mat-icon>
+              <span>Email</span>
+            </div>
+            <div class="info-value">{{ student.father_email }}</div>
+          </div>
+          
+          <div class="info-item" *ngIf="student.father_occupation">
+            <div class="info-label">
+              <mat-icon>work</mat-icon>
+              <span>Occupation</span>
+            </div>
+            <div class="info-value">{{ student.father_occupation }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mother Information -->
+      <div class="parent-group">
+        <div class="parent-header">
+          <mat-icon>woman</mat-icon>
+          <h4>Mother</h4>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>person</mat-icon>
+              <span>Name</span>
+            </div>
+            <div class="info-value">{{ student.mother_name }}</div>
+          </div>
+          
+          <div class="info-item" *ngIf="student.mother_phone">
+            <div class="info-label">
+              <mat-icon>phone</mat-icon>
+              <span>Phone</span>
+            </div>
+            <div class="info-value">{{ student.mother_phone }}</div>
+          </div>
+          
+          <div class="info-item" *ngIf="student.mother_email">
+            <div class="info-label">
+              <mat-icon>email</mat-icon>
+              <span>Email</span>
+            </div>
+            <div class="info-value">{{ student.mother_email }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="parent-group" *ngIf="student.emergency_contact_name">
+        <div class="parent-header">
+          <mat-icon>emergency</mat-icon>
+          <h4>Emergency Contact</h4>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>person</mat-icon>
+              <span>Name</span>
+            </div>
+            <div class="info-value">{{ student.emergency_contact_name }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>phone</mat-icon>
+              <span>Phone</span>
+            </div>
+            <div class="info-value">{{ student.emergency_contact_phone }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Information -->
+  <div class="info-section additional-info">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>info</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Additional Information</h3>
+        <p>Supplementary details and educational background</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <!-- Previous Education -->
+        <div class="info-item full-width" *ngIf="student.previous_school || student.previous_grade">
+          <div class="info-label">
+            <mat-icon>school</mat-icon>
+            <span>Previous Education</span>
+          </div>
+          <div class="info-value">
+            <div class="previous-education">
+              <div *ngIf="student.previous_school" class="education-item">
+                <strong>School:</strong> {{ student.previous_school }}
+              </div>
+              <div *ngIf="student.previous_grade" class="education-item">
+                <strong>Grade:</strong> {{ student.previous_grade }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Medical Information -->
+        <div class="info-item full-width" *ngIf="student.medical_history || student.allergies">
+          <div class="info-label">
+            <mat-icon>medical_services</mat-icon>
+            <span>Medical Information</span>
+          </div>
+          <div class="info-value">
+            <div class="medical-info">
+              <div *ngIf="student.medical_history" class="medical-item">
+                <strong>Medical History:</strong> {{ student.medical_history }}
+              </div>
+              <div *ngIf="student.allergies" class="medical-item">
+                <strong>Allergies:</strong> {{ student.allergies }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>check_circle</mat-icon>
+            <span>Status</span>
+          </div>
+          <div class="info-value">
+            <span class="status-badge status-active">
+              Active
+            </span>
+          </div>
+        </div>
+        
+        <!-- No Additional Info Message -->
+        <div class="no-info-message" *ngIf="!student.previous_school && !student.previous_grade && !student.medical_history && !student.allergies">
+          <div class="no-info-content">
+            <mat-icon>info_outline</mat-icon>
+            <p>No additional information available</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

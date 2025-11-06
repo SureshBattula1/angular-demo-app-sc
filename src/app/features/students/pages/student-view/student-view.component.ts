@@ -13,13 +13,28 @@ import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 import { ExamScheduleService } from '../../../exams/services/exam-schedule.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { FeeService } from '../../../fees/services/fee.service';
-// Import child component
+// Import child components
 import { StudentHeaderComponent } from './components/student-header/student-header.component';
+import { StudentInfoComponent } from './components/student-info/student-info.component';
+import { StudentAttendanceComponent } from './components/student-attendance/student-attendance.component';
+import { StudentLeavesComponent } from './components/student-leaves/student-leaves.component';
+import { StudentExamsComponent } from './components/student-exams/student-exams.component';
+import { StudentFeesComponent } from './components/student-fees/student-fees.component';
 
 @Component({
   selector: 'app-student-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule, StudentHeaderComponent],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    MaterialModule, 
+    StudentHeaderComponent,
+    StudentInfoComponent,
+    StudentAttendanceComponent,
+    StudentLeavesComponent,
+    StudentExamsComponent,
+    StudentFeesComponent
+  ],
   templateUrl: './student-view.component.html',
   styleUrls: ['./student-view.component.scss']
 })
