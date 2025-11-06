@@ -45,12 +45,6 @@ export class RoleListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       {
-        key: 'id',
-        header: 'ID',
-        sortable: true,
-        width: '80px'
-      },
-      {
         key: 'name',
         header: 'Role Name',
         sortable: true

@@ -49,19 +49,8 @@ export class UserListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       {
-        key: 'id',
-        header: 'ID',
-        sortable: true,
-        width: '80px'
-      },
-      {
-        key: 'first_name',
-        header: 'First Name',
-        sortable: true
-      },
-      {
-        key: 'last_name',
-        header: 'Last Name',
+        key: 'full_name',
+        header: 'Full Name',
         sortable: true
       },
       {
@@ -239,8 +228,13 @@ export class UserListComponent implements OnInit {
     this.userService.getUsers(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.users = response.data.data || [];
+          // Add full_name to each user
+          this.users = (response.data.data || []).map(user => ({
+            ...user,
+            full_name: `${user.first_name} ${user.last_name}`.trim()
+          }));
           console.log('Users loaded:', this.users.length);
+          console.log('Sample user data:', this.users[0]); // Debug: Check user structure
           this.tableConfig = {
             ...this.tableConfig,
             totalCount: response.data.total || 0

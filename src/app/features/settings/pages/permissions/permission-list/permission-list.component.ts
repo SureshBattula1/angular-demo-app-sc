@@ -43,12 +43,6 @@ export class PermissionListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       {
-        key: 'id',
-        header: 'ID',
-        sortable: true,
-        width: '80px'
-      },
-      {
         key: 'name',
         header: 'Permission Name',
         sortable: true
