@@ -20,110 +20,8 @@ import { Section } from '../../../../core/models/section.model';
   selector: 'app-attendance-list',
   standalone: true,
   imports: [CommonModule, MaterialModule, DataTableComponent],
-  template: `
-    <div class="page-container">
-     
-
-      <!-- Tabbed Interface -->
-      <div class="tabs-container">
-        <!-- Tab Header -->
-        <div class="tabs-header">
-          <button 
-            class="tab-item" 
-            [class.active]="activeTab === 'student'"
-            (click)="switchTab('student')">
-            <div class="tab-label-full">
-              <mat-icon>school</mat-icon>
-              Student Attendance
-              <span class="tab-badge" *ngIf="studentCount > 0">{{ studentCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>school</mat-icon>
-              Students
-              <span class="tab-badge" *ngIf="studentCount > 0">{{ studentCount }}</span>
-            </div>
-          </button>
-          
-          <button 
-            class="tab-item" 
-            [class.active]="activeTab === 'teacher'"
-            (click)="switchTab('teacher')">
-            <div class="tab-label-full">
-              <mat-icon>group</mat-icon>
-              Teacher Attendance
-              <span class="tab-badge" *ngIf="teacherCount > 0">{{ teacherCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>group</mat-icon>
-              Teachers
-              <span class="tab-badge" *ngIf="teacherCount > 0">{{ teacherCount }}</span>
-            </div>
-          </button>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="tabs-content">
-          <!-- Student Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'student'">
-            <app-data-table
-              #studentDataTable
-              [data]="studentRecords"
-              [config]="studentTableConfig"
-              [advancedSearchConfig]="studentSearchConfig"
-              [title]="'Student Attendances'"
-              [loading]="loading"
-              (actionClicked)="onStudentAction($event)"
-              (rowClicked)="onRowClick($event)"
-              (selectionChanged)="onSelectionChange($event)"
-              (exportClicked)="onExport($event)"
-              (paginationChanged)="onPaginationChange($event)"
-              (sortChanged)="onSortChange($event)"
-              (searchChanged)="onSearchChange($event)"
-              (searchFieldChanged)="onSearchFieldChanged($event)"
-              (advancedSearchChanged)="onAdvancedSearchChange($event)"
-              (searchResetEvent)="onSearchReset()">
-            </app-data-table>
-          </div>
-
-          <!-- Teacher Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'teacher'">
-            <app-data-table
-              #teacherDataTable
-              [data]="teacherRecords"
-              [config]="teacherTableConfig"
-              [advancedSearchConfig]="teacherSearchConfig"
-              [title]="'Teacher Attendances'"
-              [loading]="loading"
-              (actionClicked)="onTeacherAction($event)"
-              (rowClicked)="onRowClick($event)"
-              (selectionChanged)="onSelectionChange($event)"
-              (exportClicked)="onExport($event)"
-              (paginationChanged)="onPaginationChange($event)"
-              (sortChanged)="onSortChange($event)"
-              (searchChanged)="onSearchChange($event)"
-              (searchFieldChanged)="onSearchFieldChanged($event)"
-              (advancedSearchChanged)="onAdvancedSearchChange($event)"
-              (searchResetEvent)="onSearchReset()">
-            </app-data-table>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host { display: block; }
-    .page-container { max-width: 1600px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 16px; background: var(--card-background); border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-    .header-content h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: var(--text-primary); }
-    .header-content h1 mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--primary-color); }
-    .subtitle { margin: 0; color: var(--text-secondary); font-size: 14px; }
-    @media (max-width: 960px) {
-      .page-container { padding: 16px; }
-      .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-      .header-actions { width: 100%; }
-      .header-actions button { width: 100%; }
-    }
-  `]
+  templateUrl: './attendance-list.component.html',
+  styleUrls: ['./attendance-list.component.scss']
 })
 export class AttendanceListComponent implements OnInit {
   @ViewChild('studentDataTable') studentDataTable!: DataTableComponent;
@@ -131,6 +29,7 @@ export class AttendanceListComponent implements OnInit {
   
   loading = false;
   activeTab: 'student' | 'teacher' = 'student';
+  loadedTabs = new Set<string>(['student']); // Track which tabs have been loaded for lazy loading
   
   // Separate data arrays for each tab
   studentRecords: StudentAttendance[] = [];
@@ -164,7 +63,8 @@ export class AttendanceListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'attendance.create'
   };
 
   teacherTableConfig: TableConfig = {
@@ -184,7 +84,8 @@ export class AttendanceListComponent implements OnInit {
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 25
+    defaultPageSize: 25,
+    addButtonPermission: 'attendance.create'
   };
 
   // Separate search configurations
@@ -212,7 +113,7 @@ export class AttendanceListComponent implements OnInit {
         label: 'Grade',
         type: 'select',
         icon: 'grade',
-        options: [] // Will be populated dynamically from API
+        options: []
       },
       {
         key: 'section',
@@ -260,7 +161,7 @@ export class AttendanceListComponent implements OnInit {
         label: 'Department',
         type: 'select',
         icon: 'business',
-        options: [] // Will be populated dynamically from API
+        options: []
       },
       {
         key: 'status',
@@ -274,96 +175,6 @@ export class AttendanceListComponent implements OnInit {
           { value: 'excused', label: 'Excused' }
         ]
       }
-    ]
-  };
-  
-  advancedSearchConfig: AdvancedSearchConfig = {
-    title: 'Advanced Attendance Search',
-    width: '500px',
-    showReset: true,
-    showSaveSearch: false,
-    fields: [
-      {
-        key: 'type',
-        label: 'Attendance Type',
-        type: 'select',
-        icon: 'category',
-        options: [
-          { value: 'student', label: 'Student Attendance' },
-          { value: 'teacher', label: 'Teacher Attendance' }
-        ],
-        defaultValue: 'student',
-        // group: 'Basic Filters'
-      },
-      {
-        key: 'branch_id',
-        label: 'Branch',
-        type: 'select',
-        icon: 'business',
-        options: [], // Will be populated dynamically
-        // group: 'Basic Filters'
-      },
-      {
-        key: 'date',
-        label: 'Date',
-        type: 'date',
-        icon: 'event',
-        // group: 'Basic Filters'
-      },
-      {
-        key: 'from_date',
-        label: 'From Date',
-        type: 'date',
-        icon: 'event',
-        // group: 'Date Range'
-      },
-      {
-        key: 'to_date',
-        label: 'To Date',
-        type: 'date',
-        icon: 'event',
-        // group: 'Date Range'
-      },
-      {
-        key: 'status',
-        label: 'Status',
-        type: 'select',
-        icon: 'info',
-        options: [
-          { value: 'Present', label: 'Present' },
-          { value: 'Absent', label: 'Absent' },
-          { value: 'Late', label: 'Late' },
-          { value: 'Half-Day', label: 'Half Day' },
-          { value: 'Sick Leave', label: 'Sick Leave' },
-          { value: 'Leave', label: 'Leave' }
-        ],
-        // group: 'Status Filters'
-      },
-      {
-        key: 'grade',
-        label: 'Grade',
-        type: 'select',
-        icon: 'school',
-        options: [], // Will be populated dynamically
-        // group: 'Class Filters'
-      },
-      {
-        key: 'section',
-        label: 'Section',
-        type: 'select',
-        icon: 'class',
-        options: [], // Will be populated dynamically based on selected grade
-        dependsOn: 'grade', // Section field depends on grade selection
-        // group: 'Class Filters'
-      },
-      // {
-      //   key: 'admission_number',
-      //   label: 'Admission Number',
-      //   type: 'text',
-      //   icon: 'badge',
-      //   placeholder: 'Enter admission number',
-      //   // group: 'Student Search'
-      // }
     ]
   };
   
@@ -382,25 +193,62 @@ export class AttendanceListComponent implements OnInit {
   ngOnInit(): void {
     // Check query parameters to restore active tab
     this.route.queryParams.subscribe(params => {
-      const tabType = params['tab'];
+      // Check both 'tab' and 'returnTab' params to restore correct tab
+      const tabType = params['tab'] || params['returnTab'];
       if (tabType === 'teacher') {
         this.activeTab = 'teacher';
+        this.loadedTabs.add('teacher');
       } else {
-        this.activeTab = 'student'; // Default to student
+        this.activeTab = 'student';
+        this.loadedTabs.add('student');
       }
     });
     
+    // Load filter options
     this.loadBranches();
     this.loadGrades();
     this.loadSections();
     this.loadDepartments();
-    this.loadStudentAttendance();
-    this.loadTeacherAttendance();
+    
+    // Only load data for the active tab (lazy loading)
+    if (this.activeTab === 'student') {
+      this.loadStudentAttendance();
+    } else {
+      this.loadTeacherAttendance();
+    }
   }
 
-  // Tab switching method
+  /**
+   * Tab switching with lazy loading
+   * Only load data when user clicks on a tab for the first time
+   */
   switchTab(tab: 'student' | 'teacher'): void {
     this.activeTab = tab;
+    
+    // Lazy load data only if not already loaded
+    if (!this.loadedTabs.has(tab)) {
+      this.loadedTabs.add(tab);
+      
+      if (tab === 'student') {
+        this.loadStudentAttendance();
+      } else {
+        this.loadTeacherAttendance();
+      }
+    }
+    
+    // Update URL query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  /**
+   * Check if a tab has been loaded (for lazy loading in template)
+   */
+  isTabLoaded(tab: string): boolean {
+    return this.loadedTabs.has(tab);
   }
 
   // Load student attendance
@@ -498,11 +346,6 @@ export class AttendanceListComponent implements OnInit {
     ];
   }
   
-  // This method is no longer needed as we have separate table configs
-  // updateTableColumns(type: 'student' | 'teacher'): void {
-  //   // Method removed - using separate table configs instead
-  // }
-  
   /**
    * Load all sections for filtering
    */
@@ -511,7 +354,6 @@ export class AttendanceListComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.allSections = response.data;
-          // Initialize section options with all sections for both configs
           this.updateSectionOptions(null);
         }
       },
@@ -527,7 +369,6 @@ export class AttendanceListComponent implements OnInit {
     let sectionOptions;
     
     if (selectedGrade) {
-      // Filter sections by grade
       const filteredSections = this.allSections.filter(
         section => section.grade_level === selectedGrade
       );
@@ -536,23 +377,15 @@ export class AttendanceListComponent implements OnInit {
         label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
       }));
     } else {
-      // Show all sections
       sectionOptions = this.allSections.map(section => ({
         value: section.name,
         label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
       }));
     }
     
-    // Update student search config
     const studentSectionField = this.studentSearchConfig.fields.find(f => f.key === 'section');
     if (studentSectionField) {
       studentSectionField.options = sectionOptions;
-    }
-    
-    // Update old advanced search config if it exists
-    const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section');
-    if (sectionField) {
-      sectionField.options = sectionOptions;
     }
   }
   
@@ -568,16 +401,9 @@ export class AttendanceListComponent implements OnInit {
             label: grade.label
           }));
           
-          // Update student search config
           const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
           if (studentGradeField) {
             studentGradeField.options = gradeOptions;
-          }
-          
-          // Update old advanced search config if it exists
-          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade');
-          if (gradeField) {
-            gradeField.options = gradeOptions;
           }
         }
       },
@@ -597,22 +423,14 @@ export class AttendanceListComponent implements OnInit {
             label: b.name
           }));
           
-          // Update student search config with branches
           const studentBranchField = this.studentSearchConfig.fields.find(f => f.key === 'branch_id');
           if (studentBranchField) {
             studentBranchField.options = branchOptions;
           }
           
-          // Update teacher search config with branches
           const teacherBranchField = this.teacherSearchConfig.fields.find(f => f.key === 'branch_id');
           if (teacherBranchField) {
             teacherBranchField.options = branchOptions;
-          }
-          
-          // Update old advanced search config if it exists
-          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
-          if (branchField) {
-            branchField.options = branchOptions;
           }
         }
       },
@@ -633,16 +451,9 @@ export class AttendanceListComponent implements OnInit {
             label: dept.name
           }));
           
-          // Update teacher search config with departments
           const teacherDeptField = this.teacherSearchConfig.fields.find(f => f.key === 'department');
           if (teacherDeptField) {
             teacherDeptField.options = departmentOptions;
-          }
-          
-          // Update old advanced search config if it exists
-          const deptField = this.advancedSearchConfig.fields.find(f => f.key === 'department');
-          if (deptField) {
-            deptField.options = departmentOptions;
           }
         }
       },
@@ -650,11 +461,6 @@ export class AttendanceListComponent implements OnInit {
       }
     });
   }
-  
-  // This method is no longer needed as we have separate load methods
-  // loadAttendance(filters?: Record<string, unknown>): void {
-  //   // Method removed - using separate loadStudentAttendance and loadTeacherAttendance instead
-  // }
   
   // Student tab actions
   onStudentAction(event: { action: string; row: any }): void {
@@ -713,18 +519,16 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onExport(format: string): void {
-    const type = this.activeTab; // 'student' or 'teacher'
+    const type = this.activeTab;
     const recordCount = this.selectedRecords.length || (type === 'student' ? this.studentCount : this.teacherCount);
     
     this.errorHandler.showInfo(`Exporting ${recordCount} ${type} attendance records as ${format.toUpperCase()}...`);
     
-    // Prepare export configuration
     const exportConfig = {
       endpoint: '/attendance/export',
       filename: `${type}_attendance_export`
     };
     
-    // Prepare export options with current filters
     const exportOptions = {
       format: format as 'excel' | 'pdf' | 'csv',
       filters: {
@@ -733,12 +537,10 @@ export class AttendanceListComponent implements OnInit {
       }
     };
     
-    // Call the export service
     this.exportService.export(exportConfig, exportOptions);
   }
   
   onSearchChange(query: string): void {
-    // Handle basic search - load data for active tab
     if (this.activeTab === 'student') {
       this.loadStudentAttendance({ search: query });
     } else {
@@ -747,13 +549,9 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
-    
-    // Update sections when grade field changes
     if (event.field === 'grade') {
       this.updateSectionOptions(event.value);
     }
-    
-    // Note: Type changes are now handled by tab switching
   }
   
   /**
@@ -762,11 +560,10 @@ export class AttendanceListComponent implements OnInit {
   onPaginationChange(event: PaginationEvent): void {
     this.currentFilters = {
       ...this.currentFilters,
-      page: event.page + 1, // Backend expects 1-based page numbers
+      page: event.page + 1,
       per_page: event.pageSize
     };
     
-    // Reload data for active tab
     if (this.activeTab === 'student') {
       this.loadStudentAttendance(this.currentFilters);
     } else {
@@ -778,7 +575,6 @@ export class AttendanceListComponent implements OnInit {
    * Handle sort changes
    */
   onSortChange(event: SortEvent): void {
-    // Map frontend column names to backend column names
     const columnMapping: Record<string, string> = {
       'date': this.activeTab === 'student' ? 'student_attendance.date' : 'teacher_attendance.date',
       'first_name': 'users.first_name',
@@ -798,7 +594,6 @@ export class AttendanceListComponent implements OnInit {
       sort_direction: event.direction
     };
     
-    // Reload data for active tab
     if (this.activeTab === 'student') {
       this.loadStudentAttendance(this.currentFilters);
     } else {
@@ -807,19 +602,14 @@ export class AttendanceListComponent implements OnInit {
   }
 
   onAdvancedSearchChange(event: SearchEvent): void {
-    
-    // Reset to first page when searching
     const filters: Record<string, any> = {
       ...event.filters,
       search: event.query,
       page: 1
     };
     
-    // Save current filters
     this.currentFilters = filters;
     
-    
-    // Load data for active tab
     if (this.activeTab === 'student') {
       this.loadStudentAttendance(filters);
     } else {
@@ -828,10 +618,8 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onSearchReset(): void {
-    // Reset section options to show all sections
     this.updateSectionOptions(null);
     
-    // Load fresh data for active tab
     if (this.activeTab === 'student') {
       this.loadStudentAttendance();
     } else {
@@ -840,31 +628,29 @@ export class AttendanceListComponent implements OnInit {
   }
   
   viewAttendance(attendance: StudentAttendance | TeacherAttendance): void {
-    this.router.navigate(['/attendance/view', attendance.id]);
+    // Preserve the current tab when navigating away
+    this.router.navigate(['/attendance/view', attendance.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   editAttendance(attendance: StudentAttendance | TeacherAttendance): void {
-    this.router.navigate(['/attendance/edit', attendance.id]);
+    // Preserve the current tab when navigating away
+    this.router.navigate(['/attendance/edit', attendance.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   deleteAttendance(attendance: StudentAttendance | TeacherAttendance): void {
     if (confirm(`Are you sure you want to delete this attendance record for ${attendance.first_name} ${attendance.last_name}?`)) {
       this.errorHandler.showInfo('Delete functionality will be implemented with backend integration');
-      // TODO: Implement delete API call
-      // this.attendanceService.deleteAttendance(attendance.id).subscribe({
-      //   next: () => {
-      //     this.errorHandler.showSuccess('Attendance deleted successfully');
-      //     this.loadAttendance();
-      //   },
-      //   error: (error) => this.errorHandler.showError(error)
-      // });
     }
   }
   
   viewStudentReport(attendance: StudentAttendance | TeacherAttendance): void {
     if ('student_id' in attendance) {
       this.router.navigate(['/attendance/view', attendance.student_id], { 
-        queryParams: { report: 'true', type: 'student' } 
+        queryParams: { report: 'true', type: 'student', returnTab: this.activeTab } 
       });
     }
   }
@@ -872,24 +658,20 @@ export class AttendanceListComponent implements OnInit {
   viewTeacherReport(attendance: StudentAttendance | TeacherAttendance): void {
     if ('teacher_id' in attendance) {
       this.router.navigate(['/attendance/view', attendance.teacher_id], { 
-        queryParams: { report: 'true', type: 'teacher' } 
+        queryParams: { report: 'true', type: 'teacher', returnTab: this.activeTab } 
       });
     }
   }
   
-  // Mark student attendance
   markStudentAttendance(): void {
     this.router.navigate(['/attendance/mark'], {
       queryParams: { type: 'student' }
     });
   }
 
-  // Mark teacher attendance
   markTeacherAttendance(): void {
     this.router.navigate(['/attendance/mark'], {
       queryParams: { type: 'teacher' }
     });
   }
 }
-
-

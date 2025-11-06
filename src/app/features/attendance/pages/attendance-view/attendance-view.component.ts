@@ -20,6 +20,7 @@ export class AttendanceViewComponent implements OnInit {
   teacherId?: number;
   showReport = false;
   reportType: 'student' | 'teacher' = 'student';
+  returnTab: 'student' | 'teacher' = 'student'; // Store the tab to return to
   attendance?: StudentAttendance | TeacherAttendance;
   attendanceHistory: any[] = [];
   summary: any = null;
@@ -42,6 +43,7 @@ export class AttendanceViewComponent implements OnInit {
         this.route.queryParams.subscribe(queryParams => {
           this.showReport = queryParams['report'] === 'true';
           this.reportType = queryParams['type'] || 'student';
+          this.returnTab = queryParams['returnTab'] || 'student'; // Capture the tab to return to
           
           if (this.showReport) {
             if (this.reportType === 'student') {
@@ -74,7 +76,9 @@ export class AttendanceViewComponent implements OnInit {
       error: (error) => {
         this.errorHandler.showError(error);
         this.loading = false;
-        this.router.navigate(['/attendance']);
+        this.router.navigate(['/attendance'], {
+          queryParams: { tab: this.returnTab }
+        });
       }
     });
   }
@@ -213,12 +217,18 @@ export class AttendanceViewComponent implements OnInit {
   }
   
   onBack(): void {
-    this.router.navigate(['/attendance']);
+    // Navigate back with the tab that user was on
+    this.router.navigate(['/attendance'], {
+      queryParams: { tab: this.returnTab }
+    });
   }
   
   onEdit(): void {
     if (this.attendanceId) {
-      this.router.navigate(['/attendance/edit', this.attendanceId]);
+      // Pass returnTab to edit page as well
+      this.router.navigate(['/attendance/edit', this.attendanceId], {
+        queryParams: { returnTab: this.returnTab }
+      });
     }
   }
   

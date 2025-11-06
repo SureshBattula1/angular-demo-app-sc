@@ -19,6 +19,7 @@ export class AttendanceEditComponent implements OnInit {
   isLoading = false;
   attendanceId?: number;
   attendance?: StudentAttendance;
+  returnTab: 'student' | 'teacher' = 'student'; // Store the tab to return to
   
   statusOptions = [
     { value: 'Present', label: 'Present', icon: 'check_circle' },
@@ -43,6 +44,12 @@ export class AttendanceEditComponent implements OnInit {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.attendanceId = +params['id'];
+        
+        // Capture the returnTab query param
+        this.route.queryParams.subscribe(queryParams => {
+          this.returnTab = queryParams['returnTab'] || 'student';
+        });
+        
         this.loadAttendance();
       }
     });
@@ -74,7 +81,9 @@ export class AttendanceEditComponent implements OnInit {
       error: (error) => {
         this.errorHandler.showError(error);
         this.isLoading = false;
-        this.router.navigate(['/attendance']);
+        this.router.navigate(['/attendance'], {
+          queryParams: { tab: this.returnTab }
+        });
       }
     });
   }
@@ -92,7 +101,9 @@ export class AttendanceEditComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.errorHandler.showSuccess('Attendance updated successfully');
-          this.router.navigate(['/attendance']);
+          this.router.navigate(['/attendance'], {
+            queryParams: { tab: this.returnTab }
+          });
         } else {
           this.errorHandler.showError(response.message || 'Failed to update attendance');
           this.isLoading = false;
@@ -106,7 +117,10 @@ export class AttendanceEditComponent implements OnInit {
   }
   
   onCancel(): void {
-    this.router.navigate(['/attendance']);
+    // Navigate back with the tab that user was on
+    this.router.navigate(['/attendance'], {
+      queryParams: { tab: this.returnTab }
+    });
   }
   
   getStatusColor(status: string): string {
