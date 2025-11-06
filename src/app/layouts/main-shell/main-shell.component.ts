@@ -4,7 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { MaterialModule } from '../../shared/modules/material/material.module';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { PermissionService } from '../../core/services/permission.service';
@@ -122,51 +122,8 @@ export class MainShellComponent implements OnInit {
     { value: 'petrol', label: 'Petrol', color: '#0F766E' }
   ];
   
-  // Theme definitions
-  // themes = {
-  //   'teal-green': {
-  //     primary: '#00897b',
-  //     primaryLight: '#4db6ac',
-  //     primaryDark: '#00695c',
-  //     accent: '#4caf50',
-  //     accentLight: '#81c784',
-  //     accentDark: '#388e3c'
-  //   },
-  //   'indigo-pink': {
-  //     primary: '#3f51b5',
-  //     primaryLight: '#7986cb',
-  //     primaryDark: '#303f9f',
-  //     accent: '#ff4081',
-  //     accentLight: '#ff79b0',
-  //     accentDark: '#c60055'
-  //   },
-  //   'blue-orange': {
-  //     primary: '#1976d2',
-  //     primaryLight: '#42a5f5',
-  //     primaryDark: '#1565c0',
-  //     accent: '#ff9800',
-  //     accentLight: '#ffb74d',
-  //     accentDark: '#f57c00'
-  //   },
-  //   'purple-pink': {
-  //     primary: '#9c27b0',
-  //     primaryLight: '#ba68c8',
-  //     primaryDark: '#7b1fa2',
-  //     accent: '#e91e63',
-  //     accentLight: '#f06292',
-  //     accentDark: '#c2185b'
-  //   },
-  //   'red-gray': {
-  //     primary: '#d32f2f',
-  //     primaryLight: '#ef5350',
-  //     primaryDark: '#c62828',
-  //     accent: '#616161',
-  //     accentLight: '#9e9e9e',
-  //     accentDark: '#424242'
-  //   }
-  // };
-   // themes.ts
- themes = {
+  // Theme definitions - Full theme configuration for dynamic styling
+  themes = {
   "ocean-blue": {
     primary:"#1E88E5", primaryLight:"#90CAF9", primaryDark:"#1565C0",
     accent:"#00B8D9",  accentLight:"#80E1EF",  accentDark:"#008DA7",
@@ -611,7 +568,7 @@ export class MainShellComponent implements OnInit {
    */
   onSidenavClosed(): void {
     // On mobile, when user clicks outside, set as collapsed
-    this.isHandset$.subscribe(isHandset => {
+    this.isHandset$.pipe(take(1)).subscribe(isHandset => {
       if (isHandset) {
         this.isSidebarCollapsed = true;
       }
@@ -646,40 +603,9 @@ export class MainShellComponent implements OnInit {
     // Save to backend (persistent across devices)
     this.themeService.applyTheme(theme, true);
     
-    // Show success message with theme name
-    const themeName = this.getThemeDisplayName(theme);
+    // Show success message with theme name from themeOptions
+    const themeName = this.themeOptions.find(t => t.value === theme)?.label || theme;
     this.errorHandler.showSuccess(`Theme changed to ${themeName} successfully!`);
-  }
-
-  getThemeDisplayName(themeKey: string): string {
-    const displayNames: Record<string, string> = {
-      'ocean-blue': 'Ocean Blue',
-      'corporate-blue-gray': 'Corporate Blue & Gray',
-      'sunset-orange': 'Sunset Orange',
-      'forest-green': 'Forest Green',
-      'royal-purple': 'Royal Purple',
-      'ruby-red': 'Ruby Red',
-      'teal-mint': 'Teal Mint',
-      'amber-gold': 'Amber Gold',
-      'slate-gray': 'Slate Gray',
-      'midnight-blue': 'Midnight Blue',
-      'lavender-dream': 'Lavender Dream',
-      'coral-reef': 'Coral Reef',
-      'emerald-city': 'Emerald City',
-      'graphite': 'Graphite',
-      'cobalt-sky': 'Cobalt Sky',
-      'flamingo': 'Flamingo',
-      'coffee-cream': 'Coffee Cream',
-      'moss': 'Moss',
-      'indigo-night': 'Indigo Night',
-      'arctic-ice': 'Arctic Ice',
-      'desert-sand': 'Desert Sand',
-      'wine-berry': 'Wine Berry',
-      'aqua-splash': 'Aqua Splash',
-      'lime-zest': 'Lime Zest',
-      'plum': 'Plum'
-    };
-    return displayNames[themeKey] || themeKey;
   }
   
   applyTheme(themeName: string) {
