@@ -12,6 +12,16 @@ import { UserPreferenceService } from '../../core/services/user-preference.servi
 import { ThemeService } from '../../core/services/theme.service';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 
+// Menu item interface
+interface MenuItem {
+  icon: string;
+  label: string;
+  route: string;
+  permission: string | string[];
+  permissionMode?: 'any' | 'all';
+  tooltip?: string;
+}
+
 @Component({
   selector: 'app-main-shell',
   standalone: true,
@@ -25,6 +35,28 @@ export class MainShellComponent implements OnInit {
   selectedTheme = 'ocean-blue';
   isTablet = false;
   isMobile = false;
+  
+  // Menu items configuration
+  menuItems: MenuItem[] = [
+    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', permission: 'dashboard.view' },
+    { icon: 'business', label: 'Branches', route: '/branches', permission: ['branches.view', 'branches.create'], permissionMode: 'any' },
+    { icon: 'person', label: 'Teachers', route: '/teachers', permission: 'teachers.view' },
+    { icon: 'business', label: 'Departments', route: '/departments', permission: 'departments.view' },
+    { icon: 'grade', label: 'Classes (Grades)', route: '/grades', permission: 'grades.view', tooltip: 'Classes( Grades)' },
+    { icon: 'view_module', label: 'Sections', route: '/sections', permission: 'sections.view' },
+    { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'] },
+    { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
+    { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['attendance.view', 'attendance.mark'] },
+    { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create'] },
+    { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'] },
+    { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'] },
+    { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'] },
+    { icon: 'receipt', label: 'Invoices', route: '/invoices', permission: 'invoices.view' },
+    { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
+    { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
+    { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'imports.view' },
+    { icon: 'settings', label: 'Settings', route: '/settings', permission: 'settings.view' }
+  ];
   
   // Theme options for dropdown
   themeOptions = [
