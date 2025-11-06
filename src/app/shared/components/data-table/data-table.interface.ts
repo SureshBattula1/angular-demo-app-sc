@@ -17,7 +17,7 @@ export interface TableColumn {
 export interface TableAction {
   icon: string;                   // Material icon name
   label: string;                  // Tooltip text
-  color?: 'primary' | 'accent' | 'warn';
+  color?: 'primary' | 'accent' | 'warn' | 'info' | 'success' | 'warning';
   action: (row: any) => void;     // Action callback 
   show?: (row: any) => boolean;   // Conditional visibility
   permission?: string | string[];  // Required permission to show this action

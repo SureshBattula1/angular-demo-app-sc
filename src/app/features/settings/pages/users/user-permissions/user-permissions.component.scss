@@ -117,15 +117,15 @@
           height: 18px;
 
           &.from-role {
-            color: #2196f3;
+            color: var(--info-color);
           }
 
           &.overridden {
-            color: #ff9800;
+            color: var(--warning-color);
           }
 
           &.modified {
-            color: #f44336;
+            color: var(--error-color);
           }
         }
       }
@@ -160,8 +160,8 @@
         }
 
         .overridden-chip {
-          background-color: #fff3e0;
-          color: #e65100;
+          background-color: rgba(255, 152, 0, 0.1);
+          color: var(--warning-dark);
           font-size: 11px;
           height: 22px;
         }
@@ -181,16 +181,16 @@
           transition: all 0.2s;
 
           &.granted {
-            border-left: 4px solid #4caf50;
+            border-left: 4px solid var(--success-color);
           }
 
           &.denied {
-            border-left: 4px solid #e0e0e0;
+            border-left: 4px solid var(--border-color);
           }
 
           &.modified {
-            background: #fff9c4;
-            border-color: #fbc02d;
+            background: rgba(255, 152, 0, 0.08);
+            border-color: var(--warning-color);
           }
 
           .permission-info {
@@ -217,21 +217,21 @@
                   gap: 8px;
 
                   .from-role-icon {
-                    color: #2196f3;
+                    color: var(--info-color);
                     font-size: 16px;
                     width: 16px;
                     height: 16px;
                   }
 
                   .overridden-icon {
-                    color: #ff9800;
+                    color: var(--warning-color);
                     font-size: 16px;
                     width: 16px;
                     height: 16px;
                   }
 
                   .modified-icon {
-                    color: #f44336;
+                    color: var(--error-color);
                     font-size: 14px;
                     width: 14px;
                     height: 14px;
@@ -264,18 +264,18 @@
               height: 22px;
 
               &.role-chip {
-                background-color: #e3f2fd;
-                color: #1976d2;
+                background-color: rgba(33, 150, 243, 0.1);
+                color: var(--info-dark);
               }
 
               &.override-chip {
-                background-color: #fff3e0;
-                color: #e65100;
+                background-color: rgba(255, 152, 0, 0.1);
+                color: var(--warning-dark);
               }
 
               &.modified-chip {
-                background-color: #ffebee;
-                color: #c62828;
+                background-color: rgba(244, 67, 54, 0.1);
+                color: var(--error-dark);
               }
             }
           }

@@ -200,8 +200,8 @@
     }
 
     .modified-chip {
-      background-color: #fff3e0;
-      color: #e65100;
+      background-color: rgba(255, 152, 0, 0.1);
+      color: var(--warning-dark);
       font-weight: 500;
       margin-left: auto;
 
@@ -217,7 +217,7 @@
     display: flex;
     gap: var(--spacing-lg);
     padding: var(--spacing-md);
-    background: #e3f2fd;
+    background: rgba(33, 150, 243, 0.08);
     border-radius: var(--radius-sm);
     margin-bottom: var(--spacing-lg);
 
@@ -234,15 +234,15 @@
         height: 18px;
 
         &.from-role {
-          color: #2196f3;
+          color: var(--info-color);
         }
 
         &.overridden {
-          color: #ff9800;
+          color: var(--warning-color);
         }
 
         &.modified {
-          color: #f44336;
+          color: var(--error-color);
         }
       }
     }
@@ -343,8 +343,8 @@
       }
 
       &.permission-modified {
-        background: #fff9c4;
-        border: 1px solid #fbc02d;
+        background: rgba(255, 152, 0, 0.08);
+        border: 1px solid var(--warning-color);
       }
     }
   }
@@ -367,15 +367,15 @@
         height: 16px;
 
         &.from-role-icon {
-          color: #2196f3;
+          color: var(--info-color);
         }
 
         &.overridden-icon {
-          color: #ff9800;
+          color: var(--warning-color);
         }
 
         &.modified-icon {
-          color: #f44336;
+          color: var(--error-color);
           font-size: 12px;
           width: 12px;
           height: 12px;

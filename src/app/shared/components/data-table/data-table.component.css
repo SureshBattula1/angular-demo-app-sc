@@ -351,6 +351,74 @@
   height: 32px;
 }
 
+/* Dynamic theme colors for action buttons - Use data-color attribute */
+
+/* Primary Color (Teal) - View Button */
+.action-buttons button[data-color="primary"],
+.action-buttons button[data-color="primary"] mat-icon,
+.action-buttons button[data-color="primary"] .mat-icon {
+  color: var(--primary-color) !important;
+}
+
+.action-buttons button[data-color="primary"]:hover {
+  background-color: rgba(var(--primary-rgb), 0.08) !important;
+}
+
+/* Info Color (Blue) - Edit Button */
+.action-buttons button[data-color="info"],
+.action-buttons button[data-color="info"] mat-icon,
+.action-buttons button[data-color="info"] .mat-icon {
+  color: var(--info-color) !important;
+}
+
+.action-buttons button[data-color="info"]:hover {
+  background-color: rgba(var(--info-rgb), 0.08) !important;
+}
+
+/* Accent Color (Green) - Permissions Button */
+.action-buttons button[data-color="accent"],
+.action-buttons button[data-color="accent"] mat-icon,
+.action-buttons button[data-color="accent"] .mat-icon {
+  color: var(--accent-color) !important;
+}
+
+.action-buttons button[data-color="accent"]:hover {
+  background-color: rgba(var(--accent-rgb), 0.08) !important;
+}
+
+/* Warn Color (Red) - Delete Button */
+.action-buttons button[data-color="warn"],
+.action-buttons button[data-color="warn"] mat-icon,
+.action-buttons button[data-color="warn"] .mat-icon {
+  color: var(--error-color) !important;
+}
+
+.action-buttons button[data-color="warn"]:hover {
+  background-color: rgba(var(--error-rgb), 0.08) !important;
+}
+
+/* Success Color (Green) */
+.action-buttons button[data-color="success"],
+.action-buttons button[data-color="success"] mat-icon,
+.action-buttons button[data-color="success"] .mat-icon {
+  color: var(--success-color) !important;
+}
+
+.action-buttons button[data-color="success"]:hover {
+  background-color: rgba(var(--success-rgb), 0.08) !important;
+}
+
+/* Warning Color (Orange) */
+.action-buttons button[data-color="warning"],
+.action-buttons button[data-color="warning"] mat-icon,
+.action-buttons button[data-color="warning"] .mat-icon {
+  color: var(--warning-color) !important;
+}
+
+.action-buttons button[data-color="warning"]:hover {
+  background-color: rgba(var(--warning-rgb), 0.08) !important;
+}
+
 /* Cell Types */
 .badge {
   display: inline-block;

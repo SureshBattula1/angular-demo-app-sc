@@ -193,7 +193,7 @@
             <button mat-icon-button 
               *ngFor="let action of getVisibleActions(row)"
               [matTooltip]="action.label"
-              [color]="action.color"
+              [attr.data-color]="action.color"
               (click)="onActionClick(action, row); $event.stopPropagation()">
               <mat-icon>{{ action.icon }}</mat-icon>
             </button>

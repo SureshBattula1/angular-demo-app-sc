@@ -88,13 +88,13 @@ export class UserListComponent implements OnInit {
         label: 'Edit',
         icon: 'edit',
         action: (row: User) => this.editUser(row.id),
-        color: 'accent'
+        color: 'info'
       },
       {
         label: 'Permissions',
         icon: 'shield',
         action: (row: User) => this.managePermissions(row.id),
-        color: 'primary'
+        color: 'accent'
       },
       {
         label: 'Delete',
@@ -228,13 +228,12 @@ export class UserListComponent implements OnInit {
     this.userService.getUsers(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          // Add full_name to each user
-          this.users = (response.data.data || []).map(user => ({
-            ...user,
-            full_name: `${user.first_name} ${user.last_name}`.trim()
-          }));
+          // Backend now provides full_name and properly structured branch data
+          this.users = response.data.data || [];
           console.log('Users loaded:', this.users.length);
-          console.log('Sample user data:', this.users[0]); // Debug: Check user structure
+          if (this.users.length > 0) {
+            console.log('Sample user data:', this.users[0]); // Debug: Check user structure
+          }
           this.tableConfig = {
             ...this.tableConfig,
             totalCount: response.data.total || 0

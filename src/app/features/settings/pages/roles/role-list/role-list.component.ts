@@ -86,7 +86,7 @@ export class RoleListComponent implements OnInit {
         label: 'Edit',
         icon: 'edit',
         action: (row: Role) => this.editRole(row.id),
-        color: 'accent',
+        color: 'info',
         show: (row: Role) => !row.is_system_role
       },
       {
