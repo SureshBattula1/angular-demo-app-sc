@@ -49,7 +49,7 @@
         <!-- Dynamic Menu Items -->
         <ng-container *ngFor="let item of menuItems">
           <a mat-list-item 
-             *hasPermission="item.permission; mode: item.permissionMode || 'all'"
+             *hasPermission="item.permission; hasPermissionMode: item.permissionMode || 'all'"
              [routerLink]="item.route" 
              routerLinkActive="active"
              (click)="onMenuItemClick()"

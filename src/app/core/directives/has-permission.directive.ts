@@ -8,7 +8,7 @@ import { PermissionService } from '../services/permission.service';
 })
 export class HasPermissionDirective implements OnInit, OnDestroy {
   @Input() hasPermission!: string | string[];
-  @Input() mode: 'any' | 'all' = 'any';
+  @Input() hasPermissionMode: 'any' | 'all' = 'any';
   
   private destroy$ = new Subject<void>();
   private hasView = false;
@@ -53,13 +53,13 @@ export class HasPermissionDirective implements OnInit, OnDestroy {
       : [this.hasPermission];
 
     let result: boolean;
-    if (this.mode === 'all') {
+    if (this.hasPermissionMode === 'all') {
       result = this.permissionService.hasAllPermissions(permissions);
     } else {
       result = this.permissionService.hasAnyPermission(permissions);
     }
     
-    // console.log(`Directive checking ${this.mode} for permissions:`, permissions, '| Result:', result);
+    // console.log(`Directive checking ${this.hasPermissionMode} for permissions:`, permissions, '| Result:', result);
     return result;
   }
 

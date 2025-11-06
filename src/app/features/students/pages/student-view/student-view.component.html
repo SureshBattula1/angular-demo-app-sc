@@ -17,53 +17,21 @@
     </div>
   </div>
 
-  <!-- Header Card -->
-  <mat-card class="view-header-card">
-    <mat-card-content>
-      <div class="view-header">
-        <div class="view-avatar">
-          <!-- Show profile picture if exists, otherwise show icon -->
-          <img *ngIf="showProfilePicture" 
-               [src]="profilePictureUrl" 
-               [alt]="getFullName()"
-               class="student-profile-avatar"
-               (load)="onImageLoad()"
-               (error)="onImageError()">
-          <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
-        </div>
-        <div class="view-info">
-          <h1 class="view-name">{{ getFullName() }}</h1>
-          <div class="view-meta">
-            <span>
-              <mat-icon>badge</mat-icon>
-              {{ student.admission_number }}
-            </span>
-            <span>
-              <mat-icon>school</mat-icon>
-              {{ getGradeLabel() }} ({{ student.grade }}) {{ student.section ? '- ' + student.section : '' }}
-            </span>
-            <span *ngIf="student.roll_number">
-              <mat-icon>numbers</mat-icon>
-              Roll: {{ student.roll_number }}
-            </span>
-            <span class="status-badge" [ngClass]="getStatusColor(student.student_status)">
-              <mat-icon>circle</mat-icon>
-              {{ student.student_status }}
-            </span>
-          </div>
-        </div>
-      </div>
-    </mat-card-content>
-    
-    <!-- Tabs Section -->
-    <mat-tab-group class="student-tabs" [(selectedIndex)]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
-      <!-- Student Info Tab -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon>person</mat-icon>
-          <span>Student Info</span>
-        </ng-template>
-        <div class="tab-content student-info-content">
+  <!-- Header Component with Toolbar Navigation -->
+  <app-student-header
+    [student]="student"
+    [showProfilePicture]="showProfilePicture"
+    [profilePictureUrl]="profilePictureUrl"
+    [activeMenu]="activeMenu"
+    (menuClick)="onMenuClick($event)"
+    (imageLoad)="onImageLoad()"
+    (imageError)="onImageError()">
+  </app-student-header>
+
+  <!-- Content Sections - Lazy Loaded -->
+  <mat-card class="content-card">
+    <!-- Student Info Section -->
+    <div class="menu-content student-info-content" *ngIf="activeMenu === 'info'">
           <!-- Professional Student Information Layout -->
           <div class="student-info-grid">
             <!-- Personal Information -->
@@ -484,28 +452,22 @@
                   </div>
                 </div>
               </div>
+            </div>
           </div>
-          </div>
-        </div>
-      </mat-tab>
-      
-          <!-- Attendance Info Tab -->
-          <mat-tab>
-            <ng-template mat-tab-label>
-              <mat-icon>analytics</mat-icon>
-              <span>Attendance Analytics</span>
-            </ng-template>
-            <div class="tab-content attendance-tab">
-              <!-- Loading State -->
-              <div class="attendance-loading" *ngIf="attendanceLoading">
+    </div>
+
+    <!-- Attendance Analytics Section -->
+    <div class="menu-content attendance-tab" *ngIf="activeMenu === 'attendance'">
+      <!-- Loading State -->
+      <div class="attendance-loading" *ngIf="attendanceLoading">
                 <div class="loading-container">
                   <mat-spinner diameter="40"></mat-spinner>
                   <p>Loading attendance data...</p>
                 </div>
-              </div>
-              
-              <!-- Compact Filters & Stats Section -->
-              <div class="attendance-compact-header" *ngIf="!attendanceLoading">
+      </div>
+      
+      <!-- Compact Filters & Stats Section -->
+      <div class="attendance-compact-header" *ngIf="!attendanceLoading">
                 <!-- Quick Stats Bar -->
                 <div class="quick-stats-bar">
                   <div class="stat-item present">
@@ -586,11 +548,11 @@
                   <button mat-icon-button matTooltip="Advanced Search" class="advanced-search-btn">
                     <mat-icon>search</mat-icon>
                   </button>
-                </div>
-              </div>
-          
-              <!-- Monthly Calendar View -->
-              <div class="attendance-monthly-calendars" *ngIf="!attendanceLoading && filteredAttendance.length > 0">
+        </div>
+      </div>
+      
+      <!-- Monthly Calendar View -->
+      <div class="attendance-monthly-calendars" *ngIf="!attendanceLoading && filteredAttendance.length > 0">
                 <div class="month-calendar" *ngFor="let month of getMonthsFromAttendance()">
                   <div class="month-header">
                     <h4>{{ month.monthName }} {{ month.year }}</h4>
@@ -631,12 +593,12 @@
                         {{ getAttendanceStatusIcon(day.attendance.status) }}
                       </mat-icon>
                     </div>
-                  </div>
-                </div>
-              </div>
-          
-          <!-- Attendance Stats (Old - Removed) -->
-          <div class="attendance-stats-old" *ngIf="false">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Attendance Stats (Old - Removed) -->
+      <div class="attendance-stats-old" *ngIf="false">
             <div class="stat-card primary-stat">
               <div class="stat-icon">
                 <mat-icon>trending_up</mat-icon>
@@ -674,19 +636,12 @@
               </div>
           </div>
         </div>
+    </div>
 
-        </div>
-      </mat-tab>
-
-      <!-- Leaves Tab -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon>event_busy</mat-icon>
-          <span>Leaves</span>
-        </ng-template>
-        <div class="tab-content leaves-tab">
-          <!-- Loading State -->
-          <div class="leaves-loading" *ngIf="leavesLoading">
+    <!-- Leaves Section -->
+    <div class="menu-content leaves-tab" *ngIf="activeMenu === 'leaves'">
+      <!-- Loading State -->
+      <div class="leaves-loading" *ngIf="leavesLoading">
             <div class="loading-container">
               <mat-spinner diameter="40"></mat-spinner>
               <p>Loading leave records...</p>
@@ -774,18 +729,12 @@
             <mat-icon>event_available</mat-icon>
             <p>No leave records found for this student.</p>
           </div>
-        </div>
-      </mat-tab>
+    </div>
 
-      <!-- Exams Tab -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon>assessment</mat-icon>
-          <span>Exams</span>
-        </ng-template>
-        <div class="tab-content exams-tab">
-          <!-- Loading State -->
-          <div class="exams-loading" *ngIf="examsLoading">
+    <!-- Exams Section -->
+    <div class="menu-content exams-tab" *ngIf="activeMenu === 'exams'">
+      <!-- Loading State -->
+      <div class="exams-loading" *ngIf="examsLoading">
             <div class="loading-container">
               <mat-spinner diameter="40"></mat-spinner>
               <p>Loading exam information...</p>
@@ -794,8 +743,8 @@
 
           <!-- Exams Content -->
           <div class="exams-content" *ngIf="!examsLoading">
-            <!-- Exam Schedules Section -->
-            <div class="exams-section">
+        <!-- Exam Schedules Section -->
+        <div class="exams-section">
               <div class="section-header">
                 <div class="section-icon">
                   <mat-icon>event</mat-icon>
@@ -804,9 +753,9 @@
                   <h3>Upcoming Exam Schedules</h3>
                   <p>Your upcoming examinations and their details</p>
                 </div>
-              </div>
+          </div>
 
-              <div class="exam-schedules" *ngIf="upcomingExams.length > 0">
+          <div class="exam-schedules" *ngIf="upcomingExams.length > 0">
                 <div class="exam-card" *ngFor="let exam of upcomingExams">
                   <div class="exam-header">
                     <div class="exam-icon">
@@ -865,17 +814,17 @@
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div class="no-exams" *ngIf="upcomingExams.length === 0">
-                <mat-icon>event_available</mat-icon>
-                <p>No upcoming exams scheduled for you.</p>
-              </div>
             </div>
+          </div>
 
-            <!-- Exam Results Section -->
-            <div class="exams-section">
+          <div class="no-exams" *ngIf="upcomingExams.length === 0">
+            <mat-icon>event_available</mat-icon>
+            <p>No upcoming exams scheduled for you.</p>
+          </div>
+        </div>
+
+        <!-- Exam Results Section -->
+        <div class="exams-section">
               <div class="section-header">
                 <div class="section-icon">
                   <mat-icon>bar_chart</mat-icon>
@@ -884,9 +833,9 @@
                   <h3>Exam Results</h3>
                   <p>Your performance in completed examinations</p>
                 </div>
-              </div>
+          </div>
 
-              <div class="exam-results" *ngIf="examResults.length > 0">
+          <div class="exam-results" *ngIf="examResults.length > 0">
                 <div class="result-card" *ngFor="let result of examResults">
                   <div class="result-header">
                     <div class="result-details">
@@ -909,37 +858,31 @@
                       <span>Status: <strong [ngClass]="getStatusClass(result.is_pass)">{{ result.is_pass ? 'Pass' : 'Fail' }}</strong></span>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div class="no-results" *ngIf="examResults.length === 0">
-                <mat-icon>assessment</mat-icon>
-                <p>No exam results available yet.</p>
-              </div>
             </div>
+          </div>
+
+          <div class="no-results" *ngIf="examResults.length === 0">
+            <mat-icon>assessment</mat-icon>
+            <p>No exam results available yet.</p>
           </div>
         </div>
-      </mat-tab>
+      </div>
+    </div>
 
-      <!-- Fees Tab -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon>account_balance_wallet</mat-icon>
-          <span>Fees</span>
-        </ng-template>
-        <div class="tab-content fees-tab">
-          <!-- Loading State -->
-          <div class="fees-loading" *ngIf="feesLoading">
-            <div class="loading-container">
-              <mat-spinner diameter="40"></mat-spinner>
-              <p>Loading fee information...</p>
-            </div>
-          </div>
+    <!-- Fees Section -->
+    <div class="menu-content fees-tab" *ngIf="activeMenu === 'fees'">
+      <!-- Loading State -->
+      <div class="fees-loading" *ngIf="feesLoading">
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading fee information...</p>
+        </div>
+      </div>
 
-          <!-- Fees Content -->
-          <div class="fees-content" *ngIf="!feesLoading">
-            <!-- Summary Cards -->
-            <div class="fees-summary">
+      <!-- Fees Content -->
+      <div class="fees-content" *ngIf="!feesLoading">
+        <!-- Summary Cards -->
+        <div class="fees-summary">
               <div class="summary-card total-paid">
                 <div class="card-icon">
                   <mat-icon>check_circle</mat-icon>
@@ -1064,11 +1007,9 @@
               </div>
             </div>
           </div>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
+      </div>
     </mat-card>
-</div>
+  </div>
 
 <!-- Loading State -->
 <div class="view-loading-container" *ngIf="isLoading">

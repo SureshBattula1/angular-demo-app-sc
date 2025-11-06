@@ -13,11 +13,13 @@ import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 import { ExamScheduleService } from '../../../exams/services/exam-schedule.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { FeeService } from '../../../fees/services/fee.service';
+// Import child component
+import { StudentHeaderComponent } from './components/student-header/student-header.component';
 
 @Component({
   selector: 'app-student-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule],
+  imports: [CommonModule, FormsModule, MaterialModule, StudentHeaderComponent],
   templateUrl: './student-view.component.html',
   styleUrls: ['./student-view.component.scss']
 })
@@ -28,8 +30,9 @@ export class StudentViewComponent implements OnInit {
   showProfilePicture = false;
   profilePictureUrl = '';
   
-  // Tab management
-  selectedTabIndex = 0;
+  // Menu management with lazy loading
+  activeMenu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' = 'info';
+  loadedMenus = new Set<string>(['info']);
   
   // Attendance data
   attendanceStats = {
@@ -102,12 +105,35 @@ export class StudentViewComponent implements OnInit {
     });
   }
   
-  onTabChange(index: number): void {
-    this.selectedTabIndex = index;
+  /**
+   * Handle menu click - implement lazy loading
+   * Only load data when user clicks on a menu item for the first time
+   */  
+  onMenuClick(menu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees'): void {
+    this.activeMenu = menu;
     
-    // Lazy load data when tabs are selected
-    // Data is now loaded automatically in loadStudent()
-    // This just handles the tab switching
+    // Lazy load data only if not already loaded
+    if (!this.loadedMenus.has(menu)) {
+      this.loadedMenus.add(menu);
+      
+      switch(menu) {
+        case 'attendance':
+          this.loadAttendanceData();
+          break;
+        case 'leaves':
+          this.loadLeavesData();
+          break;
+        case 'exams':
+          this.loadExamsData();
+          break;
+        case 'fees':
+          this.loadFeesData();
+          break;
+        case 'info':
+          // Info is always loaded with student data
+          break;
+      }
+    }
   }
 
   loadStudent(): void {
@@ -133,12 +159,8 @@ export class StudentViewComponent implements OnInit {
           
           this.isLoading = false;
           
-          // Load data after student is loaded
-          // This ensures we have the user_id available
-          this.loadAttendanceData();
-          this.loadExamsData();
-          this.loadLeavesData();
-          this.loadFeesData();
+          // Don't auto-load data - it will be loaded when user clicks on menus
+          // This implements true lazy loading
         }
       },
       error: (error) => {

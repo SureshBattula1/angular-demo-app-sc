@@ -65,31 +65,30 @@
   }
 }
 
-// Tabs
-::ng-deep .student-tabs {
-  .mat-mdc-tab-group {
-    background: var(--card-background);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .mat-mdc-tab-header { border-bottom: 1px solid var(--divider-color); }
-  
-  .mat-mdc-tab .mat-mdc-tab-label {
-          display: flex;
-          align-items: center;
-          gap: var(--spacing-xs);
-    font-weight: 600;
-          
-          mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-  }
+// Content Card for Menu Sections
+.content-card {
+  background: var(--card-background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
-.tab-content { padding: var(--spacing-md); }
+// Menu Content Animation
+.menu-content { 
+  padding: var(--spacing-md);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 // Compact Professional Student Info Layout
 .student-info-content {

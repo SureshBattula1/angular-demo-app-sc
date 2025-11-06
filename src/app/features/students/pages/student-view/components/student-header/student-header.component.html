@@ -1,0 +1,80 @@
+<mat-card class="view-header-card">
+  <div class="view-header">
+    <div class="view-avatar">
+      <!-- Show profile picture if exists, otherwise show icon -->
+      <img *ngIf="showProfilePicture" 
+           [src]="profilePictureUrl" 
+           [alt]="getFullName()"
+           class="student-profile-avatar"
+           (load)="onImageLoad()"
+           (error)="onImageError()">
+      <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
+    </div>
+    <div class="view-info">
+      <h1 class="view-name">{{ getFullName() }}</h1>
+      <div class="view-meta">
+        <span>
+          <mat-icon>badge</mat-icon>
+          {{ student.admission_number }}
+        </span>
+        <span>
+          <mat-icon>school</mat-icon>
+          {{ getGradeLabel() }} ({{ student.grade }}) {{ student.section ? '- ' + student.section : '' }}
+        </span>
+        <span *ngIf="student.roll_number">
+          <mat-icon>numbers</mat-icon>
+          Roll: {{ student.roll_number }}
+        </span>
+        <span class="status-badge" [ngClass]="getStatusColor(student.student_status)">
+          <mat-icon>circle</mat-icon>
+          {{ student.student_status }}
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toolbar Navigation -->
+  <mat-toolbar class="student-toolbar">
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'info'"
+      (click)="onMenuClick('info')">
+      <mat-icon>person</mat-icon>
+      <span>Student Info</span>
+    </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'attendance'"
+      (click)="onMenuClick('attendance')">
+      <mat-icon>analytics</mat-icon>
+      <span>Attendance</span>
+    </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'leaves'"
+      (click)="onMenuClick('leaves')">
+      <mat-icon>event_busy</mat-icon>
+      <span>Leaves</span>
+    </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'exams'"
+      (click)="onMenuClick('exams')">
+      <mat-icon>assessment</mat-icon>
+      <span>Exams</span>
+    </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'fees'"
+      (click)="onMenuClick('fees')">
+      <mat-icon>payments</mat-icon>
+      <span>Fees</span>
+    </button>
+  </mat-toolbar>
+</mat-card>
+
