@@ -150,6 +150,10 @@
   }
 }
 
+.content-card{
+  padding: var(--spacing-lg);
+}
+
 // Teacher Info Grid (supports old mat-card structure)
 .teacher-info-grid {
   display: grid;

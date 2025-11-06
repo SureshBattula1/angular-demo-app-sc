@@ -10,13 +10,25 @@ import { Teacher } from '../../../../core/models/teacher.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { LeaveService } from '../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
-import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
 import { environment } from '../../../../../environments/environment';
+// Import child components
+import { TeacherHeaderComponent } from './components/teacher-header/teacher-header.component';
+import { TeacherInfoComponent } from './components/teacher-info/teacher-info.component';
+import { TeacherAttendanceComponent } from './components/teacher-attendance/teacher-attendance.component';
+import { TeacherLeavesComponent } from './components/teacher-leaves/teacher-leaves.component';
 
 @Component({
   selector: 'app-teacher-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule, UniversalAttachmentsComponent],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    MaterialModule,
+    TeacherHeaderComponent,
+    TeacherInfoComponent,
+    TeacherAttendanceComponent,
+    TeacherLeavesComponent
+  ],
   templateUrl: './teacher-view.component.html',
   styleUrls: ['./teacher-view.component.scss']
 })

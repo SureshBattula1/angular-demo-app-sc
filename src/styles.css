@@ -20,12 +20,14 @@
   --primary-light: #4db6ac;
   --primary-dark: #00695c;
   --primary-contrast: #ffffff;
+  --primary-rgb: 0, 137, 123;
 
   /* Accent Colors */
   --accent-color: #4caf50;
   --accent-light: #81c784;
   --accent-dark: #388e3c;
   --accent-contrast: #ffffff;
+  --accent-rgb: 76, 175, 80;
 
   /* Neutral Colors */
   --white: #ffffff;

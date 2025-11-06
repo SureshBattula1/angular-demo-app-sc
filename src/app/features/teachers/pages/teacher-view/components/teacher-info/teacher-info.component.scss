@@ -1,8 +1,11 @@
-// Teacher Info Grid
+// Professional Teacher Info Component Styles
+// Uses global CSS variables for dynamic theming
+
 .teacher-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: var(--spacing-md);
+  animation: fadeIn 0.3s ease-in-out;
   
   .detail-card {
     background: var(--card-background);
@@ -10,6 +13,12 @@
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
     overflow: hidden;
+    transition: all var(--transition-normal);
+    
+    &:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
     
     ::ng-deep .mat-mdc-card-header {
       background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
@@ -17,6 +26,18 @@
       margin: calc(var(--spacing-md) * -1);
       margin-bottom: var(--spacing-md);
       overflow: hidden;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+        pointer-events: none;
+      }
       
       .mat-mdc-card-title {
         color: white;
@@ -31,6 +52,7 @@
         word-wrap: break-word;
         max-width: 100%;
         padding-top: 15px;
+        letter-spacing: 0.2px;
         
         mat-icon {
           font-size: 20px;
@@ -49,9 +71,17 @@
     .detail-row {
       display: flex;
       justify-content: space-between;
-      padding: var(--spacing-xs) 0;
+      padding: var(--spacing-sm) 0;
       border-bottom: 1px solid var(--divider-color);
       gap: var(--spacing-md);
+      transition: all var(--transition-fast);
+      
+      &:hover {
+        background: var(--gray-50);
+        padding-left: var(--spacing-xs);
+        padding-right: var(--spacing-xs);
+        border-radius: var(--radius-sm);
+      }
       
       &:last-child {
         border-bottom: none;
@@ -62,13 +92,17 @@
         color: var(--text-secondary);
         font-size: 13px;
         flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        font-size: 11px;
       }
       
       .detail-value {
         color: var(--text-primary);
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         text-align: right;
+        word-break: break-word;
         
         .badge {
           display: inline-block;
@@ -91,6 +125,110 @@
         }
       }
     }
+    
+    // Subsection Titles
+    .subsection-title {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+    
+    // Address Sections
+    .address-section {
+      margin-bottom: var(--spacing-md);
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: var(--spacing-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    // Qualification Items
+    .qualification-item {
+      margin-bottom: var(--spacing-md);
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      > strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+      }
+    }
+    
+    // Skills Sections
+    .skills-section {
+      margin-bottom: var(--spacing-md);
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .subsection-title {
+        margin-top: 0;
+        margin-bottom: var(--spacing-sm);
+      }
+      
+      mat-chip-set {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+        
+        mat-chip {
+          background: var(--primary-light);
+          color: white;
+          font-size: 12px;
+          font-weight: 500;
+          
+          &:hover {
+            background: var(--primary-color);
+            transform: scale(1.05);
+          }
+        }
+      }
+    }
+    
+    // Divider spacing
+    .my-2 {
+      margin: var(--spacing-sm) 0;
+    }
+    
+    .my-3 {
+      margin: var(--spacing-md) 0;
+    }
+  }
+}
+
+// Animation
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
