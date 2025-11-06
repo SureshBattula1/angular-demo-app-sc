@@ -14,6 +14,7 @@ export interface StudentAttendance {
   // Joined fields from API
   first_name?: string;
   last_name?: string;
+  full_name?: string;
   email?: string;
   admission_number?: string;
   grade?: string;
@@ -33,6 +34,7 @@ export interface TeacherAttendance {
   // Joined fields from API
   first_name?: string;
   last_name?: string;
+  full_name?: string;
   email?: string;
   employee_id?: string;
 }
@@ -89,6 +91,7 @@ export interface AttendanceStudent {
   last_name: string;
   admission_number: string;
   roll_number: string;
+  phone?: string;
   grade: string;
   section: string;
   status?: 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'Sick Leave' | 'Leave';

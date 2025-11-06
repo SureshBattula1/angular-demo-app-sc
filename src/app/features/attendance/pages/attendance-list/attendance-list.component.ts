@@ -411,7 +411,10 @@ export class AttendanceListComponent implements OnInit {
     this.attendanceService.getAttendance(params).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.studentRecords = response.data || [];
+          this.studentRecords = (response.data || []).map((record: StudentAttendance) => ({
+            ...record,
+            full_name: record.full_name || `${record.first_name || ''} ${record.last_name || ''}`.trim()
+          }));
           if (response.meta) {
             this.studentTableConfig = { ...this.studentTableConfig, totalCount: response.meta.total };
             this.studentCount = response.meta.total;
@@ -444,7 +447,10 @@ export class AttendanceListComponent implements OnInit {
     this.attendanceService.getAttendance(params).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.teacherRecords = response.data || [];
+          this.teacherRecords = (response.data || []).map((record: TeacherAttendance) => ({
+            ...record,
+            full_name: record.full_name || `${record.first_name || ''} ${record.last_name || ''}`.trim()
+          }));
           if (response.meta) {
             this.teacherTableConfig = { ...this.teacherTableConfig, totalCount: response.meta.total };
             this.teacherCount = response.meta.total;
@@ -472,8 +478,7 @@ export class AttendanceListComponent implements OnInit {
   getStudentColumns(): TableColumn[] {
     return [
       { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
       { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
       { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
@@ -485,8 +490,7 @@ export class AttendanceListComponent implements OnInit {
   getTeacherColumns(): TableColumn[] {
     return [
       { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
       { key: 'employee_id', header: 'Employee ID', searchable: true, width: '140px' },
       { key: 'email', header: 'Email', searchable: true, width: '200px' },
       { key: 'status', header: 'Status', type: 'badge', width: '120px', align: 'center' },

@@ -50,8 +50,6 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 8px 16px;
-  background: var(--info-light, #e3f2fd);
   color: var(--info-dark, #0d47a1);
   border-radius: 4px;
   font-size: 13px;
@@ -127,7 +125,7 @@
   
   .load-button {
     margin-top: 4px;
-    height: 56px;
+    // height: 56px;
   }
 }
 
@@ -167,7 +165,7 @@
 
 // Quick Actions
 .quick-actions {
-  margin-bottom: 24px;
+  // margin-bottom: 24px;
   padding: 16px;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: 8px;

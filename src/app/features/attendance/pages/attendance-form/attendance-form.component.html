@@ -47,12 +47,6 @@
 
   <!-- Filter Section -->
   <mat-card class="detail-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>filter_list</mat-icon>
-        Filters
-      </mat-card-title>
-    </mat-card-header>
     
     <mat-card-content>
       <div class="filter-grid">
@@ -129,7 +123,6 @@
     <mat-card-content>
       <!-- Quick Actions -->
       <div class="quick-actions">
-        <h3>Quick Mark All As:</h3>
         <div class="quick-actions-buttons">
           <button 
             mat-stroked-button 
@@ -157,7 +150,7 @@
             <td mat-cell *matCellDef="let student">
               <div class="person-info">
                 <strong>{{ getStudentFullName(student) }}</strong>
-                <small>{{ student.admission_number }}</small>
+                <small>{{ student.phone || student.admission_number }}</small>
               </div>
             </td>
           </ng-container>
@@ -213,7 +206,7 @@
             <td mat-cell *matCellDef="let teacher">
               <div class="person-info">
                 <strong>{{ getTeacherFullName(teacher) }}</strong>
-                <small>{{ teacher.email }}</small>
+                <small>{{ teacher.phone || teacher.employee_id }}</small>
               </div>
             </td>
           </ng-container>

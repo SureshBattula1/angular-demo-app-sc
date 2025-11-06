@@ -206,6 +206,7 @@ export class AttendanceFormComponent implements OnInit {
               last_name: student.last_name || '',
               admission_number: student.admission_number || '',
               roll_number: student.roll_number || '',
+              phone: student.phone || '',
               grade: student.grade || '',
               section: student.section || '',
               status: 'Present', // Default to Present
@@ -267,12 +268,19 @@ export class AttendanceFormComponent implements OnInit {
             if (!userId) {
             }
             
+            // Get name from teacher or user object
+            const firstName = teacher.first_name || teacher.user?.first_name || '';
+            const lastName = teacher.last_name || teacher.user?.last_name || '';
+            const email = teacher.email || teacher.user?.email || '';
+            const phone = teacher.phone || teacher.user?.phone || '';
+            
             return {
               id: userId,
-              first_name: teacher.first_name || '',
-              last_name: teacher.last_name || '',
+              first_name: firstName,
+              last_name: lastName,
               employee_id: teacher.employee_id || '',
-              email: teacher.email || '',
+              email: email,
+              phone: phone,
               department: teacher.department?.name || 'N/A',
               status: 'Present', // Default to Present
               remarks: ''
@@ -568,11 +576,17 @@ export class AttendanceFormComponent implements OnInit {
   }
   
   getStudentFullName(student: AttendanceStudent): string {
-    return `${student.first_name} ${student.last_name}`;
+    const firstName = student.first_name || '';
+    const lastName = student.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || student.admission_number || 'Unknown Student';
   }
   
   getTeacherFullName(teacher: any): string {
-    return `${teacher.first_name} ${teacher.last_name}`;
+    const firstName = teacher.first_name || '';
+    const lastName = teacher.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName || teacher.email || 'Unknown Teacher';
   }
   
   getPresentCount(): number {
