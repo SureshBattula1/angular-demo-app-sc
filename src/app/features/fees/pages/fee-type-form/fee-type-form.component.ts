@@ -49,7 +49,7 @@ export class FeeTypeFormComponent implements OnInit {
     
     // Get return tab from query params
     this.route.queryParams.subscribe(params => {
-      this.returnTab = params['tab'] || 'types';
+      this.returnTab = params['returnTab'] || 'types';
     });
   }
   

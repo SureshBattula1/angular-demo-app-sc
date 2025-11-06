@@ -35,7 +35,7 @@ export class FeeStructureViewComponent implements OnInit {
     });
     
     this.route.queryParams.subscribe(params => {
-      this.returnTab = params['tab'] || 'structures';
+      this.returnTab = params['returnTab'] || 'structures';
     });
   }
   
@@ -69,7 +69,7 @@ export class FeeStructureViewComponent implements OnInit {
   
   onEdit(): void {
     this.router.navigate(['/fees/structure/edit', this.feeStructureId], {
-      queryParams: { tab: this.returnTab }
+      queryParams: { returnTab: this.returnTab }
     });
   }
   

@@ -1,0 +1,97 @@
+<div class="page-container">
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="fee-toolbar">
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'structures'"
+        (click)="switchTab('structures')">
+        <mat-icon>account_balance</mat-icon>
+        <span>Fee Structures</span>
+        <span class="tab-badge" *ngIf="structureCount > 0">{{ structureCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'payments'"
+        (click)="switchTab('payments')">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Fee Payments</span>
+        <span class="tab-badge" *ngIf="paymentCount > 0">{{ paymentCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'types'"
+        (click)="switchTab('types')">
+        <mat-icon>category</mat-icon>
+        <span>Fee Types</span>
+        <span class="tab-badge" *ngIf="feeTypeCount > 0">{{ feeTypeCount }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Fee Structures Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'structures' && isTabLoaded('structures')"
+    #structuresTable
+    [data]="feeStructures"
+    [config]="structuresTableConfig"
+    [advancedSearchConfig]="structuresSearchConfig"
+    [title]="'Fee Structures'"
+    [loading]="loading"
+    (actionClicked)="onStructureAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onStructureExport($event)"
+    (searchChanged)="onSearchChange($event)"
+    (paginationChanged)="onStructurePaginationChange($event)"
+    (sortChanged)="onStructureSortChange($event)"
+    (advancedSearchChanged)="onStructuresSearch($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
+
+  <!-- Fee Payments Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'payments' && isTabLoaded('payments')"
+    #paymentsTable
+    [data]="feePayments"
+    [config]="paymentsTableConfig"
+    [advancedSearchConfig]="paymentsSearchConfig"
+    [title]="'Fee Payments'"
+    [loading]="loading"
+    (actionClicked)="onPaymentAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onPaymentExport($event)"
+    (searchChanged)="onSearchChange($event)"
+    (paginationChanged)="onPaymentPaginationChange($event)"
+    (sortChanged)="onPaymentSortChange($event)"
+    (advancedSearchChanged)="onPaymentsSearch($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
+
+  <!-- Fee Types Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'types' && isTabLoaded('types')"
+    #feeTypesTable
+    [data]="feeTypes"
+    [config]="feeTypesTableConfig"
+    [advancedSearchConfig]="feeTypesSearchConfig"
+    [title]="'Fee Types'"
+    [loading]="loading"
+    (actionClicked)="onFeeTypeAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onFeeTypeExport($event)"
+    (searchChanged)="onSearchChange($event)"
+    (paginationChanged)="onFeeTypePaginationChange($event)"
+    (sortChanged)="onFeeTypeSortChange($event)"
+    (advancedSearchChanged)="onFeeTypesSearch($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
+</div>
+

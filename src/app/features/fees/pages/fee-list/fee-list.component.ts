@@ -16,143 +16,8 @@ import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.m
   selector: 'app-fee-list',
   standalone: true,
   imports: [CommonModule, MaterialModule, DataTableComponent],
-  template: `
-    <div class="page-container">
-      <!-- Tabbed Interface -->
-      <div class="tabs-container">
-        <!-- Tab Header -->
-        <div class="tabs-header">
-          <button 
-            class="tab-item" 
-            [class.active]="activeTab === 'structures'"
-            (click)="switchTab('structures')">
-            <div class="tab-label-full">
-              <mat-icon>account_balance</mat-icon>
-              Fee Structures
-              <span class="tab-badge" *ngIf="structureCount > 0">{{ structureCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>account_balance</mat-icon>
-              Structures
-              <span class="tab-badge" *ngIf="structureCount > 0">{{ structureCount }}</span>
-            </div>
-          </button>
-          
-          <button 
-            class="tab-item" 
-            [class.active]="activeTab === 'payments'"
-            (click)="switchTab('payments')">
-            <div class="tab-label-full">
-              <mat-icon>receipt_long</mat-icon>
-              Fee Payments
-              <span class="tab-badge" *ngIf="paymentCount > 0">{{ paymentCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>receipt_long</mat-icon>
-              Payments
-              <span class="tab-badge" *ngIf="paymentCount > 0">{{ paymentCount }}</span>
-            </div>
-          </button>
-          
-          <button 
-            class="tab-item" 
-            [class.active]="activeTab === 'types'"
-            (click)="switchTab('types')">
-            <div class="tab-label-full">
-              <mat-icon>category</mat-icon>
-              Fee Types
-              <span class="tab-badge" *ngIf="feeTypeCount > 0">{{ feeTypeCount }}</span>
-            </div>
-            <div class="tab-label-short">
-              <mat-icon>category</mat-icon>
-              Types
-              <span class="tab-badge" *ngIf="feeTypeCount > 0">{{ feeTypeCount }}</span>
-            </div>
-          </button>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="tabs-content">
-          <!-- Fee Structures Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'structures'">
-            <app-data-table
-              #structuresTable
-              [data]="feeStructures"
-              [config]="structuresTableConfig"
-              [advancedSearchConfig]="structuresSearchConfig"
-              [title]="'Fee Structures'"
-              [loading]="loading"
-              (actionClicked)="onStructureAction($event)"
-              (rowClicked)="onRowClick($event)"
-              (selectionChanged)="onSelectionChange($event)"
-              (exportClicked)="onStructureExport($event)"
-              (searchChanged)="onSearchChange($event)"
-              (paginationChanged)="onStructurePaginationChange($event)"
-              (sortChanged)="onStructureSortChange($event)"
-              (advancedSearchChanged)="onStructuresSearch($event)"
-              (searchResetEvent)="onSearchReset()">
-            </app-data-table>
-          </div>
-
-          <!-- Fee Payments Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'payments'">
-            <app-data-table
-              #paymentsTable
-              [data]="feePayments"
-              [config]="paymentsTableConfig"
-              [advancedSearchConfig]="paymentsSearchConfig"
-              [title]="'Fee Payments'"
-              [loading]="loading"
-              (actionClicked)="onPaymentAction($event)"
-              (rowClicked)="onRowClick($event)"
-              (selectionChanged)="onSelectionChange($event)"
-              (exportClicked)="onPaymentExport($event)"
-              (searchChanged)="onSearchChange($event)"
-              (paginationChanged)="onPaymentPaginationChange($event)"
-              (sortChanged)="onPaymentSortChange($event)"
-              (advancedSearchChanged)="onPaymentsSearch($event)"
-              (searchResetEvent)="onSearchReset()">
-            </app-data-table>
-          </div>
-
-          <!-- Fee Types Tab -->
-          <div class="tab-pane" [class.active]="activeTab === 'types'">
-            <app-data-table
-              #feeTypesTable
-              [data]="feeTypes"
-              [config]="feeTypesTableConfig"
-              [advancedSearchConfig]="feeTypesSearchConfig"
-              [title]="'Fee Types'"
-              [loading]="loading"
-              (actionClicked)="onFeeTypeAction($event)"
-              (rowClicked)="onRowClick($event)"
-              (selectionChanged)="onSelectionChange($event)"
-              (exportClicked)="onFeeTypeExport($event)"
-              (searchChanged)="onSearchChange($event)"
-              (paginationChanged)="onFeeTypePaginationChange($event)"
-              (sortChanged)="onFeeTypeSortChange($event)"
-              (advancedSearchChanged)="onFeeTypesSearch($event)"
-              (searchResetEvent)="onSearchReset()">
-            </app-data-table>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host { display: block; }
-    .page-container { max-width: 1600px; margin: 0 auto; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 16px; background: var(--card-background); border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-    .header-content h1 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: var(--text-primary); }
-    .header-content h1 mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--primary-color); }
-    .subtitle { margin: 0; color: var(--text-secondary); font-size: 14px; }
-    @media (max-width: 960px) {
-      .page-container { padding: 16px; }
-      .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-      .header-actions { width: 100%; }
-      .header-actions button { width: 100%; }
-    }
-  `]
+  templateUrl: './fee-list.component.html',
+  styleUrls: ['./fee-list.component.scss']
 })
 export class FeeListComponent implements OnInit {
   @ViewChild('structuresTable') structuresTable!: DataTableComponent;
@@ -161,6 +26,9 @@ export class FeeListComponent implements OnInit {
   
   loading = false;
   activeTab: 'structures' | 'payments' | 'types' = 'structures';
+  
+  // Track which tabs have been loaded for lazy loading
+  private loadedTabs = new Set<string>();
   
   // Separate data arrays for each tab
   feeStructures: FeeStructure[] = [];
@@ -396,29 +264,63 @@ export class FeeListComponent implements OnInit {
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
+    this.loadGrades();
+    this.loadFeeTypesForFilter();
+    
     // Check query parameters to restore active tab
     this.route.queryParams.subscribe(params => {
-      const tabType = params['tab'];
-      if (tabType === 'payments') {
+      // Check for returnTab first (when coming back from view/edit), then tab
+      const targetTab = params['returnTab'] || params['tab'];
+      
+      if (targetTab === 'payments') {
         this.activeTab = 'payments';
-      } else if (tabType === 'types') {
+      } else if (targetTab === 'types') {
         this.activeTab = 'types';
       } else {
         this.activeTab = 'structures'; // Default to structures
       }
+      
+      // Mark the initial tab as loaded
+      this.loadedTabs.add(this.activeTab);
     });
     
-    this.loadBranches();
-    this.loadGrades();
-    this.loadFeeTypesForFilter();
-    this.loadFeeStructures();
-    this.loadFeePayments();
-    this.loadFeeTypes();
+    // Load data for the active tab only (lazy loading)
+    this.loadActiveTabData();
+  }
+  
+  // Check if a tab has been loaded (for lazy loading)
+  isTabLoaded(tab: string): boolean {
+    return this.loadedTabs.has(tab);
   }
 
   // Tab switching method
   switchTab(tab: 'structures' | 'payments' | 'types'): void {
     this.activeTab = tab;
+    
+    // Mark tab as loaded for lazy loading
+    this.loadedTabs.add(tab);
+    
+    // Update URL query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge'
+    });
+    
+    // Load data for the tab
+    this.loadActiveTabData();
+  }
+  
+  // Load data for active tab only
+  private loadActiveTabData(): void {
+    if (this.activeTab === 'structures') {
+      this.loadFeeStructures();
+    } else if (this.activeTab === 'payments') {
+      this.loadFeePayments();
+    } else if (this.activeTab === 'types') {
+      this.loadFeeTypes();
+    }
   }
 
   // Load fee structures
@@ -718,19 +620,19 @@ export class FeeListComponent implements OnInit {
   // Structure Actions
   addFeeStructure(): void {
     this.router.navigate(['/fees/structure/create'], {
-      queryParams: { tab: 'structures' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
   viewStructure(structure: FeeStructure): void {
     this.router.navigate(['/fees/structure/view', structure.id], {
-      queryParams: { tab: 'structures' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
   editStructure(structure: FeeStructure): void {
     this.router.navigate(['/fees/structure/edit', structure.id], {
-      queryParams: { tab: 'structures' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
@@ -753,13 +655,13 @@ export class FeeListComponent implements OnInit {
   // Payment Actions
   recordPayment(): void {
     this.router.navigate(['/fees/payment/create'], {
-      queryParams: { tab: 'payments' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
   viewPayment(payment: FeePayment): void {
     this.router.navigate(['/fees/payment/view', payment.id], {
-      queryParams: { tab: 'payments' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
@@ -922,19 +824,19 @@ export class FeeListComponent implements OnInit {
 
   addFeeType(): void {
     this.router.navigate(['/fees/type/create'], {
-      queryParams: { tab: 'types' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
   viewFeeType(feeType: FeeType): void {
     this.router.navigate(['/fees/type/view', feeType.id], {
-      queryParams: { tab: 'types' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   
   editFeeType(feeType: FeeType): void {
     this.router.navigate(['/fees/type/edit', feeType.id], {
-      queryParams: { tab: 'types' }
+      queryParams: { returnTab: this.activeTab }
     });
   }
   

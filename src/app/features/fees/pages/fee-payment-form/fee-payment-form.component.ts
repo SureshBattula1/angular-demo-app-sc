@@ -53,7 +53,7 @@ export class FeePaymentFormComponent implements OnInit {
     
     // Get return tab from query params
     this.route.queryParams.subscribe(params => {
-      this.returnTab = params['tab'] || 'payments';
+      this.returnTab = params['returnTab'] || 'payments';
     });
   }
   

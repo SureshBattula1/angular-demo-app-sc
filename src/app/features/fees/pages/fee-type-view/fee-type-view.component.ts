@@ -35,7 +35,7 @@ export class FeeTypeViewComponent implements OnInit {
     });
     
     this.route.queryParams.subscribe(params => {
-      this.returnTab = params['tab'] || 'types';
+      this.returnTab = params['returnTab'] || 'types';
     });
   }
   
@@ -69,7 +69,7 @@ export class FeeTypeViewComponent implements OnInit {
   
   onEdit(): void {
     this.router.navigate(['/fees/type/edit', this.feeTypeId], {
-      queryParams: { tab: this.returnTab }
+      queryParams: { returnTab: this.returnTab }
     });
   }
   

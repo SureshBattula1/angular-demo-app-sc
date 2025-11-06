@@ -60,7 +60,7 @@ export class FeeStructureFormComponent implements OnInit {
     });
     
     this.route.queryParams.subscribe(params => {
-      this.returnTab = params['tab'] || 'structures';
+      this.returnTab = params['returnTab'] || 'structures';
     });
   }
   
