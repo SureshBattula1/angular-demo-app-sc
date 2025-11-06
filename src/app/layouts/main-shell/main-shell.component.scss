@@ -281,6 +281,12 @@
   }
 }
 
+/* Theme color icons - override any theme styling */
+::ng-deep .mat-mdc-option .theme-color-icon {
+  // Use CSS custom property to set color with !important to override theme
+  color: var(--icon-color) !important;
+}
+
 /* Badge styling */
 ::ng-deep {
   .mat-badge-content {

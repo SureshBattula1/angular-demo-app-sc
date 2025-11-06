@@ -26,6 +26,70 @@ export class MainShellComponent implements OnInit {
   isTablet = false;
   isMobile = false;
   
+  // Theme options for dropdown
+  themeOptions = [
+    { value: 'ocean-blue', label: 'Ocean Blue', color: '#1E88E5' },
+    { value: 'corporate-blue-gray', label: 'Corporate Blue & Gray', color: '#2B6CB0' },
+    { value: 'sunset-orange', label: 'Sunset Orange', color: '#F97316' },
+    { value: 'forest-green', label: 'Forest Green', color: '#2E7D32' },
+    { value: 'royal-purple', label: 'Royal Purple', color: '#7C3AED' },
+    { value: 'ruby-red', label: 'Ruby Red', color: '#E11D48' },
+    { value: 'teal-mint', label: 'Teal Mint', color: '#0D9488' },
+    { value: 'amber-gold', label: 'Amber Gold', color: '#D97706' },
+    { value: 'slate-gray', label: 'Slate Gray', color: '#475569' },
+    { value: 'midnight-blue', label: 'Midnight Blue', color: '#0F172A' },
+    { value: 'lavender-dream', label: 'Lavender Dream', color: '#8B5CF6' },
+    { value: 'coral-reef', label: 'Coral Reef', color: '#FB7185' },
+    { value: 'emerald-city', label: 'Emerald City', color: '#059669' },
+    { value: 'graphite', label: 'Graphite', color: '#374151' },
+    { value: 'cobalt-sky', label: 'Cobalt Sky', color: '#2563EB' },
+    { value: 'flamingo', label: 'Flamingo', color: '#F43F5E' },
+    { value: 'coffee-cream', label: 'Coffee & Cream', color: '#8B5E34' },
+    { value: 'moss', label: 'Moss', color: '#3F6212' },
+    { value: 'indigo-night', label: 'Indigo Night', color: '#4338CA' },
+    { value: 'arctic-ice', label: 'Arctic Ice', color: '#38BDF8' },
+    { value: 'desert-sand', label: 'Desert Sand', color: '#D4A373' },
+    { value: 'wine-berry', label: 'Wine Berry', color: '#7F1D1D' },
+    { value: 'aqua-splash', label: 'Aqua Splash', color: '#06B6D4' },
+    { value: 'lime-zest', label: 'Lime Zest', color: '#65A30D' },
+    { value: 'plum', label: 'Plum', color: '#6D28D9' },
+    { value: 'steel', label: 'Steel', color: '#607D8B' },
+    { value: 'peach-blush', label: 'Peach Blush', color: '#FB923C' },
+    { value: 'navy-copper', label: 'Navy & Copper', color: '#1E3A8A' },
+    { value: 'orchid', label: 'Orchid', color: '#C026D3' },
+    { value: 'sky-mist', label: 'Sky Mist', color: '#60A5FA' },
+    { value: 'bronze', label: 'Bronze', color: '#B45309' },
+    { value: 'pine', label: 'Pine', color: '#14532D' },
+    { value: 'cherry', label: 'Cherry', color: '#B91C1C' },
+    { value: 'ocean-deep', label: 'Ocean Deep', color: '#0E7490' },
+    { value: 'sunflower', label: 'Sunflower', color: '#EAB308' },
+    { value: 'charcoal', label: 'Charcoal', color: '#111827' },
+    { value: 'turquoise', label: 'Turquoise', color: '#14B8A6' },
+    { value: 'maroon', label: 'Maroon', color: '#7F1D1D' },
+    { value: 'glacier', label: 'Glacier', color: '#93C5FD' },
+    { value: 'saffron', label: 'Saffron', color: '#F59E0B' },
+    { value: 'cyan', label: 'Cyan', color: '#06B6D4' },
+    { value: 'olive', label: 'Olive', color: '#4D7C0F' },
+    { value: 'periwinkle', label: 'Periwinkle', color: '#6366F1' },
+    { value: 'graphite-blue', label: 'Graphite Blue', color: '#334155' },
+    { value: 'rose', label: 'Rose', color: '#E11D48' },
+    { value: 'mint-cream', label: 'Mint Cream', color: '#10B981' },
+    { value: 'onyx', label: 'Onyx', color: '#0B1220' },
+    { value: 'aurora', label: 'Aurora', color: '#22D3EE' },
+    { value: 'denim', label: 'Denim', color: '#1D4ED8' },
+    { value: 'blush', label: 'Blush', color: '#F472B6' },
+    { value: 'citrus', label: 'Citrus', color: '#84CC16' },
+    { value: 'clay', label: 'Clay', color: '#9A3412' },
+    { value: 'mulberry', label: 'Mulberry', color: '#8E44AD' },
+    { value: 'seaweed', label: 'Seaweed', color: '#0B7A75' },
+    { value: 'ink', label: 'Ink', color: '#0A0A0A' },
+    { value: 'honey', label: 'Honey', color: '#EAB308' },
+    { value: 'wave', label: 'Wave', color: '#0EA5E9' },
+    { value: 'terra', label: 'Terra', color: '#92400E' },
+    { value: 'ice-lilac', label: 'Ice Lilac', color: '#A78BFA' },
+    { value: 'petrol', label: 'Petrol', color: '#0F766E' }
+  ];
+  
   // Theme definitions
   // themes = {
   //   'teal-green': {
@@ -778,6 +842,11 @@ export class MainShellComponent implements OnInit {
       /* Links */
       a:not(.mat-mdc-button):not(.mat-mdc-list-item) {
         color: ${theme.primary} !important;
+      }
+      
+      /* Theme preview icons - exclude from theme coloring */
+      .mat-mdc-option .theme-color-icon {
+        /* Don't override - let inline styles work */
       }
     `;
   }
