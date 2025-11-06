@@ -842,5 +842,18 @@ export class MainShellComponent implements OnInit {
     const user = this.authService.currentUser();
     return user?.role || '';
   }
+  
+  /**
+   * Get user initials (e.g., "Murali Nakka" => "MN")
+   */
+  getUserInitials(): string {
+    const user = this.authService.currentUser();
+    if (user && user.first_name && user.last_name) {
+      const firstInitial = user.first_name.charAt(0).toUpperCase();
+      const lastInitial = user.last_name.charAt(0).toUpperCase();
+      return `${firstInitial}${lastInitial}`;
+    }
+    return 'U'; // Default fallback
+  }
 }
 
