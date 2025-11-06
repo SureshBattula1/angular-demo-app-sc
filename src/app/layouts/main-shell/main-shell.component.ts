@@ -653,11 +653,37 @@ export class MainShellComponent implements OnInit {
       .mat-mdc-raised-button.mat-primary,
       .mat-mdc-unelevated-button.mat-primary {
         background-color: ${theme.primary} !important;
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-primary .mdc-button__label,
+      .mat-mdc-unelevated-button.mat-primary .mdc-button__label {
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-primary mat-icon,
+      .mat-mdc-raised-button.mat-primary .mat-icon,
+      .mat-mdc-unelevated-button.mat-primary mat-icon,
+      .mat-mdc-unelevated-button.mat-primary .mat-icon {
+        color: white !important;
       }
       
       .mat-mdc-raised-button.mat-accent,
       .mat-mdc-unelevated-button.mat-accent {
         background-color: ${theme.accent} !important;
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-accent .mdc-button__label,
+      .mat-mdc-unelevated-button.mat-accent .mdc-button__label {
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-accent mat-icon,
+      .mat-mdc-raised-button.mat-accent .mat-icon,
+      .mat-mdc-unelevated-button.mat-accent mat-icon,
+      .mat-mdc-unelevated-button.mat-accent .mat-icon {
+        color: white !important;
       }
       
       .export-btn {
@@ -718,6 +744,11 @@ export class MainShellComponent implements OnInit {
       .mat-primary .mat-pseudo-checkbox-checked,
       .mat-primary .mat-pseudo-checkbox-indeterminate {
         background-color: ${theme.primary} !important;
+      }
+      
+      .mat-primary .mat-pseudo-checkbox-checked::after,
+      .mat-primary .mat-pseudo-checkbox-indeterminate::after {
+        border-color: white !important;
       }
       
       /* Checkbox and radio buttons */

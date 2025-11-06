@@ -380,11 +380,37 @@ export class ThemeService {
       .mat-mdc-raised-button.mat-primary,
       .mat-mdc-unelevated-button.mat-primary {
         background-color: ${theme.primary} !important;
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-primary .mdc-button__label,
+      .mat-mdc-unelevated-button.mat-primary .mdc-button__label {
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-primary mat-icon,
+      .mat-mdc-raised-button.mat-primary .mat-icon,
+      .mat-mdc-unelevated-button.mat-primary mat-icon,
+      .mat-mdc-unelevated-button.mat-primary .mat-icon {
+        color: white !important;
       }
       
       .mat-mdc-raised-button.mat-accent,
       .mat-mdc-unelevated-button.mat-accent {
         background-color: ${theme.accent} !important;
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-accent .mdc-button__label,
+      .mat-mdc-unelevated-button.mat-accent .mdc-button__label {
+        color: white !important;
+      }
+      
+      .mat-mdc-raised-button.mat-accent mat-icon,
+      .mat-mdc-raised-button.mat-accent .mat-icon,
+      .mat-mdc-unelevated-button.mat-accent mat-icon,
+      .mat-mdc-unelevated-button.mat-accent .mat-icon {
+        color: white !important;
       }
       
       /* Form Fields - Focused State */
@@ -470,6 +496,11 @@ export class ThemeService {
       .mat-mdc-option.mdc-list-item--selected .mat-pseudo-checkbox-indeterminate {
         background-color: ${theme.primary} !important;
         border-color: ${theme.primary} !important;
+      }
+      
+      .mat-mdc-option.mdc-list-item--selected .mat-pseudo-checkbox-checked::after,
+      .mat-mdc-option.mdc-list-item--selected .mat-pseudo-checkbox-indeterminate::after {
+        border-color: white !important;
       }
       
       /* Mat-Select Panel */

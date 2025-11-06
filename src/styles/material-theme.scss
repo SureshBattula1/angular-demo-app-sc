@@ -70,6 +70,42 @@ $dark-theme: mat.m2-define-dark-theme((
   font-weight: 500;
 }
 
+// Ensure white text and icons for primary/accent buttons
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-accent,
+.mat-mdc-unelevated-button.mat-accent {
+  color: white !important;
+  
+  .mdc-button__label {
+    color: white !important;
+  }
+  
+  mat-icon,
+  .mat-icon {
+    color: white !important;
+  }
+}
+
+// Also apply to mat-card-actions buttons
+mat-card-actions {
+  .mat-mdc-raised-button.mat-primary,
+  .mat-mdc-unelevated-button.mat-primary,
+  .mat-mdc-raised-button.mat-accent,
+  .mat-mdc-unelevated-button.mat-accent {
+    color: white !important;
+    
+    .mdc-button__label {
+      color: white !important;
+    }
+    
+    mat-icon,
+    .mat-icon {
+      color: white !important;
+    }
+  }
+}
+
 
 // Elevation overrides
 .mat-elevation-z0 { box-shadow: none !important; }
@@ -77,4 +113,63 @@ $dark-theme: mat.m2-define-dark-theme((
 .mat-elevation-z2 { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; }
 .mat-elevation-z3 { box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important; }
 .mat-elevation-z4 { box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15) !important; }
+
+// Mat-pseudo-checkbox - Fix checkmark visibility
+.mat-pseudo-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+  display: inline-block;
+  position: relative;
+  
+  &::after {
+    position: absolute;
+    opacity: 0;
+    content: '';
+    border-bottom: 2px solid;
+    transition: opacity 90ms cubic-bezier(0, 0, 0.2, 0.1);
+  }
+}
+
+.mat-pseudo-checkbox-checked,
+.mat-pseudo-checkbox-indeterminate {
+  border-color: transparent;
+  
+  &::after {
+    opacity: 1;
+  }
+}
+
+.mat-pseudo-checkbox-checked::after {
+  top: 2.4px;
+  left: 1px;
+  width: 12px;
+  height: 5px;
+  border-left: 2px solid;
+  transform: rotate(-45deg);
+  border-color: currentColor;
+}
+
+.mat-pseudo-checkbox-indeterminate::after {
+  top: 7px;
+  left: 1px;
+  width: 12px;
+  height: 0;
+  border-top-width: 2px;
+  border-color: currentColor;
+}
+
+// Ensure checkmarks show in white on colored backgrounds
+.mat-primary .mat-pseudo-checkbox-checked::after,
+.mat-accent .mat-pseudo-checkbox-checked::after,
+.mat-pseudo-checkbox-checked::after {
+  border-color: white !important;
+}
+
+.mat-primary .mat-pseudo-checkbox-indeterminate::after,
+.mat-accent .mat-pseudo-checkbox-indeterminate::after,
+.mat-pseudo-checkbox-indeterminate::after {
+  border-color: white !important;
+}
 

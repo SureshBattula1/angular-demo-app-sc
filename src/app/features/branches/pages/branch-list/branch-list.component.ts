@@ -22,7 +22,7 @@ import { environment } from '../../../../../environments/environment';
       [data]="branches"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Branchs'"
+      [title]="'Branches'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
