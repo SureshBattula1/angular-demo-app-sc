@@ -75,7 +75,7 @@ export const routes: Routes = [
         path: 'attendance',
         loadChildren: () => import('./features/attendance/attendance.routes').then(m => m.ATTENDANCE_ROUTES),
         canActivate: [permissionGuard],
-        data: { permissions: ['attendance.view', 'attendance.mark'], permissionMode: 'any' }
+        data: { permissions: ['student_attendance.view', 'student_attendance.mark', 'teacher_attendance.view', 'teacher_attendance.mark'], permissionMode: 'any' }
       },
       {
         path: 'leaves',

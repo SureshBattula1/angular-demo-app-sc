@@ -46,7 +46,7 @@ export class MainShellComponent implements OnInit {
     { icon: 'view_module', label: 'Sections', route: '/sections', permission: 'sections.view' },
     { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'], permissionMode: 'any' },
     { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
-    { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['attendance.view', 'attendance.mark'], permissionMode: 'any' },
+    { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['student_attendance.view', 'student_attendance.mark', 'teacher_attendance.view', 'teacher_attendance.mark'], permissionMode: 'any' },
     { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
     { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'], permissionMode: 'any' },
     { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'], permissionMode: 'any' },

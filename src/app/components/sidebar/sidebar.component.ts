@@ -68,7 +68,7 @@ export class SidebarComponent implements OnInit {
       name: 'Attendance',
       icon: 'check_circle',
       route: '/attendance',
-      permission: ['attendance.view', 'attendance.mark'],
+      permission: ['student_attendance.view', 'student_attendance.mark', 'teacher_attendance.view', 'teacher_attendance.mark'],
       permissionMode: 'any'
     },
     {

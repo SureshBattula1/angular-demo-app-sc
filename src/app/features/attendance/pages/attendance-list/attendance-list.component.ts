@@ -49,10 +49,10 @@ export class AttendanceListComponent implements OnInit {
   studentTableConfig: TableConfig = {
     columns: this.getStudentColumns(),
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'attendance.view' },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'attendance.edit' },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'attendance.edit' },
-      { icon: 'assessment', label: 'Student Report', color: 'accent', action: (row) => this.viewStudentReport(row), permission: 'attendance.report' }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'student_attendance.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'student_attendance.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'student_attendance.delete' },
+      { icon: 'assessment', label: 'Student Report', color: 'accent', action: (row) => this.viewStudentReport(row), permission: 'student_attendance.report' }
     ],
     selectable: true,
     pagination: true,
@@ -64,16 +64,16 @@ export class AttendanceListComponent implements OnInit {
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25,
-    addButtonPermission: 'attendance.create'
+    addButtonPermission: 'student_attendance.create'
   };
 
   teacherTableConfig: TableConfig = {
     columns: this.getTeacherColumns(),
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'attendance.view' },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'attendance.edit' },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'attendance.edit' },
-      { icon: 'assessment', label: 'Teacher Report', color: 'accent', action: (row) => this.viewTeacherReport(row), permission: 'attendance.report' }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'teacher_attendance.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'teacher_attendance.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'teacher_attendance.delete' },
+      { icon: 'assessment', label: 'Teacher Report', color: 'accent', action: (row) => this.viewTeacherReport(row), permission: 'teacher_attendance.report' }
     ],
     selectable: true,
     pagination: true,
@@ -85,7 +85,7 @@ export class AttendanceListComponent implements OnInit {
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25,
-    addButtonPermission: 'attendance.create'
+    addButtonPermission: 'teacher_attendance.create'
   };
 
   // Separate search configurations
