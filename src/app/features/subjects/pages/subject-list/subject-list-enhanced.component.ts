@@ -26,7 +26,10 @@ export class SubjectListEnhancedComponent implements OnInit {
   ngOnInit(): void {
     // Check query params for tab selection
     this.route.queryParams.subscribe(params => {
-      if (params['tab'] === 'assignments') {
+      // Check for returnTab first (when coming back from view/edit), then tab
+      const targetTab = params['returnTab'] || params['tab'];
+      
+      if (targetTab === 'assignments') {
         this.activeTab = 'assignments';
         // Mark as loaded when switching via query params
         this.loadedTabs.add('assignments');

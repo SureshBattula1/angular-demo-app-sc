@@ -18,6 +18,7 @@ export class SubjectViewComponent implements OnInit {
   subject?: Subject;
   isLoading = true;
   subjectId!: number;
+  returnTab?: string;
 
   // Permission checks
   hasEditPermission = false;
@@ -41,6 +42,11 @@ export class SubjectViewComponent implements OnInit {
         this.loadSubject();
       }
     });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
+    });
   }
 
   loadSubject(): void {
@@ -56,7 +62,7 @@ export class SubjectViewComponent implements OnInit {
       error: (error: any) => {
         this.errorHandler.showError(error);
         this.isLoading = false;
-        this.router.navigate(['/subjects']);
+        this.router.navigate(['/subjects'], { queryParams: { tab: this.returnTab } });
       }
     });
   }
@@ -66,7 +72,9 @@ export class SubjectViewComponent implements OnInit {
       this.errorHandler.showError('You do not have permission to edit subjects');
       return;
     }
-    this.router.navigate(['/subjects/edit', this.subjectId]);
+    this.router.navigate(['/subjects/edit', this.subjectId], {
+      queryParams: { returnTab: this.returnTab }
+    });
   }
 
   onDelete(): void {
@@ -80,7 +88,7 @@ export class SubjectViewComponent implements OnInit {
         next: (response: any) => {
           if (response.success) {
             this.errorHandler.showSuccess('Subject deleted successfully');
-            this.router.navigate(['/subjects']);
+            this.router.navigate(['/subjects'], { queryParams: { tab: this.returnTab } });
           }
         },
         error: (error: any) => {
@@ -91,6 +99,6 @@ export class SubjectViewComponent implements OnInit {
   }
 
   onBack(): void {
-    this.router.navigate(['/subjects']);
+    this.router.navigate(['/subjects'], { queryParams: { tab: this.returnTab } });
   }
 }

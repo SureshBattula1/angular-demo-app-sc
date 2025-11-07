@@ -272,11 +272,15 @@ export class SubjectListComponent implements OnInit {
   }
   
   viewSubject(subject: Subject): void {
-    this.router.navigate(['/subjects/view', subject.id]);
+    this.router.navigate(['/subjects/view', subject.id], {
+      queryParams: { returnTab: 'subjects' }
+    });
   }
   
   editSubject(subject: Subject): void {
-    this.router.navigate(['/subjects/edit', subject.id]);
+    this.router.navigate(['/subjects/edit', subject.id], {
+      queryParams: { returnTab: 'subjects' }
+    });
   }
   
   deleteSubject(subject: Subject): void {

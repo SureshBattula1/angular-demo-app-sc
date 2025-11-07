@@ -1,12 +1,16 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { SectionSubjectService, SectionSubjectAssignment } from '../../services/section-subject.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { SectionService } from '../../../sections/services/section.service';
+import { TeacherService } from '../../../teachers/services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
 @Component({
@@ -171,8 +175,10 @@ export class AssignedSubjectsListComponent implements OnInit {
     private sectionSubjectService: SectionSubjectService,
     private branchService: BranchService,
     private sectionService: SectionService,
+    private teacherService: TeacherService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private dialog: MatDialog
   ) {}
   
   ngOnInit(): void {
@@ -281,13 +287,24 @@ export class AssignedSubjectsListComponent implements OnInit {
   }
   
   viewAssignment(assignment: SectionSubjectAssignment): void {
-    // Can navigate to section view or subject view
-    this.router.navigate(['/sections/view', assignment.section_id]);
+    // Navigate to subject view page with returnTab to preserve active tab
+    this.router.navigate(['/subjects/view', assignment.subject_id], {
+      queryParams: { returnTab: 'assignments' }
+    });
   }
   
   editAssignment(assignment: SectionSubjectAssignment): void {
-    // For now, just show a message. Can enhance later
-    this.errorHandler.showInfo('Teacher change feature - Coming soon');
+    // Open dialog to change teacher assignment
+    const dialogRef = this.dialog.open(EditAssignmentDialogComponent, {
+      width: '500px',
+      data: { assignment }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadAssignments();
+      }
+    });
   }
   
   removeAssignment(assignment: SectionSubjectAssignment): void {
@@ -311,6 +328,182 @@ export class AssignedSubjectsListComponent implements OnInit {
   
   onExport(format: string): void {
     this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  }
+}
+
+// Dialog Component for Editing Teacher Assignment
+@Component({
+  selector: 'app-edit-assignment-dialog',
+  standalone: true,
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  template: `
+    <h2 mat-dialog-title>
+      <mat-icon>edit</mat-icon>
+      Edit Subject Assignment
+    </h2>
+    
+    <mat-dialog-content>
+      <div class="assignment-info">
+        <div class="info-item">
+          <mat-icon>class</mat-icon>
+          <span><strong>Section:</strong> {{ data.assignment.section?.name }} (Grade {{ data.assignment.section?.grade_level }})</span>
+        </div>
+        <div class="info-item">
+          <mat-icon>book</mat-icon>
+          <span><strong>Subject:</strong> {{ data.assignment.subject?.name }} ({{ data.assignment.subject?.code }})</span>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <form [formGroup]="editForm" class="edit-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Assign Teacher</mat-label>
+          <mat-select formControlName="teacher_id">
+            <mat-option [value]="null">-- No Teacher --</mat-option>
+            <mat-option *ngFor="let teacher of teachers" [value]="teacher.user_id">
+              {{ teacher.user?.first_name }} {{ teacher.user?.last_name }}
+              <span *ngIf="teacher.department?.name" class="teacher-dept"> - {{ teacher.department.name }}</span>
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-hint>Current: {{ getCurrentTeacherName() }}</mat-hint>
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onCancel()">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" (click)="onSave()" [disabled]="saving || editForm.invalid">
+        <mat-spinner *ngIf="saving" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!saving">save</mat-icon>
+        {{ saving ? 'Saving...' : 'Update Assignment' }}
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: [`
+    .assignment-info {
+      margin: 16px 0;
+      
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        
+        mat-icon {
+          color: var(--primary-color);
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+        
+        span {
+          font-size: 14px;
+          color: var(--text-primary);
+        }
+      }
+    }
+    
+    mat-divider {
+      margin: 16px 0;
+    }
+    
+    .edit-form {
+      margin-top: 16px;
+    }
+    
+    .full-width {
+      width: 100%;
+    }
+    
+    .teacher-dept {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    
+    .spinner-inline {
+      display: inline-block;
+      margin-right: 8px;
+    }
+    
+    mat-dialog-content {
+      min-height: 200px;
+    }
+  `]
+})
+export class EditAssignmentDialogComponent implements OnInit {
+  editForm!: FormGroup;
+  teachers: any[] = [];
+  saving = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<EditAssignmentDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { assignment: SectionSubjectAssignment },
+    private fb: FormBuilder,
+    private sectionSubjectService: SectionSubjectService,
+    private teacherService: TeacherService,
+    private errorHandler: ErrorHandlerService
+  ) {}
+
+  ngOnInit(): void {
+    this.editForm = this.fb.group({
+      teacher_id: [this.data.assignment.teacher_id]
+    });
+
+    this.loadTeachers();
+  }
+
+  loadTeachers(): void {
+    this.teacherService.getTeachers({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.teachers = response.data;
+        }
+      },
+      error: (error) => {
+        this.errorHandler.showError('Failed to load teachers');
+      }
+    });
+  }
+
+  getCurrentTeacherName(): string {
+    const teacher = this.data.assignment.teacher;
+    if (!teacher) return 'No teacher assigned';
+    
+    const firstName = teacher.first_name || teacher.user?.first_name || '';
+    const lastName = teacher.last_name || teacher.user?.last_name || '';
+    return `${firstName} ${lastName}`.trim() || 'Unknown';
+  }
+
+  onSave(): void {
+    if (this.editForm.invalid) return;
+
+    this.saving = true;
+    const formData = {
+      teacher_id: this.editForm.value.teacher_id
+    };
+
+    this.sectionSubjectService.updateAssignment(this.data.assignment.id, formData).subscribe({
+      next: (response) => {
+        this.saving = false;
+        if (response.success) {
+          this.errorHandler.showSuccess('Teacher assignment updated successfully');
+          this.dialogRef.close(true);
+        }
+      },
+      error: (error) => {
+        this.saving = false;
+        this.errorHandler.showError(error);
+      }
+    });
+  }
+
+  onCancel(): void {
+    this.dialogRef.close(false);
   }
 }
 

@@ -27,6 +27,7 @@ export class SubjectFormComponent implements OnInit {
   isLoading = false;
   subjectId?: number;
   currentSubject?: Subject;
+  returnTab?: string;
   
   branches: any[] = [];
   departments: Department[] = [];
@@ -72,6 +73,11 @@ export class SubjectFormComponent implements OnInit {
         this.loadSubject(this.subjectId);
       }
     });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
+    });
   }
 
   private initForm(): void {
@@ -103,7 +109,7 @@ export class SubjectFormComponent implements OnInit {
       error: (error: any) => {
         this.errorHandler.showError(error);
         this.isLoading = false;
-        this.router.navigate(['/subjects']);
+        this.router.navigate(['/subjects'], { queryParams: { tab: this.returnTab } });
       }
     });
   }
@@ -196,7 +202,7 @@ export class SubjectFormComponent implements OnInit {
           this.errorHandler.showSuccess(
             this.isEditMode ? 'Subject updated successfully' : 'Subject created successfully'
           );
-          this.router.navigate(['/subjects']);
+          this.router.navigate(['/subjects'], { queryParams: { tab: this.returnTab } });
         }
       },
       error: (error: any) => {
@@ -207,7 +213,7 @@ export class SubjectFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/subjects']);
+    this.router.navigate(['/subjects'], { queryParams: { tab: this.returnTab } });
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
