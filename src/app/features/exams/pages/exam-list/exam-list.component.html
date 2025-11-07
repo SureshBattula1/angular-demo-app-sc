@@ -40,9 +40,13 @@
     #termsTable
     [data]="examTerms"
     [config]="termsTableConfig"
+    [advancedSearchConfig]="termsSearchConfig"
     [title]="'Exam Terms'"
     [loading]="loading"
     (actionClicked)="onTermAction($event)"
+    (searchChanged)="onSearchChange($event)"
+    (advancedSearchChanged)="onTermsAdvancedSearch($event)"
+    (searchResetEvent)="onSearchReset()"
     (paginationChanged)="onPaginationChange($event)"
     (sortChanged)="onSortChange($event)">
   </app-data-table>
@@ -53,9 +57,13 @@
     #examsTable
     [data]="exams"
     [config]="examsTableConfig"
+    [advancedSearchConfig]="examsSearchConfig"
     [title]="'Exams'"
     [loading]="loading"
     (actionClicked)="onExamAction($event)"
+    (searchChanged)="onSearchChange($event)"
+    (advancedSearchChanged)="onExamsAdvancedSearch($event)"
+    (searchResetEvent)="onSearchReset()"
     (paginationChanged)="onPaginationChange($event)"
     (sortChanged)="onSortChange($event)">
   </app-data-table>
@@ -66,9 +74,13 @@
     #schedulesTable
     [data]="schedules"
     [config]="schedulesTableConfig"
+    [advancedSearchConfig]="schedulesSearchConfig"
     [title]="'Exam Schedules'"
     [loading]="loading"
     (actionClicked)="onScheduleAction($event)"
+    (searchChanged)="onSearchChange($event)"
+    (advancedSearchChanged)="onSchedulesAdvancedSearch($event)"
+    (searchResetEvent)="onSearchReset()"
     (paginationChanged)="onPaginationChange($event)"
     (sortChanged)="onSortChange($event)">
   </app-data-table>

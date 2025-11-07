@@ -3,10 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { ExamService, Exam } from '../../services/exam.service';
 import { ExamTermService, ExamTerm } from '../../services/exam-term.service';
 import { ExamScheduleService, ExamSchedule } from '../../services/exam-schedule.service';
+import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
 @Component({
@@ -36,6 +39,9 @@ export class ExamListComponent implements OnInit {
   scheduleCount = 0;
 
   currentFilters: Record<string, unknown> = {};
+  branches: any[] = [];
+  grades: any[] = [];
+  examTermsList: any[] = [];
 
   termsTableConfig: TableConfig = {
     columns: [
@@ -56,6 +62,7 @@ export class ExamListComponent implements OnInit {
     selectable: true,
     pagination: true,
     searchable: true,
+    advancedSearch: true,
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50],
@@ -64,11 +71,10 @@ export class ExamListComponent implements OnInit {
 
   examsTableConfig: TableConfig = {
     columns: [
-      { key: 'name', header: 'Exam Name', sortable: true },
-      { key: 'exam_type', header: 'Type', type: 'badge', sortable: true, width: '120px' },
-      { key: 'academic_year', header: 'Academic Year', sortable: true, width: '140px' },
-      { key: 'start_date', header: 'Start Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
-      { key: 'end_date', header: 'End Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
+      { key: 'name', header: 'Exam Name', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: false, searchable: true, width: '150px' },
+      { key: 'exam_term_name', header: 'Exam Term', sortable: false, searchable: true, width: '150px' },
+      { key: 'academic_year', header: 'Academic Year', sortable: true, searchable: true, width: '140px' },
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
@@ -88,9 +94,10 @@ export class ExamListComponent implements OnInit {
 
   schedulesTableConfig: TableConfig = {
     columns: [
-      { key: 'exam.name', header: 'Exam', sortable: false },
-      { key: 'subject.name', header: 'Subject', sortable: false },
-      { key: 'grade', header: 'Grade', sortable: true, width: '120px', type: 'text' },
+      { key: 'exam.name', header: 'Exam', sortable: false, searchable: true },
+      { key: 'exam.branch.name', header: 'Branch', sortable: false, searchable: true, width: '140px' },
+      { key: 'subject.name', header: 'Subject', sortable: false, searchable: true },
+      { key: 'grade', header: 'Grade', sortable: true, searchable: true, width: '120px', type: 'text' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
       { key: 'exam_date', header: 'Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
       { key: 'start_time', header: 'Start Time', sortable: false, width: '120px' },
@@ -106,22 +113,140 @@ export class ExamListComponent implements OnInit {
     selectable: true,
     pagination: true,
     searchable: true,
+    advancedSearch: true,
     serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50],
     defaultPageSize: 25
   };
 
+  // Advanced Search Configurations
+  termsSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Exam Term Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'academic_year',
+        label: 'Academic Year',
+        type: 'text',
+        icon: 'event',
+        placeholder: '2024-2025'
+      },
+      {
+        key: 'is_active',
+        label: 'Status',
+        type: 'select',
+        icon: 'check_circle',
+        options: [
+          { value: 'true', label: 'Active' },
+          { value: 'false', label: 'Inactive' }
+        ]
+      }
+    ]
+  };
+
+  examsSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Exam Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'exam_term_id',
+        label: 'Exam Term',
+        type: 'select',
+        icon: 'calendar_today',
+        options: []
+      },
+      {
+        key: 'academic_year',
+        label: 'Academic Year',
+        type: 'text',
+        icon: 'event',
+        placeholder: '2024-2025'
+      },
+      {
+        key: 'is_active',
+        label: 'Status',
+        type: 'select',
+        icon: 'check_circle',
+        options: [
+          { value: 'true', label: 'Active' },
+          { value: 'false', label: 'Inactive' }
+        ]
+      }
+    ]
+  };
+
+  schedulesSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Schedule Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'exam_id',
+        label: 'Exam',
+        type: 'select',
+        icon: 'assignment',
+        options: []
+      },
+      {
+        key: 'grade',
+        label: 'Grade',
+        type: 'select',
+        icon: 'school',
+        options: []
+      },
+      {
+        key: 'exam_date',
+        label: 'Exam Date',
+        type: 'date',
+        icon: 'event'
+      }
+    ]
+  };
+
   constructor(
     private examService: ExamService,
     private examTermService: ExamTermService,
     private examScheduleService: ExamScheduleService,
+    private branchService: BranchService,
+    private gradeService: GradeService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    // Load branches, grades, and exam terms for advanced search
+    this.loadBranches();
+    this.loadGrades();
+    this.loadExamTermsForFilter();
+    
     this.route.queryParams.subscribe(params => {
       // Check for returnTab first (when coming back from view/edit), then tab
       const targetTab = params['returnTab'] || params['tab'];
@@ -196,9 +321,10 @@ export class ExamListComponent implements OnInit {
     this.examService.getExams(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          // Format dates for display
+          // Format dates and add exam term name
           this.exams = (response.data || []).map((exam: any) => ({
             ...exam,
+            exam_term_name: exam.exam_term?.name || 'N/A',
             start_date: exam.start_date ? new Date(exam.start_date).toLocaleDateString() : '',
             end_date: exam.end_date ? new Date(exam.end_date).toLocaleDateString() : ''
           }));
@@ -240,6 +366,11 @@ export class ExamListComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  onSearchChange(query: string): void {
+    this.currentFilters = { ...this.currentFilters, search: query, page: 1 };
+    this.loadData();
   }
 
   onPaginationChange(event: PaginationEvent): void {
@@ -419,6 +550,130 @@ export class ExamListComponent implements OnInit {
         returnTab: this.activeTab
       } 
     });
+  }
+
+  // Load branches for advanced search
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.branches = response.data;
+          const branchOptions = this.branches.map((b: any) => ({
+            value: b.id.toString(),
+            label: b.name
+          }));
+
+          // Update all search configs with branch options
+          const termBranchField = this.termsSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (termBranchField) termBranchField.options = branchOptions;
+
+          const examBranchField = this.examsSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (examBranchField) examBranchField.options = branchOptions;
+
+          const scheduleBranchField = this.schedulesSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (scheduleBranchField) scheduleBranchField.options = branchOptions;
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  // Load grades for advanced search
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.grades = response.data;
+          const gradeOptions = response.data.map((grade: any) => ({
+            value: grade.value,
+            label: grade.label
+          }));
+
+          // Update schedule search config with grade options
+          const scheduleGradeField = this.schedulesSearchConfig.fields.find(f => f.key === 'grade');
+          if (scheduleGradeField) scheduleGradeField.options = gradeOptions;
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  // Load exam terms for advanced search dropdown
+  loadExamTermsForFilter(): void {
+    this.examTermService.getExamTerms({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.examTermsList = response.data;
+          const examTermOptions = response.data.map((term: any) => ({
+            value: term.id.toString(),
+            label: `${term.name} (${term.academic_year})`
+          }));
+
+          // Update exam search config with exam term options
+          const examTermField = this.examsSearchConfig.fields.find(f => f.key === 'exam_term_id');
+          if (examTermField) examTermField.options = examTermOptions;
+
+          // Also update schedule search config to load exams for dropdown
+          this.loadExamsForScheduleFilter();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  // Load exams for schedule advanced search dropdown
+  loadExamsForScheduleFilter(): void {
+    this.examService.getExams({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          const examOptions = response.data.map((exam: any) => ({
+            value: exam.id.toString(),
+            label: `${exam.name} (${exam.academic_year})`
+          }));
+
+          // Update schedule search config with exam options
+          const scheduleExamField = this.schedulesSearchConfig.fields.find(f => f.key === 'exam_id');
+          if (scheduleExamField) scheduleExamField.options = examOptions;
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  // Advanced search handlers
+  onTermsAdvancedSearch(event: SearchEvent): void {
+    const filters: Record<string, any> = {
+      ...event.filters,
+      search: event.query,
+      page: 1
+    };
+    this.currentFilters = filters;
+    this.loadExamTerms();
+  }
+
+  onExamsAdvancedSearch(event: SearchEvent): void {
+    const filters: Record<string, any> = {
+      ...event.filters,
+      search: event.query,
+      page: 1
+    };
+    this.currentFilters = filters;
+    this.loadExams();
+  }
+
+  onSchedulesAdvancedSearch(event: SearchEvent): void {
+    const filters: Record<string, any> = {
+      ...event.filters,
+      search: event.query,
+      page: 1
+    };
+    this.currentFilters = filters;
+    this.loadSchedules();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
+    this.loadData();
   }
 }
 
