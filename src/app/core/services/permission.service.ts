@@ -53,12 +53,21 @@ export class PermissionService {
    */
   loadUserPermissions(userId: number): Observable<ApiResponse> {
     return this.apiService.get(`/permissions/user/${userId}/permissions`).pipe(
-      tap(response => {
-        if (response.success && response.data) {
-          const data = response.data as any;
-          const permissions = data.permission_slugs || 
-                            this.extractPermissionSlugs(data.permissions);
-          this.setPermissions(permissions);
+      tap({
+        next: (response) => {
+          if (response.success && response.data) {
+            const data = response.data as any;
+            const permissions = data.permission_slugs || 
+                              this.extractPermissionSlugs(data.permissions);
+            
+            this.setPermissions(permissions);
+          } else {
+            this.setPermissions([]);
+          }
+        },
+        error: (error) => {
+          console.error('Error loading permissions', error);
+          this.setPermissions([]);
         }
       })
     );

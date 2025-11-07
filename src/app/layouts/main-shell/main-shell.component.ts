@@ -44,13 +44,13 @@ export class MainShellComponent implements OnInit {
     { icon: 'business', label: 'Departments', route: '/departments', permission: 'departments.view' },
     { icon: 'grade', label: 'Classes (Grades)', route: '/grades', permission: 'grades.view', tooltip: 'Classes( Grades)' },
     { icon: 'view_module', label: 'Sections', route: '/sections', permission: 'sections.view' },
-    { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'] },
+    { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'], permissionMode: 'any' },
     { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
-    { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['attendance.view', 'attendance.mark'] },
-    { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create'] },
-    { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'] },
-    { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'] },
-    { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'] },
+    { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['attendance.view', 'attendance.mark'], permissionMode: 'any' },
+    { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
+    { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'], permissionMode: 'any' },
+    { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'], permissionMode: 'any' },
+    { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'], permissionMode: 'any' },
     { icon: 'receipt', label: 'Invoices', route: '/invoices', permission: 'invoices.view' },
     { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
     { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
@@ -517,6 +517,12 @@ export class MainShellComponent implements OnInit {
         this.isSidebarCollapsed = true;
       }
     });
+    
+    // Ensure permissions are loaded
+    const currentUser = this.authService.currentUser();
+    if (currentUser && currentUser.id) {
+      this.permissionService.loadUserPermissions(currentUser.id).subscribe();
+    }
     
     // Load user preferences from backend
     this.loadUserPreferences();

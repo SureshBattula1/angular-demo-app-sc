@@ -59,7 +59,6 @@ export class HasPermissionDirective implements OnInit, OnDestroy {
       result = this.permissionService.hasAnyPermission(permissions);
     }
     
-    // console.log(`Directive checking ${this.hasPermissionMode} for permissions:`, permissions, '| Result:', result);
     return result;
   }
 
