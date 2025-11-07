@@ -33,6 +33,17 @@
       color: var(--primary-color);
     }
   }
+  
+  &.filter-section {
+    background-color: rgba(var(--primary-rgb), 0.05);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    
+    h3 mat-icon {
+      color: var(--accent-color);
+    }
+  }
 }
 
 .form-row {
@@ -112,6 +123,53 @@
 .spinner-inline {
   display: inline-block;
   margin-right: var(--spacing-xs);
+}
+
+.info-card {
+  margin: var(--spacing-md) 0;
+  background-color: rgba(var(--primary-rgb), 0.05);
+  border-left: 4px solid var(--primary-color);
+}
+
+.fee-amount-info {
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    
+    .label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .value {
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 600;
+      
+      &.payment {
+        color: var(--accent-color);
+      }
+      
+      &.remaining {
+        color: var(--warning-color);
+      }
+    }
+    
+    &.warning {
+      background-color: rgba(var(--warning-rgb), 0.1);
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 8px;
+      
+      mat-icon {
+        color: var(--warning-color);
+        margin-right: 8px;
+      }
+    }
+  }
 }
 
 @media (max-width: 960px) {

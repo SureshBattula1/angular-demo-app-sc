@@ -11,18 +11,69 @@
     <mat-divider></mat-divider>
 
     <mat-card-content>
+      <!-- Filter Section -->
+      <form [formGroup]="filterForm">
+        <div class="form-section filter-section">
+          <h3><mat-icon>filter_list</mat-icon> Filter Students</h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="filterForm.get('branch_id')?.invalid">Branch is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Grade *</mat-label>
+              <mat-select formControlName="grade">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-error *ngIf="filterForm.get('grade')?.invalid">Grade is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Section</mat-label>
+              <mat-select formControlName="section">
+                <mat-option [value]="null">All Sections</mat-option>
+                <mat-option *ngIf="loadingSections" disabled>Loading sections...</mat-option>
+                <mat-option *ngFor="let section of sections" [value]="section.name">
+                  {{ section.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>class</mat-icon>
+              <mat-hint>Optional: Filter by specific section</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+      </form>
+
+      <mat-divider></mat-divider>
+
+      <!-- Payment Form -->
       <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
         <div class="form-section">
           <h3><mat-icon>person</mat-icon> Student & Fee Information</h3>
           
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Select Student *</mat-label>
-            <mat-select formControlName="student_id">
-              <mat-option *ngFor="let student of students" [value]="student.user_id || student.id">
+            <mat-select formControlName="student_id" [disabled]="filteredStudents.length === 0">
+              <mat-option *ngIf="filteredStudents.length === 0" disabled>
+                {{ filterForm.invalid ? 'Please select Branch and Grade first' : 'No students found' }}
+              </mat-option>
+              <mat-option *ngFor="let student of filteredStudents" [value]="student.user_id || student.id">
                 {{ getStudentName(student) }} ({{ student.admission_number }})
               </mat-option>
             </mat-select>
             <mat-icon matPrefix>person</mat-icon>
+            <mat-hint *ngIf="filteredStudents.length > 0">{{ filteredStudents.length }} student(s) found</mat-hint>
             <mat-error *ngIf="paymentForm.get('student_id')?.invalid">{{ getErrorMessage('student_id') }}</mat-error>
           </mat-form-field>
 
@@ -30,7 +81,7 @@
             <mat-label>Fee Type *</mat-label>
             <mat-select formControlName="fee_structure_id">
               <mat-option *ngFor="let structure of feeStructures" [value]="structure.id">
-                {{ structure.fee_type }} - ₹{{ structure.amount }} ({{ structure.academic_year }})
+                {{ structure.fee_type }} - ₹{{ structure.amount | number:'1.2-2' }} ({{ structure.academic_year }})
               </mat-option>
             </mat-select>
             <mat-icon matPrefix>category</mat-icon>
@@ -39,6 +90,25 @@
             </mat-hint>
             <mat-error *ngIf="paymentForm.get('fee_structure_id')?.invalid">{{ getErrorMessage('fee_structure_id') }}</mat-error>
           </mat-form-field>
+
+          <!-- Fee Amount Info Card -->
+          <mat-card class="info-card" *ngIf="selectedFeeStructure">
+            <div class="fee-amount-info">
+              <div class="info-row">
+                <span class="label">Fee Amount:</span>
+                <strong class="value">₹{{ getFeeStructureAmount() | number:'1.2-2' }}</strong>
+              </div>
+              <div class="info-row" *ngIf="isPartialPayment()">
+                <span class="label">Paying Now:</span>
+                <strong class="value payment">₹{{ getTotalAmount() | number:'1.2-2' }}</strong>
+              </div>
+              <div class="info-row warning" *ngIf="isPartialPayment()">
+                <mat-icon>warning</mat-icon>
+                <span class="label">Remaining Balance:</span>
+                <strong class="value remaining">₹{{ getRemainingBalance() | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </mat-card>
         </div>
 
         <div class="form-section">

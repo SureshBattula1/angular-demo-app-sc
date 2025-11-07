@@ -31,19 +31,30 @@ export class StudentFeesComponent implements OnInit {
   }
 
   loadFeesData(): void {
-    if (!this.student || !this.student.id) {
+    if (!this.student || !this.student.user_id) {
       return;
     }
     
     this.isLoading = true;
     
-    this.feeService.getStudentFees(this.student.id).subscribe({
+    // Use user_id, not student.id (API expects user_id)
+    this.feeService.getStudentFees(this.student.user_id).subscribe({
       next: (response) => {
+        console.log('📊 Student Fees Response:', response);
+        
         if (response.success && response.data) {
           this.feePayments = response.data.payments || [];
           this.pendingFees = response.data.pending_fees || [];
           this.totalPaid = response.data.total_paid || 0;
           this.pendingCount = response.data.pending_count || 0;
+          
+          console.log('✅ Fees Data Loaded:', {
+            pendingFees: this.pendingFees.length,
+            payments: this.feePayments.length,
+            totalPaid: this.totalPaid,
+            pendingFeesData: this.pendingFees,
+            paymentsData: this.feePayments
+          });
         } else {
           this.feePayments = [];
           this.pendingFees = [];
