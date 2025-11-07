@@ -6,6 +6,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { StudentCrudService } from '../../services/student-crud.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { PermissionService } from '../../../../core/services/permission.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { Student } from '../../../../core/models/student.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { LeaveService } from '../../../leaves/services/leave.service';
@@ -48,6 +49,9 @@ export class StudentViewComponent implements OnInit {
   // Menu management with lazy loading
   activeMenu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' = 'info';
   loadedMenus = new Set<string>(['info']);
+  
+  // Flag to check if this is a student viewing their own profile
+  isStudentView = false;
   
   // Attendance data
   attendanceStats = {
@@ -103,7 +107,8 @@ export class StudentViewComponent implements OnInit {
     private feeService: FeeService,
     private route: ActivatedRoute,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private authService: AuthService
   ) {
     // Initialize date filters to current month
     const now = new Date();
@@ -117,6 +122,11 @@ export class StudentViewComponent implements OnInit {
         this.studentId = +params['id'];
         this.loadStudent();
       }
+    });
+    
+    // Check if this is a student viewing their own profile
+    this.route.queryParams.subscribe(params => {
+      this.isStudentView = params['studentView'] === 'true';
     });
   }
   

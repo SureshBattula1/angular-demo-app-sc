@@ -1,8 +1,9 @@
 <div class="app-container">
   <!-- Header Toolbar -->
   <mat-toolbar class="app-header" color="primary">
-    <!-- Toggle Button - Always visible on desktop -->
+    <!-- Toggle Button - Hide for students -->
     <button mat-icon-button 
+            *ngIf="!isStudentRole()"
             (click)="toggleSidebar()" 
             class="sidebar-toggle"
             aria-label="Toggle sidebar">
@@ -35,10 +36,11 @@
   </mat-toolbar>
 
   <!-- Sidenav Container -->
-  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed">
-    <!-- Sidenav -->
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed || isStudentRole()">
+    <!-- Sidenav - Hide for students -->
     <mat-sidenav
       #drawer
+      *ngIf="!isStudentRole()"
       [mode]="isMobileOrTablet() ? 'over' : 'side'"
       [opened]="isMobileOrTablet() ? !isSidebarCollapsed : true"
       [class.collapsed]="isSidebarCollapsed && !isMobileOrTablet()"

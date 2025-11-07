@@ -888,5 +888,13 @@ export class MainShellComponent implements OnInit {
     }
     return 'U'; // Default fallback
   }
+  
+  /**
+   * Check if current user is a student
+   */
+  isStudentRole(): boolean {
+    const user = this.authService.currentUser();
+    return user?.role === 'Student';
+  }
 }
 

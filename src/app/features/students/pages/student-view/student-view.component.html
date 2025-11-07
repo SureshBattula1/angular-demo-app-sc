@@ -1,6 +1,6 @@
 <div class="view-container" *ngIf="!isLoading && student">
-  <!-- Action Bar -->
-  <div class="view-action-bar">
+  <!-- Action Bar - Hide for students viewing their own profile -->
+  <div class="view-action-bar" *ngIf="!isStudentView">
     <button mat-button (click)="onBack()">
       <mat-icon>arrow_back</mat-icon>
       Back to List

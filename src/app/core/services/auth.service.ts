@@ -261,6 +261,13 @@ export class AuthService {
   }
 
   /**
+   * Get student by user ID (for logged-in students)
+   */
+  getStudentByUserId(userId: number): Observable<any> {
+    return this.apiService.get(`/students/by-user/${userId}`);
+  }
+
+  /**
    * Check if user is authenticated
    */
   isLoggedIn(): boolean {
