@@ -72,9 +72,6 @@ export class TransactionFormComponent implements OnInit {
         this.loadTransaction(this.transactionId);
       }
     });
-
-    // Debug log
-    console.log('TransactionForm initialized with type:', this.transactionForm.get('type')?.value);
   }
 
   private initForm(): void {
@@ -98,7 +95,6 @@ export class TransactionFormComponent implements OnInit {
 
   private setupTypeChangeListener(): void {
     this.transactionForm.get('type')?.valueChanges.subscribe(type => {
-      console.log('Type changed to:', type);
       this.filterCategoriesByType(type);
       // Clear category when type changes
       this.transactionForm.patchValue({ category_id: null }, { emitEvent: false });
@@ -138,35 +134,19 @@ export class TransactionFormComponent implements OnInit {
 
   private loadCategories(): void {
     this.loadingCategories = true;
-    console.log('Starting to load categories...');
     
     this.accountService.getCategories({ is_active: true }).subscribe({
       next: (response) => {
-        console.log('Raw API response:', response);
-        console.log('Response success:', response.success);
-        console.log('Response data:', response.data);
-        console.log('Response data type:', typeof response.data);
-        console.log('Response data is array:', Array.isArray(response.data));
-        
         if (response.success && response.data) {
           this.categories = response.data;
-          console.log('Categories assigned:', this.categories.length, 'items');
-          console.log('First category:', this.categories[0]);
-          
           const currentType = this.transactionForm.get('type')?.value;
-          console.log('Current form type:', currentType);
-          
           this.filterCategoriesByType(currentType);
         } else {
-          console.error('No categories data in response:', response);
           this.errorHandler.showWarning('No categories found. Please create categories first.');
         }
         this.loadingCategories = false;
       },
       error: (error) => {
-        console.error('Error loading categories - Full error object:', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
         this.errorHandler.handleError(error);
         this.loadingCategories = false;
       }
@@ -176,18 +156,14 @@ export class TransactionFormComponent implements OnInit {
   private filterCategoriesByType(type: string): void {
     if (type === 'Income') {
       this.incomeCategories = this.categories.filter(c => c.type === 'Income');
-      console.log('Income categories filtered:', this.incomeCategories);
     } else {
       this.expenseCategories = this.categories.filter(c => c.type === 'Expense');
-      console.log('Expense categories filtered:', this.expenseCategories);
     }
   }
 
   get currentCategories(): AccountCategory[] {
     const type = this.transactionForm.get('type')?.value;
-    const filtered = type === 'Income' ? this.incomeCategories : this.expenseCategories;
-    console.log('Current categories for type', type, ':', filtered);
-    return filtered;
+    return type === 'Income' ? this.incomeCategories : this.expenseCategories;
   }
 
   onSubmit(): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
@@ -16,7 +16,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   standalone: true,
   imports: [CommonModule, MaterialModule, DataTableComponent],
   templateUrl: './account-list.component.html',
-  styleUrls: ['./account-list.component.scss']
+  styleUrls: ['./account-list.component.scss'],
+  // Performance: Use OnPush change detection
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountListComponent implements OnInit {
   @ViewChild('incomeTable') incomeTable!: DataTableComponent;
@@ -263,7 +265,8 @@ export class AccountListComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
   
   ngOnInit(): void {
@@ -279,11 +282,14 @@ export class AccountListComponent implements OnInit {
     });
   }
   
-  // Load all active categories for dropdown (not paginated)
+  // Load all active categories for dropdown (not paginated) - OPTIMIZED
   private loadCategoriesForDropdown(): void {
     this.accountService.getCategories({ is_active: true }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          // Update category count for badge
+          this.categoryCount = response.data.length;
+          
           // Update category options in search dropdowns
           const categoryField = this.transactionSearchConfig.fields.find(f => f.key === 'category_id');
           if (categoryField) {
@@ -292,10 +298,11 @@ export class AccountListComponent implements OnInit {
               label: `${c.name} (${c.type})`
             }));
           }
+          this.cdr.markForCheck();
         }
       },
       error: (error) => {
-        console.error('Error loading categories for dropdown:', error);
+        this.errorHandler.handleError(error);
       }
     });
   }
@@ -359,6 +366,8 @@ export class AccountListComponent implements OnInit {
   
   loadDashboardStats(): void {
     this.loading = true;
+    this.cdr.markForCheck();
+    
     this.accountService.getDashboard().subscribe({
       next: (response) => {
         if (response.success && response.data) {
@@ -372,16 +381,20 @@ export class AccountListComponent implements OnInit {
           };
         }
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorHandler.handleError(error);
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
   
   loadIncomeTransactions(): void {
     this.loading = true;
+    this.cdr.markForCheck(); // Trigger change detection
+    
     this.accountService.getTransactions(this.incomeFilters).subscribe({
       next: (response) => {
         if (response.success && response.data) {
@@ -389,23 +402,27 @@ export class AccountListComponent implements OnInit {
           // Update total count from meta if available (for pagination)
           if (response.meta?.total !== undefined) {
             this.incomeCount = response.meta.total;
-            this.incomeTableConfig.totalCount = response.meta.total;
+            this.incomeTableConfig = { ...this.incomeTableConfig, totalCount: response.meta.total };
           } else {
             this.incomeCount = response.count || response.data.length;
-            this.incomeTableConfig.totalCount = this.incomeCount;
+            this.incomeTableConfig = { ...this.incomeTableConfig, totalCount: this.incomeCount };
           }
         }
         this.loading = false;
+        this.cdr.markForCheck(); // Update view
       },
       error: (error) => {
         this.errorHandler.handleError(error);
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
   
   loadExpenseTransactions(): void {
     this.loading = true;
+    this.cdr.markForCheck();
+    
     this.accountService.getTransactions(this.expenseFilters).subscribe({
       next: (response) => {
         if (response.success && response.data) {
@@ -413,36 +430,41 @@ export class AccountListComponent implements OnInit {
           // Update total count from meta if available (for pagination)
           if (response.meta?.total !== undefined) {
             this.expenseCount = response.meta.total;
-            this.expensesTableConfig.totalCount = response.meta.total;
+            this.expensesTableConfig = { ...this.expensesTableConfig, totalCount: response.meta.total };
           } else {
             this.expenseCount = response.count || response.data.length;
-            this.expensesTableConfig.totalCount = this.expenseCount;
+            this.expensesTableConfig = { ...this.expensesTableConfig, totalCount: this.expenseCount };
           }
         }
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorHandler.handleError(error);
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
   
   loadCategories(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     
     this.accountService.getCategories(this.categoryFilters).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.categories = response.data;
           this.categoryCount = response.count || response.data.length;
-          this.categoriesTableConfig.totalCount = this.categoryCount;
+          this.categoriesTableConfig = { ...this.categoriesTableConfig, totalCount: this.categoryCount };
         }
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorHandler.handleError(error);
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -641,8 +663,16 @@ export class AccountListComponent implements OnInit {
   }
   
   onExport(format: string): void {
-    console.log('Export:', format);
-    // Implement export logic
+    // Implement export logic when needed
+  }
+
+  // TrackBy functions for better performance
+  trackByTransactionId(index: number, item: Transaction): number {
+    return item.id;
+  }
+
+  trackByCategoryId(index: number, item: AccountCategory): number {
+    return item.id;
   }
 }
 

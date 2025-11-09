@@ -204,8 +204,7 @@ export class AccountCategoryListComponent implements OnInit {
   }
   
   onExport(format: string): void {
-    console.log('Export format:', format);
-    // Implement export logic
+    // Implement export logic when needed
   }
   
   onPaginationChange(event: PaginationEvent): void {
