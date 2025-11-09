@@ -9,6 +9,30 @@ export const ACCOUNTS_ROUTES: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'categories',
+    loadComponent: () => import('./pages/account-category-list/account-category-list.component')
+      .then(m => m.AccountCategoryListComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categories/new',
+    loadComponent: () => import('./pages/account-category-form/account-category-form.component')
+      .then(m => m.AccountCategoryFormComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categories/:id',
+    loadComponent: () => import('./pages/account-category-view/account-category-view.component')
+      .then(m => m.AccountCategoryViewComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categories/:id/edit',
+    loadComponent: () => import('./pages/account-category-form/account-category-form.component')
+      .then(m => m.AccountCategoryFormComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'transactions/create',
     loadComponent: () => import('./pages/transaction-form/transaction-form.component')
       .then(m => m.TransactionFormComponent),

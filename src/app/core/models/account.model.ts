@@ -8,6 +8,19 @@ export interface AccountCategory {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  
+  // Relationships
+  transactions?: Transaction[];
+  budgets?: Budget[];
+}
+
+export interface AccountCategoryFormData {
+  name: string;
+  code: string;
+  type: 'Income' | 'Expense';
+  sub_type?: string;
+  description?: string;
+  is_active?: boolean;
 }
 
 export interface Transaction {

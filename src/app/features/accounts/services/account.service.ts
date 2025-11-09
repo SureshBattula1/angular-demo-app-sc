@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 import {
   AccountCategory,
+  AccountCategoryFormData,
   Transaction,
   AccountDashboard,
   TransactionFormData
@@ -29,6 +30,41 @@ export class AccountService {
    */
   getCategories(params?: Record<string, unknown>): Observable<ApiResponse<AccountCategory[]>> {
     return this.apiService.get<AccountCategory[]>(`${this.ENDPOINT}/categories`, params);
+  }
+
+  /**
+   * Get single account category
+   */
+  getCategory(id: number): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.get<AccountCategory>(`${this.ENDPOINT}/categories/${id}`);
+  }
+
+  /**
+   * Create new account category
+   */
+  createCategory(data: AccountCategoryFormData): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.post<AccountCategory>(`${this.ENDPOINT}/categories`, data);
+  }
+
+  /**
+   * Update account category
+   */
+  updateCategory(id: number, data: Partial<AccountCategoryFormData>): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.put<AccountCategory>(`${this.ENDPOINT}/categories/${id}`, data);
+  }
+
+  /**
+   * Delete account category
+   */
+  deleteCategory(id: number): Observable<ApiResponse> {
+    return this.apiService.delete(`${this.ENDPOINT}/categories/${id}`);
+  }
+
+  /**
+   * Toggle category status
+   */
+  toggleCategoryStatus(id: number): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.put<AccountCategory>(`${this.ENDPOINT}/categories/${id}/toggle-status`, {});
   }
 
   /**
