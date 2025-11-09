@@ -99,6 +99,17 @@
 
           <div class="info-item">
             <div class="info-label">
+              <mat-icon>business</mat-icon>
+              Branch
+            </div>
+            <div class="info-value">
+              {{ category.branch?.name || 'Global (All Branches)' }}
+              <mat-chip *ngIf="!category.branch_id" class="global-chip">Global</mat-chip>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-label">
               <mat-icon>category</mat-icon>
               Type
             </div>

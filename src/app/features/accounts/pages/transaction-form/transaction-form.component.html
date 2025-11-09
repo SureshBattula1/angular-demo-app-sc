@@ -8,6 +8,9 @@
       </mat-card-title>
       <mat-card-subtitle>
         {{ isEditMode ? 'Update transaction details' : 'Record an income or expense transaction' }}
+        <span style="font-size: 11px; color: #999; margin-left: 10px;">
+          [Debug: Total: {{ categories.length }}, Income: {{ incomeCategories.length }}, Expense: {{ expenseCategories.length }}, Current: {{ currentCategories.length }}]
+        </span>
       </mat-card-subtitle>
     </mat-card-header>
 
@@ -53,13 +56,19 @@
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Category *</mat-label>
               <mat-select formControlName="category_id" [disabled]="loadingCategories">
-                <mat-option *ngIf="loadingCategories" disabled>Loading...</mat-option>
+                <mat-option *ngIf="loadingCategories" disabled>
+                  Loading categories...
+                </mat-option>
+                <mat-option *ngIf="!loadingCategories && currentCategories.length === 0" disabled>
+                  No {{ transactionForm.get('type')?.value }} categories found
+                </mat-option>
                 <mat-option *ngFor="let category of currentCategories" [value]="category.id">
-                  {{ category.name }}
+                  {{ category.name }} ({{ category.code }})
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>category</mat-icon>
-              <mat-hint>Select transaction type first</mat-hint>
+              <mat-hint *ngIf="currentCategories.length > 0">{{ currentCategories.length }} categories available</mat-hint>
+              <mat-hint *ngIf="currentCategories.length === 0 && !loadingCategories">Please create categories first</mat-hint>
               <mat-error *ngIf="transactionForm.get('category_id')?.invalid">{{ getErrorMessage('category_id') }}</mat-error>
             </mat-form-field>
 

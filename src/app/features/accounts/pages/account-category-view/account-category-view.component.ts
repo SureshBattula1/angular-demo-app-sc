@@ -19,6 +19,7 @@ export class AccountCategoryViewComponent implements OnInit {
   category?: AccountCategory;
   isLoading = true;
   categoryId!: number;
+  returnTab?: string;
 
   // Permission checks
   hasEditPermission = false;
@@ -42,6 +43,11 @@ export class AccountCategoryViewComponent implements OnInit {
         this.categoryId = +params['id'];
         this.loadCategory();
       }
+    });
+    
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
     });
   }
 
@@ -68,7 +74,9 @@ export class AccountCategoryViewComponent implements OnInit {
       this.errorHandler.showError('You do not have permission to edit categories');
       return;
     }
-    this.router.navigate(['/accounts/categories', this.categoryId, 'edit']);
+    this.router.navigate(['/accounts/categories', this.categoryId, 'edit'], { 
+      queryParams: { returnTab: this.returnTab || 'categories' } 
+    });
   }
 
   onDelete(): void {
@@ -85,7 +93,7 @@ export class AccountCategoryViewComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.snackBar.open('Category deleted successfully', 'Close', { duration: 3000 });
-          this.router.navigate(['/accounts/categories']);
+          this.router.navigate(['/accounts'], { queryParams: { tab: 'categories' } });
         }
       },
       error: (error) => {
@@ -114,7 +122,11 @@ export class AccountCategoryViewComponent implements OnInit {
   }
 
   onBack(): void {
-    this.router.navigate(['/accounts/categories']);
+    if (this.returnTab) {
+      this.router.navigate(['/accounts'], { queryParams: { tab: this.returnTab } });
+    } else {
+      this.router.navigate(['/accounts'], { queryParams: { tab: 'categories' } });
+    }
   }
 
   get transactionCount(): number {

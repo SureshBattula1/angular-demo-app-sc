@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AccountService } from '../../services/account.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AccountCategory } from '../../../../core/models/account.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -22,6 +23,10 @@ export class AccountCategoryFormComponent implements OnInit {
   isSaving = false;
   categoryId?: number;
   currentCategory?: AccountCategory;
+  returnTab?: string;
+  
+  branches: any[] = [];
+  loadingBranches = false;
   
   categoryTypes = [
     { value: 'Income', label: 'Income', icon: 'arrow_downward', color: 'success' },
@@ -57,6 +62,7 @@ export class AccountCategoryFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private accountService: AccountService,
+    private branchService: BranchService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
@@ -65,6 +71,7 @@ export class AccountCategoryFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadBranches();
     
     this.route.params.subscribe(params => {
       if (params['id'] && params['id'] !== 'new') {
@@ -72,6 +79,11 @@ export class AccountCategoryFormComponent implements OnInit {
         this.isEditMode = true;
         this.loadCategory(this.categoryId);
       }
+    });
+
+    // Capture returnTab from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.returnTab = params['returnTab'];
     });
 
     // Update sub_type options when type changes
@@ -82,12 +94,29 @@ export class AccountCategoryFormComponent implements OnInit {
 
   private initForm(): void {
     this.categoryForm = this.fb.group({
+      branch_id: [null],
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
       type: ['Income', Validators.required],
       sub_type: [''],
       description: [''],
       is_active: [true]
+    });
+  }
+
+  private loadBranches(): void {
+    this.loadingBranches = true;
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.branches = response.data;
+        }
+        this.loadingBranches = false;
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+        this.loadingBranches = false;
+      }
     });
   }
 
@@ -99,6 +128,7 @@ export class AccountCategoryFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentCategory = response.data;
           this.categoryForm.patchValue({
+            branch_id: response.data.branch_id,
             name: response.data.name,
             code: response.data.code,
             type: response.data.type,
@@ -138,7 +168,7 @@ export class AccountCategoryFormComponent implements OnInit {
               'Close',
               { duration: 3000 }
             );
-            this.router.navigate(['/accounts/categories']);
+            this.router.navigate(['/accounts'], { queryParams: { tab: 'categories' } });
           }
           this.isSaving = false;
         },
@@ -153,7 +183,11 @@ export class AccountCategoryFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/accounts/categories']);
+    if (this.returnTab) {
+      this.router.navigate(['/accounts'], { queryParams: { tab: this.returnTab } });
+    } else {
+      this.router.navigate(['/accounts'], { queryParams: { tab: 'categories' } });
+    }
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {

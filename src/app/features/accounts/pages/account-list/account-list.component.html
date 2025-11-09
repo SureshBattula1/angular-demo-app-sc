@@ -1,0 +1,146 @@
+<div class="page-container">
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="accounts-toolbar">
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'dashboard'"
+        (click)="switchTab('dashboard')">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'income'"
+        (click)="switchTab('income')">
+        <mat-icon class="income-icon">arrow_downward</mat-icon>
+        <span>Income</span>
+        <span class="tab-badge income-badge" *ngIf="incomeCount > 0">{{ incomeCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'expenses'"
+        (click)="switchTab('expenses')">
+        <mat-icon class="expense-icon">arrow_upward</mat-icon>
+        <span>Expenses</span>
+        <span class="tab-badge expense-badge" *ngIf="expenseCount > 0">{{ expenseCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'categories'"
+        (click)="switchTab('categories')">
+        <mat-icon>category</mat-icon>
+        <span>Categories</span>
+        <span class="tab-badge" *ngIf="categoryCount > 0">{{ categoryCount }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Dashboard Tab -->
+  <div *ngIf="activeTab === 'dashboard' && isTabLoaded('dashboard')" class="dashboard-container">
+    <mat-card class="dashboard-stats">
+      <h2>Financial Overview</h2>
+      <div class="stats-grid">
+        <mat-card class="stat-card income-stat" (click)="switchTab('income')">
+          <mat-icon>arrow_downward</mat-icon>
+          <div class="stat-content">
+            <h3>Total Income</h3>
+            <p class="amount">{{ dashboardStats.total_income | currency }}</p>
+            <span class="count">{{ incomeCount }} Transactions</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card expense-stat" (click)="switchTab('expenses')">
+          <mat-icon>arrow_upward</mat-icon>
+          <div class="stat-content">
+            <h3>Total Expenses</h3>
+            <p class="amount">{{ dashboardStats.total_expense | currency }}</p>
+            <span class="count">{{ expenseCount }} Transactions</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card balance-stat">
+          <mat-icon>account_balance</mat-icon>
+          <div class="stat-content">
+            <h3>Net Balance</h3>
+            <p class="amount" [class.positive]="dashboardStats.net_balance >= 0" [class.negative]="dashboardStats.net_balance < 0">
+              {{ dashboardStats.net_balance | currency }}
+            </p>
+            <span class="count">Current Period</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card category-stat" (click)="switchTab('categories')">
+          <mat-icon>category</mat-icon>
+          <div class="stat-content">
+            <h3>Categories</h3>
+            <p class="amount">{{ categoryCount }}</p>
+            <span class="count">Active Categories</span>
+          </div>
+        </mat-card>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Income Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'income' && isTabLoaded('income')"
+    #incomeTable
+    [data]="incomeTransactions"
+    [config]="incomeTableConfig"
+    [advancedSearchConfig]="transactionSearchConfig"
+    [title]="'Income Transactions'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (paginationChanged)="onIncomePaginationChange($event)"
+    (sortChanged)="onIncomeSortChange($event)"
+    (advancedSearchChanged)="onIncomeSearch($event)">
+  </app-data-table>
+
+  <!-- Expenses Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'expenses' && isTabLoaded('expenses')"
+    #expensesTable
+    [data]="expenseTransactions"
+    [config]="expensesTableConfig"
+    [advancedSearchConfig]="transactionSearchConfig"
+    [title]="'Expense Transactions'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (paginationChanged)="onExpensePaginationChange($event)"
+    (sortChanged)="onExpenseSortChange($event)"
+    (advancedSearchChanged)="onExpenseSearch($event)">
+  </app-data-table>
+
+  <!-- Categories Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'categories' && isTabLoaded('categories')"
+    #categoriesTable
+    [data]="categories"
+    [config]="categoriesTableConfig"
+    [advancedSearchConfig]="categorySearchConfig"
+    [title]="'Account Categories'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (paginationChanged)="onCategoryPaginationChange($event)"
+    (sortChanged)="onCategorySortChange($event)"
+    (advancedSearchChanged)="onCategorySearch($event)">
+  </app-data-table>
+</div>
+

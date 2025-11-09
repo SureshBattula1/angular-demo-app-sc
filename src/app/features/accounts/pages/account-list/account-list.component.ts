@@ -1,0 +1,648 @@
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
+import { MaterialModule } from '../../../../shared/modules/material/material.module';
+import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
+import { AccountService } from '../../services/account.service';
+import { BranchService } from '../../../branches/services/branch.service';
+import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AccountCategory, Transaction } from '../../../../core/models/account.model';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+@Component({
+  selector: 'app-account-list',
+  standalone: true,
+  imports: [CommonModule, MaterialModule, DataTableComponent],
+  templateUrl: './account-list.component.html',
+  styleUrls: ['./account-list.component.scss']
+})
+export class AccountListComponent implements OnInit {
+  @ViewChild('incomeTable') incomeTable!: DataTableComponent;
+  @ViewChild('expensesTable') expensesTable!: DataTableComponent;
+  @ViewChild('categoriesTable') categoriesTable!: DataTableComponent;
+  
+  loading = false;
+  activeTab: 'income' | 'expenses' | 'categories' | 'dashboard' = 'dashboard';
+  
+  // Track which tabs have been loaded for lazy loading
+  private loadedTabs = new Set<string>(['dashboard']);
+  
+  // Separate data arrays for each tab
+  incomeTransactions: Transaction[] = [];
+  expenseTransactions: Transaction[] = [];
+  categories: AccountCategory[] = [];
+  
+  selectedRecords: (Transaction | AccountCategory)[] = [];
+  
+  // Counts for tab badges and pagination
+  incomeCount = 0;
+  expenseCount = 0;
+  categoryCount = 0;
+  
+  // Current filters for each tab with pagination
+  incomeFilters: Record<string, unknown> = { type: 'Income', page: 1, per_page: 25 };
+  expenseFilters: Record<string, unknown> = { type: 'Expense', page: 1, per_page: 25 };
+  categoryFilters: Record<string, unknown> = { page: 1, per_page: 25 };
+  
+  branches: any[] = [];
+  
+  // Dashboard stats
+  dashboardStats = {
+    total_income: 0,
+    total_expense: 0,
+    net_balance: 0,
+    income_count: 0,
+    expense_count: 0,
+    category_count: 0
+  };
+  
+  // Table configurations
+  incomeTableConfig: TableConfig = {
+    columns: [
+      { key: 'transaction_number', header: 'Transaction #', sortable: true, searchable: true, width: '140px' },
+      { key: 'transaction_date', header: 'Date', type: 'date', sortable: true, width: '120px' },
+      { key: 'category.name', header: 'Category', sortable: true, searchable: true },
+      { key: 'description', header: 'Description', searchable: true },
+      { key: 'payment_method', header: 'Method', width: '120px' },
+      { key: 'amount', header: 'Amount', type: 'number', sortable: true, width: '130px', align: 'right' },
+      { key: 'status', header: 'Status', type: 'badge', width: '100px', align: 'center' }
+    ],
+    actions: [
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewTransaction(row), permission: 'accounts.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTransaction(row), permission: 'accounts.edit', show: (row) => row.status === 'Pending' },
+      { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
+      { icon: 'cancel', label: 'Reject', color: 'warn', action: (row) => this.rejectTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteTransaction(row), permission: 'accounts.delete', show: (row) => row.status !== 'Approved' }
+    ],
+    selectable: true,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    exportable: true,
+    responsive: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25,
+    addButtonPermission: 'accounts.create'
+  };
+  
+  expensesTableConfig: TableConfig = {
+    columns: [
+      { key: 'transaction_number', header: 'Transaction #', sortable: true, searchable: true, width: '140px' },
+      { key: 'transaction_date', header: 'Date', type: 'date', sortable: true, width: '120px' },
+      { key: 'category.name', header: 'Category', sortable: true, searchable: true },
+      { key: 'description', header: 'Description', searchable: true },
+      { key: 'payment_method', header: 'Method', width: '120px' },
+      { key: 'amount', header: 'Amount', type: 'number', sortable: true, width: '130px', align: 'right' },
+      { key: 'status', header: 'Status', type: 'badge', width: '100px', align: 'center' }
+    ],
+    actions: [
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewTransaction(row), permission: 'accounts.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTransaction(row), permission: 'accounts.edit', show: (row) => row.status === 'Pending' },
+      { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
+      { icon: 'cancel', label: 'Reject', color: 'warn', action: (row) => this.rejectTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteTransaction(row), permission: 'accounts.delete', show: (row) => row.status !== 'Approved' }
+    ],
+    selectable: true,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    exportable: true,
+    responsive: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25,
+    addButtonPermission: 'accounts.create'
+  };
+  
+  categoriesTableConfig: TableConfig = {
+    columns: [
+      { key: 'name', header: 'Category Name', sortable: true, searchable: true },
+      { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
+      { key: 'type', header: 'Type', type: 'badge', sortable: true, width: '110px', align: 'center' },
+      { key: 'sub_type', header: 'Sub Type', sortable: true, width: '140px' },
+      { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
+    ],
+    actions: [
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewCategory(row), permission: 'accounts.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editCategory(row), permission: 'accounts.edit' },
+      { 
+        icon: 'toggle_on', 
+        label: 'Toggle Status', 
+        color: 'accent', 
+        action: (row) => this.toggleCategoryStatus(row), 
+        permission: 'accounts.edit',
+        show: (row) => row.is_active
+      },
+      { 
+        icon: 'toggle_off', 
+        label: 'Toggle Status', 
+        color: 'warn', 
+        action: (row) => this.toggleCategoryStatus(row), 
+        permission: 'accounts.edit',
+        show: (row) => !row.is_active
+      },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteCategory(row), permission: 'accounts.delete' }
+    ],
+    selectable: true,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    exportable: true,
+    responsive: true,
+    serverSide: false,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25,
+    addButtonPermission: 'accounts.create'
+  };
+  
+  // Search configurations
+  transactionSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Transaction Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'category_id',
+        label: 'Category',
+        type: 'select',
+        icon: 'category',
+        options: []
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        icon: 'check_circle',
+        options: [
+          { value: 'Pending', label: 'Pending' },
+          { value: 'Approved', label: 'Approved' },
+          { value: 'Rejected', label: 'Rejected' }
+        ]
+      },
+      {
+        key: 'payment_method',
+        label: 'Payment Method',
+        type: 'select',
+        icon: 'payment',
+        options: [
+          { value: 'Cash', label: 'Cash' },
+          { value: 'Check', label: 'Check' },
+          { value: 'Card', label: 'Card' },
+          { value: 'Bank Transfer', label: 'Bank Transfer' },
+          { value: 'UPI', label: 'UPI' }
+        ]
+      }
+    ]
+  };
+  
+  categorySearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Category Search',
+    width: '450px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'type',
+        label: 'Category Type',
+        type: 'select',
+        placeholder: 'Select type',
+        icon: 'category',
+        options: [
+          { value: 'Income', label: 'Income' },
+          { value: 'Expense', label: 'Expense' }
+        ]
+      },
+      {
+        key: 'name',
+        label: 'Category Name',
+        type: 'text',
+        placeholder: 'Enter category name',
+        icon: 'label'
+      },
+      {
+        key: 'code',
+        label: 'Code',
+        type: 'text',
+        placeholder: 'Enter code',
+        icon: 'tag'
+      },
+      {
+        key: 'is_active',
+        label: 'Active Only',
+        type: 'checkbox',
+        icon: 'check_circle'
+      }
+    ]
+  };
+  
+  constructor(
+    private accountService: AccountService,
+    private branchService: BranchService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private errorHandler: ErrorHandlerService,
+    private snackBar: MatSnackBar
+  ) {}
+  
+  ngOnInit(): void {
+    this.loadBranches();
+    this.loadCategoriesForDropdown(); // Load all active categories for dropdown
+    this.loadDashboardStats();
+    
+    // Check for tab query parameter
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.switchTab(params['tab'] as any);
+      }
+    });
+  }
+  
+  // Load all active categories for dropdown (not paginated)
+  private loadCategoriesForDropdown(): void {
+    this.accountService.getCategories({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Update category options in search dropdowns
+          const categoryField = this.transactionSearchConfig.fields.find(f => f.key === 'category_id');
+          if (categoryField) {
+            categoryField.options = response.data.map(c => ({
+              value: c.id.toString(),
+              label: `${c.name} (${c.type})`
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading categories for dropdown:', error);
+      }
+    });
+  }
+  
+  switchTab(tab: 'income' | 'expenses' | 'categories' | 'dashboard'): void {
+    this.activeTab = tab;
+    
+    // Update URL without reloading
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge'
+    });
+    
+    // Load data if not already loaded
+    if (!this.loadedTabs.has(tab)) {
+      this.loadedTabs.add(tab);
+      this.loadTabData(tab);
+    }
+  }
+  
+  isTabLoaded(tab: string): boolean {
+    return this.loadedTabs.has(tab);
+  }
+  
+  loadTabData(tab: string): void {
+    switch (tab) {
+      case 'income':
+        this.loadIncomeTransactions();
+        break;
+      case 'expenses':
+        this.loadExpenseTransactions();
+        break;
+      case 'categories':
+        this.loadCategories();
+        break;
+      case 'dashboard':
+        this.loadDashboardStats();
+        break;
+    }
+  }
+  
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.branches = response.data;
+          const options = response.data.map(b => ({ value: b.id.toString(), label: b.name }));
+          
+          // Update search configs for transactions
+          const branchField = this.transactionSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) branchField.options = options;
+          
+          // Update search configs for categories
+          const categoryBranchField = this.categorySearchConfig.fields.find(f => f.key === 'branch_id');
+          if (categoryBranchField) categoryBranchField.options = options;
+        }
+      }
+    });
+  }
+  
+  loadDashboardStats(): void {
+    this.loading = true;
+    this.accountService.getDashboard().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.dashboardStats = {
+            total_income: response.data.summary?.total_income || 0,
+            total_expense: response.data.summary?.total_expense || 0,
+            net_balance: response.data.summary?.net_balance || 0,
+            income_count: this.incomeCount,
+            expense_count: this.expenseCount,
+            category_count: this.categoryCount
+          };
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+        this.loading = false;
+      }
+    });
+  }
+  
+  loadIncomeTransactions(): void {
+    this.loading = true;
+    this.accountService.getTransactions(this.incomeFilters).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.incomeTransactions = response.data;
+          // Update total count from meta if available (for pagination)
+          if (response.meta?.total !== undefined) {
+            this.incomeCount = response.meta.total;
+            this.incomeTableConfig.totalCount = response.meta.total;
+          } else {
+            this.incomeCount = response.count || response.data.length;
+            this.incomeTableConfig.totalCount = this.incomeCount;
+          }
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+        this.loading = false;
+      }
+    });
+  }
+  
+  loadExpenseTransactions(): void {
+    this.loading = true;
+    this.accountService.getTransactions(this.expenseFilters).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.expenseTransactions = response.data;
+          // Update total count from meta if available (for pagination)
+          if (response.meta?.total !== undefined) {
+            this.expenseCount = response.meta.total;
+            this.expensesTableConfig.totalCount = response.meta.total;
+          } else {
+            this.expenseCount = response.count || response.data.length;
+            this.expensesTableConfig.totalCount = this.expenseCount;
+          }
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+        this.loading = false;
+      }
+    });
+  }
+  
+  loadCategories(): void {
+    this.loading = true;
+    
+    this.accountService.getCategories(this.categoryFilters).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.categories = response.data;
+          this.categoryCount = response.count || response.data.length;
+          this.categoriesTableConfig.totalCount = this.categoryCount;
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+        this.loading = false;
+      }
+    });
+  }
+  
+  // Transaction actions
+  viewTransaction(transaction: Transaction): void {
+    // Create a simple view dialog or navigate to detail view
+    const tab = transaction.type === 'Income' ? 'income' : 'expenses';
+    this.snackBar.open(
+      `Transaction: ${transaction.transaction_number} | Amount: ${transaction.amount} | Status: ${transaction.status}`,
+      'Close',
+      { duration: 5000 }
+    );
+    // Alternative: Navigate to a dedicated view page when created
+    // this.router.navigate(['/accounts/transactions', transaction.id]);
+  }
+  
+  editTransaction(transaction: Transaction): void {
+    this.router.navigate(['/accounts/transactions/edit', transaction.id]);
+  }
+  
+  approveTransaction(transaction: Transaction): void {
+    const confirmed = confirm(`Approve transaction "${transaction.transaction_number}" for ${transaction.amount}?`);
+    
+    if (!confirmed) return;
+    
+    this.accountService.approveTransaction(transaction.id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.snackBar.open('Transaction approved successfully', 'Close', { duration: 3000 });
+          if (transaction.type === 'Income') {
+            this.loadIncomeTransactions();
+          } else {
+            this.loadExpenseTransactions();
+          }
+          this.loadDashboardStats();
+        }
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+      }
+    });
+  }
+  
+  rejectTransaction(transaction: Transaction): void {
+    const confirmed = confirm(`Reject transaction "${transaction.transaction_number}"?`);
+    
+    if (!confirmed) return;
+    
+    this.accountService.rejectTransaction(transaction.id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.snackBar.open('Transaction rejected successfully', 'Close', { duration: 3000 });
+          if (transaction.type === 'Income') {
+            this.loadIncomeTransactions();
+          } else {
+            this.loadExpenseTransactions();
+          }
+        }
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+      }
+    });
+  }
+  
+  deleteTransaction(transaction: Transaction): void {
+    const confirmed = confirm(`Are you sure you want to delete transaction "${transaction.transaction_number}"?`);
+    
+    if (!confirmed) return;
+    
+    this.accountService.deleteTransaction(transaction.id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.snackBar.open('Transaction deleted successfully', 'Close', { duration: 3000 });
+          if (transaction.type === 'Income') {
+            this.loadIncomeTransactions();
+          } else {
+            this.loadExpenseTransactions();
+          }
+        }
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+      }
+    });
+  }
+  
+  // Category actions
+  viewCategory(category: AccountCategory): void {
+    this.router.navigate(['/accounts/categories', category.id], { queryParams: { returnTab: 'categories' } });
+  }
+  
+  editCategory(category: AccountCategory): void {
+    this.router.navigate(['/accounts/categories', category.id, 'edit'], { queryParams: { returnTab: 'categories' } });
+  }
+  
+  deleteCategory(category: AccountCategory): void {
+    const confirmed = confirm(`Are you sure you want to delete "${category.name}"?`);
+    
+    if (!confirmed) return;
+    
+    this.accountService.deleteCategory(category.id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.snackBar.open('Category deleted successfully', 'Close', { duration: 3000 });
+          this.loadCategories();
+        }
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+      }
+    });
+  }
+  
+  toggleCategoryStatus(category: AccountCategory): void {
+    this.accountService.toggleCategoryStatus(category.id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.snackBar.open('Category status updated successfully', 'Close', { duration: 3000 });
+          this.loadCategories();
+        }
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+      }
+    });
+  }
+  
+  // Event handlers
+  onAction(event: { action: string }): void {
+    if (event.action === 'add') {
+      if (this.activeTab === 'categories') {
+        this.router.navigate(['/accounts/categories/new']);
+      } else {
+        this.router.navigate(['/accounts/transactions/create']);
+      }
+    }
+  }
+  
+  onRowClick(row: any): void {
+    if (this.activeTab === 'categories') {
+      this.viewCategory(row);
+    } else if (this.activeTab === 'income' || this.activeTab === 'expenses') {
+      this.viewTransaction(row);
+    }
+  }
+  
+  onSelectionChange(selected: any[]): void {
+    this.selectedRecords = selected;
+  }
+  
+  onIncomePaginationChange(event: PaginationEvent): void {
+    this.incomeFilters = { ...this.incomeFilters, page: event.page, per_page: event.pageSize };
+    this.loadIncomeTransactions();
+  }
+  
+  onExpensePaginationChange(event: PaginationEvent): void {
+    this.expenseFilters = { ...this.expenseFilters, page: event.page, per_page: event.pageSize };
+    this.loadExpenseTransactions();
+  }
+  
+  onCategoryPaginationChange(event: PaginationEvent): void {
+    this.categoryFilters = { ...this.categoryFilters, page: event.page, per_page: event.pageSize };
+    this.loadCategories();
+  }
+  
+  onIncomeSortChange(event: SortEvent): void {
+    this.incomeFilters = { ...this.incomeFilters, sort_by: event.field, sort_order: event.direction };
+    this.loadIncomeTransactions();
+  }
+  
+  onExpenseSortChange(event: SortEvent): void {
+    this.expenseFilters = { ...this.expenseFilters, sort_by: event.field, sort_order: event.direction };
+    this.loadExpenseTransactions();
+  }
+  
+  onCategorySortChange(event: SortEvent): void {
+    this.categoryFilters = { ...this.categoryFilters, sort_by: event.field, sort_order: event.direction };
+    this.loadCategories();
+  }
+  
+  onIncomeSearch(event: SearchEvent): void {
+    this.incomeFilters = { ...event.filters, type: 'Income', page: 1 };
+    this.loadIncomeTransactions();
+  }
+  
+  onExpenseSearch(event: SearchEvent): void {
+    this.expenseFilters = { ...event.filters, type: 'Expense', page: 1 };
+    this.loadExpenseTransactions();
+  }
+  
+  onCategorySearch(event: SearchEvent): void {
+    this.categoryFilters = { ...event.filters, page: 1 };
+    this.loadCategories();
+  }
+  
+  onExport(format: string): void {
+    console.log('Export:', format);
+    // Implement export logic
+  }
+}
+

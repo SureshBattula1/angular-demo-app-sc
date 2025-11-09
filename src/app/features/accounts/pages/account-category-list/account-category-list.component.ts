@@ -150,11 +150,11 @@ export class AccountCategoryListComponent implements OnInit {
   }
   
   viewCategory(category: AccountCategory): void {
-    this.router.navigate(['/accounts/categories', category.id]);
+    this.router.navigate(['/accounts/categories', category.id], { queryParams: { returnTab: 'categories' } });
   }
   
   editCategory(category: AccountCategory): void {
-    this.router.navigate(['/accounts/categories', category.id, 'edit']);
+    this.router.navigate(['/accounts/categories', category.id, 'edit'], { queryParams: { returnTab: 'categories' } });
   }
   
   deleteCategory(category: AccountCategory): void {

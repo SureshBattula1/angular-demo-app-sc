@@ -1,5 +1,6 @@
 export interface AccountCategory {
   id: number;
+  branch_id?: number | null;
   name: string;
   code: string;
   type: 'Income' | 'Expense';
@@ -10,11 +11,17 @@ export interface AccountCategory {
   updated_at?: string;
   
   // Relationships
+  branch?: {
+    id: number;
+    name: string;
+    code: string;
+  };
   transactions?: Transaction[];
   budgets?: Budget[];
 }
 
 export interface AccountCategoryFormData {
+  branch_id?: number | null;
   name: string;
   code: string;
   type: 'Income' | 'Expense';
