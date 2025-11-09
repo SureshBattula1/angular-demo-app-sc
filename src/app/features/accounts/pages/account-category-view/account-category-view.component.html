@@ -173,7 +173,7 @@
               <p class="transaction-date">{{ transaction.transaction_date | date:'shortDate' }}</p>
             </div>
             <div class="transaction-amount" [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
-              {{ transaction.type === 'Income' ? '+' : '-' }}{{ transaction.amount | currency }}
+              {{ transaction.type === 'Income' ? '+' : '-' }}₹{{ transaction.amount | number:'1.2-2' }}
             </div>
           </div>
         </div>

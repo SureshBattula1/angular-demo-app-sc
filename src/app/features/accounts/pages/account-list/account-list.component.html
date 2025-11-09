@@ -52,7 +52,7 @@
           <mat-icon>arrow_downward</mat-icon>
           <div class="stat-content">
             <h3>Total Income</h3>
-            <p class="amount">{{ dashboardStats.total_income | currency }}</p>
+            <p class="amount">₹{{ dashboardStats.total_income | number:'1.2-2' }}</p>
             <span class="count">{{ incomeCount }} Transactions</span>
           </div>
         </mat-card>
@@ -61,7 +61,7 @@
           <mat-icon>arrow_upward</mat-icon>
           <div class="stat-content">
             <h3>Total Expenses</h3>
-            <p class="amount">{{ dashboardStats.total_expense | currency }}</p>
+            <p class="amount">₹{{ dashboardStats.total_expense | number:'1.2-2' }}</p>
             <span class="count">{{ expenseCount }} Transactions</span>
           </div>
         </mat-card>
@@ -71,7 +71,7 @@
           <div class="stat-content">
             <h3>Net Balance</h3>
             <p class="amount" [class.positive]="dashboardStats.net_balance >= 0" [class.negative]="dashboardStats.net_balance < 0">
-              {{ dashboardStats.net_balance | currency }}
+              ₹{{ dashboardStats.net_balance | number:'1.2-2' }}
             </p>
             <span class="count">Current Period</span>
           </div>
@@ -102,6 +102,7 @@
     (rowClicked)="onRowClick($event)"
     (selectionChanged)="onSelectionChange($event)"
     (exportClicked)="onExport($event)"
+    (searchChanged)="onIncomeBasicSearch($event)"
     (paginationChanged)="onIncomePaginationChange($event)"
     (sortChanged)="onIncomeSortChange($event)"
     (advancedSearchChanged)="onIncomeSearch($event)">
@@ -120,6 +121,7 @@
     (rowClicked)="onRowClick($event)"
     (selectionChanged)="onSelectionChange($event)"
     (exportClicked)="onExport($event)"
+    (searchChanged)="onExpenseBasicSearch($event)"
     (paginationChanged)="onExpensePaginationChange($event)"
     (sortChanged)="onExpenseSortChange($event)"
     (advancedSearchChanged)="onExpenseSearch($event)">
@@ -138,6 +140,7 @@
     (rowClicked)="onRowClick($event)"
     (selectionChanged)="onSelectionChange($event)"
     (exportClicked)="onExport($event)"
+    (searchChanged)="onCategoryBasicSearch($event)"
     (paginationChanged)="onCategoryPaginationChange($event)"
     (sortChanged)="onCategorySortChange($event)"
     (advancedSearchChanged)="onCategorySearch($event)">

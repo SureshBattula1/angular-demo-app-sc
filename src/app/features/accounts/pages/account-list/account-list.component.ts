@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
@@ -10,6 +10,8 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AccountCategory, Transaction } from '../../../../core/models/account.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-account-list',
@@ -20,10 +22,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   // Performance: Use OnPush change detection
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AccountListComponent implements OnInit {
+export class AccountListComponent implements OnInit, OnDestroy {
   @ViewChild('incomeTable') incomeTable!: DataTableComponent;
   @ViewChild('expensesTable') expensesTable!: DataTableComponent;
   @ViewChild('categoriesTable') categoriesTable!: DataTableComponent;
+  
+  private destroy$ = new Subject<void>();
+  private loadingInProgress = new Set<string>();
   
   loading = false;
   activeTab: 'income' | 'expenses' | 'categories' | 'dashboard' = 'dashboard';
@@ -275,36 +280,49 @@ export class AccountListComponent implements OnInit {
     this.loadDashboardStats();
     
     // Check for tab query parameter
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['tab']) {
         this.switchTab(params['tab'] as any);
       }
     });
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
   
   // Load all active categories for dropdown (not paginated) - OPTIMIZED
   private loadCategoriesForDropdown(): void {
-    this.accountService.getCategories({ is_active: true }).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          // Update category count for badge
-          this.categoryCount = response.data.length;
-          
-          // Update category options in search dropdowns
-          const categoryField = this.transactionSearchConfig.fields.find(f => f.key === 'category_id');
-          if (categoryField) {
-            categoryField.options = response.data.map(c => ({
-              value: c.id.toString(),
-              label: `${c.name} (${c.type})`
-            }));
+    // Prevent duplicate loads
+    if (this.loadingInProgress.has('categoriesDropdown')) return;
+    this.loadingInProgress.add('categoriesDropdown');
+    
+    this.accountService.getCategories({ is_active: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            // Update category count for badge
+            this.categoryCount = response.data.length;
+            
+            // Update category options in search dropdowns
+            const categoryField = this.transactionSearchConfig.fields.find(f => f.key === 'category_id');
+            if (categoryField) {
+              categoryField.options = response.data.map(c => ({
+                value: c.id.toString(),
+                label: `${c.name} (${c.type})`
+              }));
+            }
+            this.loadingInProgress.delete('categoriesDropdown');
+            this.cdr.markForCheck();
           }
-          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.errorHandler.handleError(error);
+          this.loadingInProgress.delete('categoriesDropdown');
         }
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-      }
-    });
+      });
   }
   
   switchTab(tab: 'income' | 'expenses' | 'categories' | 'dashboard'): void {
@@ -346,127 +364,171 @@ export class AccountListComponent implements OnInit {
   }
   
   loadBranches(): void {
-    this.branchService.getBranches({ is_active: true }).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.branches = response.data;
-          const options = response.data.map(b => ({ value: b.id.toString(), label: b.name }));
-          
-          // Update search configs for transactions
-          const branchField = this.transactionSearchConfig.fields.find(f => f.key === 'branch_id');
-          if (branchField) branchField.options = options;
-          
-          // Update search configs for categories
-          const categoryBranchField = this.categorySearchConfig.fields.find(f => f.key === 'branch_id');
-          if (categoryBranchField) categoryBranchField.options = options;
+    // Prevent duplicate loads
+    if (this.loadingInProgress.has('branches')) return;
+    this.loadingInProgress.add('branches');
+    
+    this.branchService.getBranches({ is_active: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.branches = response.data;
+            const options = response.data.map(b => ({ value: b.id.toString(), label: b.name }));
+            
+            // Update search configs for transactions
+            const branchField = this.transactionSearchConfig.fields.find(f => f.key === 'branch_id');
+            if (branchField) branchField.options = options;
+            
+            // Update search configs for categories
+            const categoryBranchField = this.categorySearchConfig.fields.find(f => f.key === 'branch_id');
+            if (categoryBranchField) categoryBranchField.options = options;
+            
+            this.loadingInProgress.delete('branches');
+            this.cdr.markForCheck();
+          }
+        },
+        error: (error) => {
+          this.loadingInProgress.delete('branches');
         }
-      }
-    });
+      });
   }
   
   loadDashboardStats(): void {
+    // Prevent duplicate loads
+    if (this.loadingInProgress.has('dashboard')) return;
+    this.loadingInProgress.add('dashboard');
+    
     this.loading = true;
     this.cdr.markForCheck();
     
-    this.accountService.getDashboard().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.dashboardStats = {
-            total_income: response.data.summary?.total_income || 0,
-            total_expense: response.data.summary?.total_expense || 0,
-            net_balance: response.data.summary?.net_balance || 0,
-            income_count: this.incomeCount,
-            expense_count: this.expenseCount,
-            category_count: this.categoryCount
-          };
+    this.accountService.getDashboard()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.dashboardStats = {
+              total_income: response.data.summary?.total_income || 0,
+              total_expense: response.data.summary?.total_expense || 0,
+              net_balance: response.data.summary?.net_balance || 0,
+              income_count: this.incomeCount,
+              expense_count: this.expenseCount,
+              category_count: this.categoryCount
+            };
+          }
+          this.loading = false;
+          this.loadingInProgress.delete('dashboard');
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.errorHandler.handleError(error);
+          this.loading = false;
+          this.loadingInProgress.delete('dashboard');
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
+      });
   }
   
   loadIncomeTransactions(): void {
-    this.loading = true;
-    this.cdr.markForCheck(); // Trigger change detection
+    // Prevent duplicate loads
+    if (this.loadingInProgress.has('income')) return;
+    this.loadingInProgress.add('income');
     
-    this.accountService.getTransactions(this.incomeFilters).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.incomeTransactions = response.data;
-          // Update total count from meta if available (for pagination)
-          if (response.meta?.total !== undefined) {
-            this.incomeCount = response.meta.total;
-            this.incomeTableConfig = { ...this.incomeTableConfig, totalCount: response.meta.total };
-          } else {
-            this.incomeCount = response.count || response.data.length;
-            this.incomeTableConfig = { ...this.incomeTableConfig, totalCount: this.incomeCount };
+    this.loading = true;
+    this.cdr.markForCheck();
+    
+    this.accountService.getTransactions(this.incomeFilters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.incomeTransactions = response.data;
+            // Update total count from meta if available (for pagination)
+            if (response.meta?.total !== undefined) {
+              this.incomeCount = response.meta.total;
+              this.incomeTableConfig = { ...this.incomeTableConfig, totalCount: response.meta.total };
+            } else {
+              this.incomeCount = response.count || response.data.length;
+              this.incomeTableConfig = { ...this.incomeTableConfig, totalCount: this.incomeCount };
+            }
           }
+          this.loading = false;
+          this.loadingInProgress.delete('income');
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.errorHandler.handleError(error);
+          this.loading = false;
+          this.loadingInProgress.delete('income');
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-        this.cdr.markForCheck(); // Update view
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
+      });
   }
   
   loadExpenseTransactions(): void {
+    // Prevent duplicate loads
+    if (this.loadingInProgress.has('expense')) return;
+    this.loadingInProgress.add('expense');
+    
     this.loading = true;
     this.cdr.markForCheck();
     
-    this.accountService.getTransactions(this.expenseFilters).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.expenseTransactions = response.data;
-          // Update total count from meta if available (for pagination)
-          if (response.meta?.total !== undefined) {
-            this.expenseCount = response.meta.total;
-            this.expensesTableConfig = { ...this.expensesTableConfig, totalCount: response.meta.total };
-          } else {
-            this.expenseCount = response.count || response.data.length;
-            this.expensesTableConfig = { ...this.expensesTableConfig, totalCount: this.expenseCount };
+    this.accountService.getTransactions(this.expenseFilters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.expenseTransactions = response.data;
+            // Update total count from meta if available (for pagination)
+            if (response.meta?.total !== undefined) {
+              this.expenseCount = response.meta.total;
+              this.expensesTableConfig = { ...this.expensesTableConfig, totalCount: response.meta.total };
+            } else {
+              this.expenseCount = response.count || response.data.length;
+              this.expensesTableConfig = { ...this.expensesTableConfig, totalCount: this.expenseCount };
+            }
           }
+          this.loading = false;
+          this.loadingInProgress.delete('expense');
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.errorHandler.handleError(error);
+          this.loading = false;
+          this.loadingInProgress.delete('expense');
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
+      });
   }
   
   loadCategories(): void {
+    // Prevent duplicate loads
+    if (this.loadingInProgress.has('categories')) return;
+    this.loadingInProgress.add('categories');
+    
     this.loading = true;
     this.cdr.markForCheck();
     
-    this.accountService.getCategories(this.categoryFilters).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.categories = response.data;
-          this.categoryCount = response.count || response.data.length;
-          this.categoriesTableConfig = { ...this.categoriesTableConfig, totalCount: this.categoryCount };
+    this.accountService.getCategories(this.categoryFilters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.categories = response.data;
+            this.categoryCount = response.count || response.data.length;
+            this.categoriesTableConfig = { ...this.categoriesTableConfig, totalCount: this.categoryCount };
+          }
+          this.loading = false;
+          this.loadingInProgress.delete('categories');
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.errorHandler.handleError(error);
+          this.loading = false;
+          this.loadingInProgress.delete('categories');
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
+      });
   }
   
   // Transaction actions
@@ -647,6 +709,23 @@ export class AccountListComponent implements OnInit {
     this.loadCategories();
   }
   
+  // Basic search handlers
+  onIncomeBasicSearch(query: string): void {
+    this.incomeFilters = { type: 'Income', page: 1, search: query };
+    this.loadIncomeTransactions();
+  }
+  
+  onExpenseBasicSearch(query: string): void {
+    this.expenseFilters = { type: 'Expense', page: 1, search: query };
+    this.loadExpenseTransactions();
+  }
+  
+  onCategoryBasicSearch(query: string): void {
+    this.categoryFilters = { page: 1, search: query };
+    this.loadCategories();
+  }
+  
+  // Advanced search handlers
   onIncomeSearch(event: SearchEvent): void {
     this.incomeFilters = { ...event.filters, type: 'Income', page: 1 };
     this.loadIncomeTransactions();
