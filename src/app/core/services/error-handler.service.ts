@@ -174,7 +174,6 @@ export class ErrorHandlerService {
    * Log error to console in development
    */
   logError(error: unknown): void {
-    console.error('Error occurred:', error);
   }
 }
 

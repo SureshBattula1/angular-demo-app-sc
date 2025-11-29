@@ -116,6 +116,12 @@ export const routes: Routes = [
         loadChildren: () => import('./features/imports/imports.routes').then(m => m.IMPORTS_ROUTES),
         canActivate: [permissionGuard],
         data: { permissions: ['students.create', 'teachers.create'], permissionMode: 'any' }
+      },
+      {
+        path: 'admissions',
+        loadChildren: () => import('./features/admissions/admissions.routes').then(m => m.ADMISSIONS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['admissions.view', 'admissions.create'], permissionMode: 'any' }
       }
     ]
   },

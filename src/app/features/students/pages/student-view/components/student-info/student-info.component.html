@@ -61,14 +61,47 @@
           </div>
         </div>
         
-        <div class="info-item" *ngIf="student.blood_group">
+        <div class="info-item">
           <div class="info-label">
             <mat-icon>favorite</mat-icon>
             <span>Blood Group</span>
           </div>
           <div class="info-value">
-            <span class="blood-group-badge">{{ student.blood_group }}</span>
+            <span class="blood-group-badge" *ngIf="student.blood_group">{{ student.blood_group }}</span>
+            <span *ngIf="!student.blood_group">N/A</span>
           </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>public</mat-icon>
+            <span>Nationality</span>
+          </div>
+          <div class="info-value">{{ student.nationality || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>language</mat-icon>
+            <span>Religion</span>
+          </div>
+          <div class="info-value">{{ student.religion || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>category</mat-icon>
+            <span>Category</span>
+          </div>
+          <div class="info-value">{{ student.category || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>translate</mat-icon>
+            <span>Mother Tongue</span>
+          </div>
+          <div class="info-value">{{ student.mother_tongue || 'N/A' }}</div>
         </div>
       </div>
     </div>
@@ -149,14 +182,31 @@
           </div>
         </div>
         
-        <div class="info-item" *ngIf="student.stream">
+        <div class="info-item">
           <div class="info-label">
             <mat-icon>stream</mat-icon>
             <span>Stream</span>
           </div>
           <div class="info-value">
-            <span class="stream-badge">{{ student.stream }}</span>
+            <span class="stream-badge" *ngIf="student.stream">{{ student.stream }}</span>
+            <span *ngIf="!student.stream">N/A</span>
           </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>subject</mat-icon>
+            <span>Elective Subjects</span>
+          </div>
+          <div class="info-value">{{ student.elective_subjects || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>numbers</mat-icon>
+            <span>Registration Number</span>
+          </div>
+          <div class="info-value">{{ student.registration_number || 'N/A' }}</div>
         </div>
         
         <div class="info-item" *ngIf="student.branch">
@@ -190,9 +240,9 @@
         <div class="info-item full-width">
           <div class="info-label">
             <mat-icon>location_on</mat-icon>
-            <span>Complete Address</span>
+            <span>Current Address</span>
           </div>
-          <div class="info-value address-text">{{ student.current_address }}</div>
+          <div class="info-value address-text">{{ student.current_address || 'N/A' }}</div>
         </div>
         
         <div class="info-item">
@@ -200,7 +250,7 @@
             <mat-icon>location_city</mat-icon>
             <span>City</span>
           </div>
-          <div class="info-value">{{ student.city }}</div>
+          <div class="info-value">{{ student.city || 'N/A' }}</div>
         </div>
         
         <div class="info-item">
@@ -208,7 +258,7 @@
             <mat-icon>map</mat-icon>
             <span>State</span>
           </div>
-          <div class="info-value">{{ student.state }}</div>
+          <div class="info-value">{{ student.state || 'N/A' }}</div>
         </div>
         
         <div class="info-item">
@@ -217,7 +267,8 @@
             <span>PIN Code</span>
           </div>
           <div class="info-value">
-            <span class="pincode-badge">{{ student.pincode }}</span>
+            <span class="pincode-badge" *ngIf="student.pincode">{{ student.pincode }}</span>
+            <span *ngIf="!student.pincode">N/A</span>
           </div>
         </div>
         
@@ -226,7 +277,55 @@
             <mat-icon>public</mat-icon>
             <span>Country</span>
           </div>
-          <div class="info-value">{{ student.country }}</div>
+          <div class="info-value">{{ student.country || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>home_work</mat-icon>
+            <span>Permanent Address</span>
+          </div>
+          <div class="info-value address-text">{{ student.permanent_address || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>location_city</mat-icon>
+            <span>Current District</span>
+          </div>
+          <div class="info-value">{{ student.current_district || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>place</mat-icon>
+            <span>Current Landmark</span>
+          </div>
+          <div class="info-value">{{ student.current_landmark || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>location_city</mat-icon>
+            <span>Permanent District</span>
+          </div>
+          <div class="info-value">{{ student.permanent_district || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>place</mat-icon>
+            <span>Permanent Landmark</span>
+          </div>
+          <div class="info-value">{{ student.permanent_landmark || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>markunread</mat-icon>
+            <span>Correspondence Address</span>
+          </div>
+          <div class="info-value address-text">{{ student.correspondence_address || 'N/A' }}</div>
         </div>
       </div>
     </div>
@@ -257,7 +356,7 @@
               <mat-icon>person</mat-icon>
               <span>Name</span>
             </div>
-            <div class="info-value">{{ student.father_name }}</div>
+            <div class="info-value">{{ student.father_name || 'N/A' }}</div>
           </div>
           
           <div class="info-item">
@@ -265,23 +364,63 @@
               <mat-icon>phone</mat-icon>
               <span>Phone</span>
             </div>
-            <div class="info-value">{{ student.father_phone }}</div>
+            <div class="info-value">{{ student.father_phone || 'N/A' }}</div>
           </div>
           
-          <div class="info-item" *ngIf="student.father_email">
+          <div class="info-item">
             <div class="info-label">
               <mat-icon>email</mat-icon>
               <span>Email</span>
             </div>
-            <div class="info-value">{{ student.father_email }}</div>
+            <div class="info-value">{{ student.father_email || 'N/A' }}</div>
           </div>
           
-          <div class="info-item" *ngIf="student.father_occupation">
+          <div class="info-item">
             <div class="info-label">
               <mat-icon>work</mat-icon>
               <span>Occupation</span>
             </div>
-            <div class="info-value">{{ student.father_occupation }}</div>
+            <div class="info-value">{{ student.father_occupation || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>school</mat-icon>
+              <span>Qualification</span>
+            </div>
+            <div class="info-value">{{ student.father_qualification || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>business</mat-icon>
+              <span>Organization</span>
+            </div>
+            <div class="info-value">{{ student.father_organization || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>badge</mat-icon>
+              <span>Designation</span>
+            </div>
+            <div class="info-value">{{ student.father_designation || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>attach_money</mat-icon>
+              <span>Annual Income</span>
+            </div>
+            <div class="info-value">{{ student.father_annual_income ? ('₹' + (student.father_annual_income | number)) : 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>fingerprint</mat-icon>
+              <span>Aadhaar Number</span>
+            </div>
+            <div class="info-value">{{ student.father_aadhaar || 'N/A' }}</div>
           </div>
         </div>
       </div>
@@ -298,29 +437,150 @@
               <mat-icon>person</mat-icon>
               <span>Name</span>
             </div>
-            <div class="info-value">{{ student.mother_name }}</div>
+            <div class="info-value">{{ student.mother_name || 'N/A' }}</div>
           </div>
           
-          <div class="info-item" *ngIf="student.mother_phone">
+          <div class="info-item">
             <div class="info-label">
               <mat-icon>phone</mat-icon>
               <span>Phone</span>
             </div>
-            <div class="info-value">{{ student.mother_phone }}</div>
+            <div class="info-value">{{ student.mother_phone || 'N/A' }}</div>
           </div>
           
-          <div class="info-item" *ngIf="student.mother_email">
+          <div class="info-item">
             <div class="info-label">
               <mat-icon>email</mat-icon>
               <span>Email</span>
             </div>
-            <div class="info-value">{{ student.mother_email }}</div>
+            <div class="info-value">{{ student.mother_email || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>work</mat-icon>
+              <span>Occupation</span>
+            </div>
+            <div class="info-value">{{ student.mother_occupation || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>school</mat-icon>
+              <span>Qualification</span>
+            </div>
+            <div class="info-value">{{ student.mother_qualification || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>business</mat-icon>
+              <span>Organization</span>
+            </div>
+            <div class="info-value">{{ student.mother_organization || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>badge</mat-icon>
+              <span>Designation</span>
+            </div>
+            <div class="info-value">{{ student.mother_designation || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>attach_money</mat-icon>
+              <span>Annual Income</span>
+            </div>
+            <div class="info-value">{{ student.mother_annual_income ? ('₹' + (student.mother_annual_income | number)) : 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>fingerprint</mat-icon>
+              <span>Aadhaar Number</span>
+            </div>
+            <div class="info-value">{{ student.mother_aadhaar || 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guardian Information -->
+      <div class="parent-group">
+        <div class="parent-header">
+          <mat-icon>supervisor_account</mat-icon>
+          <h4>Guardian</h4>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>person</mat-icon>
+              <span>Name</span>
+            </div>
+            <div class="info-value">{{ student.guardian_name || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>phone</mat-icon>
+              <span>Phone</span>
+            </div>
+            <div class="info-value">{{ student.guardian_phone || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>how_to_reg</mat-icon>
+              <span>Relation</span>
+            </div>
+            <div class="info-value">{{ student.guardian_relation || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>email</mat-icon>
+              <span>Email</span>
+            </div>
+            <div class="info-value">{{ student.guardian_email || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>school</mat-icon>
+              <span>Qualification</span>
+            </div>
+            <div class="info-value">{{ student.guardian_qualification || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>work</mat-icon>
+              <span>Occupation</span>
+            </div>
+            <div class="info-value">{{ student.guardian_occupation || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item full-width">
+            <div class="info-label">
+              <mat-icon>home</mat-icon>
+              <span>Address</span>
+            </div>
+            <div class="info-value address-text">{{ student.guardian_address || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>attach_money</mat-icon>
+              <span>Annual Income</span>
+            </div>
+            <div class="info-value">{{ student.guardian_annual_income ? ('₹' + (student.guardian_annual_income | number)) : 'N/A' }}</div>
           </div>
         </div>
       </div>
 
       <!-- Emergency Contact -->
-      <div class="parent-group" *ngIf="student.emergency_contact_name">
+      <div class="parent-group">
         <div class="parent-header">
           <mat-icon>emergency</mat-icon>
           <h4>Emergency Contact</h4>
@@ -331,7 +591,7 @@
               <mat-icon>person</mat-icon>
               <span>Name</span>
             </div>
-            <div class="info-value">{{ student.emergency_contact_name }}</div>
+            <div class="info-value">{{ student.emergency_contact_name || 'N/A' }}</div>
           </div>
           
           <div class="info-item">
@@ -339,7 +599,15 @@
               <mat-icon>phone</mat-icon>
               <span>Phone</span>
             </div>
-            <div class="info-value">{{ student.emergency_contact_phone }}</div>
+            <div class="info-value">{{ student.emergency_contact_phone || 'N/A' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>how_to_reg</mat-icon>
+              <span>Relation</span>
+            </div>
+            <div class="info-value">{{ student.emergency_contact_relation || 'N/A' }}</div>
           </div>
         </div>
       </div>
@@ -361,39 +629,271 @@
     <div class="info-content">
       <div class="info-grid">
         <!-- Previous Education -->
-        <div class="info-item full-width" *ngIf="student.previous_school || student.previous_grade">
+        <div class="info-item full-width">
           <div class="info-label">
             <mat-icon>school</mat-icon>
-            <span>Previous Education</span>
+            <span>Previous School</span>
+          </div>
+          <div class="info-value">{{ student.previous_school || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>grade</mat-icon>
+            <span>Previous Grade</span>
+          </div>
+          <div class="info-value">{{ student.previous_grade || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>percent</mat-icon>
+            <span>Previous Percentage</span>
+          </div>
+          <div class="info-value">{{ student.previous_percentage ? (student.previous_percentage + '%') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>description</mat-icon>
+            <span>Transfer Certificate Number</span>
+          </div>
+          <div class="info-value">{{ student.transfer_certificate_number || student.tc_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>school</mat-icon>
+            <span>Previous School Board</span>
+          </div>
+          <div class="info-value">{{ student.previous_school_board || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>location_on</mat-icon>
+            <span>Previous School Address</span>
+          </div>
+          <div class="info-value address-text">{{ student.previous_school_address || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>phone</mat-icon>
+            <span>Previous School Phone</span>
+          </div>
+          <div class="info-value">{{ student.previous_school_phone || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>confirmation_number</mat-icon>
+            <span>TC Number</span>
+          </div>
+          <div class="info-value">{{ student.tc_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>TC Date</span>
+          </div>
+          <div class="info-value">{{ student.tc_date ? (student.tc_date | date:'MMM d, y') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>badge</mat-icon>
+            <span>Previous Student ID</span>
+          </div>
+          <div class="info-value">{{ student.previous_student_id || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>translate</mat-icon>
+            <span>Medium of Instruction</span>
+          </div>
+          <div class="info-value">{{ student.medium_of_instruction || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>language</mat-icon>
+            <span>Language Preferences</span>
           </div>
           <div class="info-value">
-            <div class="previous-education">
-              <div *ngIf="student.previous_school" class="education-item">
-                <strong>School:</strong> {{ student.previous_school }}
-              </div>
-              <div *ngIf="student.previous_grade" class="education-item">
-                <strong>Grade:</strong> {{ student.previous_grade }}
-              </div>
-            </div>
+            <span *ngIf="student.language_preferences && student.language_preferences.length > 0">
+              {{ formatArrayField(student.language_preferences) }}
+            </span>
+            <span *ngIf="!student.language_preferences || student.language_preferences.length === 0">N/A</span>
           </div>
         </div>
         
         <!-- Medical Information -->
-        <div class="info-item full-width" *ngIf="student.medical_history || student.allergies">
+        <div class="info-item full-width">
           <div class="info-label">
             <mat-icon>medical_services</mat-icon>
-            <span>Medical Information</span>
+            <span>Medical History</span>
+          </div>
+          <div class="info-value">{{ student.medical_history || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>healing</mat-icon>
+            <span>Allergies</span>
+          </div>
+          <div class="info-value">{{ student.allergies || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>medication</mat-icon>
+            <span>Current Medications</span>
+          </div>
+          <div class="info-value">{{ student.medications || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>height</mat-icon>
+            <span>Height (cm)</span>
+          </div>
+          <div class="info-value">{{ student.height_cm ? (student.height_cm + ' cm') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>monitor_weight</mat-icon>
+            <span>Weight (kg)</span>
+          </div>
+          <div class="info-value">{{ student.weight_kg ? (student.weight_kg + ' kg') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>visibility</mat-icon>
+            <span>Vision Status</span>
+          </div>
+          <div class="info-value">{{ student.vision_status || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>hearing</mat-icon>
+            <span>Hearing Status</span>
+          </div>
+          <div class="info-value">{{ student.hearing_status || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>medication</mat-icon>
+            <span>Chronic Conditions</span>
+          </div>
+          <div class="info-value">{{ student.chronic_conditions || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>medication</mat-icon>
+            <span>Current Medications</span>
+          </div>
+          <div class="info-value">{{ student.current_medications || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>verified_user</mat-icon>
+            <span>Medical Insurance</span>
           </div>
           <div class="info-value">
-            <div class="medical-info">
-              <div *ngIf="student.medical_history" class="medical-item">
-                <strong>Medical History:</strong> {{ student.medical_history }}
-              </div>
-              <div *ngIf="student.allergies" class="medical-item">
-                <strong>Allergies:</strong> {{ student.allergies }}
-              </div>
-            </div>
+            <span class="status-badge" [class.status-active]="student.medical_insurance" [class.status-inactive]="!student.medical_insurance">
+              {{ student.medical_insurance ? 'Yes' : 'No' }}
+            </span>
           </div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.medical_insurance">
+          <div class="info-label">
+            <mat-icon>business</mat-icon>
+            <span>Insurance Provider</span>
+          </div>
+          <div class="info-value">{{ student.insurance_provider || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.medical_insurance">
+          <div class="info-label">
+            <mat-icon>policy</mat-icon>
+            <span>Policy Number</span>
+          </div>
+          <div class="info-value">{{ student.insurance_policy_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>Last Health Checkup</span>
+          </div>
+          <div class="info-value">{{ student.last_health_checkup ? (student.last_health_checkup | date:'MMM d, y') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>person</mat-icon>
+            <span>Family Doctor Name</span>
+          </div>
+          <div class="info-value">{{ student.family_doctor_name || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>phone</mat-icon>
+            <span>Doctor Phone</span>
+          </div>
+          <div class="info-value">{{ student.family_doctor_phone || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>vaccines</mat-icon>
+            <span>Vaccination Status</span>
+          </div>
+          <div class="info-value">{{ student.vaccination_status || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>description</mat-icon>
+            <span>Vaccination Records</span>
+          </div>
+          <div class="info-value">
+            <span *ngIf="student.vaccination_records && student.vaccination_records.length > 0">
+              {{ formatArrayField(student.vaccination_records) }}
+            </span>
+            <span *ngIf="!student.vaccination_records || student.vaccination_records.length === 0">N/A</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>accessible</mat-icon>
+            <span>Special Needs</span>
+          </div>
+          <div class="info-value">
+            <span class="status-badge" [class.status-active]="student.special_needs" [class.status-inactive]="!student.special_needs">
+              {{ student.special_needs ? 'Yes' : 'No' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="info-item full-width" *ngIf="student.special_needs">
+          <div class="info-label">
+            <mat-icon>info</mat-icon>
+            <span>Special Needs Details</span>
+          </div>
+          <div class="info-value">{{ student.special_needs_details || 'N/A' }}</div>
         </div>
 
         <!-- Status -->
@@ -409,14 +909,557 @@
           </div>
         </div>
         
-        <!-- No Additional Info Message -->
-        <div class="no-info-message" *ngIf="!student.previous_school && !student.previous_grade && !student.medical_history && !student.allergies">
-          <div class="no-info-content">
-            <mat-icon>info_outline</mat-icon>
-            <p>No additional information available</p>
+        <!-- Admission Status -->
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>verified</mat-icon>
+            <span>Admission Status</span>
+          </div>
+          <div class="info-value">{{ student.admission_status || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>note</mat-icon>
+            <span>Remarks</span>
+          </div>
+          <div class="info-value">{{ student.remarks || 'N/A' }}</div>
+        </div>
+        
+        <!-- Fee & Scholarship -->
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>account_balance</mat-icon>
+            <span>Fee Concession</span>
+          </div>
+          <div class="info-value">
+            <span class="status-badge" [class.status-active]="student.fee_concession_applicable" [class.status-inactive]="!student.fee_concession_applicable">
+              {{ student.fee_concession_applicable ? 'Yes' : 'No' }}
+            </span>
           </div>
         </div>
+        
+        <div class="info-item" *ngIf="student.fee_concession_applicable">
+          <div class="info-label">
+            <mat-icon>category</mat-icon>
+            <span>Concession Type</span>
+          </div>
+          <div class="info-value">{{ student.concession_type || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.fee_concession_applicable">
+          <div class="info-label">
+            <mat-icon>percent</mat-icon>
+            <span>Concession %</span>
+          </div>
+          <div class="info-value">{{ student.concession_percentage ? (student.concession_percentage + '%') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>workspace_premium</mat-icon>
+            <span>Scholarship Name</span>
+          </div>
+          <div class="info-value">{{ student.scholarship_name || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>description</mat-icon>
+            <span>Scholarship Details</span>
+          </div>
+          <div class="info-value">{{ student.scholarship_details || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>account_balance</mat-icon>
+            <span>Economic Status</span>
+          </div>
+          <div class="info-value">{{ student.economic_status || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>attach_money</mat-icon>
+            <span>Family Annual Income</span>
+          </div>
+          <div class="info-value">{{ student.family_annual_income ? ('₹' + (student.family_annual_income | number)) : 'N/A' }}</div>
+        </div>
+        
+        <!-- Additional Activities -->
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>favorite</mat-icon>
+            <span>Hobbies & Interests</span>
+          </div>
+          <div class="info-value">
+            <span *ngIf="student.hobbies_interests && student.hobbies_interests.length > 0">
+              {{ formatArrayField(student.hobbies_interests) }}
+            </span>
+            <span *ngIf="!student.hobbies_interests || student.hobbies_interests.length === 0">N/A</span>
+          </div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>sports_soccer</mat-icon>
+            <span>Extra Curricular Activities</span>
+          </div>
+          <div class="info-value">
+            <span *ngIf="student.extra_curricular_activities && student.extra_curricular_activities.length > 0">
+              {{ formatArrayField(student.extra_curricular_activities) }}
+            </span>
+            <span *ngIf="!student.extra_curricular_activities || student.extra_curricular_activities.length === 0">N/A</span>
+          </div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>emoji_events</mat-icon>
+            <span>Achievements</span>
+          </div>
+          <div class="info-value">
+            <span *ngIf="student.achievements && student.achievements.length > 0">
+              {{ formatArrayField(student.achievements) }}
+            </span>
+            <span *ngIf="!student.achievements || student.achievements.length === 0">N/A</span>
+          </div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>sports</mat-icon>
+            <span>Sports Participation</span>
+          </div>
+          <div class="info-value">
+            <span *ngIf="student.sports_participation && student.sports_participation.length > 0">
+              {{ formatArrayField(student.sports_participation) }}
+            </span>
+            <span *ngIf="!student.sports_participation || student.sports_participation.length === 0">N/A</span>
+          </div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>palette</mat-icon>
+            <span>Cultural Activities</span>
+          </div>
+          <div class="info-value">
+            <span *ngIf="student.cultural_activities && student.cultural_activities.length > 0">
+              {{ formatArrayField(student.cultural_activities) }}
+            </span>
+            <span *ngIf="!student.cultural_activities || student.cultural_activities.length === 0">N/A</span>
+          </div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>description</mat-icon>
+            <span>Behavior Records</span>
+          </div>
+          <div class="info-value">{{ student.behavior_records || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>psychology</mat-icon>
+            <span>Counselor Notes</span>
+          </div>
+          <div class="info-value">{{ student.counselor_notes || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width">
+          <div class="info-label">
+            <mat-icon>info</mat-icon>
+            <span>Special Instructions</span>
+          </div>
+          <div class="info-value">{{ student.special_instructions || 'N/A' }}</div>
+        </div>
       </div>
+    </div>
+  </div>
+  
+  <!-- Identity Documents Section -->
+  <div class="info-section identity-docs">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>badge</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Identity Documents</h3>
+        <p>Official identification and certificates</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>fingerprint</mat-icon>
+            <span>Aadhaar Number</span>
+          </div>
+          <div class="info-value">{{ student.aadhaar_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>card_membership</mat-icon>
+            <span>PEN Number</span>
+          </div>
+          <div class="info-value">{{ student.pen_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>assignment</mat-icon>
+            <span>Birth Certificate</span>
+          </div>
+          <div class="info-value">{{ student.birth_certificate_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>flight</mat-icon>
+            <span>Passport Number</span>
+          </div>
+          <div class="info-value">{{ student.passport_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>Passport Expiry</span>
+          </div>
+          <div class="info-value">{{ student.passport_expiry ? (student.passport_expiry | date:'MMM d, y') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>badge</mat-icon>
+            <span>Student ID Card</span>
+          </div>
+          <div class="info-value">{{ student.student_id_card_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>how_to_vote</mat-icon>
+            <span>Voter ID</span>
+          </div>
+          <div class="info-value">{{ student.voter_id || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>receipt</mat-icon>
+            <span>Ration Card</span>
+          </div>
+          <div class="info-value">{{ student.ration_card_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>description</mat-icon>
+            <span>Domicile Certificate</span>
+          </div>
+          <div class="info-value">{{ student.domicile_certificate_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <span>Income Certificate</span>
+          </div>
+          <div class="info-value">{{ student.income_certificate_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>description</mat-icon>
+            <span>Caste Certificate</span>
+          </div>
+          <div class="info-value">{{ student.caste_certificate_number || 'N/A' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Sibling Information Section -->
+  <div class="info-section sibling-info" *ngIf="(student.number_of_siblings && student.number_of_siblings > 0) || student.sibling_discount_applicable">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>family_restroom</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Sibling Information</h3>
+        <p>Family siblings and discount information</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>people</mat-icon>
+            <span>Number of Siblings</span>
+          </div>
+          <div class="info-value">{{ student.number_of_siblings || 0 }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>percent</mat-icon>
+            <span>Sibling Discount</span>
+          </div>
+          <div class="info-value">
+            <span class="status-badge" [class.status-active]="student.sibling_discount_applicable" [class.status-inactive]="!student.sibling_discount_applicable">
+              {{ student.sibling_discount_applicable ? 'Yes' : 'No' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.sibling_discount_applicable">
+          <div class="info-label">
+            <mat-icon>percent</mat-icon>
+            <span>Discount Percentage</span>
+          </div>
+          <div class="info-value">{{ student.sibling_discount_percentage ? (student.sibling_discount_percentage + '%') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item full-width" *ngIf="student.sibling_details && student.sibling_details.length > 0">
+          <div class="info-label">
+            <mat-icon>list</mat-icon>
+            <span>Sibling Details</span>
+          </div>
+          <div class="info-value">{{ formatArrayField(student.sibling_details) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Transport Information Section -->
+  <div class="info-section transport-info" *ngIf="student.transport_required">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>directions_bus</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Transport Information</h3>
+        <p>Transportation and route details</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>route</mat-icon>
+            <span>Transport Route</span>
+          </div>
+          <div class="info-value">{{ student.transport_route || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>local_shipping</mat-icon>
+            <span>Vehicle Number</span>
+          </div>
+          <div class="info-value">{{ student.vehicle_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>place</mat-icon>
+            <span>Pickup Point</span>
+          </div>
+          <div class="info-value">{{ student.pickup_point || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>location_on</mat-icon>
+            <span>Drop Point</span>
+          </div>
+          <div class="info-value">{{ student.drop_point || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>schedule</mat-icon>
+            <span>Pickup Time</span>
+          </div>
+          <div class="info-value">{{ student.pickup_time || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>schedule</mat-icon>
+            <span>Drop Time</span>
+          </div>
+          <div class="info-value">{{ student.drop_time || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>currency_rupee</mat-icon>
+            <span>Transport Fee</span>
+          </div>
+          <div class="info-value">{{ student.transport_fee ? ('₹' + (student.transport_fee | number)) : 'N/A' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Hostel Information Section -->
+  <div class="info-section hostel-info" *ngIf="student.hostel_required">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>hotel</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Hostel Information</h3>
+        <p>Hostel accommodation details</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>domain</mat-icon>
+            <span>Hostel Name</span>
+          </div>
+          <div class="info-value">{{ student.hostel_name || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>meeting_room</mat-icon>
+            <span>Room Number</span>
+          </div>
+          <div class="info-value">{{ student.hostel_room_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>currency_rupee</mat-icon>
+            <span>Hostel Fee</span>
+          </div>
+          <div class="info-value">{{ student.hostel_fee ? ('₹' + (student.hostel_fee | number)) : 'N/A' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Library Information Section -->
+  <div class="info-section library-info" *ngIf="student.library_card_number">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>library_books</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Library Information</h3>
+        <p>Library card and membership details</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>credit_card</mat-icon>
+            <span>Library Card Number</span>
+          </div>
+          <div class="info-value">{{ student.library_card_number || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>Issue Date</span>
+          </div>
+          <div class="info-value">{{ student.library_card_issue_date ? (student.library_card_issue_date | date:'MMM d, y') : 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>Expiry Date</span>
+          </div>
+          <div class="info-value">{{ student.library_card_expiry_date ? (student.library_card_expiry_date | date:'MMM d, y') : 'N/A' }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Admission & Leaving Information -->
+  <div class="info-section admission-info">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>assignment</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Admission & Leaving Information</h3>
+        <p>Admission type and leaving details</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <mat-icon>category</mat-icon>
+            <span>Admission Type</span>
+          </div>
+          <div class="info-value">{{ student.admission_type || 'N/A' }}</div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.leaving_date">
+          <div class="info-label">
+            <mat-icon>event</mat-icon>
+            <span>Leaving Date</span>
+          </div>
+          <div class="info-value">{{ student.leaving_date | date:'MMM d, y' }}</div>
+        </div>
+        
+        <div class="info-item full-width" *ngIf="student.leaving_reason">
+          <div class="info-label">
+            <mat-icon>info</mat-icon>
+            <span>Leaving Reason</span>
+          </div>
+          <div class="info-value">{{ student.leaving_reason }}</div>
+        </div>
+        
+        <div class="info-item" *ngIf="student.tc_issued_number">
+          <div class="info-label">
+            <mat-icon>confirmation_number</mat-icon>
+            <span>TC Issued Number</span>
+          </div>
+          <div class="info-value">{{ student.tc_issued_number }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Attachments -->
+  <div class="info-section attachments-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>attach_file</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Student Attachments</h3>
+        <p>Documents and certificates</p>
+      </div>
+    </div>
+    
+    <div class="info-content">
+      <app-universal-attachments
+        module="student"
+        [moduleId]="student.id"
+        mode="view">
+      </app-universal-attachments>
     </div>
   </div>
 </div>

@@ -25,6 +25,7 @@ export class TeacherFormComponent implements OnInit {
   teacherForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
+  isSubmitted = false;  // Track if form has been submitted
   teacherId?: number;
   currentTeacher?: Teacher;
   
@@ -92,6 +93,49 @@ export class TeacherFormComponent implements OnInit {
     'Maintenance Staff'
   ];
 
+  // Technical Skills options
+  technicalSkillOptions = [
+    'Programming', 'Web Development', 'Database Management', 'Data Analysis',
+    'Microsoft Office', 'Google Workspace', 'LMS (Moodle, Canvas)', 'Video Editing',
+    'Graphic Design', 'Animation', 'CAD Software', 'Laboratory Equipment',
+    'Smart Board Operation', 'Online Teaching Tools', 'Assessment Tools',
+    'Audio Production', 'Photography', 'STEM Equipment', 'Research Tools',
+    'Statistical Software (SPSS, R)', 'GIS Software', 'Engineering Software'
+  ];
+
+  // Soft Skills options
+  softSkillOptions = [
+    'Communication', 'Leadership', 'Teamwork', 'Problem Solving',
+    'Time Management', 'Adaptability', 'Critical Thinking', 'Creativity',
+    'Conflict Resolution', 'Empathy', 'Patience', 'Active Listening',
+    'Motivation', 'Organization', 'Decision Making', 'Mentoring',
+    'Collaboration', 'Emotional Intelligence', 'Stress Management',
+    'Public Speaking', 'Classroom Management', 'Student Engagement'
+  ];
+
+  // Subject Expertise options
+  subjectOptions = [
+    'Mathematics', 'Science', 'Physics', 'Chemistry', 'Biology',
+    'English', 'Hindi', 'Social Studies', 'History', 'Geography',
+    'Economics', 'Political Science', 'Computer Science', 'Information Technology',
+    'Physical Education', 'Art & Craft', 'Music', 'Dance',
+    'Environmental Science', 'Psychology', 'Sociology', 'Philosophy',
+    'Commerce', 'Accountancy', 'Business Studies', 'Statistics',
+    'Sanskrit', 'Other Languages', 'Home Science', 'Agriculture'
+  ];
+
+  // Teaching Methodologies options
+  teachingMethodOptions = [
+    'Lecture Method', 'Discussion Method', 'Demonstration Method',
+    'Project-Based Learning', 'Problem-Based Learning', 'Inquiry-Based Learning',
+    'Flipped Classroom', 'Blended Learning', 'Experiential Learning',
+    'Collaborative Learning', 'Cooperative Learning', 'Peer Teaching',
+    'Montessori Method', 'Waldorf Education', 'Play-Based Learning',
+    'Differentiated Instruction', 'Interactive Teaching', 'Visual Learning',
+    'Hands-on Activities', 'Field Trips', 'Role Playing', 'Case Studies',
+    'STEM/STEAM Approach', 'Socratic Method', 'Direct Instruction'
+  ];
+
   constructor(
     private fb: FormBuilder,
     private teacherService: TeacherService,
@@ -120,6 +164,9 @@ export class TeacherFormComponent implements OnInit {
       }
     });
     
+    // ✅ Listen to permanent address changes and auto-update current address if checkbox is checked
+    this.setupAddressSyncListeners();
+    
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.teacherId = +params['id'];
@@ -146,7 +193,6 @@ export class TeacherFormComponent implements OnInit {
       landline_number: [''],
       password: ['', this.isEditMode ? [] : [Validators.required, Validators.minLength(8)]],
       branch_id: [null, Validators.required],
-      is_active: [true],
       
       // Teacher Specific
       employee_id: ['', [Validators.required, Validators.maxLength(50)]],
@@ -359,10 +405,14 @@ export class TeacherFormComponent implements OnInit {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.branches = response.data;
+          this.branches = response.data || [];
+          console.log('Branches loaded:', this.branches.length);
         }
       },
       error: (error: any) => {
+        console.error('Error loading branches:', error);
+        this.errorHandler.showError('Failed to load branches');
+        this.branches = [];
       }
     });
   }
@@ -408,9 +458,14 @@ export class TeacherFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    this.isSubmitted = true;  // Mark form as submitted
+    
     if (this.teacherForm.invalid) {
       this.markFormGroupTouched(this.teacherForm);
       this.errorHandler.showWarning('Please fill in all required fields');
+      
+      // Scroll to first invalid field
+      this.scrollToFirstInvalidControl();
       return;
     }
 
@@ -578,11 +633,24 @@ export class TeacherFormComponent implements OnInit {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
       control?.markAsTouched();
+      control?.markAsDirty();  // Also mark as dirty to ensure mat-error shows
     });
+  }
+  
+  private scrollToFirstInvalidControl(): void {
+    const firstInvalidControl = document.querySelector('.mat-form-field-invalid');
+    if (firstInvalidControl) {
+      firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   getErrorMessage(fieldName: string): string {
     const control = this.teacherForm.get(fieldName);
+    
+    // Only show errors if field is touched or form is submitted
+    if (!control || (!control.touched && !this.isSubmitted)) {
+      return '';
+    }
     
     if (control?.hasError('required')) {
       return `${this.getFieldLabel(fieldName)} is required`;
@@ -881,6 +949,62 @@ export class TeacherFormComponent implements OnInit {
     this.teacherForm.get('languages_known')?.setValue(updatedLanguages);
   }
 
+  // Technical Skills management
+  addTechnicalSkill(skill: string): void {
+    const currentSkills = this.teacherForm.get('technical_skills')?.value || [];
+    if (!currentSkills.includes(skill)) {
+      this.teacherForm.get('technical_skills')?.setValue([...currentSkills, skill]);
+    }
+  }
+
+  removeTechnicalSkill(skill: string): void {
+    const currentSkills = this.teacherForm.get('technical_skills')?.value || [];
+    const updatedSkills = currentSkills.filter((s: string) => s !== skill);
+    this.teacherForm.get('technical_skills')?.setValue(updatedSkills);
+  }
+
+  // Soft Skills management
+  addSoftSkill(skill: string): void {
+    const currentSkills = this.teacherForm.get('soft_skills')?.value || [];
+    if (!currentSkills.includes(skill)) {
+      this.teacherForm.get('soft_skills')?.setValue([...currentSkills, skill]);
+    }
+  }
+
+  removeSoftSkill(skill: string): void {
+    const currentSkills = this.teacherForm.get('soft_skills')?.value || [];
+    const updatedSkills = currentSkills.filter((s: string) => s !== skill);
+    this.teacherForm.get('soft_skills')?.setValue(updatedSkills);
+  }
+
+  // Subject Expertise management
+  addSubjectExpertise(subject: string): void {
+    const currentSubjects = this.teacherForm.get('subject_expertise')?.value || [];
+    if (!currentSubjects.includes(subject)) {
+      this.teacherForm.get('subject_expertise')?.setValue([...currentSubjects, subject]);
+    }
+  }
+
+  removeSubjectExpertise(subject: string): void {
+    const currentSubjects = this.teacherForm.get('subject_expertise')?.value || [];
+    const updatedSubjects = currentSubjects.filter((s: string) => s !== subject);
+    this.teacherForm.get('subject_expertise')?.setValue(updatedSubjects);
+  }
+
+  // Teaching Methodologies management
+  addTeachingMethodology(method: string): void {
+    const currentMethods = this.teacherForm.get('teaching_methodologies')?.value || [];
+    if (!currentMethods.includes(method)) {
+      this.teacherForm.get('teaching_methodologies')?.setValue([...currentMethods, method]);
+    }
+  }
+
+  removeTeachingMethodology(method: string): void {
+    const currentMethods = this.teacherForm.get('teaching_methodologies')?.value || [];
+    const updatedMethods = currentMethods.filter((m: string) => m !== method);
+    this.teacherForm.get('teaching_methodologies')?.setValue(updatedMethods);
+  }
+
   /**
    * Get full URL for image display
    */
@@ -916,17 +1040,39 @@ export class TeacherFormComponent implements OnInit {
     this.profilePicturePreview = null;
   }
 
-  // Copy permanent address to current address
+  // ✅ Setup listeners to auto-sync permanent address to current address
+  private setupAddressSyncListeners(): void {
+    // Listen to permanent address field changes
+    const permanentFields = [
+      'permanent_address',
+      'permanent_city', 
+      'permanent_state',
+      'permanent_pincode',
+      'permanent_country'
+    ];
+    
+    permanentFields.forEach(field => {
+      this.teacherForm.get(field)?.valueChanges.subscribe(value => {
+        // Only copy if "Same as Permanent Address" is checked
+        if (this.sameAsPermanentAddress) {
+          const currentField = field.replace('permanent_', 'current_');
+          this.teacherForm.get(currentField)?.setValue(value, { emitEvent: false });
+        }
+      });
+    });
+  }
+
+  // Copy permanent address to current address (fields remain editable)
   onSameAsPermanentAddressChange(checked: boolean): void {
     this.sameAsPermanentAddress = checked;
     
     if (checked) {
       // Copy permanent address to current address
-      const permanentAddress = this.teacherForm.get('permanent_address')?.value;
-      const permanentCity = this.teacherForm.get('permanent_city')?.value;
-      const permanentState = this.teacherForm.get('permanent_state')?.value;
-      const permanentPincode = this.teacherForm.get('permanent_pincode')?.value;
-      const permanentCountry = this.teacherForm.get('permanent_country')?.value;
+      const permanentAddress = this.teacherForm.get('permanent_address')?.value || '';
+      const permanentCity = this.teacherForm.get('permanent_city')?.value || '';
+      const permanentState = this.teacherForm.get('permanent_state')?.value || '';
+      const permanentPincode = this.teacherForm.get('permanent_pincode')?.value || '';
+      const permanentCountry = this.teacherForm.get('permanent_country')?.value || 'India';
 
       this.teacherForm.patchValue({
         current_address: permanentAddress,
@@ -934,21 +1080,11 @@ export class TeacherFormComponent implements OnInit {
         current_state: permanentState,
         current_pincode: permanentPincode,
         current_country: permanentCountry
-      });
+      }, { emitEvent: false });
 
-      // Disable current address fields when checkbox is checked
-      this.teacherForm.get('current_address')?.disable();
-      this.teacherForm.get('current_city')?.disable();
-      this.teacherForm.get('current_state')?.disable();
-      this.teacherForm.get('current_pincode')?.disable();
-      this.teacherForm.get('current_country')?.disable();
-    } else {
-      // Enable current address fields when checkbox is unchecked
-      this.teacherForm.get('current_address')?.enable();
-      this.teacherForm.get('current_city')?.enable();
-      this.teacherForm.get('current_state')?.enable();
-      this.teacherForm.get('current_pincode')?.enable();
-      this.teacherForm.get('current_country')?.enable();
+      // ✅ Fields remain ENABLED - user can still edit if needed
+      // Auto-sync will continue as long as checkbox is checked
     }
+    // No need to enable/disable - fields always stay enabled
   }
 }

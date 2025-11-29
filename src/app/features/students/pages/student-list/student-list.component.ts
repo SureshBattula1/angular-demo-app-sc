@@ -59,7 +59,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
       { key: 'roll_number', header: 'Roll No.', width: '100px' },
       { key: 'phone', header: 'Phone', width: '130px' },
       { key: 'student_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
-      // { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
       { 
@@ -76,11 +76,20 @@ export class StudentListComponent implements OnInit, AfterViewInit {
         permission: ['students.edit', 'students.update'] // Support both permission names
       },
       { 
-        icon: 'delete', 
-        label: 'Delete', 
+        icon: 'block', 
+        label: 'Deactivate', 
         color: 'warn', 
-        action: (row) => this.deleteStudent(row),
-        permission: 'students.delete'
+        action: (row) => this.deactivateStudent(row),
+        permission: 'students.delete',
+        show: (row) => !row.deleted_at // Show only if not deleted
+      },
+      { 
+        icon: 'restore', 
+        label: 'Restore', 
+        color: 'accent', 
+        action: (row) => this.restoreStudent(row),
+        permission: 'students.delete',
+        show: (row) => !!row.deleted_at // Show only if deleted
       }
     ],
     selectable: true,
@@ -170,6 +179,18 @@ export class StudentListComponent implements OnInit, AfterViewInit {
           { value: 'Other', label: 'Other' }
         ],
         // group: 'Personal'
+      },
+      {
+        key: 'is_active',
+        label: 'Account Status',
+        type: 'select',
+        icon: 'toggle_on',
+        placeholder: 'Select account status',
+        options: [
+          { value: 'true', label: 'Active Accounts' },
+          { value: 'false', label: 'Inactive Accounts' }
+        ],
+        // group: 'Status'
       }
     ]
   };
@@ -377,13 +398,30 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/students/edit', student.id]);
   }
   
-  deleteStudent(student: Student): void {
+  deactivateStudent(student: Student): void {
     const studentName = this.getFullName(student);
-    if (confirm(`Are you sure you want to delete student "${studentName}"?`)) {
+    if (confirm(`Are you sure you want to deactivate student "${studentName}"?\n\nDeactivated students will not appear in:\n- Attendance marking\n- Exam assignments\n- Fee management\n- Class lists\n\nYou can restore them later from the inactive students list.`)) {
       this.studentCrudService.deleteStudent(student.id).subscribe({
         next: (response) => {
           if (response.success) {
-            this.errorHandler.showSuccess('Student deleted successfully');
+            this.errorHandler.showSuccess(`Student "${studentName}" deactivated successfully`);
+            this.loadStudents();
+          }
+        },
+        error: (error) => {
+          this.errorHandler.showError(error);
+        }
+      });
+    }
+  }
+
+  restoreStudent(student: Student): void {
+    const studentName = this.getFullName(student);
+    if (confirm(`Are you sure you want to restore/activate student "${studentName}"?`)) {
+      this.studentCrudService.restoreStudent(student.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess(`Student "${studentName}" restored successfully`);
             this.loadStudents();
           }
         },

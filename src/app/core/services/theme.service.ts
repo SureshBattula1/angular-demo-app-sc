@@ -191,7 +191,6 @@ export class ThemeService {
   applyTheme(themeName: string, saveToBackend: boolean = false): void {
     const theme = this.themes[themeName];
     if (!theme) {
-      console.warn(`Theme "${themeName}" not found`);
       return;
     }
 
@@ -247,7 +246,6 @@ export class ThemeService {
     // Save to backend if requested
     if (saveToBackend) {
       this.userPreferenceService.updateTheme(themeName).subscribe({
-        next: () => console.log(`Theme "${themeName}" saved to backend`),
         error: (err) => console.error('Failed to save theme preference:', err)
       });
     }

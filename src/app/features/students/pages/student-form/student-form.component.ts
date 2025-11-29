@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -8,18 +8,23 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { FileUploadService } from '../../../../core/services/file-upload.service';
 import { Student } from '../../../../core/models/student.model';
 import { Grade } from '../../../../core/models/grade.model';
 import { Section } from '../../../../core/models/section.model';
+import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-student-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, UniversalAttachmentsComponent],
   templateUrl: './student-form.component.html',
   styleUrls: ['./student-form.component.scss']
 })
 export class StudentFormComponent implements OnInit {
+  @ViewChild(UniversalAttachmentsComponent) attachmentsComponent!: UniversalAttachmentsComponent;
+  
   studentForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
@@ -32,10 +37,60 @@ export class StudentFormComponent implements OnInit {
   loadingGrades = false;
   loadingSections = false;
   
+  // Profile picture
+  profilePicturePreview: string | null = null;
+  profilePictureFile: File | null = null;
+  
+  // For attachments - will be set after student is created/updated
+  attachmentModuleId: number | null = null;
+  
+  // Form sections visibility
+  showTransportDetails = false;
+  showHostelDetails = false;
+  showHealthInfo = false;
+  showDocumentsInfo = false;
+  showAdditionalInfo = false;
+  showSiblingInfo = false;
+  showScholarshipInfo = false;
+  
   // Static dropdowns
   genders = ['Male', 'Female', 'Other'].map(g => ({ value: g, label: g }));
   bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => ({ value: bg, label: bg }));
-  categories = ['General', 'SC', 'ST', 'OBC', 'Other'].map(c => ({ value: c, label: c }));
+  categories = [
+    'General',
+    'SC (Scheduled Caste)',
+    'ST (Scheduled Tribe)',
+    'OBC (Other Backward Class)',
+    'OBC-NCL (OBC Non-Creamy Layer)',
+    'EWS (Economically Weaker Section)',
+    'MBC (Most Backward Class)',
+    'NT (Nomadic Tribes)',
+    'DNT (De-Notified Tribes)',
+    'SBC (Special Backward Class)',
+    'SEBC (Socially and Educationally Backward Class)',
+    'Minority',
+    'PWD (Persons with Disabilities)',
+    'Defense',
+    'Freedom Fighter',
+    'Sports Quota',
+    'NRI (Non-Resident Indian)',
+    'Foreign National',
+    'Other'
+  ].map(c => ({ value: c, label: c }));
+  admissionTypes = ['Regular', 'Transfer', 'Readmission'];
+  mediumOptions = ['English', 'Hindi', 'Regional Language', 'Bilingual'];
+  visionOptions = ['Normal', 'Weak', 'Uses Glasses', 'Corrected'];
+  hearingOptions = ['Normal', 'Weak', 'Uses Hearing Aid'];
+  vaccinationStatus = ['Complete', 'Incomplete', 'Not Vaccinated'];
+  economicStatus = ['BPL', 'APL', 'EWS', 'General'];
+  concessionTypes = ['Merit Scholarship', 'Category-based', 'Economic Weaker Section', 'Sports Quota', 'Other'];
+  schoolBoards = ['CBSE', 'ICSE', 'State Board', 'IB', 'IGCSE', 'Other'];
+  
+  // Language options
+  languageOptions = [
+    'English', 'Hindi', 'Bengali', 'Telugu', 'Marathi', 'Tamil', 'Gujarati',
+    'Urdu', 'Kannada', 'Odia', 'Malayalam', 'Punjabi', 'Assamese', 'Nepali', 'Sanskrit'
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -45,7 +100,8 @@ export class StudentFormComponent implements OnInit {
     private sectionService: SectionService,
     private router: Router,
     private route: ActivatedRoute,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private fileUploadService: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -158,11 +214,135 @@ export class StudentFormComponent implements OnInit {
       previous_school: [''],
       previous_grade: [''],
       
-      // Medical
+      // Medical & Health
       medical_history: [''],
       allergies: [''],
+      medications: [''],
+      height_cm: [null, [Validators.min(0), Validators.max(300)]],
+      weight_kg: [null, [Validators.min(0), Validators.max(200)]],
+      vision_status: ['Normal'],
+      hearing_status: ['Normal'],
+      chronic_conditions: [''],
+      current_medications: [''],
+      medical_insurance: [false],
+      insurance_provider: [''],
+      insurance_policy_number: [''],
+      last_health_checkup: [''],
+      family_doctor_name: [''],
+      family_doctor_phone: [''],
+      vaccination_status: ['Complete'],
+      vaccination_records: [[]],
+      special_needs: [false],
+      special_needs_details: [''],
       
-      remarks: ['']
+      // Identity Documents
+      aadhaar_number: ['', [Validators.pattern(/^[0-9]{12}$/)]],
+      pen_number: [''], // Permanent Education Number
+      birth_certificate_number: [''],
+      passport_number: [''],
+      passport_expiry: [''],
+      student_id_card_number: [''],
+      voter_id: [''],
+      ration_card_number: [''],
+      domicile_certificate_number: [''],
+      income_certificate_number: [''],
+      caste_certificate_number: [''],
+      caste: [''],
+      sub_caste: [''],
+      
+      // Enhanced Address
+      current_district: [''],
+      current_landmark: [''],
+      permanent_district: [''],
+      permanent_landmark: [''],
+      correspondence_address: [''],
+      
+      // Sibling Information
+      number_of_siblings: [0, [Validators.min(0), Validators.max(20)]],
+      sibling_details: [[]],
+      sibling_discount_applicable: [false],
+      sibling_discount_percentage: [0],
+      
+      // Enhanced Parent Info
+      father_qualification: [''],
+      father_organization: [''],
+      father_designation: [''],
+      father_annual_income: [0, [Validators.min(0)]],
+      father_aadhaar: ['', [Validators.pattern(/^[0-9]{12}$/)]],
+      
+      mother_qualification: [''],
+      mother_organization: [''],
+      mother_designation: [''],
+      mother_annual_income: [0, [Validators.min(0)]],
+      mother_aadhaar: ['', [Validators.pattern(/^[0-9]{12}$/)]],
+      
+      guardian_qualification: [''],
+      guardian_occupation: [''],
+      guardian_email: ['', Validators.email],
+      guardian_address: [''],
+      guardian_annual_income: [0, [Validators.min(0)]],
+      
+      // Transport Details
+      transport_required: [false],
+      transport_route: [''],
+      pickup_point: [''],
+      drop_point: [''],
+      vehicle_number: [''],
+      pickup_time: [''],
+      drop_time: [''],
+      transport_fee: [0, [Validators.min(0)]],
+      
+      // Hostel Details
+      hostel_required: [false],
+      hostel_name: [''],
+      hostel_room_number: [''],
+      hostel_fee: [0, [Validators.min(0)]],
+      
+      // Library
+      library_card_number: [''],
+      library_card_issue_date: [''],
+      library_card_expiry_date: [''],
+      
+      // Enhanced Previous Education
+      previous_school_board: [''],
+      previous_school_address: [''],
+      previous_school_phone: [''],
+      previous_percentage: [null, [Validators.min(0), Validators.max(100)]],
+      tc_number: [''],
+      tc_date: [''],
+      previous_student_id: [''],
+      medium_of_instruction: ['English'],
+      language_preferences: [[]],
+      
+      // Fee & Scholarship
+      fee_concession_applicable: [false],
+      concession_type: [''],
+      concession_percentage: [0],
+      scholarship_name: [''],
+      scholarship_details: [''],
+      economic_status: [''],
+      family_annual_income: [0, [Validators.min(0)]],
+      
+      // Additional Information
+      hobbies_interests: [[]],
+      extra_curricular_activities: [[]],
+      achievements: [[]],
+      sports_participation: [[]],
+      cultural_activities: [[]],
+      behavior_records: [''],
+      counselor_notes: [''],
+      special_instructions: [''],
+      
+      // Admission & Leaving
+      admission_type: ['Regular'],
+      leaving_date: [''],
+      leaving_reason: [''],
+      tc_issued_number: [''],
+      
+      remarks: [''],
+      
+      // Profile picture
+      profile_picture: [null]
     });
   }
 
@@ -173,7 +353,14 @@ export class StudentFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.currentStudent = response.data;
-          this.studentForm.patchValue(response.data);
+          const student = response.data;
+          this.studentForm.patchValue(student);
+          
+          // Load profile picture preview if exists - convert path to full URL
+          if (student.profile_picture) {
+            this.profilePicturePreview = this.getFullImageUrl(student.profile_picture);
+          }
+          
           // Remove password requirement for edit
           this.studentForm.get('password')?.clearValidators();
           this.studentForm.get('password')?.updateValueAndValidity();
@@ -192,10 +379,14 @@ export class StudentFormComponent implements OnInit {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response) => {
         if (response.success) {
-          this.branches = response.data;
+          this.branches = response.data || [];
+          console.log('Branches loaded in student form:', this.branches.length);
         }
       },
       error: (error) => {
+        console.error('Error loading branches in student form:', error);
+        this.errorHandler.showError('Failed to load branches');
+        this.branches = [];
       }
     });
   }
@@ -260,6 +451,11 @@ export class StudentFormComponent implements OnInit {
     if (this.isEditMode && !formData.password) {
       delete formData.password;
     }
+    
+    // Remove profile_picture File object if exists (already uploaded)
+    if (formData.profile_picture instanceof File) {
+      delete formData.profile_picture;
+    }
 
     const request = this.isEditMode && this.studentId
       ? this.studentCrudService.updateStudent(this.studentId, formData)
@@ -267,8 +463,47 @@ export class StudentFormComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.isLoading = false;
         if (response.success) {
+          // Get the student ID from response (backend returns student_id for create, id for update)
+          const responseData = response.data as any;
+          const newStudentId = !this.isEditMode 
+            ? (responseData?.student_id || responseData?.id) 
+            : this.studentId;
+          
+          if (!newStudentId) {
+            this.isLoading = false;
+            this.errorHandler.showError('Failed to get student ID from response');
+            return;
+          }
+          
+          // Set attachment module ID after student is created/updated
+          this.attachmentModuleId = newStudentId;
+          if (!this.isEditMode) {
+            this.studentId = newStudentId;
+          }
+          
+          // Upload profile picture if exists (for create mode)
+          if (!this.isEditMode && this.profilePictureFile) {
+            this.uploadProfilePictureForNewStudent(newStudentId);
+            return; // Don't navigate yet, wait for upload
+          }
+          
+          // For edit mode, upload profile picture if it was changed
+          if (this.isEditMode && this.profilePictureFile) {
+            this.uploadProfilePictureImmediately(this.profilePictureFile);
+            // Continue to upload attachments even if profile picture upload is in progress
+          }
+          
+          // Upload any pending attachments after a short delay to ensure component is ready
+          setTimeout(() => {
+            if (this.attachmentsComponent && this.attachmentModuleId) {
+              // Update the component's moduleId if it wasn't set
+              this.attachmentsComponent.moduleId = this.attachmentModuleId;
+              this.attachmentsComponent.uploadPendingAttachments();
+            }
+          }, 500);
+          
+          this.isLoading = false;
           this.errorHandler.showSuccess(
             this.isEditMode ? 'Student updated successfully' : 'Student created successfully'
           );
@@ -341,5 +576,313 @@ export class StudentFormComponent implements OnInit {
     };
     return labels[fieldName] || fieldName;
   }
+
+  /**
+   * Profile Picture Upload
+   */
+  onProfileFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file size (1MB)
+    if (file.size > 1048576) {
+      this.errorHandler.showError('Profile picture must be less than 1MB');
+      return;
+    }
+    
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.profilePicturePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    // Upload immediately if we have a student ID (edit mode)
+    if (this.isEditMode && this.studentId) {
+      this.uploadProfilePictureImmediately(file);
+    } else {
+      // Create mode: store file, will upload after student is created
+      this.studentForm.get('profile_picture')?.setValue(file);
+      this.profilePictureFile = file; // Store for later upload
+    }
+  }
+
+  uploadProfilePictureImmediately(file: File): void {
+    this.isLoading = true;
+    
+    const uploadPath = `students/${this.studentId}/profile_picture`;
+    
+    this.fileUploadService.uploadFile(file, uploadPath).subscribe({
+      next: (uploadResponse: any) => {
+        this.isLoading = false;
+        
+        if (uploadResponse.success && uploadResponse.data?.file_path) {
+          // Store the file path in the form
+          this.studentForm.get('profile_picture')?.setValue(uploadResponse.data.file_path);
+          // Use the file_url from the upload response for preview
+          this.profilePicturePreview = uploadResponse.data.file_url || this.getFullImageUrl(uploadResponse.data.file_path);
+          
+          // Update student record with the new path
+          const updateData: any = { profile_picture: uploadResponse.data.file_path };
+          
+          this.studentCrudService.updateStudent(this.studentId!, updateData).subscribe({
+            next: (updateResponse: any) => {
+              this.errorHandler.showSuccess('Profile picture uploaded successfully');
+            },
+            error: (error: any) => {
+              console.error('Failed to update student with profile picture:', error);
+              this.errorHandler.showWarning('Image uploaded but update failed');
+            }
+          });
+        }
+      },
+      error: (error: any) => {
+        console.error('Profile picture upload error:', error);
+        this.isLoading = false;
+        this.errorHandler.showError('Failed to upload profile picture');
+      }
+    });
+  }
+
+  uploadProfilePictureForNewStudent(studentId: number): void {
+    if (!this.profilePictureFile) {
+      // No profile picture to upload, just handle attachments and navigate
+      setTimeout(() => {
+        if (this.attachmentsComponent && this.attachmentModuleId) {
+          this.attachmentsComponent.moduleId = this.attachmentModuleId;
+          this.attachmentsComponent.uploadPendingAttachments();
+        }
+      }, 500);
+      this.errorHandler.showSuccess('Student created successfully');
+      this.router.navigate(['/students']);
+      return;
+    }
+    
+    this.isLoading = true;
+    const uploadPath = `students/${studentId}/profile_picture`;
+    
+    this.fileUploadService.uploadFile(this.profilePictureFile, uploadPath).subscribe({
+      next: (uploadResponse: any) => {
+        if (uploadResponse.success && uploadResponse.data?.file_path) {
+          // Update student with profile picture path
+          const updateData: any = { profile_picture: uploadResponse.data.file_path };
+          
+          this.studentCrudService.updateStudent(studentId, updateData).subscribe({
+            next: (updateResponse: any) => {
+              this.isLoading = false;
+              
+              // Upload any pending attachments after profile picture is saved
+              setTimeout(() => {
+                if (this.attachmentsComponent && this.attachmentModuleId) {
+                  this.attachmentsComponent.moduleId = this.attachmentModuleId;
+                  this.attachmentsComponent.uploadPendingAttachments();
+                }
+              }, 500);
+              
+              this.errorHandler.showSuccess('Student created successfully');
+              this.router.navigate(['/students']);
+            },
+            error: (error: any) => {
+              console.error('Failed to update student with profile picture:', error);
+              this.isLoading = false;
+              this.errorHandler.showWarning('Student created but profile picture update failed');
+              
+              // Still upload attachments and navigate
+              setTimeout(() => {
+                if (this.attachmentsComponent && this.attachmentModuleId) {
+                  this.attachmentsComponent.moduleId = this.attachmentModuleId;
+                  this.attachmentsComponent.uploadPendingAttachments();
+                }
+              }, 500);
+              
+              this.router.navigate(['/students']);
+            }
+          });
+        } else {
+          this.isLoading = false;
+          this.errorHandler.showWarning('Student created but profile picture upload failed');
+          
+          // Still upload attachments and navigate
+          setTimeout(() => {
+            if (this.attachmentsComponent && this.attachmentModuleId) {
+              this.attachmentsComponent.moduleId = this.attachmentModuleId;
+              this.attachmentsComponent.uploadPendingAttachments();
+            }
+          }, 500);
+          
+          this.router.navigate(['/students']);
+        }
+      },
+      error: (error: any) => {
+        console.error('Profile picture upload error:', error);
+        this.isLoading = false;
+        this.errorHandler.showWarning('Student created but profile picture upload failed');
+        
+        // Still upload attachments and navigate
+        setTimeout(() => {
+          if (this.attachmentsComponent && this.attachmentModuleId) {
+            this.attachmentsComponent.moduleId = this.attachmentModuleId;
+            this.attachmentsComponent.uploadPendingAttachments();
+          }
+        }, 500);
+        
+        this.router.navigate(['/students']);
+      }
+    });
+  }
+
+  removeProfilePicture(): void {
+    // Clear preview
+    this.profilePicturePreview = null;
+    
+    // Clear form value (set to null to delete the image from database)
+    this.studentForm.get('profile_picture')?.setValue(null);
+    
+    // If in edit mode, update student to remove profile picture
+    if (this.isEditMode && this.studentId) {
+      const updateData: any = { profile_picture: '' }; // Empty string to clear the field
+      
+      this.studentCrudService.updateStudent(this.studentId, updateData).subscribe({
+        next: (response: any) => {
+          if (response.success) {
+            this.errorHandler.showSuccess('Profile picture removed');
+          }
+        },
+        error: (error: any) => {
+          console.error('Failed to remove profile picture:', error);
+        }
+      });
+    }
+  }
+
+  /**
+   * Get full URL for image display
+   */
+  getFullImageUrl(imagePath: string): string {
+    if (!imagePath) {
+      return '';
+    }
+    
+    // If already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // If it's a data URL (base64), return as is
+    if (imagePath.startsWith('data:')) {
+      return imagePath;
+    }
+    
+    // Remove storage/ prefix if it exists (we'll add it back)
+    imagePath = imagePath.replace(/^storage\//, '');
+    
+    // Construct full URL - remove /api from base URL
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const fullUrl = `${baseUrl}/storage/${imagePath}`;
+    
+    return fullUrl;
+  }
+
+  /**
+   * Handle image preview error
+   */
+  onProfilePictureError(): void {
+    this.profilePicturePreview = null;
+  }
+
+  /**
+   * Toggle section visibility
+   */
+  toggleSection(section: string): void {
+    switch (section) {
+      case 'transport':
+        this.showTransportDetails = !this.showTransportDetails;
+        break;
+      case 'hostel':
+        this.showHostelDetails = !this.showHostelDetails;
+        break;
+      case 'health':
+        this.showHealthInfo = !this.showHealthInfo;
+        break;
+      case 'documents':
+        this.showDocumentsInfo = !this.showDocumentsInfo;
+        break;
+      case 'additional':
+        this.showAdditionalInfo = !this.showAdditionalInfo;
+        break;
+      case 'sibling':
+        this.showSiblingInfo = !this.showSiblingInfo;
+        break;
+      case 'scholarship':
+        this.showScholarshipInfo = !this.showScholarshipInfo;
+        break;
+    }
+  }
+
+  /**
+   * Language management
+   */
+  addLanguage(language: string): void {
+    const currentLanguages = this.studentForm.get('language_preferences')?.value || [];
+    if (!currentLanguages.includes(language)) {
+      this.studentForm.get('language_preferences')?.setValue([...currentLanguages, language]);
+    }
+  }
+
+  removeLanguage(language: string): void {
+    const currentLanguages = this.studentForm.get('language_preferences')?.value || [];
+    const updatedLanguages = currentLanguages.filter((lang: string) => lang !== language);
+    this.studentForm.get('language_preferences')?.setValue(updatedLanguages);
+  }
+
+  /**
+   * Hobbies management
+   */
+  addHobby(hobby: string): void {
+    const currentHobbies = this.studentForm.get('hobbies_interests')?.value || [];
+    if (hobby && hobby.trim() && !currentHobbies.includes(hobby.trim())) {
+      this.studentForm.get('hobbies_interests')?.setValue([...currentHobbies, hobby.trim()]);
+    }
+  }
+
+  removeHobby(hobby: string): void {
+    const currentHobbies = this.studentForm.get('hobbies_interests')?.value || [];
+    const updated = currentHobbies.filter((h: string) => h !== hobby);
+    this.studentForm.get('hobbies_interests')?.setValue(updated);
+  }
+
+  /**
+   * Extra-curricular activities management
+   */
+  addActivity(activity: string): void {
+    const currentActivities = this.studentForm.get('extra_curricular_activities')?.value || [];
+    if (activity && activity.trim() && !currentActivities.includes(activity.trim())) {
+      this.studentForm.get('extra_curricular_activities')?.setValue([...currentActivities, activity.trim()]);
+    }
+  }
+
+  removeActivity(activity: string): void {
+    const currentActivities = this.studentForm.get('extra_curricular_activities')?.value || [];
+    const updated = currentActivities.filter((a: string) => a !== activity);
+    this.studentForm.get('extra_curricular_activities')?.setValue(updated);
+  }
+
+  /**
+   * Sports participation management
+   */
+  addSport(sport: string): void {
+    const currentSports = this.studentForm.get('sports_participation')?.value || [];
+    if (sport && sport.trim() && !currentSports.includes(sport.trim())) {
+      this.studentForm.get('sports_participation')?.setValue([...currentSports, sport.trim()]);
+    }
+  }
+
+  removeSport(sport: string): void {
+    const currentSports = this.studentForm.get('sports_participation')?.value || [];
+    const updated = currentSports.filter((s: string) => s !== sport);
+    this.studentForm.get('sports_participation')?.setValue(updated);
+  }
 }
+
+
 

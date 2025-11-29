@@ -77,7 +77,6 @@ export class UserPreferenceService {
         }
       }),
       catchError(error => {
-        console.error('Error loading preferences:', error);
         // Use defaults on error
         this.preferences.set(this.defaultPreferences);
         this.preferencesSubject.next(this.defaultPreferences);

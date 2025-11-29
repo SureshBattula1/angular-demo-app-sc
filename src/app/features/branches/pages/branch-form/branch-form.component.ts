@@ -233,7 +233,17 @@ export class BranchFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.branchForm.value;
+    const formData = { ...this.branchForm.value };
+    
+    // Clean up logo field - logo is OPTIONAL, remove if not set
+    if (!formData.logo || formData.logo === '' || formData.logo === null || formData.logo === undefined) {
+      delete formData.logo; // Remove logo field completely if not provided
+    }
+    
+    // If logo was uploaded via file-upload component, use logoUrl
+    if (this.logoUrl) {
+      formData.logo = this.logoUrl;
+    }
 
     const request = this.isEditMode && this.branchId
       ? this.branchService.updateBranch(this.branchId, formData)

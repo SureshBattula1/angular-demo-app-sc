@@ -68,6 +68,10 @@ export interface Teacher {
   permanent_state?: string;
   permanent_pincode?: string;
   permanent_country?: string;
+  // Database columns (mapped from current_*)
+  city?: string;
+  state?: string;
+  pincode?: string;
   
   // Professional Details
   joining_date?: string;

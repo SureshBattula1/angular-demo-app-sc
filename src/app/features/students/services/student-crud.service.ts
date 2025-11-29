@@ -40,10 +40,17 @@ export class StudentCrudService {
   }
 
   /**
-   * Delete student
+   * Delete student (soft delete - makes inactive)
    */
   deleteStudent(id: number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
+  }
+
+  /**
+   * Restore soft-deleted student (reactivate)
+   */
+  restoreStudent(id: number): Observable<ApiResponse> {
+    return this.apiService.post(`${this.ENDPOINT}/${id}/restore`, {});
   }
 
   /**

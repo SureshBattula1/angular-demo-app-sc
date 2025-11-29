@@ -1,0 +1,409 @@
+<div class="admission-view-container" *ngIf="!isLoading && application">
+  <!-- Header Card -->
+  <mat-card class="header-card">
+    <mat-card-content>
+      <div class="header-content">
+        <div class="header-left">
+          <button mat-icon-button (click)="onBack()" class="back-button">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="header-info">
+            <h1 class="application-title">{{ getFullName() }}</h1>
+            <div class="application-meta">
+              <mat-chip [color]="getStatusColor(application.application_status)">
+                {{ application.application_status }}
+              </mat-chip>
+              <span class="meta-item">
+                <mat-icon>confirmation_number</mat-icon>
+                System Generated ID: {{ application.application_number }}
+              </span>
+              <span class="meta-item">
+                <mat-icon>event</mat-icon>
+                {{ application.application_date | date:'mediumDate' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="primary" (click)="onEdit()">
+            <mat-icon>edit</mat-icon>
+            Edit
+          </button>
+          <button 
+            mat-raised-button 
+            color="accent" 
+            (click)="onUpdateStatus()"
+            [disabled]="isLoading || (application && application.student_id)"
+            *ngIf="application && !application.student_id">
+            <mat-icon>update</mat-icon>
+            Update Status
+            <mat-spinner *ngIf="isLoading" diameter="16" style="display: inline-block; margin-left: 8px;"></mat-spinner>
+          </button>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="onConvertToStudent()"
+            [disabled]="isLoading"
+            *ngIf="application && !application.student_id">
+            <mat-icon>person_add</mat-icon>
+            Convert to Student
+            <mat-spinner *ngIf="isLoading" diameter="16" style="display: inline-block; margin-left: 8px;"></mat-spinner>
+          </button>
+          <button 
+            mat-stroked-button 
+            color="primary"
+            (click)="onViewStudent()"
+            *ngIf="application?.student_id">
+            <mat-icon>visibility</mat-icon>
+            View Student
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+    <!-- Convert to Student Info Banner -->
+    <mat-card *ngIf="application && !application.student_id && (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved' || !application.registration_fee_paid)" 
+              class="info-banner" 
+              style="margin-bottom: 16px; background: #fff3cd; border-left: 4px solid #ffc107;">
+      <mat-card-content style="padding: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <mat-icon style="color: #856404;">info</mat-icon>
+          <div>
+            <strong>Convert to Student Requirements:</strong>
+            <ul style="margin: 8px 0 0 20px; padding: 0;">
+              <li *ngIf="application.application_status !== 'Admitted' && application.admission_decision !== 'Approved'">
+                Application status must be "Admitted" or "Approved" (Current: {{ application.application_status }}{{ application.admission_decision ? ', Decision: ' + application.admission_decision : '' }})
+              </li>
+              <li *ngIf="!application.registration_fee_paid">
+                Registration fee must be paid
+              </li>
+            </ul>
+            <p style="margin: 8px 0 0 0; font-size: 12px;">
+              Click "Edit" button above to update the application status and mark registration fee as paid.
+            </p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    
+    <!-- Success Banner (if already converted) -->
+    <mat-card *ngIf="application && application.student_id" 
+              class="success-banner" 
+              style="margin-bottom: 16px; background: #d4edda; border-left: 4px solid #28a745;">
+      <mat-card-content style="padding: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <mat-icon style="color: #155724;">check_circle</mat-icon>
+            <div>
+              <strong>This application has been converted to a student.</strong>
+              <p style="margin: 4px 0 0 0; font-size: 12px;">
+                Student ID: {{ application.student_id }}
+              </p>
+            </div>
+          </div>
+          <button mat-raised-button color="primary" (click)="onViewStudent()">
+            <mat-icon>visibility</mat-icon>
+            View Student
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tabs Navigation -->
+    <mat-tab-group [(selectedIndex)]="activeTabIndex" class="view-tabs">
+    <mat-tab label="Application Details">
+      <ng-template matTabContent>
+        <mat-card class="details-card">
+          <mat-card-content>
+            <!-- Personal Information -->
+            <div class="info-section">
+              <h3 class="section-title">
+                <mat-icon>person</mat-icon>
+                Personal Information
+              </h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">System Generated ID:</span>
+                  <span class="info-value">{{ application.application_number }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Full Name:</span>
+                  <span class="info-value">{{ getFullName() }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Date of Birth:</span>
+                  <span class="info-value">{{ application.date_of_birth | date:'mediumDate' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Gender:</span>
+                  <span class="info-value">{{ application.gender }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Blood Group:</span>
+                  <span class="info-value">{{ application.blood_group || 'N/A' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Email:</span>
+                  <span class="info-value">{{ application.email }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Phone:</span>
+                  <span class="info-value">{{ application.phone }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Academic Information -->
+            <div class="info-section">
+              <h3 class="section-title">
+                <mat-icon>school</mat-icon>
+                Academic Information
+              </h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Applying For:</span>
+                  <span class="info-value">{{ application.grade_label || application.applying_for_grade }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Section:</span>
+                  <span class="info-value">{{ application.applying_for_section || 'N/A' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Academic Year:</span>
+                  <span class="info-value">{{ application.academic_year }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Branch:</span>
+                  <span class="info-value">{{ application.branch_name || 'N/A' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="info-section">
+              <h3 class="section-title">
+                <mat-icon>home</mat-icon>
+                Address Information
+              </h3>
+              <div class="info-grid">
+                <div class="info-item full-width">
+                  <span class="info-label">Current Address:</span>
+                  <span class="info-value">
+                    {{ application.current_address }}, {{ application.current_city }}, 
+                    {{ application.current_state }} - {{ application.current_pincode }}
+                  </span>
+                </div>
+                <div class="info-item full-width" *ngIf="application.permanent_address">
+                  <span class="info-label">Permanent Address:</span>
+                  <span class="info-value">
+                    {{ application.permanent_address }}, {{ application.permanent_city }}, 
+                    {{ application.permanent_state }} - {{ application.permanent_pincode }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parent Information -->
+            <div class="info-section">
+              <h3 class="section-title">
+                <mat-icon>family_restroom</mat-icon>
+                Parent Information
+              </h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Father's Name:</span>
+                  <span class="info-value">{{ application.father_name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Father's Phone:</span>
+                  <span class="info-value">{{ application.father_phone }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Mother's Name:</span>
+                  <span class="info-value">{{ application.mother_name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Mother's Phone:</span>
+                  <span class="info-value">{{ application.mother_phone || 'N/A' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Previous Education -->
+            <div class="info-section" *ngIf="application.previous_school">
+              <h3 class="section-title">
+                <mat-icon>history_edu</mat-icon>
+                Previous Education
+              </h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Previous School:</span>
+                  <span class="info-value">{{ application.previous_school }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Previous Grade:</span>
+                  <span class="info-value">{{ application.previous_grade || 'N/A' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Board:</span>
+                  <span class="info-value">{{ application.previous_school_board || 'N/A' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Percentage:</span>
+                  <span class="info-value">{{ application.previous_percentage || 'N/A' }}%</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Status & Process">
+      <ng-template matTabContent>
+        <mat-card class="details-card">
+          <mat-card-content>
+            <div class="info-section">
+              <h3 class="section-title">
+                <mat-icon>assignment</mat-icon>
+                Application Status
+              </h3>
+              <div class="status-timeline">
+                <div class="timeline-item" [class.active]="application.application_status === 'Applied'">
+                  <div class="timeline-icon">
+                    <mat-icon>description</mat-icon>
+                  </div>
+                  <div class="timeline-content">
+                    <h4>Application Submitted</h4>
+                    <p>{{ application.application_date | date:'medium' }}</p>
+                  </div>
+                </div>
+
+                <div class="timeline-item" [class.active]="application.application_status === 'Shortlisted'">
+                  <div class="timeline-icon">
+                    <mat-icon>check_circle</mat-icon>
+                  </div>
+                  <div class="timeline-content">
+                    <h4>Shortlisted</h4>
+                    <p *ngIf="application.application_status === 'Shortlisted'">Application has been shortlisted</p>
+                  </div>
+                </div>
+
+                <div class="timeline-item" [class.active]="application.entrance_test_required && application.entrance_test_result">
+                  <div class="timeline-icon">
+                    <mat-icon>quiz</mat-icon>
+                  </div>
+                  <div class="timeline-content">
+                    <h4>Entrance Test</h4>
+                    <p *ngIf="application.entrance_test_date">
+                      Date: {{ application.entrance_test_date | date:'mediumDate' }}
+                    </p>
+                    <p *ngIf="application.entrance_test_score">
+                      Score: {{ application.entrance_test_score }}
+                    </p>
+                    <p *ngIf="application.entrance_test_result">
+                      Result: {{ application.entrance_test_result }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="timeline-item" [class.active]="application.interview_required && application.interview_result">
+                  <div class="timeline-icon">
+                    <mat-icon>record_voice_over</mat-icon>
+                  </div>
+                  <div class="timeline-content">
+                    <h4>Interview</h4>
+                    <p *ngIf="application.interview_date">
+                      Date: {{ application.interview_date | date:'mediumDate' }}
+                    </p>
+                    <p *ngIf="application.interview_score">
+                      Score: {{ application.interview_score }}
+                    </p>
+                    <p *ngIf="application.interview_result">
+                      Result: {{ application.interview_result }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="timeline-item" [class.active]="application.application_status === 'Admitted'">
+                  <div class="timeline-icon">
+                    <mat-icon>check_circle_outline</mat-icon>
+                  </div>
+                  <div class="timeline-content">
+                    <h4>Admission Decision</h4>
+                    <p *ngIf="application.admission_decision">
+                      Decision: {{ application.admission_decision }}
+                    </p>
+                    <p *ngIf="application.admission_decision_date">
+                      Date: {{ application.admission_decision_date | date:'mediumDate' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-section" *ngIf="application.remarks">
+              <h3 class="section-title">
+                <mat-icon>note</mat-icon>
+                Remarks
+              </h3>
+              <p class="remarks-text">{{ application.remarks }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+
+    <mat-tab label="Fees & Payments">
+      <ng-template matTabContent>
+        <mat-card class="details-card">
+          <mat-card-content>
+            <div class="info-section">
+              <h3 class="section-title">
+                <mat-icon>payment</mat-icon>
+                Fee Information
+              </h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Application Fee Paid:</span>
+                  <mat-chip [color]="application.application_fee_paid ? 'primary' : 'warn'">
+                    {{ application.application_fee_paid ? 'Yes' : 'No' }}
+                  </mat-chip>
+                </div>
+                <div class="info-item" *ngIf="application.application_fee_paid">
+                  <span class="info-label">Application Fee Amount:</span>
+                  <span class="info-value">₹{{ application.application_fee_amount || 0 }}</span>
+                </div>
+                <div class="info-item" *ngIf="application.application_fee_payment_date">
+                  <span class="info-label">Payment Date:</span>
+                  <span class="info-value">{{ application.application_fee_payment_date | date:'mediumDate' }}</span>
+                </div>
+                <div class="info-item" *ngIf="application.application_fee_receipt_number">
+                  <span class="info-label">Receipt Number:</span>
+                  <span class="info-value">{{ application.application_fee_receipt_number }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Registration Fee Paid:</span>
+                  <mat-chip [color]="application.registration_fee_paid ? 'primary' : 'warn'">
+                    {{ application.registration_fee_paid ? 'Yes' : 'No' }}
+                  </mat-chip>
+                </div>
+                <div class="info-item" *ngIf="application.registration_fee_paid">
+                  <span class="info-label">Registration Fee Amount:</span>
+                  <span class="info-value">₹{{ application.registration_fee_amount || 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner></mat-spinner>
+  <p>Loading application details...</p>
+</div>
+

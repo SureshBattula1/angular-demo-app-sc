@@ -31,9 +31,14 @@ export class TeacherService {
     return this.apiService.put<Teacher>(`${this.ENDPOINT}/${id}`, data);
   }
 
-  // Delete teacher
+  // Delete teacher (soft delete - makes inactive)
   deleteTeacher(id: number): Observable<ApiResponse<any>> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
+  }
+
+  // Restore soft-deleted teacher (reactivate)
+  restoreTeacher(id: number): Observable<ApiResponse<any>> {
+    return this.apiService.post(`${this.ENDPOINT}/${id}/restore`, {});
   }
 
   // Upload profile picture

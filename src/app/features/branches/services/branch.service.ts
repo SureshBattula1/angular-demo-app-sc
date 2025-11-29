@@ -19,12 +19,17 @@ export class BranchService {
   getBranches(params?: Record<string, unknown>): Observable<BranchListResponse> {
     // 🔥 CHANGED: Use /accessible endpoint to filter by user's branch access
     return this.apiService.get<Branch[]>(`${this.ENDPOINT}/accessible`, params).pipe(
-      map(response => ({
-        success: response.success,
-        data: response.data || [],
-        count: response.data?.length || 0,
-        total: response.data?.length || 0
-      }))
+      map((response: any) => {
+        // The accessible endpoint returns data directly as an array
+        const branches = Array.isArray(response.data) ? response.data : [];
+        return {
+          success: response.success || true,
+          data: branches,
+          count: branches.length,
+          total: branches.length,
+          message: response.message
+        };
+      })
     );
   }
 

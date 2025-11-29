@@ -349,6 +349,19 @@
 .action-buttons button {
   width: 32px;
   height: 32px;
+  position: relative;
+}
+
+/* Tooltip positioning fix for action buttons */
+::ng-deep .action-buttons button .mat-mdc-tooltip {
+  margin-bottom: 8px !important;
+}
+
+::ng-deep .mat-mdc-tooltip {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Dynamic theme colors for action buttons - Use data-color attribute */

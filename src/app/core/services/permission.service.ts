@@ -66,7 +66,6 @@ export class PermissionService {
           }
         },
         error: (error) => {
-          console.error('Error loading permissions', error);
           this.setPermissions([]);
         }
       })
