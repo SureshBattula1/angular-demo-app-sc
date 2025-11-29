@@ -81,13 +81,10 @@ export class AdmissionFormComponent implements OnInit {
   }
 
   private initForm(): void {
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-
     this.admissionForm = this.fb.group({
       // Branch & Academic
       branch_id: [null, Validators.required],
-      academic_year: [`${currentYear}-${nextYear}`, Validators.required],
+      academic_year: ['', Validators.required], // Manual entry - no default value
       applying_for_grade: ['', Validators.required],
       applying_for_section: [null],
       
@@ -153,7 +150,7 @@ export class AdmissionFormComponent implements OnInit {
       tc_date: [''],
       
       // Application Status
-      application_status: ['Applied'],
+      application_status: ['Applied', Validators.required],
       application_fee_paid: [false],
       application_fee_amount: [null],
       application_fee_payment_date: [''],
@@ -162,13 +159,13 @@ export class AdmissionFormComponent implements OnInit {
       // Entrance Test
       entrance_test_required: [false],
       entrance_test_date: [''],
-      entrance_test_score: [null],
+      entrance_test_score: [null, [Validators.min(0), Validators.max(999.99)]],
       entrance_test_result: [null],
       
       // Interview
       interview_required: [false],
       interview_date: [''],
-      interview_score: [null],
+      interview_score: [null, [Validators.min(0), Validators.max(999.99)]],
       interview_result: [null],
       
       // Admission Decision
@@ -314,6 +311,17 @@ export class AdmissionFormComponent implements OnInit {
       return 'Invalid email format';
     }
     return '';
+  }
+
+  getStatusColor(status: string): string {
+    const colors: Record<string, string> = {
+      'Applied': 'primary',
+      'Shortlisted': 'accent',
+      'Rejected': 'warn',
+      'Admitted': 'primary',
+      'Waitlisted': 'accent'
+    };
+    return colors[status] || 'primary';
   }
 }
 

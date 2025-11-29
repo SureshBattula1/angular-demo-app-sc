@@ -147,5 +147,16 @@ export class AdmissionService {
   exportApplications(params?: any): Observable<ApiResponse<AdmissionApplication[]>> {
     return this.apiService.get<AdmissionApplication[]>(`${this.ENDPOINT}/export`, params);
   }
+
+  /**
+   * Convert admission application to student
+   */
+  convertToStudent(id: number, password?: string): Observable<ApiResponse<any>> {
+    const data: any = {};
+    if (password) {
+      data.password = password;
+    }
+    return this.apiService.post<any>(`${this.ENDPOINT}/${id}/convert-to-student`, data);
+  }
 }
 

@@ -9,6 +9,7 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-admission-list',
@@ -84,6 +85,14 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
         color: 'accent', 
         action: (row) => this.updateStatus(row),
         permission: 'admissions.edit'
+      },
+      { 
+        icon: 'person_add', 
+        label: 'Convert to Student', 
+        color: 'primary', 
+        action: (row) => this.convertToStudent(row),
+        permission: 'admissions.edit',
+        show: (row) => this.canConvertToStudent(row)
       }
     ],
     selectable: true,
@@ -172,7 +181,8 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
     private gradeService: GradeService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -355,6 +365,66 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
     // This would typically open a dialog to update status
     // For now, navigate to edit page
     this.editApplication(application);
+  }
+
+  canConvertToStudent(application: AdmissionApplication): boolean {
+    if (!application) return false;
+    
+    // Already converted
+    if (application.student_id) return false;
+    
+    // Status check
+    if (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved') {
+      return false;
+    }
+    
+    // Registration fee check
+    if (!application.registration_fee_paid) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  convertToStudent(application: AdmissionApplication): void {
+    if (!this.canConvertToStudent(application)) {
+      let message = 'Cannot convert this application to student.';
+      if (application.student_id) {
+        message = 'This application has already been converted to a student.';
+      } else if (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved') {
+        message = 'Application must be approved/admitted before converting to student.';
+      } else if (!application.registration_fee_paid) {
+        message = 'Registration fee must be paid before converting to student.';
+      }
+      this.errorHandler.showWarning(message);
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to convert application ${application.application_number} to a student? This action cannot be undone.`)) {
+      this.loading = true;
+      this.admissionService.convertToStudent(application.id!).subscribe({
+        next: (response) => {
+          this.loading = false;
+          if (response.success) {
+            this.errorHandler.showSuccess('Application converted to student successfully!');
+            // Reload applications
+            this.loadApplications(this.currentFilters);
+            // Optionally navigate to student view
+            if (response.data?.student_id) {
+              setTimeout(() => {
+                if (confirm('Would you like to view the newly created student?')) {
+                  this.router.navigate(['/students/view', response.data.student_id]);
+                }
+              }, 1000);
+            }
+          }
+        },
+        error: (error) => {
+          this.loading = false;
+          this.errorHandler.handleError(error);
+        }
+      });
+    }
   }
 }
 

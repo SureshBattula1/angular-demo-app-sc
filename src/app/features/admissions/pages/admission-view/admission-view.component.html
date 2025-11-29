@@ -15,7 +15,7 @@
               </mat-chip>
               <span class="meta-item">
                 <mat-icon>confirmation_number</mat-icon>
-                {{ application.application_number }}
+                System Generated ID: {{ application.application_number }}
               </span>
               <span class="meta-item">
                 <mat-icon>event</mat-icon>
@@ -29,17 +29,89 @@
             <mat-icon>edit</mat-icon>
             Edit
           </button>
-          <button mat-raised-button color="accent" (click)="onUpdateStatus()">
+          <button 
+            mat-raised-button 
+            color="accent" 
+            (click)="onUpdateStatus()"
+            [disabled]="isLoading || (application && application.student_id)"
+            *ngIf="application && !application.student_id">
             <mat-icon>update</mat-icon>
             Update Status
+            <mat-spinner *ngIf="isLoading" diameter="16" style="display: inline-block; margin-left: 8px;"></mat-spinner>
+          </button>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="onConvertToStudent()"
+            [disabled]="isLoading"
+            *ngIf="application && !application.student_id">
+            <mat-icon>person_add</mat-icon>
+            Convert to Student
+            <mat-spinner *ngIf="isLoading" diameter="16" style="display: inline-block; margin-left: 8px;"></mat-spinner>
+          </button>
+          <button 
+            mat-stroked-button 
+            color="primary"
+            (click)="onViewStudent()"
+            *ngIf="application?.student_id">
+            <mat-icon>visibility</mat-icon>
+            View Student
           </button>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <!-- Tabs Navigation -->
-  <mat-tab-group [(selectedIndex)]="activeTabIndex" class="view-tabs">
+    <!-- Convert to Student Info Banner -->
+    <mat-card *ngIf="application && !application.student_id && (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved' || !application.registration_fee_paid)" 
+              class="info-banner" 
+              style="margin-bottom: 16px; background: #fff3cd; border-left: 4px solid #ffc107;">
+      <mat-card-content style="padding: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <mat-icon style="color: #856404;">info</mat-icon>
+          <div>
+            <strong>Convert to Student Requirements:</strong>
+            <ul style="margin: 8px 0 0 20px; padding: 0;">
+              <li *ngIf="application.application_status !== 'Admitted' && application.admission_decision !== 'Approved'">
+                Application status must be "Admitted" or "Approved" (Current: {{ application.application_status }}{{ application.admission_decision ? ', Decision: ' + application.admission_decision : '' }})
+              </li>
+              <li *ngIf="!application.registration_fee_paid">
+                Registration fee must be paid
+              </li>
+            </ul>
+            <p style="margin: 8px 0 0 0; font-size: 12px;">
+              Click "Edit" button above to update the application status and mark registration fee as paid.
+            </p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    
+    <!-- Success Banner (if already converted) -->
+    <mat-card *ngIf="application && application.student_id" 
+              class="success-banner" 
+              style="margin-bottom: 16px; background: #d4edda; border-left: 4px solid #28a745;">
+      <mat-card-content style="padding: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <mat-icon style="color: #155724;">check_circle</mat-icon>
+            <div>
+              <strong>This application has been converted to a student.</strong>
+              <p style="margin: 4px 0 0 0; font-size: 12px;">
+                Student ID: {{ application.student_id }}
+              </p>
+            </div>
+          </div>
+          <button mat-raised-button color="primary" (click)="onViewStudent()">
+            <mat-icon>visibility</mat-icon>
+            View Student
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tabs Navigation -->
+    <mat-tab-group [(selectedIndex)]="activeTabIndex" class="view-tabs">
     <mat-tab label="Application Details">
       <ng-template matTabContent>
         <mat-card class="details-card">
@@ -51,6 +123,10 @@
                 Personal Information
               </h3>
               <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">System Generated ID:</span>
+                  <span class="info-value">{{ application.application_number }}</span>
+                </div>
                 <div class="info-item">
                   <span class="info-label">Full Name:</span>
                   <span class="info-value">{{ getFullName() }}</span>
