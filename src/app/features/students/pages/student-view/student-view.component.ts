@@ -14,6 +14,7 @@ import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 import { ExamScheduleService } from '../../../exams/services/exam-schedule.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { FeeService } from '../../../fees/services/fee.service';
+import { LibraryService } from '../../../library/services/library.service';
 // Import child components
 import { StudentHeaderComponent } from './components/student-header/student-header.component';
 import { StudentInfoComponent } from './components/student-info/student-info.component';
@@ -47,7 +48,7 @@ export class StudentViewComponent implements OnInit {
   profilePictureUrl = '';
   
   // Menu management with lazy loading
-  activeMenu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' = 'info';
+  activeMenu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' | 'library' = 'info';
   loadedMenus = new Set<string>(['info']);
   
   // Flag to check if this is a student viewing their own profile
@@ -98,6 +99,10 @@ export class StudentViewComponent implements OnInit {
   pendingCount = 0;
   feesLoading = false;
 
+  // Library data
+  bookIssues: any[] = [];
+  libraryLoading = false;
+
   constructor(
     private studentCrudService: StudentCrudService,
     private attendanceService: AttendanceService,
@@ -105,6 +110,7 @@ export class StudentViewComponent implements OnInit {
     private examScheduleService: ExamScheduleService,
     private apiService: ApiService,
     private feeService: FeeService,
+    private libraryService: LibraryService,
     private route: ActivatedRoute,
     private router: Router,
     private errorHandler: ErrorHandlerService,
@@ -134,7 +140,7 @@ export class StudentViewComponent implements OnInit {
    * Handle menu click - implement lazy loading
    * Only load data when user clicks on a menu item for the first time
    */  
-  onMenuClick(menu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees'): void {
+  onMenuClick(menu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' | 'library'): void {
     this.activeMenu = menu;
     
     // Lazy load data only if not already loaded
@@ -153,6 +159,9 @@ export class StudentViewComponent implements OnInit {
           break;
         case 'fees':
           this.loadFeesData();
+          break;
+        case 'library':
+          this.loadLibraryData();
           break;
         case 'info':
           // Info is always loaded with student data
@@ -729,17 +738,13 @@ export class StudentViewComponent implements OnInit {
    */
   loadFeesData(): void {
     if (!this.student || !this.student.id) {
-
       return;
     }
     
     this.feesLoading = true;
     
-
-    
     this.feeService.getStudentFees(this.student.id).subscribe({
       next: (response) => {
-
         if (response.success && response.data) {
           this.feePayments = response.data.payments || [];
           this.pendingFees = response.data.pending_fees || [];
@@ -759,6 +764,34 @@ export class StudentViewComponent implements OnInit {
         this.feePayments = [];
         this.pendingFees = [];
         this.feesLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Load library data (book issues) for student
+   */
+  loadLibraryData(): void {
+    if (!this.student || !this.student.id) {
+      return;
+    }
+    
+    this.libraryLoading = true;
+    
+    this.libraryService.getStudentIssues(this.student.id).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.bookIssues = response.data || [];
+        } else {
+          this.bookIssues = [];
+        }
+        this.libraryLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading library data:', error);
+        this.errorHandler.showError('Failed to load library information');
+        this.bookIssues = [];
+        this.libraryLoading = false;
       }
     });
   }

@@ -29,7 +29,7 @@ export interface ApiResponse<T = unknown> {
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly API_URL = environment.apiUrl || 'http://localhost:8003/api';
+  private readonly API_URL = environment.apiUrl || 'http://localhost:8000/api';
 
   constructor(private http: HttpClient) {}
 

@@ -14,9 +14,9 @@ export class StudentHeaderComponent {
   @Input() student!: Student;
   @Input() showProfilePicture = false;
   @Input() profilePictureUrl = '';
-  @Input() activeMenu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' = 'info';
+  @Input() activeMenu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' | 'library' = 'info';
   
-  @Output() menuClick = new EventEmitter<'info' | 'attendance' | 'leaves' | 'exams' | 'fees'>();
+  @Output() menuClick = new EventEmitter<'info' | 'attendance' | 'leaves' | 'exams' | 'fees' | 'library'>();
   @Output() imageLoad = new EventEmitter<void>();
   @Output() imageError = new EventEmitter<void>();
 
@@ -48,7 +48,7 @@ export class StudentHeaderComponent {
     return statusColors[status] || 'status-default';
   }
 
-  onMenuClick(menu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees'): void {
+  onMenuClick(menu: 'info' | 'attendance' | 'leaves' | 'exams' | 'fees' | 'library'): void {
     this.menuClick.emit(menu);
   }
 

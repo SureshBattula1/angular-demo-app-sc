@@ -75,6 +75,14 @@
       <mat-icon>payments</mat-icon>
       <span>Fees</span>
     </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'library'"
+      (click)="onMenuClick('library')">
+      <mat-icon>menu_book</mat-icon>
+      <span>Library</span>
+    </button>
   </mat-toolbar>
 </mat-card>
 

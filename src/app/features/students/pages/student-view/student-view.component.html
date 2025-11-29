@@ -41,6 +41,61 @@
       *ngIf="activeMenu === 'attendance'" 
       [student]="student">
     </app-student-attendance>
+
+    <!-- Library Section -->
+    <div class="menu-content library-tab" *ngIf="activeMenu === 'library'">
+      <div class="library-loading" *ngIf="libraryLoading">
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading library data...</p>
+        </div>
+      </div>
+      
+      <div class="library-content" *ngIf="!libraryLoading">
+        <div class="section-header">
+          <h2>Library Books</h2>
+          <p>Books issued to this student</p>
+        </div>
+        
+        <div class="book-issues-list" *ngIf="bookIssues.length > 0">
+          <mat-card *ngFor="let issue of bookIssues" class="book-issue-card">
+            <mat-card-header>
+              <mat-card-title>{{ issue.book?.title || 'Unknown Book' }}</mat-card-title>
+              <mat-card-subtitle>{{ issue.book?.author || 'Unknown Author' }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="issue-details">
+                <div class="detail-item">
+                  <mat-icon>event</mat-icon>
+                  <span><strong>Issued:</strong> {{ issue.issue_date | date:'MMM d, y' }}</span>
+                </div>
+                <div class="detail-item">
+                  <mat-icon>schedule</mat-icon>
+                  <span><strong>Due:</strong> {{ issue.due_date | date:'MMM d, y' }}</span>
+                </div>
+                <div class="detail-item" *ngIf="issue.return_date">
+                  <mat-icon>check_circle</mat-icon>
+                  <span><strong>Returned:</strong> {{ issue.return_date | date:'MMM d, y' }}</span>
+                </div>
+                <div class="detail-item">
+                  <mat-icon [ngClass]="'status-' + issue.status.toLowerCase()">circle</mat-icon>
+                  <span><strong>Status:</strong> {{ issue.status }}</span>
+                </div>
+                <div class="detail-item" *ngIf="issue.fine_amount && issue.fine_amount > 0">
+                  <mat-icon>attach_money</mat-icon>
+                  <span><strong>Fine:</strong> ₹{{ issue.fine_amount }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        
+        <div class="empty-state" *ngIf="bookIssues.length === 0">
+          <mat-icon>menu_book</mat-icon>
+          <p>No books issued to this student</p>
+        </div>
+      </div>
+    </div>
     
     <!-- OLD Attendance Code - Keeping for reference during migration -->
     <div class="menu-content attendance-tab-OLD" *ngIf="false">

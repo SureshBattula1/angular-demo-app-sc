@@ -122,6 +122,42 @@ export const routes: Routes = [
         loadChildren: () => import('./features/admissions/admissions.routes').then(m => m.ADMISSIONS_ROUTES),
         canActivate: [permissionGuard],
         data: { permissions: ['admissions.view', 'admissions.create'], permissionMode: 'any' }
+      },
+      {
+        path: 'library',
+        loadChildren: () => import('./features/library/library.routes').then(m => m.LIBRARY_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['library.view', 'library.manage'], permissionMode: 'any' }
+      },
+      {
+        path: 'transport',
+        loadChildren: () => import('./features/transport/transport.routes').then(m => m.TRANSPORT_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['transport.view', 'transport.manage'], permissionMode: 'any' }
+      },
+      {
+        path: 'timetable',
+        loadChildren: () => import('./features/timetable/timetable.routes').then(m => m.TIMETABLE_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['timetable.view', 'timetable.manage'], permissionMode: 'any' }
+      },
+      {
+        path: 'events',
+        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['events.view', 'events.create'], permissionMode: 'any' }
+      },
+      {
+        path: 'communications',
+        loadChildren: () => import('./features/communications/communications.routes').then(m => m.COMMUNICATIONS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['communications.view', 'communications.create'], permissionMode: 'any' }
+      },
+      {
+        path: 'branch-transfers',
+        loadChildren: () => import('./features/branch-transfers/branch-transfers.routes').then(m => m.BRANCH_TRANSFERS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['branch_transfers.view', 'branch_transfers.create'], permissionMode: 'any' }
       }
     ]
   },
