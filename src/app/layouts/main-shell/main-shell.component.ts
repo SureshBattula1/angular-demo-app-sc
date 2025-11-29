@@ -46,6 +46,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   menuItems: MenuItem[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', permission: 'dashboard.view' },
     { icon: 'business', label: 'Branches', route: '/branches', permission: ['branches.view', 'branches.create'], permissionMode: 'any' },
+    { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
     { icon: 'person', label: 'Teachers', route: '/teachers', permission: 'teachers.view' },
     { icon: 'business', label: 'Departments', route: '/departments', permission: 'departments.view' },
     { icon: 'grade', label: 'Classes (Grades)', route: '/grades', permission: 'grades.view', tooltip: 'Classes( Grades)' },
