@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { AttendanceService } from '../../../attendance/services/attendance.servi
 import { LeaveService } from '../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../core/models/leave.model';
 import { environment } from '../../../../../environments/environment';
+import { Subject, takeUntil } from 'rxjs';
 // Import child components
 import { TeacherHeaderComponent } from './components/teacher-header/teacher-header.component';
 import { TeacherInfoComponent } from './components/teacher-info/teacher-info.component';
@@ -32,7 +33,9 @@ import { TeacherLeavesComponent } from './components/teacher-leaves/teacher-leav
   templateUrl: './teacher-view.component.html',
   styleUrls: ['./teacher-view.component.scss']
 })
-export class TeacherViewComponent implements OnInit {
+export class TeacherViewComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
   teacher: Teacher | null = null;
   isLoading = false;
   teacherId!: number;
@@ -96,13 +99,20 @@ export class TeacherViewComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(params => {
       if (params['id']) {
         this.teacherId = +params['id'];
         this.loadTeacher();
         // Don't load attendance automatically - wait for user interaction
       }
     });
+  }
+  
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
   
   /**
@@ -133,7 +143,9 @@ export class TeacherViewComponent implements OnInit {
   loadTeacher(): void {
     this.isLoading = true;
     
-    this.teacherService.getTeacher(this.teacherId).subscribe({
+    this.teacherService.getTeacher(this.teacherId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.teacher = response.data;

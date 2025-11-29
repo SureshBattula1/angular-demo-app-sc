@@ -24,13 +24,15 @@
           <button mat-icon-button 
             [class.active]="viewMode === 'list'"
             (click)="viewMode = 'list'"
-            matTooltip="List View">
+            matTooltip="List View"
+            matTooltipPosition="below">
             <mat-icon>list</mat-icon>
           </button>
           <button mat-icon-button 
             [class.active]="viewMode === 'card'"
             (click)="viewMode = 'card'"
-            matTooltip="Card View">
+            matTooltip="Card View"
+            matTooltipPosition="below">
             <mat-icon>grid_view</mat-icon>
           </button>
         </div>
@@ -60,6 +62,7 @@
           *ngIf="advancedSearchConfig"
           class="advanced-search-btn"
           matTooltip="Advanced Search"
+          matTooltipPosition="below"
           [matBadge]="getActiveFilterCount()"
           [matBadgeHidden]="getActiveFilterCount() === 0"
           matBadgeColor="warn"
@@ -72,6 +75,7 @@
         <button mat-icon-button 
           class="reset-btn"
           matTooltip="Clear All Filters"
+          matTooltipPosition="below"
           (click)="resetAllFilters()"
           [disabled]="!hasActiveFilters()">
           <mat-icon>refresh</mat-icon>
@@ -193,6 +197,7 @@
             <button mat-icon-button 
               *ngFor="let action of getVisibleActions(row)"
               [matTooltip]="action.label"
+              matTooltipPosition="above"
               [attr.data-color]="action.color"
               (click)="onActionClick(action, row); $event.stopPropagation()">
               <mat-icon>{{ action.icon }}</mat-icon>

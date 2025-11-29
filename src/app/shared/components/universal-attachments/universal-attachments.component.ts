@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -56,9 +56,17 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
     }
   }
 
-  ngOnChanges(): void {
-    if (this.moduleId) {
+  ngOnChanges(changes: SimpleChanges): void {
+    // If moduleId changed and is now available, load attachments
+    if (changes['moduleId'] && this.moduleId && this.moduleId !== 0) {
       this.loadAttachments();
+      
+      // If there are pending attachments, upload them now that we have a moduleId
+      if (this.attachments.some(a => !a.file_path && a.pendingFile)) {
+        setTimeout(() => {
+          this.uploadPendingAttachments();
+        }, 100);
+      }
     }
   }
 
@@ -411,16 +419,39 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
       return;
     }
     
-    // Download using the attachments API
+    // Download using the attachments API with authentication
     const downloadUrl = `${environment.apiUrl}/attachments/${this.module}/${this.moduleId}/${attachment.id}/download`;
     
-    // Create a temporary anchor element and trigger download
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = attachment.original_name || attachment.file_name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Use HttpClient to download with authentication headers
+    this.http.get(downloadUrl, { 
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe({
+      next: (response) => {
+        // Create blob from response
+        const blob = response.body;
+        if (!blob) {
+          alert('Failed to download file - empty response');
+          return;
+        }
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.original_name || attachment.file_name;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Download error:', error);
+        alert('Failed to download attachment. Please try again.');
+      }
+    });
   }
 
   deleteAttachment(attachment: Attachment): void {

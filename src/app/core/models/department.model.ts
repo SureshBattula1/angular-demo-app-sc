@@ -38,3 +38,4 @@ export interface DepartmentFormData {
   is_active?: boolean;
 }
 
+

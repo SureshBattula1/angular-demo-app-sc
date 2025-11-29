@@ -97,10 +97,14 @@ export class DepartmentFormComponent implements OnInit {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.branches = response.data;
+          this.branches = response.data || [];
+          console.log('Branches loaded in department form:', this.branches.length);
         }
       },
       error: (error: any) => {
+        console.error('Error loading branches in department form:', error);
+        this.errorHandler.showError('Failed to load branches');
+        this.branches = [];
       }
     });
   }

@@ -2,11 +2,12 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
 import { Student } from '../../../../../../core/models/student.model';
+import { UniversalAttachmentsComponent } from '../../../../../../shared/components/universal-attachments/universal-attachments.component';
 
 @Component({
   selector: 'app-student-info',
   standalone: true,
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MaterialModule, UniversalAttachmentsComponent],
   templateUrl: './student-info.component.html',
   styleUrls: ['./student-info.component.scss']
 })
@@ -33,5 +34,27 @@ export class StudentInfoComponent {
   getGradeLabel(): string {
     if (!this.student) return 'N/A';
     return this.student.grade_label || `Grade ${this.student.grade}` || 'N/A';
+  }
+
+  /**
+   * Format array fields for display
+   */
+  formatArrayField(value: any): string {
+    if (!value) return 'N/A';
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.join(', ') : 'N/A';
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed.length > 0 ? parsed.join(', ') : 'N/A';
+        }
+      } catch {
+        // Not JSON, return as is
+      }
+      return value;
+    }
+    return String(value);
   }
 }

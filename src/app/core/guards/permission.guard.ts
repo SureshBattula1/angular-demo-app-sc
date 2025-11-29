@@ -21,16 +21,11 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
   const hasStudentViewParam = state.url.includes('studentView=true');
   
   if (isStudentRole && isStudentsRoute && hasStudentViewParam) {
-    console.log('Permission guard: Allowing student to view own profile', {
-      url: state.url,
-      user: user.role
-    });
     return true;
   }
   
   // Also allow if URL contains /students/view/ and user is a student (even without query param yet)
   if (isStudentRole && isStudentsRoute) {
-    console.log('Permission guard: Allowing student to access student view route');
     return true;
   }
 

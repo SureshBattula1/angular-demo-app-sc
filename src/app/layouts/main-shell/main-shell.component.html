@@ -52,8 +52,8 @@
         <ng-container *ngFor="let item of menuItems">
           <a mat-list-item 
              *hasPermission="item.permission; hasPermissionMode: item.permissionMode || 'all'"
-             [routerLink]="item.route" 
-             routerLinkActive="active"
+             [routerLink]="item.route"
+             [class.active]="isRouteActive(item.route)"
              (click)="onMenuItemClick()"
              [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? (item.tooltip || item.label) : null"
              [matTooltipPosition]="'right'"

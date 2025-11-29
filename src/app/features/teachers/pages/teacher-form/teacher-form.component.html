@@ -109,6 +109,12 @@
               <input matInput formControlName="preferred_name">
               <mat-icon matPrefix>person_pin</mat-icon>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Suffix</mat-label>
+              <input matInput formControlName="suffix" placeholder="Jr., Sr., III, etc.">
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
           </div>
 
           <div class="form-row">
@@ -149,13 +155,27 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Landline Number</mat-label>
+              <input matInput formControlName="landline_number">
+              <mat-icon matPrefix>phone_in_talk</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
               <mat-select formControlName="branch_id">
+                <mat-option *ngIf="branches.length === 0" disabled>
+                  Loading branches...
+                </mat-option>
                 <mat-option *ngFor="let branch of branches" [value]="branch.id">
                   {{ branch.name }} ({{ branch.code }})
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>business</mat-icon>
+              <mat-hint *ngIf="branches.length > 0">{{ branches.length }} branches available</mat-hint>
+              <mat-hint *ngIf="branches.length === 0">No branches found. Please contact administrator.</mat-hint>
               <mat-error>{{ getErrorMessage('branch_id') }}</mat-error>
             </mat-form-field>
           </div>
@@ -279,9 +299,29 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Industry Experience (Years)</mat-label>
+              <input matInput type="number" formControlName="industry_experience_years" min="0" max="50">
+              <mat-icon matPrefix>business</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Qualification</mat-label>
               <input matInput formControlName="qualification">
               <mat-icon matPrefix>workspace_premium</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Probation End Date</mat-label>
+              <input matInput type="date" formControlName="probation_end_date">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Confirmation Date</mat-label>
+              <input matInput type="date" formControlName="confirmation_date">
+              <mat-icon matPrefix>verified</mat-icon>
             </mat-form-field>
           </div>
         </div>
@@ -372,6 +412,39 @@
               </mat-chip-listbox>
             </div>
           </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Caste</mat-label>
+              <input matInput formControlName="caste">
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Sub Caste</mat-label>
+              <input matInput formControlName="sub_caste">
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Handicap Status</mat-label>
+              <mat-select formControlName="handicap_status">
+                <mat-option value="None">None</mat-option>
+                <mat-option value="Mild">Mild</mat-option>
+                <mat-option value="Moderate">Moderate</mat-option>
+                <mat-option value="Severe">Severe</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>accessible</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Handicap Details</mat-label>
+              <input matInput formControlName="handicap_details">
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+          </div>
         </div>
 
         <!-- Family Information -->
@@ -429,6 +502,15 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Spouse Email</mat-label>
+                <input matInput type="email" formControlName="spouse_email">
+                <mat-icon matPrefix>email</mat-icon>
+                <mat-error>{{ getErrorMessage('spouse_email') }}</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
                 <mat-label>Number of Children</mat-label>
                 <input matInput type="number" formControlName="number_of_children" min="0" max="20">
                 <mat-icon matPrefix>child_care</mat-icon>
@@ -443,30 +525,53 @@
             <mat-icon>location_on</mat-icon>
             Address Information
           </h3>
-
-          <!-- Same as Permanent Address Checkbox -->
           <div class="subsection">
-            <div class="address-sync-card">
-              <div class="sync-card-content">
-                <div class="sync-icon-wrapper">
-                  <mat-icon class="sync-icon">sync_alt</mat-icon>
-                </div>
-                <div class="sync-text-wrapper">
-                  <mat-checkbox 
-                    [(ngModel)]="sameAsPermanentAddress" 
-                    [ngModelOptions]="{standalone: true}"
-                    (change)="onSameAsPermanentAddressChange($event.checked)"
-                    color="primary"
-                    class="sync-checkbox">
-                    <span class="checkbox-label">Current Address same as Permanent Address</span>
-            </mat-checkbox>
-                  <p class="checkbox-description">
-                    <mat-icon class="info-icon">info_outline</mat-icon>
-                    Enable this to automatically copy permanent address to current address
-                  </p>
-                </div>
-              </div>
+            <h4>
+              <mat-icon>gite</mat-icon>
+              Permanent Address
+            </h4>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Permanent Address</mat-label>
+              <textarea matInput formControlName="permanent_address" rows="2"></textarea>
+              <mat-icon matPrefix>home_work</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>City</mat-label>
+                <input matInput formControlName="permanent_city">
+                <mat-icon matPrefix>location_city</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>State</mat-label>
+                <input matInput formControlName="permanent_state">
+                <mat-icon matPrefix>map</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>Pincode</mat-label>
+                <input matInput formControlName="permanent_pincode">
+                <mat-icon matPrefix>pin_drop</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-quarter">
+                <mat-label>Country</mat-label>
+                <input matInput formControlName="permanent_country">
+                <mat-icon matPrefix>public</mat-icon>
+              </mat-form-field>
             </div>
+          </div>
+          <!-- Same as Permanent Address Checkbox -->
+          <div class="simple-checkbox-wrapper">
+            <mat-checkbox 
+              [(ngModel)]="sameAsPermanentAddress" 
+              [ngModelOptions]="{standalone: true}"
+              (change)="onSameAsPermanentAddressChange($event.checked)"
+              color="primary">
+              Current Address same as Permanent Address
+            </mat-checkbox>
           </div>
 
           <div class="subsection">
@@ -508,44 +613,7 @@
             </div>
           </div>
 
-          <div class="subsection">
-            <h4>
-              <mat-icon>gite</mat-icon>
-              Permanent Address
-            </h4>
 
-            <mat-form-field appearance="outline" class="w-100">
-              <mat-label>Permanent Address</mat-label>
-              <textarea matInput formControlName="permanent_address" rows="2"></textarea>
-              <mat-icon matPrefix>home_work</mat-icon>
-            </mat-form-field>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline" class="form-field-quarter">
-                <mat-label>City</mat-label>
-                <input matInput formControlName="permanent_city">
-                <mat-icon matPrefix>location_city</mat-icon>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="form-field-quarter">
-                <mat-label>State</mat-label>
-                <input matInput formControlName="permanent_state">
-                <mat-icon matPrefix>map</mat-icon>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="form-field-quarter">
-                <mat-label>Pincode</mat-label>
-                <input matInput formControlName="permanent_pincode">
-                <mat-icon matPrefix>pin_drop</mat-icon>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="form-field-quarter">
-                <mat-label>Country</mat-label>
-                <input matInput formControlName="permanent_country">
-                <mat-icon matPrefix>public</mat-icon>
-              </mat-form-field>
-            </div>
-          </div>
         </div>
 
         <!-- Identity Documents -->
@@ -592,6 +660,14 @@
               <mat-icon matPrefix>directions_car</mat-icon>
             </mat-form-field>
 
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Driving License Expiry</mat-label>
+              <input matInput type="date" formControlName="driving_license_expiry">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Voter ID</mat-label>
               <input matInput formControlName="voter_id">
@@ -691,6 +767,20 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Gratuity Number</mat-label>
+              <input matInput formControlName="gratuity_number">
+              <mat-icon matPrefix>money</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Income Tax PAN</mat-label>
+              <input matInput formControlName="income_tax_pan" style="text-transform: uppercase">
+              <mat-icon matPrefix>receipt_long</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Basic Salary</mat-label>
               <input matInput type="number" formControlName="basic_salary" min="0">
               <mat-icon matPrefix>currency_rupee</mat-icon>
@@ -747,6 +837,142 @@
           </div>
         </div>
 
+        <!-- Skills & Certifications -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>school</mat-icon>
+            Skills & Certifications
+          </h3>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>psychology</mat-icon>
+              Technical Skills
+            </h4>
+            
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Add Technical Skill</mat-label>
+              <mat-select (selectionChange)="addTechnicalSkill($event.value)">
+                <mat-option *ngFor="let skill of technicalSkillOptions" [value]="skill">
+                  {{ skill }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>code</mat-icon>
+              <mat-hint>Select skills from the list or add custom ones</mat-hint>
+            </mat-form-field>
+            
+            <div class="selected-skills" *ngIf="teacherForm.get('technical_skills')?.value?.length > 0">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let skill of teacherForm.get('technical_skills')?.value" 
+                         (removed)="removeTechnicalSkill(skill)">
+                  {{ skill }}
+                  <button matChipRemove>
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-listbox>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>groups</mat-icon>
+              Soft Skills
+            </h4>
+            
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Add Soft Skill</mat-label>
+              <mat-select (selectionChange)="addSoftSkill($event.value)">
+                <mat-option *ngFor="let skill of softSkillOptions" [value]="skill">
+                  {{ skill }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>psychology_alt</mat-icon>
+              <mat-hint>Communication, leadership, teamwork, etc.</mat-hint>
+            </mat-form-field>
+            
+            <div class="selected-skills" *ngIf="teacherForm.get('soft_skills')?.value?.length > 0">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let skill of teacherForm.get('soft_skills')?.value" 
+                         (removed)="removeSoftSkill(skill)">
+                  {{ skill }}
+                  <button matChipRemove>
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-listbox>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>book</mat-icon>
+              Subject Expertise
+            </h4>
+            
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Add Subject</mat-label>
+              <mat-select (selectionChange)="addSubjectExpertise($event.value)">
+                <mat-option *ngFor="let subject of subjectOptions" [value]="subject">
+                  {{ subject }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>subject</mat-icon>
+              <mat-hint>Select subjects you specialize in</mat-hint>
+            </mat-form-field>
+            
+            <div class="selected-skills" *ngIf="teacherForm.get('subject_expertise')?.value?.length > 0">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let subject of teacherForm.get('subject_expertise')?.value" 
+                         (removed)="removeSubjectExpertise(subject)">
+                  {{ subject }}
+                  <button matChipRemove>
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-listbox>
+            </div>
+          </div>
+
+          <div class="subsection">
+            <h4>
+              <mat-icon>co_present</mat-icon>
+              Teaching Methodologies
+            </h4>
+            
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Add Teaching Method</mat-label>
+              <mat-select (selectionChange)="addTeachingMethodology($event.value)">
+                <mat-option *ngFor="let method of teachingMethodOptions" [value]="method">
+                  {{ method }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>menu_book</mat-icon>
+              <mat-hint>Teaching approaches and methods you use</mat-hint>
+            </mat-form-field>
+            
+            <div class="selected-skills" *ngIf="teacherForm.get('teaching_methodologies')?.value?.length > 0">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let method of teacherForm.get('teaching_methodologies')?.value" 
+                         (removed)="removeTeachingMethodology(method)">
+                  {{ method }}
+                  <button matChipRemove>
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip>
+              </mat-chip-listbox>
+            </div>
+          </div>
+
+          <div class="info-banner">
+            <mat-icon>info</mat-icon>
+            <span>
+              <strong>Note:</strong> Professional certifications, educational qualifications, and other documents 
+              should be uploaded in the <strong>Teacher Attachments</strong> section below.
+            </span>
+          </div>
+        </div>
+
         <!-- Health & Medical Information -->
         <div class="form-section">
           <h3 class="section-title">
@@ -766,17 +992,29 @@
             <mat-icon matPrefix>warning</mat-icon>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Current Medications</mat-label>
+            <textarea matInput formControlName="current_medications" rows="2"></textarea>
+            <mat-icon matPrefix>medication</mat-icon>
+          </mat-form-field>
+
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-half">
+            <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Family Doctor Name</mat-label>
               <input matInput formControlName="family_doctor_name">
               <mat-icon matPrefix>medical_services</mat-icon>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="form-field-half">
+            <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Doctor Phone</mat-label>
               <input matInput formControlName="family_doctor_phone">
               <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Last Medical Checkup</mat-label>
+              <input matInput type="date" formControlName="last_medical_checkup">
+              <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
         </div>
@@ -801,9 +1039,47 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Volunteer Work</mat-label>
+            <textarea matInput formControlName="volunteer_work" rows="2"></textarea>
+            <mat-icon matPrefix>volunteer_activism</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Community Involvement</mat-label>
+            <textarea matInput formControlName="community_involvement" rows="2"></textarea>
+            <mat-icon matPrefix>groups</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Personal Statement</mat-label>
+            <textarea matInput formControlName="personal_statement" rows="3"></textarea>
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Professional Memberships</mat-label>
+              <input matInput formControlName="professional_memberships">
+              <mat-icon matPrefix>card_membership</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Professional License</mat-label>
+              <input matInput formControlName="professional_license">
+              <mat-icon matPrefix>verified_user</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100">
             <mat-label>Notes</mat-label>
             <textarea matInput formControlName="notes" rows="3"></textarea>
             <mat-icon matPrefix>note</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Additional Notes</mat-label>
+            <textarea matInput formControlName="additional_notes" rows="2"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
           </mat-form-field>
         </div>
 

@@ -53,6 +53,21 @@ export class TeacherListComponent implements OnInit {
       { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
       { key: 'user.email', header: 'Email', searchable: true },
       { key: 'user.phone', header: 'Phone', width: '130px' },
+      // ✅ Added additional fields
+      { key: 'gender', header: 'Gender', sortable: true, width: '100px' },
+      { key: 'blood_group', header: 'Blood Group', sortable: true, width: '120px' },
+      { key: 'qualification', header: 'Qualification', sortable: true, width: '150px' },
+      { key: 'experience_years', header: 'Experience', sortable: true, width: '120px' },
+      { key: 'nationality', header: 'Nationality', sortable: true, width: '120px' },
+      { key: 'religion', header: 'Religion', sortable: true, width: '120px' },
+      { key: 'aadhaar_number', header: 'Aadhaar', width: '140px' },
+      { key: 'pan_number', header: 'PAN', width: '130px' },
+      { key: 'city', header: 'City', sortable: true, width: '130px' },
+      { key: 'state', header: 'State', sortable: true, width: '130px' },
+      { key: 'emergency_contact_name', header: 'Emergency Contact', width: '150px' },
+      { key: 'emergency_contact_phone', header: 'Emergency Phone', width: '140px' },
+      { key: 'joining_date', header: 'Joining Date', sortable: true, width: '130px' },
+      { key: 'basic_salary', header: 'Salary', sortable: true, width: '120px' },
       { key: 'teacher_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
       { key: 'user.is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
@@ -71,11 +86,20 @@ export class TeacherListComponent implements OnInit {
         permission: 'teachers.edit'
       },
       { 
-        icon: 'delete', 
-        label: 'Delete', 
+        icon: 'block', 
+        label: 'Deactivate', 
         color: 'warn', 
-        action: (row) => this.deleteTeacher(row),
-        permission: 'teachers.delete'
+        action: (row) => this.deactivateTeacher(row),
+        permission: 'teachers.delete',
+        show: (row) => !row.deleted_at // Show only if not deleted
+      },
+      { 
+        icon: 'restore', 
+        label: 'Restore', 
+        color: 'accent', 
+        action: (row) => this.restoreTeacher(row),
+        permission: 'teachers.delete',
+        show: (row) => !!row.deleted_at // Show only if deleted
       }
     ],
     selectable: true,
@@ -180,9 +204,14 @@ export class TeacherListComponent implements OnInit {
       },
       {
         key: 'is_active',
-        label: 'Active Only',
-        type: 'checkbox',
-        icon: 'check_circle'
+        label: 'Account Status',
+        type: 'select',
+        placeholder: 'Select account status',
+        icon: 'toggle_on',
+        options: [
+          { value: 'true', label: 'Active Accounts' },
+          { value: 'false', label: 'Inactive Accounts' }
+        ]
       }
     ]
   };
@@ -352,13 +381,30 @@ export class TeacherListComponent implements OnInit {
     this.router.navigate(['/teachers/edit', teacher.id]);
   }
   
-  deleteTeacher(teacher: Teacher): void {
+  deactivateTeacher(teacher: Teacher): void {
     const teacherName = this.getFullName(teacher);
-    if (confirm(`Are you sure you want to delete teacher "${teacherName}"?`)) {
+    if (confirm(`Are you sure you want to deactivate teacher "${teacherName}"?\n\nDeactivated teachers will not be available for:\n- Attendance marking\n- Class assignments\n- Timetable scheduling\n- Exam duties\n\nYou can restore them later from the inactive teachers list.`)) {
       this.teacherService.deleteTeacher(teacher.id).subscribe({
         next: (response) => {
           if (response.success) {
-            this.errorHandler.showSuccess('Teacher deleted successfully');
+            this.errorHandler.showSuccess(`Teacher "${teacherName}" deactivated successfully`);
+            this.loadTeachers();
+          }
+        },
+        error: (error) => {
+          this.errorHandler.showError(error);
+        }
+      });
+    }
+  }
+
+  restoreTeacher(teacher: Teacher): void {
+    const teacherName = this.getFullName(teacher);
+    if (confirm(`Are you sure you want to restore/activate teacher "${teacherName}"?`)) {
+      this.teacherService.restoreTeacher(teacher.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess(`Teacher "${teacherName}" restored successfully`);
             this.loadTeachers();
           }
         },

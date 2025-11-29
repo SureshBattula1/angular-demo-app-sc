@@ -175,7 +175,7 @@
   padding: var(--spacing-md);
   background: var(--white);
   border-radius: var(--radius-sm);
-  border-left: 3px solid var(--primary-color);
+  // ✅ Removed left border as per user request
   
   h4 {
     color: var(--text-primary);
@@ -195,71 +195,13 @@
   }
 }
 
-// Address Sync Card
-.address-sync-card {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), rgba(var(--primary-dark-rgb), 0.05));
-  border-radius: var(--radius-md);
-  border: 2px solid var(--primary-light);
-  transition: all 0.3s ease;
+// Simple Checkbox Wrapper
+.simple-checkbox-wrapper {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm);
   
-  &:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
-  }
-  
-  .sync-card-content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-  }
-  
-  .sync-icon-wrapper {
-    flex-shrink: 0;
-    width: 52px;
-    height: 52px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-md);
-    
-    .sync-icon {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
-      color: var(--white);
-    }
-  }
-  
-  .sync-text-wrapper {
-    flex: 1;
-    
-    .sync-checkbox {
-      .checkbox-label {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text-primary);
-      }
-    }
-    
-    .checkbox-description {
-      margin: var(--spacing-xs) 0 0 32px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      
-      .info-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        color: var(--primary-color);
-      }
-    }
+  mat-checkbox {
+    font-size: 14px;
   }
 }
 
@@ -297,6 +239,67 @@
       display: flex;
       flex-wrap: wrap;
       gap: var(--spacing-xs);
+    }
+  }
+}
+
+// Skills Section (similar to languages)
+.selected-skills {
+  margin-top: var(--spacing-md);
+  
+  mat-chip-listbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    
+    mat-chip {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      
+      &:hover {
+        background-color: var(--primary-color);
+        color: var(--white);
+      }
+      
+      button[matChipRemove] {
+        opacity: 0.7;
+        
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+// Info Banner
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--radius-sm);
+  
+  mat-icon {
+    color: var(--primary-color);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+  }
+  
+  span {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    
+    strong {
+      color: var(--text-primary);
+      font-weight: 600;
     }
   }
 }
@@ -406,18 +409,8 @@
     }
   }
   
-  .address-sync-card {
-    .sync-card-content {
-      flex-direction: column;
-      text-align: center;
-    }
-    
-    .sync-text-wrapper {
-      .checkbox-description {
-        margin-left: 0;
-        justify-content: center;
-      }
-    }
+  .simple-checkbox-wrapper {
+    text-align: left;
   }
   
   .file-input-wrapper {
@@ -468,8 +461,8 @@
     padding: var(--spacing-sm);
   }
   
-  .address-sync-card {
-    padding: var(--spacing-md);
+  .simple-checkbox-wrapper {
+    padding: var(--spacing-xs);
   }
   
   .subsection {
@@ -598,3 +591,53 @@
     }
   }
 }
+
+// Status Toggle Row
+.status-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gray-200);
+  margin-top: var(--spacing-md);
+  
+  .status-toggle {
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-weight: 500;
+      font-size: 16px;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+  
+  .toggle-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}
+
