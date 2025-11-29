@@ -53,7 +53,7 @@
             mat-stroked-button 
             color="primary"
             (click)="onViewStudent()"
-            *ngIf="application?.student_id">
+            *ngIf="application && application.student_id">
             <mat-icon>visibility</mat-icon>
             View Student
           </button>
