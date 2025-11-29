@@ -100,5 +100,24 @@ export class FeeService {
       `${this.apiUrl}/students/${studentId}/fees`
     );
   }
+
+  // Today's Payments
+  getTodayPayments(filters?: FeeFilters): Observable<ApiResponse<FeePayment[]>> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const value = filters[key as keyof FeeFilters];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+
+    return this.http.get<ApiResponse<FeePayment[]>>(
+      `${this.apiUrl}/fee-payments/today`,
+      { params }
+    );
+  }
 }
 

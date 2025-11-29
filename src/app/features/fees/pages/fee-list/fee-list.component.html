@@ -5,6 +5,16 @@
       <button 
         mat-button 
         class="toolbar-menu-item" 
+        [class.active]="activeTab === 'today'"
+        (click)="switchTab('today')">
+        <mat-icon>today</mat-icon>
+        <span>Today's Payments</span>
+        <span class="tab-badge" *ngIf="todayPaymentCount > 0">{{ todayPaymentCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
         [class.active]="activeTab === 'structures'"
         (click)="switchTab('structures')">
         <mat-icon>account_balance</mat-icon>
@@ -33,6 +43,174 @@
       </button>
     </mat-toolbar>
   </mat-card>
+
+  <!-- Today's Payments Dashboard Tab - Lazy Loaded -->
+  <div *ngIf="activeTab === 'today' && isTabLoaded('today')" class="today-payments-dashboard">
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <mat-spinner></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div *ngIf="!loading && todayPaymentsDashboard">
+      <!-- Header Section -->
+      <div class="dashboard-header">
+        <div class="header-content">
+          <h1 class="page-title">
+            <mat-icon>today</mat-icon>
+            Today's Payments Overview
+          </h1>
+          <p class="page-subtitle">{{ todayPaymentsDashboard.summary.date | date:'fullDate' }}</p>
+        </div>
+        
+        <div class="header-actions">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Branch</mat-label>
+            <mat-select [(value)]="selectedBranch" (selectionChange)="onBranchFilterChange()">
+              <mat-option value="">All Branches</mat-option>
+              <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                {{ branch.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-section">
+        <mat-card class="summary-card total-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>account_balance_wallet</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Amount Paid</h3>
+              <p class="summary-value">₹{{ todayPaymentsDashboard.summary.total_amount | number:'1.2-2' }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>receipt_long</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Payments</h3>
+              <p class="summary-value">{{ todayPaymentsDashboard.summary.total_count | number }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Breakdown Section -->
+      <div class="breakdown-section">
+        <!-- Class/Grade Wise Breakdown -->
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="grade-icon">school</mat-icon>
+              Payments by Class/Grade
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_grade">
+                <div class="category-info">
+                  <span class="category-name">{{ item.grade_label }}</span>
+                  <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+              </div>
+              <div *ngIf="todayPaymentsDashboard.by_grade.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No payments by class today</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Section Wise Breakdown -->
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="section-icon">class</mat-icon>
+              Payments by Section
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_section">
+                <div class="category-info">
+                  <span class="category-name">{{ item.grade_label }} - Section {{ item.section }}</span>
+                  <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+              </div>
+              <div *ngIf="todayPaymentsDashboard.by_section.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No payments by section today</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Additional Breakdowns -->
+      <div class="breakdown-section">
+        <!-- Branch Wise Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="todayPaymentsDashboard.by_branch.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="branch-icon">business</mat-icon>
+              Payments by Branch
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_branch">
+                <div class="category-info">
+                  <span class="category-name">{{ item.branch_name }}</span>
+                  <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Payment Method Breakdown -->
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="method-icon">payment</mat-icon>
+              Payments by Method
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_payment_method">
+                <div class="category-info">
+                  <span class="category-name">{{ item.payment_method }}</span>
+                  <span class="category-meta">{{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+              </div>
+              <div *ngIf="todayPaymentsDashboard.by_payment_method.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No payment method data available</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
 
   <!-- Fee Structures Tab - Lazy Loaded -->
   <app-data-table

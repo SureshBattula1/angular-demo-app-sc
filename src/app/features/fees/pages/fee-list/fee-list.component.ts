@@ -25,28 +25,33 @@ export class FeeListComponent implements OnInit {
   @ViewChild('feeTypesTable') feeTypesTable!: DataTableComponent;
   
   loading = false;
-  activeTab: 'structures' | 'payments' | 'types' = 'structures';
+  activeTab: 'today' | 'structures' | 'payments' | 'types' = 'today'; // Default to today's payments
   
   // Track which tabs have been loaded for lazy loading
   private loadedTabs = new Set<string>();
   
   // Separate data arrays for each tab
+  todayPaymentsDashboard: any = null;
   feeStructures: FeeStructure[] = [];
   feePayments: FeePayment[] = [];
   feeTypes: FeeType[] = [];
   selectedRecords: (FeeStructure | FeePayment | FeeType)[] = [];
   
   // Counts for tab badges
+  todayPaymentCount = 0;
   structureCount = 0;
   paymentCount = 0;
   feeTypeCount = 0;
   
   // Current filters for each tab
+  todayPaymentFilters: Record<string, unknown> = {};
   structureFilters: Record<string, unknown> = {};
   paymentFilters: Record<string, unknown> = {};
   feeTypeFilters: Record<string, unknown> = {};
   branches: any[] = [];
   grades: any[] = [];
+  sections: any[] = [];
+  selectedBranch: string | number | null = null;
   
   // Separate table configurations
   structuresTableConfig: TableConfig = {
@@ -129,6 +134,49 @@ export class FeeListComponent implements OnInit {
         options: [
           { value: 'true', label: 'Active' },
           { value: 'false', label: 'Inactive' }
+        ]
+      }
+    ]
+  };
+  
+  todayPaymentsSearchConfig: AdvancedSearchConfig = {
+    title: 'Filter Today\'s Payments',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'grade',
+        label: 'Class/Grade',
+        type: 'select',
+        icon: 'school',
+        options: []
+      },
+      {
+        key: 'section',
+        label: 'Section',
+        type: 'select',
+        icon: 'class',
+        options: []
+      },
+      {
+        key: 'payment_method',
+        label: 'Payment Method',
+        type: 'select',
+        icon: 'payment',
+        options: [
+          { value: 'Cash', label: 'Cash' },
+          { value: 'Card', label: 'Card' },
+          { value: 'Online', label: 'Online' },
+          { value: 'Cheque', label: 'Cheque' },
+          { value: 'Other', label: 'Other' }
         ]
       }
     ]
@@ -266,6 +314,7 @@ export class FeeListComponent implements OnInit {
   ngOnInit(): void {
     this.loadBranches();
     this.loadGrades();
+    this.loadSections();
     this.loadFeeTypesForFilter();
     
     // Check query parameters to restore active tab
@@ -273,12 +322,16 @@ export class FeeListComponent implements OnInit {
       // Check for returnTab first (when coming back from view/edit), then tab
       const targetTab = params['returnTab'] || params['tab'];
       
-      if (targetTab === 'payments') {
+      if (targetTab === 'today') {
+        this.activeTab = 'today';
+      } else if (targetTab === 'payments') {
         this.activeTab = 'payments';
       } else if (targetTab === 'types') {
         this.activeTab = 'types';
+      } else if (targetTab === 'structures') {
+        this.activeTab = 'structures';
       } else {
-        this.activeTab = 'structures'; // Default to structures
+        this.activeTab = 'today'; // Default to today's payments
       }
       
       // Mark the initial tab as loaded
@@ -295,7 +348,7 @@ export class FeeListComponent implements OnInit {
   }
 
   // Tab switching method
-  switchTab(tab: 'structures' | 'payments' | 'types'): void {
+  switchTab(tab: 'today' | 'structures' | 'payments' | 'types'): void {
     this.activeTab = tab;
     
     // Mark tab as loaded for lazy loading
@@ -314,7 +367,9 @@ export class FeeListComponent implements OnInit {
   
   // Load data for active tab only
   private loadActiveTabData(): void {
-    if (this.activeTab === 'structures') {
+    if (this.activeTab === 'today') {
+      this.loadTodayPayments();
+    } else if (this.activeTab === 'structures') {
       this.loadFeeStructures();
     } else if (this.activeTab === 'payments') {
       this.loadFeePayments();
@@ -363,6 +418,39 @@ export class FeeListComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  // Load today's payments dashboard
+  loadTodayPayments(filters: Record<string, any> = {}): void {
+    this.loading = true;
+    this.todayPaymentFilters = { ...this.todayPaymentFilters, ...filters };
+    
+    this.feeService.getTodayPayments(this.todayPaymentFilters).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.todayPaymentsDashboard = response.data;
+          this.todayPaymentCount = response.data.summary?.total_count || 0;
+        } else {
+          this.todayPaymentsDashboard = null;
+          this.todayPaymentCount = 0;
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.todayPaymentsDashboard = null;
+        this.todayPaymentCount = 0;
+        this.loading = false;
+      }
+    });
+  }
+
+  onBranchFilterChange(): void {
+    const filters: Record<string, any> = {};
+    if (this.selectedBranch) {
+      filters['branch_id'] = this.selectedBranch;
+    }
+    this.loadTodayPayments(filters);
   }
 
   // Load fee payments
@@ -511,6 +599,12 @@ export class FeeListComponent implements OnInit {
             structureBranchField.options = branchOptions;
           }
           
+          // Update today's payments search config with branches
+          const todayBranchField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (todayBranchField) {
+            todayBranchField.options = branchOptions;
+          }
+          
           // Update payment search config with branches
           const paymentBranchField = this.paymentsSearchConfig.fields.find(f => f.key === 'branch_id');
           if (paymentBranchField) {
@@ -547,11 +641,44 @@ export class FeeListComponent implements OnInit {
           if (structureGradeField) {
             structureGradeField.options = gradeOptions;
           }
+          
+          // Update today's payments search config
+          const todayGradeField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'grade');
+          if (todayGradeField) {
+            todayGradeField.options = gradeOptions;
+          }
         }
       },
       error: (error) => {
       }
     });
+  }
+
+  /**
+   * Load sections dynamically (for filtering)
+   */
+  loadSections(): void {
+    // Sections are typically loaded based on selected grade
+    // For now, we'll create a method that can be called when grade changes
+    // Common sections: A, B, C, D, etc.
+    this.sections = [
+      { value: 'A', label: 'Section A' },
+      { value: 'B', label: 'Section B' },
+      { value: 'C', label: 'Section C' },
+      { value: 'D', label: 'Section D' },
+      { value: 'E', label: 'Section E' }
+    ];
+    
+    const sectionOptions = this.sections.map(section => ({
+      value: section.value,
+      label: section.label
+    }));
+    
+    // Update today's payments search config
+    const todaySectionField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'section');
+    if (todaySectionField) {
+      todaySectionField.options = sectionOptions;
+    }
   }
 
   /**
@@ -671,7 +798,9 @@ export class FeeListComponent implements OnInit {
   }
   
   onRowClick(row: FeeStructure | FeePayment | FeeType): void {
-    if (this.activeTab === 'structures') {
+    if (this.activeTab === 'today') {
+      this.viewPayment(row as FeePayment);
+    } else if (this.activeTab === 'structures') {
       this.viewStructure(row as FeeStructure);
     } else if (this.activeTab === 'payments') {
       this.viewPayment(row as FeePayment);
@@ -738,7 +867,10 @@ export class FeeListComponent implements OnInit {
   
   onSearchReset(): void {
     // Load fresh data for active tab
-    if (this.activeTab === 'structures') {
+    if (this.activeTab === 'today') {
+      this.todayPaymentFilters = {};
+      this.loadTodayPayments();
+    } else if (this.activeTab === 'structures') {
       this.structureFilters = {};
       this.loadFeeStructures();
     } else if (this.activeTab === 'payments') {
