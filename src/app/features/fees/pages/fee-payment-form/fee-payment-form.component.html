@@ -98,13 +98,21 @@
                 <span class="label">Fee Amount:</span>
                 <strong class="value">₹{{ getFeeStructureAmount() | number:'1.2-2' }}</strong>
               </div>
+              <div class="info-row" *ngIf="getAlreadyPaidAmount() > 0">
+                <span class="label">Already Paid:</span>
+                <strong class="value paid">₹{{ getAlreadyPaidAmount() | number:'1.2-2' }}</strong>
+              </div>
+              <div class="info-row" *ngIf="getAlreadyPaidAmount() > 0">
+                <span class="label">Remaining Before Payment:</span>
+                <strong class="value remaining-before">₹{{ getRemainingAmountBeforePayment() | number:'1.2-2' }}</strong>
+              </div>
               <div class="info-row" *ngIf="isPartialPayment()">
                 <span class="label">Paying Now:</span>
                 <strong class="value payment">₹{{ getTotalAmount() | number:'1.2-2' }}</strong>
               </div>
               <div class="info-row warning" *ngIf="isPartialPayment()">
                 <mat-icon>warning</mat-icon>
-                <span class="label">Remaining Balance:</span>
+                <span class="label">Remaining Balance After Payment:</span>
                 <strong class="value remaining">₹{{ getRemainingBalance() | number:'1.2-2' }}</strong>
               </div>
             </div>

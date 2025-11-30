@@ -54,27 +54,63 @@
 
     <!-- Dashboard Content -->
     <div *ngIf="!loading && todayPaymentsDashboard">
-      <!-- Header Section -->
-      <div class="dashboard-header">
-        <div class="header-content">
-          <h1 class="page-title">
-            <mat-icon>today</mat-icon>
-            Today's Payments Overview
-          </h1>
-          <p class="page-subtitle">{{ todayPaymentsDashboard.summary.date | date:'fullDate' }}</p>
+      
+      <!-- Filters Row: Branch + Date Range -->
+      <div class="filters-container">
+        <!-- Branch Filter -->
+        <mat-form-field appearance="outline" class="branch-filter">
+          <mat-label>
+            <mat-icon>business</mat-icon>
+            Branch
+          </mat-label>
+          <mat-select [(value)]="selectedBranch" (selectionChange)="onBranchFilterChange()">
+            <mat-option value="">All Branches</mat-option>
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">
+              {{ branch.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Date Range Selector -->
+        <div class="date-range-selector">
+          <mat-button-toggle-group [formControl]="selectedPeriod" class="period-toggle">
+            <mat-button-toggle value="today">
+              <mat-icon>today</mat-icon>
+              <span class="toggle-label">Today</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="week">
+              <mat-icon>view_week</mat-icon>
+              <span class="toggle-label">Week</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="month">
+              <mat-icon>calendar_month</mat-icon>
+              <span class="toggle-label">Month</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="custom">
+              <mat-icon>date_range</mat-icon>
+              <span class="toggle-label">Custom</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
         </div>
+      </div>
+      
+      <!-- Custom Date Range (shown only when custom selected) -->
+      <div class="custom-range-row" *ngIf="selectedPeriod.value === 'custom'">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [formControl]="customFromDate" 
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
         
-        <div class="header-actions">
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Branch</mat-label>
-            <mat-select [(value)]="selectedBranch" (selectionChange)="onBranchFilterChange()">
-              <mat-option value="">All Branches</mat-option>
-              <mat-option *ngFor="let branch of branches" [value]="branch.id">
-                {{ branch.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="toPicker" [formControl]="customToDate"
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
       </div>
 
       <!-- Summary Cards -->
@@ -106,6 +142,31 @@
 
       <!-- Breakdown Section -->
       <div class="breakdown-section">
+        <!-- Payment Status Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="todayPaymentsDashboard.by_status && todayPaymentsDashboard.by_status.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="status-icon">payment</mat-icon>
+              Payments by Status
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_status">
+                <div class="category-info">
+                  <span class="category-name" [class.status-completed]="item.payment_status === 'Completed'" 
+                        [class.status-partial]="item.payment_status === 'Partial'">
+                    {{ item.payment_status === 'Completed' ? '✓ Completed' : '◐ Partial' }}
+                  </span>
+                  <span class="category-meta">{{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
         <!-- Class/Grade Wise Breakdown -->
         <mat-card class="breakdown-card">
           <mat-card-header>
@@ -120,9 +181,19 @@
               <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_grade">
                 <div class="category-info">
                   <span class="category-name">{{ item.grade_label }}</span>
-                  <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
+                  <span class="category-meta">
+                    {{ item.student_count }} students • {{ item.payment_count }} payments
+                    <span *ngIf="item.pending_amount > 0" class="pending-badge">
+                      • Pending: ₹{{ item.pending_amount | number:'1.2-2' }}
+                    </span>
+                  </span>
                 </div>
-                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                <div class="amount-group">
+                  <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                  <span *ngIf="item.pending_amount > 0" class="pending-amount">
+                    Pending: ₹{{ item.pending_amount | number:'1.2-2' }}
+                  </span>
+                </div>
               </div>
               <div *ngIf="todayPaymentsDashboard.by_grade.length === 0" class="empty-state">
                 <mat-icon>info</mat-icon>

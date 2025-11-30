@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
@@ -11,11 +12,22 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.model';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 @Component({
   selector: 'app-fee-list',
   standalone: true,
-  imports: [CommonModule, MaterialModule, DataTableComponent],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule,
+    MaterialModule, 
+    DataTableComponent,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatButtonToggleModule
+  ],
   templateUrl: './fee-list.component.html',
   styleUrls: ['./fee-list.component.scss']
 })
@@ -52,6 +64,11 @@ export class FeeListComponent implements OnInit {
   grades: any[] = [];
   sections: any[] = [];
   selectedBranch: string | number | null = null;
+  
+  // Date range filters (similar to dashboard)
+  selectedPeriod = new FormControl('today');
+  customFromDate = new FormControl();
+  customToDate = new FormControl();
   
   // Separate table configurations
   structuresTableConfig: TableConfig = {
@@ -340,6 +357,13 @@ export class FeeListComponent implements OnInit {
     
     // Load data for the active tab only (lazy loading)
     this.loadActiveTabData();
+    
+    // Listen to period changes for today's payments tab
+    this.selectedPeriod.valueChanges.subscribe(() => {
+      if (this.activeTab === 'today') {
+        this.loadTodayPayments();
+      }
+    });
   }
   
   // Check if a tab has been loaded (for lazy loading)
@@ -423,7 +447,24 @@ export class FeeListComponent implements OnInit {
   // Load today's payments dashboard
   loadTodayPayments(filters: Record<string, any> = {}): void {
     this.loading = true;
-    this.todayPaymentFilters = { ...this.todayPaymentFilters, ...filters };
+    
+    // Build filters with date range
+    const dateFilters: Record<string, any> = {
+      period: this.selectedPeriod.value || 'today'
+    };
+    
+    // Add custom date range if selected
+    if (this.selectedPeriod.value === 'custom') {
+      if (this.customFromDate.value) {
+        dateFilters['from_date'] = this.formatDate(this.customFromDate.value);
+      }
+      if (this.customToDate.value) {
+        dateFilters['to_date'] = this.formatDate(this.customToDate.value);
+      }
+    }
+    
+    // Merge with existing filters
+    this.todayPaymentFilters = { ...this.todayPaymentFilters, ...filters, ...dateFilters };
     
     this.feeService.getTodayPayments(this.todayPaymentFilters).subscribe({
       next: (response: any) => {
@@ -869,6 +910,9 @@ export class FeeListComponent implements OnInit {
     // Load fresh data for active tab
     if (this.activeTab === 'today') {
       this.todayPaymentFilters = {};
+      this.selectedPeriod.setValue('today');
+      this.customFromDate.setValue(null);
+      this.customToDate.setValue(null);
       this.loadTodayPayments();
     } else if (this.activeTab === 'structures') {
       this.structureFilters = {};
@@ -880,6 +924,27 @@ export class FeeListComponent implements OnInit {
       this.feeTypeFilters = {};
       this.loadFeeTypes();
     }
+  }
+  
+  /**
+   * Handle custom date range change
+   */
+  onCustomRangeChange(): void {
+    if (this.customFromDate.value && this.customToDate.value) {
+      this.loadTodayPayments();
+    }
+  }
+  
+  /**
+   * Format date to YYYY-MM-DD format
+   */
+  formatDate(date: Date | null): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = ('0' + (d.getMonth() + 1)).slice(-2);
+    const day = ('0' + d.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
   }
   
   // Pagination handlers

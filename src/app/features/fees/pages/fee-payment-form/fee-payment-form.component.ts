@@ -346,14 +346,21 @@ export class FeePaymentFormComponent implements OnInit {
   validatePaymentAmount(): void {
     if (!this.selectedFeeStructure) return;
     
+    // Get the full fee amount
     const feeAmount = parseFloat(this.selectedFeeStructure.amount || 0);
+    // Get amount already paid (from previous partial payments)
+    const alreadyPaid = parseFloat((this.selectedFeeStructure as any).amount_paid || 0);
+    // Calculate remaining amount to be paid
+    const remainingAmount = feeAmount - alreadyPaid;
+    
     const amountPaid = parseFloat(this.paymentForm.get('amount_paid')?.value || 0);
     const discount = parseFloat(this.paymentForm.get('discount_amount')?.value || 0);
     const lateFee = parseFloat(this.paymentForm.get('late_fee')?.value || 0);
     
     // Calculate net amount after discount and late fee
     const netAmount = amountPaid + lateFee - discount;
-    const remainingBalance = feeAmount - netAmount;
+    // Calculate remaining balance after this payment
+    const remainingBalance = remainingAmount - netAmount;
     
     // Auto-suggest payment status based on amount
     const currentStatus = this.paymentForm.get('payment_status')?.value;
@@ -363,14 +370,17 @@ export class FeePaymentFormComponent implements OnInit {
       if (currentStatus !== 'Failed' && currentStatus !== 'Pending') {
         this.paymentForm.get('payment_status')?.setValue('Pending', { emitEvent: false });
       }
-    } else if (netAmount < feeAmount) {
-      // Partial payment
+    } else if (netAmount < remainingAmount) {
+      // Partial payment (not covering full remaining amount)
       if (currentStatus === 'Completed') {
         // Warn user about partial payment marked as completed
         this.errorHandler.showWarning(
-          `⚠️ Partial Payment Detected! Fee amount is ₹${feeAmount.toLocaleString('en-IN')}, ` +
-          `but paying only ₹${netAmount.toLocaleString('en-IN')}. ` +
-          `Remaining balance: ₹${remainingBalance.toLocaleString('en-IN')}. ` +
+          `⚠️ Partial Payment Detected! ` +
+          `Fee amount: ₹${feeAmount.toLocaleString('en-IN')}, ` +
+          `Already paid: ₹${alreadyPaid.toLocaleString('en-IN')}, ` +
+          `Remaining: ₹${remainingAmount.toLocaleString('en-IN')}, ` +
+          `Paying now: ₹${netAmount.toLocaleString('en-IN')}, ` +
+          `Balance after payment: ₹${remainingBalance.toLocaleString('en-IN')}. ` +
           `Please use "Partial Payment" status instead of "Completed".`
         );
       }
@@ -378,8 +388,8 @@ export class FeePaymentFormComponent implements OnInit {
       if (currentStatus === 'Completed' || !currentStatus || currentStatus === 'Pending') {
         this.paymentForm.get('payment_status')?.setValue('Partial', { emitEvent: false });
       }
-    } else if (netAmount >= feeAmount) {
-      // Full or overpayment
+    } else if (netAmount >= remainingAmount) {
+      // Full payment (covers remaining amount) or overpayment
       if (currentStatus === 'Partial' || currentStatus === 'Pending' || !currentStatus) {
         this.paymentForm.get('payment_status')?.setValue('Completed', { emitEvent: false });
       }
@@ -389,10 +399,28 @@ export class FeePaymentFormComponent implements OnInit {
   getRemainingBalance(): number {
     if (!this.selectedFeeStructure) return 0;
     
+    // Get the full fee amount
     const feeAmount = parseFloat(this.selectedFeeStructure.amount || 0);
+    // Get amount already paid (from previous partial payments)
+    const alreadyPaid = parseFloat((this.selectedFeeStructure as any).amount_paid || 0);
+    // Calculate remaining amount before this payment
+    const remainingAmount = feeAmount - alreadyPaid;
+    // Get current payment amount
     const netAmount = this.getTotalAmount();
-    
-    return Math.max(0, feeAmount - netAmount);
+    // Calculate remaining balance after this payment
+    return Math.max(0, remainingAmount - netAmount);
+  }
+  
+  getAlreadyPaidAmount(): number {
+    if (!this.selectedFeeStructure) return 0;
+    return parseFloat((this.selectedFeeStructure as any).amount_paid || 0);
+  }
+  
+  getRemainingAmountBeforePayment(): number {
+    if (!this.selectedFeeStructure) return 0;
+    const feeAmount = parseFloat(this.selectedFeeStructure.amount || 0);
+    const alreadyPaid = this.getAlreadyPaidAmount();
+    return Math.max(0, feeAmount - alreadyPaid);
   }
   
   getFeeStructureAmount(): number {
@@ -402,10 +430,10 @@ export class FeePaymentFormComponent implements OnInit {
   isPartialPayment(): boolean {
     if (!this.selectedFeeStructure) return false;
     
-    const feeAmount = this.getFeeStructureAmount();
+    const remainingAmount = this.getRemainingAmountBeforePayment();
     const netAmount = this.getTotalAmount();
     
-    return netAmount > 0 && netAmount < feeAmount;
+    return netAmount > 0 && netAmount < remainingAmount;
   }
   
   onSubmit(): void {
@@ -418,11 +446,15 @@ export class FeePaymentFormComponent implements OnInit {
     // Validate partial payment logic
     const paymentStatus = this.paymentForm.get('payment_status')?.value;
     if (this.isPartialPayment() && paymentStatus === 'Completed') {
+      const alreadyPaid = this.getAlreadyPaidAmount();
+      const remainingBefore = this.getRemainingAmountBeforePayment();
       const confirmed = confirm(
         `⚠️ WARNING: This is a partial payment!\n\n` +
         `Fee Amount: ₹${this.getFeeStructureAmount().toLocaleString('en-IN')}\n` +
-        `Paying: ₹${this.getTotalAmount().toLocaleString('en-IN')}\n` +
-        `Balance: ₹${this.getRemainingBalance().toLocaleString('en-IN')}\n\n` +
+        `Already Paid: ₹${alreadyPaid.toLocaleString('en-IN')}\n` +
+        `Remaining: ₹${remainingBefore.toLocaleString('en-IN')}\n` +
+        `Paying Now: ₹${this.getTotalAmount().toLocaleString('en-IN')}\n` +
+        `Balance After Payment: ₹${this.getRemainingBalance().toLocaleString('en-IN')}\n\n` +
         `You've marked this as "Completed" but it's only a partial payment. ` +
         `The fee will be removed from pending list even though ₹${this.getRemainingBalance().toLocaleString('en-IN')} is still due.\n\n` +
         `Are you sure you want to mark this as "Completed"?`
