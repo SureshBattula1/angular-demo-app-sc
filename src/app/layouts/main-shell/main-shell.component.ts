@@ -61,7 +61,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'receipt', label: 'Invoices', route: '/invoices', permission: 'invoices.view' },
     { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
     { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
-    { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'imports.view' },
+    { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'import.view' },
     { icon: 'settings', label: 'Settings', route: '/settings', permission: 'settings.view' }
   ];
   

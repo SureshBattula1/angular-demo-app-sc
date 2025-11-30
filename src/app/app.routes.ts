@@ -115,7 +115,7 @@ export const routes: Routes = [
         path: 'imports',
         loadChildren: () => import('./features/imports/imports.routes').then(m => m.IMPORTS_ROUTES),
         canActivate: [permissionGuard],
-        data: { permissions: ['students.create', 'teachers.create'], permissionMode: 'any' }
+        data: { permissions: 'import.view' }
       },
       {
         path: 'admissions',
