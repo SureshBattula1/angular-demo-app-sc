@@ -330,7 +330,7 @@
 // Charts Grid - Responsive
 .charts-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
   
   // Full width class spans all columns on all screen sizes
@@ -741,6 +741,420 @@
   @for $i from 1 through 8 {
     &:nth-child(#{$i}) {
       animation-delay: #{$i * 0.05}s;
+    }
+  }
+}
+
+// Financial Overview Section
+.financial-overview-section {
+  margin-top: 32px;
+  margin-bottom: 32px;
+  
+  @include mobile-only {
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .financial-overview-card {
+    background: var(--card-background);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    
+    mat-card-header {
+      padding: 24px 24px 16px 24px;
+      
+      @include mobile-only {
+        padding: 16px 16px 12px 16px;
+      }
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text-primary);
+        
+        @include mobile-only {
+          font-size: 20px;
+        }
+        
+        mat-icon {
+          font-size: 28px;
+          width: 28px;
+          height: 28px;
+          color: var(--primary-color);
+        }
+      }
+    }
+    
+    mat-card-content {
+      padding: 24px !important;
+      
+      @include mobile-only {
+        padding: 16px !important;
+      }
+    }
+  }
+  
+  .financial-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    
+    @include tablet-only {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @include mobile-only {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+  
+  .financial-card {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    mat-card-content {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 24px !important;
+      
+      @include mobile-only {
+        padding: 16px !important;
+        gap: 16px;
+      }
+    }
+    
+    .financial-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+      
+      @include mobile-only {
+        width: 48px;
+        height: 48px;
+      }
+      
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        
+        @include mobile-only {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+      }
+    }
+    
+    .financial-details {
+      flex: 1;
+      
+      .financial-label {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        
+        @include mobile-only {
+          font-size: 12px;
+          margin-bottom: 6px;
+        }
+      }
+      
+      .financial-value {
+        margin: 0 0 4px 0;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.2;
+        
+        @include mobile-only {
+          font-size: 24px;
+        }
+      }
+      
+      .financial-meta {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-secondary);
+        
+        @include mobile-only {
+          font-size: 11px;
+        }
+      }
+    }
+    
+    &.income-card {
+      border-left: 4px solid #4CAF50;
+      
+      .financial-icon {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4CAF50;
+      }
+      
+      .financial-value {
+        color: #4CAF50;
+      }
+    }
+    
+    &.expense-card {
+      border-left: 4px solid #F44336;
+      
+      .financial-icon {
+        background: rgba(244, 67, 54, 0.1);
+        color: #F44336;
+      }
+      
+      .financial-value {
+        color: #F44336;
+      }
+    }
+    
+    &.balance-card {
+      border-left: 4px solid var(--primary-color);
+      
+      .financial-icon {
+        background: rgba(0, 137, 123, 0.1);
+        color: var(--primary-color);
+      }
+      
+      .financial-value {
+        color: var(--primary-color);
+      }
+      
+      &.positive {
+        border-left-color: #4CAF50;
+        
+        .financial-icon {
+          background: rgba(76, 175, 80, 0.1);
+          color: #4CAF50;
+        }
+        
+        .financial-value {
+          color: #4CAF50;
+        }
+      }
+      
+      &.negative {
+        border-left-color: #F44336;
+        
+        .financial-icon {
+          background: rgba(244, 67, 54, 0.1);
+          color: #F44336;
+        }
+        
+        .financial-value {
+          color: #F44336;
+        }
+      }
+    }
+  }
+  
+  // Payment Mode Breakdown Card
+  .payment-mode-card {
+    margin-top: 24px;
+    background: var(--card-background);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    
+    @include mobile-only {
+      margin-top: 16px;
+    }
+    
+    mat-card-header {
+      padding: 24px 24px 16px 24px;
+      
+      @include mobile-only {
+        padding: 16px 16px 12px 16px;
+      }
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+        
+        @include mobile-only {
+          font-size: 18px;
+        }
+        
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+          color: var(--primary-color);
+        }
+      }
+    }
+    
+    mat-card-content {
+      padding: 24px !important;
+      
+      @include mobile-only {
+        padding: 16px !important;
+      }
+    }
+  }
+  
+  .payment-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    
+    @include tablet-only {
+      gap: 24px;
+    }
+    
+    @include mobile-only {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+  
+  .payment-mode-section {
+    .payment-mode-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      
+      @include mobile-only {
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        
+        &.income-icon {
+          color: #4CAF50;
+        }
+        
+        &.expense-icon {
+          color: #F44336;
+        }
+      }
+    }
+    
+    .payment-mode-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      
+      @include mobile-only {
+        gap: 10px;
+      }
+    }
+    
+    .payment-mode-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: var(--surface-color);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      transition: all 0.2s ease;
+      
+      @include mobile-only {
+        padding: 12px;
+      }
+      
+      &:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+      }
+      
+      .payment-mode-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        
+        @include mobile-only {
+          gap: 10px;
+        }
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          
+          // Payment mode icon colors
+          &.payment-icon-cash {
+            color: #FF9800;
+          }
+          
+          &.payment-icon-check {
+            color: #9C27B0;
+          }
+          
+          &.payment-icon-card {
+            color: #2196F3;
+          }
+          
+          &.payment-icon-bank-transfer {
+            color: #00BCD4;
+          }
+          
+          &.payment-icon-upi {
+            color: #4CAF50;
+          }
+          
+          &.payment-icon-other {
+            color: #757575;
+          }
+        }
+        
+        .payment-mode-label {
+          font-size: 15px;
+          font-weight: 500;
+          color: var(--text-primary);
+          
+          @include mobile-only {
+            font-size: 14px;
+          }
+        }
+      }
+      
+      .payment-mode-amount {
+        font-size: 18px;
+        font-weight: 700;
+        
+        @include mobile-only {
+          font-size: 16px;
+        }
+        
+        &.income {
+          color: #4CAF50;
+        }
+        
+        &.expense {
+          color: #F44336;
+        }
+      }
     }
   }
 }

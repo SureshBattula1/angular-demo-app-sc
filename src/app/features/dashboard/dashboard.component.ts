@@ -58,6 +58,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   feeBreakdownData: DoughnutChartData | null = null;
   feeByClassData: any | null = null; // Stacked bar chart for fees by class
   
+  // Payment methods (same as transaction form)
+  paymentMethods = [
+    { value: 'Cash', label: 'Cash', icon: 'money' },
+    { value: 'Check', label: 'Check/Cheque', icon: 'receipt' },
+    { value: 'Card', label: 'Debit/Credit Card', icon: 'credit_card' },
+    { value: 'Bank Transfer', label: 'Bank Transfer', icon: 'account_balance' },
+    { value: 'UPI', label: 'UPI', icon: 'qr_code_scanner' },
+    { value: 'Other', label: 'Other', icon: 'more_horiz' }
+  ];
+  
   // Subscriptions
   private subscriptions: Subscription[] = [];
   private autoRefreshInterval: any;
@@ -331,5 +341,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const heightInPixels = Math.min(700, Math.max(400, (numClasses * 60) + 100));
     
     return `${heightInPixels}px`;
+  }
+
+  /**
+   * Get payment mode amount for income or expenses
+   * Handles different key formats: 'Cash', 'cash', 'bank_transfer', etc.
+   */
+  getPaymentModeAmount(mode: string, type: 'income' | 'expenses'): number {
+    if (!this.dashboardData?.financial) {
+      return 0;
+    }
+
+    const data = type === 'income' 
+      ? this.dashboardData.financial.income_by_mode 
+      : this.dashboardData.financial.expenses_by_mode;
+
+    if (!data) {
+      return 0;
+    }
+
+    // Try different key formats
+    return data[mode] || 
+           data[mode.toLowerCase()] || 
+           data[mode.toLowerCase().replace(' ', '_')] || 
+           data[mode.toLowerCase().replace(' ', '-')] || 
+           0;
   }
 }

@@ -2,20 +2,6 @@
   
   <!-- Dashboard Header with Date Range Selector -->
   <div class="dashboard-header">
-    <!-- <div class="header-content">
-      <div class="header-text">
-        <h1 class="dashboard-title">Dashboard</h1>
-        <p class="dashboard-subtitle" *ngIf="dashboardData?.period">
-          {{ dashboardData.period.label }}
-        </p>
-      </div>
-      
-      <div class="header-actions">
-        <button mat-icon-button (click)="refresh()" [disabled]="loading" class="refresh-btn">
-          <mat-icon>refresh</mat-icon>
-        </button>
-      </div>
-    </div> -->
     
     <!-- Filters Row: Branch + Date Range -->
     <div class="filters-container">
@@ -132,35 +118,7 @@
           <div class="stat-label">Total Teachers</div>
         </div>
       </div>
-      
-      <!-- Student Attendance Card -->
-      <div class="stat-card info">
-        <div class="card-icon">
-          <mat-icon>fact_check</mat-icon>
-        </div>
-        <div class="card-content">
-          <div class="stat-value">{{ dashboardData.attendance.students.rate }}%</div>
-          <div class="stat-label">Student Attendance</div>
-          <div class="stat-subtext">
-            {{ dashboardData.attendance.students.present | number }} Present of 
-            {{ dashboardData.attendance.students.total_records | number }}
-          </div>
-        </div>
-      </div>
-      
-      <!-- Fees Collected Card -->
-      <!-- <div class="stat-card warning">
-        <div class="card-icon">
-          <mat-icon>payments</mat-icon>
-        </div>
-        <div class="card-content">
-          <div class="stat-value">₹{{ dashboardData.fees.total_collected | number:'1.0-0' }}</div>
-          <div class="stat-label">Fees Collected</div>
-          <div class="stat-subtext">
-            ₹{{ dashboardData.fees.total_pending | number:'1.0-0' }} Pending
-          </div>
-        </div>
-      </div> -->
+     
     </div>
 
     <!-- CHARTS SECTION - Responsive Grid -->
@@ -195,7 +153,7 @@
     </div>
     <div class="charts-grid">
        <!-- Fee Collection Breakdown -->
-       <mat-card class="chart-card">
+       <!-- <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>pie_chart</mat-icon>
@@ -218,7 +176,7 @@
             </div>
           </div>
         </mat-card-content>
-      </mat-card>
+      </mat-card> -->
 
       <!-- Teacher Attendance Card -->
       <mat-card class="chart-card">
@@ -256,78 +214,154 @@
           </div>
         </mat-card-content>
       </mat-card>
-    </div>
 
-    <!-- FEE COLLECTION BY CLASS & SECTION - Stacked Bar Chart (Full Width) -->
-    <!-- <mat-card class="chart-card full-width fee-by-class-card" *ngIf="feeByClassData">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>account_balance_wallet</mat-icon>
-          Fee Collection Status by Class & Section
-        </mat-card-title>
-        <mat-card-subtitle>Paid vs Unpaid fees across all grades and sections</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <app-bar-chart 
-          *ngIf="feeByClassData"
-          [data]="feeByClassData"
-          [height]="getDynamicFeeChartHeight()"
-          [responsive]="true"
-          [showLegend]="true"
-          [stacked]="true"
-          [horizontal]="true">
-        </app-bar-chart>
-        <div *ngIf="!feeByClassData" class="no-data">
-          <mat-icon>info</mat-icon>
-          <p>No fee data available by class</p>
-        </div>
-      </mat-card-content>
-    </mat-card> -->
-
-    <!-- QUICK STATS CARDS - Responsive Grid -->
-    <div class="quick-stats-grid">
-      
-      <mat-card class="quick-stat-card">
-        <div class="quick-stat-icon new-admissions">
-          <mat-icon>person_add</mat-icon>
-        </div>
-        <div class="quick-stat-content">
-          <div class="stat-value">{{ dashboardData.quick_stats.new_admissions | number }}</div>
-          <div class="stat-label">New Admissions</div>
-        </div>
-      </mat-card>
-
-      <mat-card class="quick-stat-card">
-        <div class="quick-stat-icon upcoming-exams">
-          <mat-icon>assignment</mat-icon>
-        </div>
-        <div class="quick-stat-content">
-          <div class="stat-value">{{ dashboardData.quick_stats.upcoming_exams | number }}</div>
-          <div class="stat-label">Upcoming Exams</div>
-        </div>
-      </mat-card>
-
-      <mat-card class="quick-stat-card">
-        <div class="quick-stat-icon teachers-leave">
-          <mat-icon>event_busy</mat-icon>
-        </div>
-        <div class="quick-stat-content">
-          <div class="stat-value">{{ dashboardData.quick_stats.teachers_on_leave | number }}</div>
-          <div class="stat-label">Teachers on Leave</div>
-        </div>
-      </mat-card>
-
-      <mat-card class="quick-stat-card">
-        <div class="quick-stat-icon period-info">
-          <mat-icon>calendar_today</mat-icon>
-        </div>
-        <div class="quick-stat-content">
-          <div class="stat-value">{{ dashboardData.quick_stats.period_days | number }}</div>
-          <div class="stat-label">Days in Period</div>
-        </div>
+      <!-- Student Attendance Card -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>school</mat-icon>
+            Student Attendance
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="attendance-summary">
+            <div class="attendance-circle" [style.--percentage]="dashboardData.attendance.students.rate">
+              <svg class="progress-ring" width="140" height="140">
+                <circle class="progress-ring-circle-bg" cx="70" cy="70" r="60"></circle>
+                <circle class="progress-ring-circle" cx="70" cy="70" r="60" 
+                        [style.strokeDashoffset]="calculateStrokeDashoffset(dashboardData.attendance.students.rate)">
+                </circle>
+              </svg>
+              <div class="percentage-text">{{ dashboardData.attendance.students.rate }}%</div>
+            </div>
+            <div class="attendance-details">
+              <div class="detail-row">
+                <span class="label">Present:</span>
+                <span class="value success">{{ dashboardData.attendance.students.present }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Absent:</span>
+                <span class="value danger">{{ dashboardData.attendance.students.absent }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">On Leave:</span>
+                <span class="value warning">{{ dashboardData.attendance.students.leaves }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
       </mat-card>
 
     </div>
+
+    <!-- FINANCIAL OVERVIEW SECTION -->
+    <div class="financial-overview-section">
+      <mat-card class="financial-overview-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>account_balance</mat-icon>
+            Financial Overview
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="financial-summary-grid">
+            <!-- Total Income Card -->
+            <mat-card class="financial-card income-card">
+              <mat-card-content>
+                <div class="financial-icon">
+                  <mat-icon>trending_up</mat-icon>
+                </div>
+                <div class="financial-details">
+                  <h3 class="financial-label">Total Income</h3>
+                  <p class="financial-value">₹{{ (dashboardData.financial?.total_income || 0) | number:'1.2-2' }}</p>
+                  <p class="financial-meta">{{ dashboardData.financial?.income_transactions || 0 }} Transactions</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Total Expenses Card -->
+            <mat-card class="financial-card expense-card">
+              <mat-card-content>
+                <div class="financial-icon">
+                  <mat-icon>trending_down</mat-icon>
+                </div>
+                <div class="financial-details">
+                  <h3 class="financial-label">Total Expenses</h3>
+                  <p class="financial-value">₹{{ (dashboardData.financial?.total_expenses || 0) | number:'1.2-2' }}</p>
+                  <p class="financial-meta">{{ dashboardData.financial?.expense_transactions || 0 }} Transactions</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Net Balance Card -->
+            <mat-card class="financial-card balance-card" 
+                     [class.positive]="(dashboardData.financial?.net_balance || 0) >= 0" 
+                     [class.negative]="(dashboardData.financial?.net_balance || 0) < 0">
+              <mat-card-content>
+                <div class="financial-icon">
+                  <mat-icon>account_balance_wallet</mat-icon>
+                </div>
+                <div class="financial-details">
+                  <h3 class="financial-label">Net Balance</h3>
+                  <p class="financial-value">₹{{ (dashboardData.financial?.net_balance || 0) | number:'1.2-2' }}</p>
+                  <p class="financial-meta">Current Period</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Payment Mode Breakdown -->
+      <mat-card class="payment-mode-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>payment</mat-icon>
+            Payment Mode Breakdown
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="payment-mode-grid">
+            <!-- Income by Payment Mode -->
+            <div class="payment-mode-section">
+              <h4 class="payment-mode-title">
+                <mat-icon class="income-icon">trending_up</mat-icon>
+                Income by Payment Mode
+              </h4>
+              <div class="payment-mode-list">
+                <div class="payment-mode-item" *ngFor="let method of paymentMethods">
+                  <div class="payment-mode-info">
+                    <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
+                    <span class="payment-mode-label">{{ method.label }}</span>
+                  </div>
+                  <span class="payment-mode-amount income">₹{{ getPaymentModeAmount(method.value, 'income') | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expenses by Payment Mode -->
+            <div class="payment-mode-section">
+              <h4 class="payment-mode-title">
+                <mat-icon class="expense-icon">trending_down</mat-icon>
+                Expenses by Payment Mode
+              </h4>
+              <div class="payment-mode-list">
+                <div class="payment-mode-item" *ngFor="let method of paymentMethods">
+                  <div class="payment-mode-info">
+                    <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
+                    <span class="payment-mode-label">{{ method.label }}</span>
+                  </div>
+                  <span class="payment-mode-amount expense">₹{{ getPaymentModeAmount(method.value, 'expenses') | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+   
+
 
 
   </div>
