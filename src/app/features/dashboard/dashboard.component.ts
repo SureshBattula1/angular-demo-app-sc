@@ -11,7 +11,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { DoughnutChartData } from '../../shared/components/charts/doughnut-chart/doughnut-chart.component';
 import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
 import { DashboardService } from './dashboard.service';
 import { BranchService } from '../branches/services/branch.service';
@@ -54,10 +53,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   
-  // Chart data
-  attendanceTrendData: any | null = null; // Changed to bar chart data
-  feeBreakdownData: DoughnutChartData | null = null;
-  feeByClassData: any | null = null; // Stacked bar chart for fees by class
   
   // Payment methods (same as transaction form)
   paymentMethods = [
@@ -175,7 +170,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && response.data) {
           this.dashboardData = response.data;
-          this.prepareChartData();
         }
         this.loading = false;
       },
@@ -186,94 +180,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     
     this.subscriptions.push(statsSub);
-  }
-  
-  /**
-   * Prepare chart data from dashboard response
-   */
-  private prepareChartData(): void {
-    if (!this.dashboardData) return;
-    
-    // Attendance by Grade/Section - Bar Chart
-    if (this.dashboardData.trends?.attendance) {
-      const trend = this.dashboardData.trends.attendance;
-      
-      this.attendanceTrendData = {
-        labels: trend.map((item: any) => item.label), // e.g., "Grade 1 - A"
-        datasets: [
-          {
-            label: 'Present',
-            data: trend.map((item: any) => item.present),
-            backgroundColor: 'rgba(76, 175, 80, 0.8)', // Green
-            borderColor: '#4CAF50',
-            borderWidth: 1
-          },
-          {
-            label: 'Absent',
-            data: trend.map((item: any) => item.absent),
-            backgroundColor: 'rgba(244, 67, 54, 0.8)', // Red
-            borderColor: '#F44336',
-            borderWidth: 1
-          },
-          {
-            label: 'Leave',
-            data: trend.map((item: any) => item.leaves),
-            backgroundColor: 'rgba(255, 152, 0, 0.8)', // Orange
-            borderColor: '#FF9800',
-            borderWidth: 1
-          }
-        ]
-      };
-    }
-    
-    // Fee Breakdown Doughnut Chart
-    if (this.dashboardData.fees) {
-      const fees = this.dashboardData.fees;
-      this.feeBreakdownData = {
-        labels: ['Collected', 'Pending', 'Overdue'],
-        data: [
-          fees.total_collected || 0,
-          fees.total_pending || 0,
-          fees.total_overdue || 0
-        ],
-        backgroundColor: ['#4CAF50', '#FF9800', '#F44336']
-      };
-    }
-    
-    // Fee Collection by Class - Stacked Bar Chart
-    if (this.dashboardData.fees_by_class && this.dashboardData.fees_by_class.length > 0) {
-      const feeData = this.dashboardData.fees_by_class;
-      
-      // Extract the data
-      const paidAmounts = feeData.map((item: any) => item.total_paid);
-      const unpaidAmounts = feeData.map((item: any) => item.total_unpaid);
-      
-      this.feeByClassData = {
-        labels: feeData.map((item: any) => item.label), // e.g., "Grade 1 - A"
-        datasets: [
-          {
-            label: 'Paid',
-            data: paidAmounts,
-            backgroundColor: '#4CAF50', // Green
-            borderColor: '#388E3C',
-            borderWidth: 1,
-            barThickness: 25, // Fixed bar thickness
-            maxBarThickness: 30
-          },
-          {
-            label: 'Unpaid',
-            data: unpaidAmounts,
-            backgroundColor: '#FF5252', // Red
-            borderColor: '#D32F2F',
-            borderWidth: 1,
-            barThickness: 25, // Fixed bar thickness
-            maxBarThickness: 30
-          }
-        ]
-      };
-    } else {
-      this.feeByClassData = null;
-    }
   }
   
   /**
@@ -296,52 +202,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Format date for chart labels
-   */
-  private formatChartDate(dateString: string): string {
-    const date = new Date(dateString);
-    const period = this.selectedPeriod.value;
-    
-    if (period === 'today' || period === 'week') {
-      // Show day of week for today/week view
-      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    } else {
-      // Show date for month/custom view
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-  }
-  
-  /**
-   * Refresh dashboard
-   */
-  refresh(): void {
-    this.loadDashboard();
-  }
-  
-  /**
    * Calculate stroke dashoffset for circular progress
    */
   calculateStrokeDashoffset(percentage: number): number {
     const circumference = 2 * Math.PI * 60; // r=60
     return circumference - (percentage / 100) * circumference;
-  }
-  
-  /**
-   * Calculate dynamic height for fee chart based on number of classes
-   * More classes = taller chart for better spacing
-   * Maximum 1000px to prevent excessive height
-   */
-  getDynamicFeeChartHeight(): string {
-    if (!this.dashboardData?.fees_by_class) {
-      return '400px';
-    }
-    
-    const numClasses = this.dashboardData.fees_by_class.length;
-    // Calculate height: 60px per class/section + 100px for legend/padding
-    // Minimum 400px, Maximum 1000px
-    const heightInPixels = Math.min(700, Math.max(400, (numClasses * 60) + 100));
-    
-    return `${heightInPixels}px`;
   }
 
   /**
