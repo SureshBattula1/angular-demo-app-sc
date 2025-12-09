@@ -273,7 +273,7 @@
                 </div>
                 <div class="financial-details">
                   <h3 class="financial-label">Total Income</h3>
-                  <p class="financial-value">₹{{ (dashboardData.financial?.total_income || 0) | number:'1.2-2' }}</p>
+                  <p class="financial-value">₹{{ dashboardData.financial?.total_income | indianCurrency }}</p>
                   <p class="financial-meta">{{ dashboardData.financial?.income_transactions || 0 }} Transactions</p>
                 </div>
               </mat-card-content>
@@ -287,7 +287,7 @@
                 </div>
                 <div class="financial-details">
                   <h3 class="financial-label">Total Expenses</h3>
-                  <p class="financial-value">₹{{ (dashboardData.financial?.total_expenses || 0) | number:'1.2-2' }}</p>
+                  <p class="financial-value">₹{{ dashboardData.financial?.total_expenses | indianCurrency }}</p>
                   <p class="financial-meta">{{ dashboardData.financial?.expense_transactions || 0 }} Transactions</p>
                 </div>
               </mat-card-content>
@@ -303,7 +303,7 @@
                 </div>
                 <div class="financial-details">
                   <h3 class="financial-label">Net Balance</h3>
-                  <p class="financial-value">₹{{ (dashboardData.financial?.net_balance || 0) | number:'1.2-2' }}</p>
+                  <p class="financial-value">₹{{ dashboardData.financial?.net_balance | indianCurrency }}</p>
                   <p class="financial-meta">Current Period</p>
                 </div>
               </mat-card-content>
@@ -334,7 +334,7 @@
                     <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
                     <span class="payment-mode-label">{{ method.label }}</span>
                   </div>
-                  <span class="payment-mode-amount income">₹{{ getPaymentModeAmount(method.value, 'income') | number:'1.2-2' }}</span>
+                  <span class="payment-mode-amount income">₹{{ getPaymentModeAmount(method.value, 'income') | indianCurrency }}</span>
                 </div>
               </div>
             </div>
@@ -351,7 +351,28 @@
                     <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
                     <span class="payment-mode-label">{{ method.label }}</span>
                   </div>
-                  <span class="payment-mode-amount expense">₹{{ getPaymentModeAmount(method.value, 'expenses') | number:'1.2-2' }}</span>
+                  <span class="payment-mode-amount expense">₹{{ getPaymentModeAmount(method.value, 'expenses') | indianCurrency }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Net Balance by Payment Mode -->
+            <div class="payment-mode-section">
+              <h4 class="payment-mode-title">
+                <mat-icon class="balance-icon">account_balance_wallet</mat-icon>
+                Net Balance by Payment Mode
+              </h4>
+              <div class="payment-mode-list">
+                <div class="payment-mode-item" *ngFor="let method of paymentMethods">
+                  <div class="payment-mode-info">
+                    <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
+                    <span class="payment-mode-label">{{ method.label }}</span>
+                  </div>
+                  <span class="payment-mode-amount" 
+                        [class.positive]="getPaymentModeNetBalance(method.value) >= 0"
+                        [class.negative]="getPaymentModeNetBalance(method.value) < 0">
+                    ₹{{ getPaymentModeNetBalance(method.value) | indianCurrency }}
+                  </span>
                 </div>
               </div>
             </div>

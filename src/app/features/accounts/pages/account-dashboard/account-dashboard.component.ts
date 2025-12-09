@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
+import { IndianCurrencyPipe } from '../../../../shared/pipes/indian-currency.pipe';
 import { AccountService } from '../../services/account.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AccountDashboard, Transaction } from '../../../../core/models/account.model';
@@ -9,7 +10,7 @@ import { AccountDashboard, Transaction } from '../../../../core/models/account.m
 @Component({
   selector: 'app-account-dashboard',
   standalone: true,
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MaterialModule, IndianCurrencyPipe],
   templateUrl: './account-dashboard.component.html',
   styleUrls: ['./account-dashboard.component.scss']
 })

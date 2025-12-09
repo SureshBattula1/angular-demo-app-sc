@@ -122,7 +122,7 @@
             </div>
             <div class="summary-details">
               <h3 class="summary-label">Total Amount Paid</h3>
-              <p class="summary-value">₹{{ todayPaymentsDashboard.summary.total_amount | number:'1.2-2' }}</p>
+              <p class="summary-value">₹{{ todayPaymentsDashboard.summary.total_amount | indianCurrency }}</p>
             </div>
           </mat-card-content>
         </mat-card>
@@ -161,7 +161,7 @@
                   </span>
                   <span class="category-meta">{{ item.payment_count }} payments</span>
                 </div>
-                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
               </div>
             </div>
           </mat-card-content>
@@ -184,14 +184,14 @@
                   <span class="category-meta">
                     {{ item.student_count }} students • {{ item.payment_count }} payments
                     <span *ngIf="item.pending_amount > 0" class="pending-badge">
-                      • Pending: ₹{{ item.pending_amount | number:'1.2-2' }}
+                      • Pending: ₹{{ item.pending_amount | indianCurrency }}
                     </span>
                   </span>
                 </div>
                 <div class="amount-group">
-                  <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                  <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
                   <span *ngIf="item.pending_amount > 0" class="pending-amount">
-                    Pending: ₹{{ item.pending_amount | number:'1.2-2' }}
+                    Pending: ₹{{ item.pending_amount | indianCurrency }}
                   </span>
                 </div>
               </div>
@@ -219,7 +219,7 @@
                   <span class="category-name">{{ item.grade_label }} - Section {{ item.section }}</span>
                   <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
                 </div>
-                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
               </div>
               <div *ngIf="todayPaymentsDashboard.by_section.length === 0" class="empty-state">
                 <mat-icon>info</mat-icon>
@@ -248,7 +248,7 @@
                   <span class="category-name">{{ item.branch_name }}</span>
                   <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
                 </div>
-                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
               </div>
             </div>
           </mat-card-content>
@@ -270,7 +270,7 @@
                   <span class="category-name">{{ item.payment_method }}</span>
                   <span class="category-meta">{{ item.payment_count }} payments</span>
                 </div>
-                <span class="category-amount">₹{{ item.total_amount | number:'1.2-2' }}</span>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
               </div>
               <div *ngIf="todayPaymentsDashboard.by_payment_method.length === 0" class="empty-state">
                 <mat-icon>info</mat-icon>

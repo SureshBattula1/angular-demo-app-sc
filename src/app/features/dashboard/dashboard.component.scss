@@ -1016,10 +1016,11 @@
   
   .payment-mode-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 32px;
     
     @include tablet-only {
+      grid-template-columns: repeat(2, 1fr);
       gap: 24px;
     }
     
@@ -1055,6 +1056,10 @@
         
         &.expense-icon {
           color: #F44336;
+        }
+        
+        &.balance-icon {
+          color: var(--primary-color);
         }
       }
     }
@@ -1152,6 +1157,14 @@
         }
         
         &.expense {
+          color: #F44336;
+        }
+        
+        &.positive {
+          color: #4CAF50;
+        }
+        
+        &.negative {
           color: #F44336;
         }
       }

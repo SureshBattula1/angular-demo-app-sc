@@ -39,7 +39,7 @@
           </div>
           <div class="summary-details">
             <h3 class="summary-label">Total Income</h3>
-            <p class="summary-value">₹{{ dashboard.summary.total_income | number:'1.2-2' }}</p>
+            <p class="summary-value">₹{{ dashboard.summary.total_income | indianCurrency }}</p>
           </div>
         </mat-card-content>
       </mat-card>
@@ -51,7 +51,7 @@
           </div>
           <div class="summary-details">
             <h3 class="summary-label">Total Expense</h3>
-            <p class="summary-value">₹{{ dashboard.summary.total_expense | number:'1.2-2' }}</p>
+            <p class="summary-value">₹{{ dashboard.summary.total_expense | indianCurrency }}</p>
           </div>
         </mat-card-content>
       </mat-card>
@@ -63,7 +63,7 @@
           </div>
           <div class="summary-details">
             <h3 class="summary-label">Net Balance</h3>
-            <p class="summary-value">₹{{ dashboard.summary.net_balance | number:'1.2-2' }}</p>
+            <p class="summary-value">₹{{ dashboard.summary.net_balance | indianCurrency }}</p>
           </div>
         </mat-card-content>
       </mat-card>
@@ -88,7 +88,7 @@
           <div class="category-list">
             <div class="category-item" *ngFor="let item of dashboard.income_by_category">
               <span class="category-name">{{ item.category }}</span>
-              <span class="category-amount income">₹{{ item.amount | number:'1.2-2' }}</span>
+              <span class="category-amount income">₹{{ item.amount | indianCurrency }}</span>
             </div>
             <div *ngIf="dashboard.income_by_category.length === 0" class="empty-state">
               <mat-icon>info</mat-icon>
@@ -115,7 +115,7 @@
           <div class="category-list">
             <div class="category-item" *ngFor="let item of dashboard.expense_by_category">
               <span class="category-name">{{ item.category }}</span>
-              <span class="category-amount expense">₹{{ item.amount | number:'1.2-2' }}</span>
+              <span class="category-amount expense">₹{{ item.amount | indianCurrency }}</span>
             </div>
             <div *ngIf="dashboard.expense_by_category.length === 0" class="empty-state">
               <mat-icon>info</mat-icon>
@@ -149,7 +149,7 @@
               </p>
             </div>
             <div class="transaction-amount" [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
-              {{ transaction.type === 'Income' ? '+' : '-' }}₹{{ transaction.amount | number:'1.2-2' }}
+              {{ transaction.type === 'Income' ? '+' : '-' }}₹{{ transaction.amount | indianCurrency }}
             </div>
           </div>
           <div *ngIf="dashboard.recent_transactions.length === 0" class="empty-state">

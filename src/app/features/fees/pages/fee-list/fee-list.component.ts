@@ -15,6 +15,7 @@ import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.m
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { IndianCurrencyPipe } from '../../../../shared/pipes/indian-currency.pipe';
 
 @Component({
   selector: 'app-fee-list',
@@ -26,7 +27,8 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     DataTableComponent,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatButtonToggleModule
+    MatButtonToggleModule,
+    IndianCurrencyPipe
   ],
   templateUrl: './fee-list.component.html',
   styleUrls: ['./fee-list.component.scss']

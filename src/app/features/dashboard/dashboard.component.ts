@@ -11,7 +11,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { DoughnutChartComponent, DoughnutChartData } from '../../shared/components/charts/doughnut-chart/doughnut-chart.component';
+import { DoughnutChartData } from '../../shared/components/charts/doughnut-chart/doughnut-chart.component';
+import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
 import { DashboardService } from './dashboard.service';
 import { BranchService } from '../branches/services/branch.service';
 import { Subscription } from 'rxjs';
@@ -32,7 +33,7 @@ import { Subscription } from 'rxjs';
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule,
-    DoughnutChartComponent
+    IndianCurrencyPipe
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
@@ -367,4 +368,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
            data[mode.toLowerCase().replace(' ', '-')] || 
            0;
   }
+
+  /**
+   * Get net balance by payment mode (income - expenses)
+   */
+  getPaymentModeNetBalance(mode: string): number {
+    const income = this.getPaymentModeAmount(mode, 'income');
+    const expenses = this.getPaymentModeAmount(mode, 'expenses');
+    return income - expenses;
+  }
+
 }
