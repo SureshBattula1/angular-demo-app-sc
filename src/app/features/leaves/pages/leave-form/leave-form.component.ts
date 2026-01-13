@@ -10,9 +10,11 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ApiService } from '../../../../core/services/api.service';
 import { Leave, LeaveType, LeaveStatus } from '../../../../core/models/leave.model';
 import { Grade } from '../../../../core/models/grade.model';
 import { Section } from '../../../../core/models/section.model';
+import { Class } from '../../../../core/models/class.model';
 
 @Component({
   selector: 'app-leave-form',
@@ -33,6 +35,7 @@ export class LeaveFormComponent implements OnInit {
   grades: Grade[] = [];
   sections: Section[] = [];
   allSections: Section[] = [];
+  classes: Class[] = [];
   students: any[] = [];
   teachers: any[] = [];
   
@@ -74,6 +77,7 @@ export class LeaveFormComponent implements OnInit {
     private branchService: BranchService,
     private gradeService: GradeService,
     private sectionService: SectionService,
+    private apiService: ApiService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute
@@ -149,11 +153,27 @@ export class LeaveFormComponent implements OnInit {
     });
   }
   
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  loadGrades(branchId?: number | null): void {
+    const params: any = {};
+    if (branchId !== null && branchId !== undefined) {
+      params.branch_id = branchId;
+    }
+    
+    this.gradeService.getGrades(params).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.grades = response.data;
+          // Reset grade selection if current selection is not in filtered list
+          if (this.selectedGrade && !this.grades.find(g => g.value === this.selectedGrade)) {
+            this.selectedGrade = null;
+            this.selectedSection = null;
+            this.selectedUser = null;
+            this.students = [];
+          }
+          // After grades are loaded, filter sections if we have a grade selected
+          if (this.selectedGrade && this.selectedBranch !== null) {
+            this.filterSectionsAfterGradeLoad();
+          }
         }
       },
       error: (error) => {
@@ -162,11 +182,94 @@ export class LeaveFormComponent implements OnInit {
     });
   }
   
+  /**
+   * Load classes from API when branch is selected
+   */
+  loadClasses(branchId: number | null): void {
+    if (!branchId) {
+      this.classes = [];
+      return;
+    }
+    
+    const params: any = {
+      branch_id: branchId,
+      is_active: true
+    };
+    
+    this.apiService.get<Class[]>('/classes', params).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.classes = Array.isArray(response.data) ? response.data : [];
+          console.log('Classes loaded:', this.classes.length);
+        } else {
+          this.classes = [];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading classes:', error);
+        this.classes = [];
+        this.errorHandler.showError('Failed to load classes');
+      }
+    });
+  }
+  
+  /**
+   * Filter sections after grades are loaded (used when branch changes)
+   */
+  private filterSectionsAfterGradeLoad(): void {
+    if (this.selectedGrade && this.selectedBranch !== null) {
+      // Load sections filtered by grade and branch from backend
+      this.sectionService.getSections({
+        grade_level: this.selectedGrade,
+        branch_id: this.selectedBranch,
+        is_active: true,
+        per_page: 1000
+      }).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.sections = response.data;
+            // Reset section selection if current selection is not in filtered list
+            if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
+              this.selectedSection = null;
+              this.selectedUser = null;
+              this.students = [];
+            }
+          } else {
+            this.sections = [];
+            this.selectedSection = null;
+            this.selectedUser = null;
+            this.students = [];
+          }
+        },
+        error: (error) => {
+          console.error('Error loading filtered sections:', error);
+          // Fallback to client-side filtering
+          this.filterSectionsClientSide();
+        }
+      });
+    } else {
+      // Use client-side filtering
+      this.filterSectionsClientSide();
+    }
+  }
+  
+  /**
+   * Load all sections for filtering
+   * Load with high per_page limit to get all sections, or filter by branch/grade on backend
+   */
   loadAllSections(): void {
-    this.sectionService.getSections().subscribe({
+    // Load all sections with a high per_page limit and filter active sections
+    this.sectionService.getSections({ 
+      per_page: 1000, // High limit to get all sections
+      is_active: true  // Only load active sections
+    }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.allSections = response.data;
+          // Trigger filtering if branch/grade already selected
+          if (this.selectedBranch || this.selectedGrade) {
+            this.onGradeChange();
+          }
         }
       },
       error: (error) => {
@@ -175,11 +278,92 @@ export class LeaveFormComponent implements OnInit {
     });
   }
   
+  /**
+   * Update sections when grade or branch changes
+   */
   onGradeChange(): void {
-    if (this.selectedGrade) {
+    // Reload grades when branch changes (for student leaves)
+    // Only reload if we have a branch selected and we're in student mode
+    if (this.leaveType === 'student' && this.selectedBranch !== null) {
+      const currentGrade = this.selectedGrade; // Save current selection
+      this.loadGrades(this.selectedBranch);
+      // Load classes when branch is selected
+      this.loadClasses(this.selectedBranch);
+      // Note: loadGrades will handle resetting selectedGrade if it's not in the filtered list
+      // Sections will be filtered after grades are loaded via the callback
+    }
+    
+    // If both grade and branch are selected (branch not null), load sections from backend with filters
+    if (this.selectedGrade && this.selectedBranch !== null) {
+      // Load sections filtered by grade and branch from backend for better performance
+      this.sectionService.getSections({
+        grade_level: this.selectedGrade,
+        branch_id: this.selectedBranch,
+        is_active: true,
+        per_page: 1000
+      }).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.sections = response.data;
+            // Reset section selection if current selection is not in filtered list
+            if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
+              this.selectedSection = null;
+              this.selectedUser = null;
+              this.students = [];
+            }
+          } else {
+            this.sections = [];
+            this.selectedSection = null;
+            this.selectedUser = null;
+            this.students = [];
+          }
+        },
+        error: (error) => {
+          console.error('Error loading filtered sections:', error);
+          // Fallback to client-side filtering
+          this.filterSectionsClientSide();
+        }
+      });
+    } else {
+      // Use client-side filtering when only one filter is selected or branch is null
+      this.filterSectionsClientSide();
+    }
+  }
+
+  /**
+   * Client-side filtering fallback
+   */
+  private filterSectionsClientSide(): void {
+    if (this.selectedGrade && this.selectedBranch) {
+      // Filter sections by selected grade and branch
       this.sections = this.allSections.filter(
-        section => section.grade_level === this.selectedGrade
+        section => {
+          // Ensure section is active
+          if (!section.is_active) return false;
+          // Type-safe comparison: convert both to strings for grade_level
+          const matchesGrade = String(section.grade_level) === String(this.selectedGrade);
+          // Type-safe comparison: convert both to numbers for branch_id
+          const matchesBranch = Number(section.branch_id) === Number(this.selectedBranch);
+          return matchesGrade && matchesBranch;
+        }
       );
+    } else if (this.selectedGrade) {
+      // Filter by grade only (branch is null or not selected)
+      this.sections = this.allSections.filter(
+        section => section.is_active && String(section.grade_level) === String(this.selectedGrade)
+      );
+    } else if (this.selectedBranch) {
+      // Filter by branch only (grade not selected)
+      this.sections = this.allSections.filter(
+        section => section.is_active && Number(section.branch_id) === Number(this.selectedBranch)
+      );
+    } else {
+      // No filters selected - show all active sections
+      this.sections = this.allSections.filter(section => section.is_active);
+    }
+    
+    // Reset section selection if current selection is not in filtered list
+    if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
       this.selectedSection = null;
       this.selectedUser = null;
       this.students = [];
@@ -195,6 +379,8 @@ export class LeaveFormComponent implements OnInit {
   onBranchChange(): void {
     if (this.leaveType === 'teacher') {
       this.loadTeachers();
+      // Load classes when branch changes for teacher leaves too
+      this.loadClasses(this.selectedBranch);
     }
   }
   
@@ -202,11 +388,18 @@ export class LeaveFormComponent implements OnInit {
     if (!this.selectedGrade || !this.selectedSection) return;
     
     this.loading = true;
-    this.studentService.getStudents({
+    const filters: any = {
       grade: this.selectedGrade,
       section: this.selectedSection,
       student_status: 'Active'
-    }).subscribe({
+    };
+    
+    // Include branch_id if selected
+    if (this.selectedBranch) {
+      filters.branch_id = this.selectedBranch;
+    }
+    
+    this.studentService.getStudents(filters).subscribe({
       next: (response: any) => {
         if (response.success) {
           this.students = response.data || [];

@@ -1,0 +1,295 @@
+.student-promotion-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.promotion-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+mat-card-header {
+  padding: 24px 24px 16px;
+  
+  .header-icon {
+    margin-right: 12px;
+    color: #1976d2;
+    vertical-align: middle;
+  }
+  
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0;
+  }
+  
+  mat-card-subtitle {
+    margin-top: 8px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+mat-card-content {
+  padding: 24px;
+}
+
+mat-divider {
+  margin: 0 24px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+  
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+  
+  .section-title {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0 0 20px 0;
+    color: rgba(0, 0, 0, 0.87);
+    
+    mat-icon {
+      margin-right: 8px;
+      color: #1976d2;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    
+    .section-title {
+      margin: 0;
+    }
+    
+    .selection-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      .selected-count {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  
+  .form-field-half {
+    flex: 1;
+  }
+  
+  mat-checkbox {
+    margin-top: 8px;
+  }
+}
+
+mat-form-field {
+  width: 100%;
+  
+  mat-icon[matPrefix] {
+    margin-right: 8px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  
+  mat-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0;
+  }
+}
+
+.no-students {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: rgba(0, 0, 0, 0.3);
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0;
+  }
+}
+
+.students-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 8px;
+  
+  .student-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .student-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      
+      .student-name {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.87);
+      }
+      
+      .student-details {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+  }
+}
+
+.preview-card {
+  background-color: #f5f5f5;
+  margin-top: 16px;
+  position: relative;
+  
+  .preview-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    
+    .preview-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      
+      .preview-label {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.6);
+        font-weight: 500;
+      }
+      
+      .preview-value {
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.87);
+      }
+    }
+  }
+  
+  .close-preview-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  
+  .action-buttons-right {
+    display: flex;
+    gap: 12px;
+  }
+  
+  button {
+    mat-icon {
+      margin-right: 8px;
+    }
+    
+    .button-spinner {
+      display: inline-block;
+      margin-left: 8px;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .student-promotion-container {
+    padding: 16px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+    
+    .action-buttons-right {
+      width: 100%;
+      flex-direction: column;
+      
+      button {
+        width: 100%;
+      }
+    }
+    
+    button:first-child {
+      width: 100%;
+    }
+  }
+  
+  .preview-summary {
+    grid-template-columns: 1fr;
+  }
+}

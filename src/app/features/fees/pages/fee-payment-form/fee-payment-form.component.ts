@@ -188,9 +188,15 @@ export class FeePaymentFormComponent implements OnInit {
     
     this.loadingSections = true;
     // Note: SectionService uses 'grade_level' parameter
-    this.sectionService.getSections({ branch_id: branchId, grade_level: grade }).subscribe({
+    this.sectionService.getSections({ 
+      branch_id: branchId, 
+      grade_level: grade,
+      per_page: 1000,
+      is_active: true
+    }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
+          // Double-check is_active filter (already filtered by backend, but safe to filter again)
           this.sections = response.data.filter((s: any) => s.is_active);
         } else {
           this.sections = [];

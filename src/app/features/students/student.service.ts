@@ -140,20 +140,6 @@ export class StudentService {
   }
 
   /**
-   * Promote students to next grade
-   * @param data - Promotion data
-   * @returns Observable of success response
-   */
-  promoteStudents(data: {
-    student_ids: number[];
-    from_grade: string;
-    to_grade: string;
-    academic_year: string;
-  }): Observable<any> {
-    return this.studentCrudService.promoteStudents(data);
-  }
-
-  /**
    * Export students data
    * Note: Export is handled by ExportService in the list component
    * This method is kept for backward compatibility

@@ -15,9 +15,13 @@ export class GradeService {
 
   /**
    * Get all grades
+   * If branch_id is provided, uses /classes/grades endpoint which supports branch filtering
    */
   getGrades(params?: Record<string, unknown>): Observable<GradeListResponse> {
-    return this.apiService.get<Grade[]>(this.GRADE_ENDPOINT, params).pipe(
+    // Use /classes/grades endpoint if branch_id is provided (supports branch filtering)
+    const endpoint = (params && params['branch_id']) ? `${this.ENDPOINT}/grades` : this.GRADE_ENDPOINT;
+    
+    return this.apiService.get<Grade[]>(endpoint, params).pipe(
       map(response => ({
         success: response.success,
         data: response.data || [],

@@ -54,6 +54,12 @@ export const routes: Routes = [
         data: { permissions: ['students.view', 'students.create'], permissionMode: 'any' }
       },
       {
+        path: 'promotions',
+        loadChildren: () => import('./features/promotions/promotions.routes').then(m => m.PROMOTIONS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['students.promote', 'students.edit'], permissionMode: 'any' }
+      },
+      {
         path: 'teachers',
         loadChildren: () => import('./features/teachers/teachers.routes').then(m => m.TEACHERS_ROUTES),
         canActivate: [permissionGuard],

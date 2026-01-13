@@ -46,6 +46,8 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   selectedStudents: Student[] = [];
   currentFilters: Record<string, unknown> = {};
   allSections: Section[] = []; // Store all sections for filtering
+  currentGrade: string | null = null; // Track current grade selection
+  currentBranch: string | null = null; // Track current branch selection
   
   tableConfig: TableConfig = {
     columns: [
@@ -220,7 +222,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     forkJoin({
       branches: this.branchService.getBranches({ is_active: true }),
       grades: this.gradeService.getGrades(),
-      sections: this.sectionService.getSections()
+      sections: this.sectionService.getSections({ per_page: 1000, is_active: true })
     }).subscribe({
       next: (responses) => {
         // Process branches
@@ -261,28 +263,36 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   }
   
   /**
-   * Update section options based on selected grade
+   * Update section options based on selected grade and branch
    */
-  updateSectionOptions(selectedGrade: string | null): void {
+  updateSectionOptions(selectedGrade: string | null, selectedBranch: string | null = null): void {
     const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section');
-    if (sectionField) {
-      if (selectedGrade) {
-        // Filter sections by grade
-        const filteredSections = this.allSections.filter(
-          section => section.grade_level === selectedGrade
-        );
-        sectionField.options = filteredSections.map(section => ({
-          value: section.name,
-          label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
-        }));
-      } else {
-        // Show all sections or clear
-        sectionField.options = this.allSections.map(section => ({
-          value: section.name,
-          label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
-        }));
-      }
+    if (!sectionField) return;
+    
+    let filteredSections = this.allSections;
+    
+    // Filter by grade if selected
+    if (selectedGrade) {
+      filteredSections = filteredSections.filter(
+        section => String(section.grade_level) === String(selectedGrade)
+      );
     }
+    
+    // Filter by branch if selected
+    if (selectedBranch) {
+      filteredSections = filteredSections.filter(
+        section => Number(section.branch_id) === Number(selectedBranch)
+      );
+    }
+    
+    // Only show active sections
+    filteredSections = filteredSections.filter(section => section.is_active);
+    
+    // Update section options
+    sectionField.options = filteredSections.map(section => ({
+      value: section.name,
+      label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+    }));
   }
   
   loadStudents(): void {
@@ -309,9 +319,13 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
-    // Update sections when grade field changes
+    // Update sections when grade or branch field changes
     if (event.field === 'grade') {
-      this.updateSectionOptions(event.value);
+      this.currentGrade = event.value;
+      this.updateSectionOptions(this.currentGrade, this.currentBranch);
+    } else if (event.field === 'branch_id') {
+      this.currentBranch = event.value;
+      this.updateSectionOptions(this.currentGrade, this.currentBranch);
     }
   }
   

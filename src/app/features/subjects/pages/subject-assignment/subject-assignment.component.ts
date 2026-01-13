@@ -92,7 +92,7 @@ export class SubjectAssignmentComponent implements OnInit {
   }
   
   loadAllSections(): void {
-    this.sectionService.getSections().subscribe({
+    this.sectionService.getSections({ per_page: 1000, is_active: true }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.allSections = response.data;
@@ -105,23 +105,30 @@ export class SubjectAssignmentComponent implements OnInit {
   }
   
   onBranchOrGradeChange(): void {
+    let filteredSections = this.allSections;
+    
     if (this.selectedGrade && this.selectedBranch) {
-      this.sections = this.allSections.filter(
-        section => section.grade_level === this.selectedGrade && 
-                   section.branch_id === this.selectedBranch
+      // Filter by both grade and branch with type-safe comparisons
+      filteredSections = filteredSections.filter(
+        section => {
+          const matchesGrade = String(section.grade_level) === String(this.selectedGrade);
+          const matchesBranch = Number(section.branch_id) === Number(this.selectedBranch);
+          return matchesGrade && matchesBranch && section.is_active;
+        }
       );
     } else if (this.selectedGrade) {
-      this.sections = this.allSections.filter(
-        section => section.grade_level === this.selectedGrade
+      filteredSections = filteredSections.filter(
+        section => String(section.grade_level) === String(this.selectedGrade) && section.is_active
       );
     } else if (this.selectedBranch) {
-      this.sections = this.allSections.filter(
-        section => section.branch_id === this.selectedBranch
+      filteredSections = filteredSections.filter(
+        section => Number(section.branch_id) === Number(this.selectedBranch) && section.is_active
       );
     } else {
-      this.sections = [];
+      filteredSections = filteredSections.filter(section => section.is_active);
     }
     
+    this.sections = filteredSections;
     this.selectedSection = null;
   }
   

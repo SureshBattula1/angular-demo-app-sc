@@ -123,13 +123,21 @@ export class AttendanceFormComponent implements OnInit {
   
   /**
    * Load all sections for filtering
+   * Load with high per_page limit to get all sections, or filter by branch/grade on backend
    */
   loadAllSections(): void {
-    this.sectionService.getSections().subscribe({
+    // Load all sections with a high per_page limit and filter active sections
+    this.sectionService.getSections({ 
+      per_page: 1000, // High limit to get all sections
+      is_active: true  // Only load active sections
+    }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.allSections = response.data;
-
+          // Trigger filtering if branch/grade already selected
+          if (this.selectedBranch || this.selectedGrade) {
+            this.onGradeOrBranchChange();
+          }
         }
       },
       error: (error) => {
@@ -142,30 +150,69 @@ export class AttendanceFormComponent implements OnInit {
    * Update sections when grade or branch changes
    */
   onGradeOrBranchChange(): void {
+    // If both grade and branch are selected, load sections from backend with filters
+    if (this.selectedGrade && this.selectedBranch) {
+      // Load sections filtered by grade and branch from backend for better performance
+      this.sectionService.getSections({
+        grade_level: this.selectedGrade,
+        branch_id: this.selectedBranch,
+        is_active: true,
+        per_page: 1000
+      }).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.sections = response.data;
+            // Reset section selection if current selection is not in filtered list
+            if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
+              this.selectedSection = null;
+            }
+          } else {
+            this.sections = [];
+            this.selectedSection = null;
+          }
+        },
+        error: (error) => {
+          console.error('Error loading filtered sections:', error);
+          // Fallback to client-side filtering
+          this.filterSectionsClientSide();
+        }
+      });
+    } else {
+      // Use client-side filtering when only one filter is selected
+      this.filterSectionsClientSide();
+    }
+  }
+
+  /**
+   * Client-side filtering fallback
+   */
+  private filterSectionsClientSide(): void {
     if (this.selectedGrade && this.selectedBranch) {
       // Filter sections by selected grade and branch
       this.sections = this.allSections.filter(
         section => {
-          const matchesGrade = section.grade_level === this.selectedGrade;
-          const matchesBranch = section.branch_id === this.selectedBranch;
+          // Ensure section is active
+          if (!section.is_active) return false;
+          // Type-safe comparison: convert both to strings for grade_level
+          const matchesGrade = String(section.grade_level) === String(this.selectedGrade);
+          // Type-safe comparison: convert both to numbers for branch_id
+          const matchesBranch = Number(section.branch_id) === Number(this.selectedBranch);
           return matchesGrade && matchesBranch;
         }
       );
     } else if (this.selectedGrade) {
       // Filter by grade only
       this.sections = this.allSections.filter(
-        section => section.grade_level === this.selectedGrade
+        section => section.is_active && String(section.grade_level) === String(this.selectedGrade)
       );
     } else if (this.selectedBranch) {
       // Filter by branch only
       this.sections = this.allSections.filter(
-        section => section.branch_id === this.selectedBranch
+        section => section.is_active && Number(section.branch_id) === Number(this.selectedBranch)
       );
     } else {
       this.sections = [];
     }
-    
-
     
     // Reset section selection if current selection is not in filtered list
     if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {

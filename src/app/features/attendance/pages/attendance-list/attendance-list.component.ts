@@ -44,6 +44,8 @@ export class AttendanceListComponent implements OnInit {
   currentFilters: Record<string, unknown> = {};
   branches: any[] = [];
   allSections: Section[] = [];
+  currentGrade: string | null = null; // Track current grade selection
+  currentBranch: string | null = null; // Track current branch selection
   
   // Separate table configurations
   studentTableConfig: TableConfig = {
@@ -350,11 +352,11 @@ export class AttendanceListComponent implements OnInit {
    * Load all sections for filtering
    */
   loadSections(): void {
-    this.sectionService.getSections().subscribe({
+    this.sectionService.getSections({ per_page: 1000, is_active: true }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.allSections = response.data;
-          this.updateSectionOptions(null);
+          this.updateSectionOptions(null, null);
         }
       },
       error: (error) => {
@@ -363,25 +365,32 @@ export class AttendanceListComponent implements OnInit {
   }
   
   /**
-   * Update section options based on selected grade
+   * Update section options based on selected grade and branch
    */
-  updateSectionOptions(selectedGrade: string | null): void {
-    let sectionOptions;
+  updateSectionOptions(selectedGrade: string | null, selectedBranch: string | null = null): void {
+    let filteredSections = this.allSections;
     
+    // Filter by grade if selected
     if (selectedGrade) {
-      const filteredSections = this.allSections.filter(
-        section => section.grade_level === selectedGrade
+      filteredSections = filteredSections.filter(
+        section => String(section.grade_level) === String(selectedGrade)
       );
-      sectionOptions = filteredSections.map(section => ({
-        value: section.name,
-        label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
-      }));
-    } else {
-      sectionOptions = this.allSections.map(section => ({
-        value: section.name,
-        label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
-      }));
     }
+    
+    // Filter by branch if selected
+    if (selectedBranch) {
+      filteredSections = filteredSections.filter(
+        section => Number(section.branch_id) === Number(selectedBranch)
+      );
+    }
+    
+    // Only show active sections
+    filteredSections = filteredSections.filter(section => section.is_active);
+    
+    const sectionOptions = filteredSections.map(section => ({
+      value: section.name,
+      label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+    }));
     
     const studentSectionField = this.studentSearchConfig.fields.find(f => f.key === 'section');
     if (studentSectionField) {
@@ -549,8 +558,13 @@ export class AttendanceListComponent implements OnInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
+    // Update sections when grade or branch field changes
     if (event.field === 'grade') {
-      this.updateSectionOptions(event.value);
+      this.currentGrade = event.value;
+      this.updateSectionOptions(this.currentGrade, this.currentBranch);
+    } else if (event.field === 'branch_id') {
+      this.currentBranch = event.value;
+      this.updateSectionOptions(this.currentGrade, this.currentBranch);
     }
   }
   

@@ -62,17 +62,5 @@ export class StudentCrudService {
     
     return this.apiService.post<{file_path: string, file_url: string}>(`${this.ENDPOINT}/${id}/upload-profile-picture`, formData);
   }
-
-  /**
-   * Promote students
-   */
-  promoteStudents(data: {
-    student_ids: number[];
-    from_grade: string;
-    to_grade: string;
-    academic_year: string;
-  }): Observable<ApiResponse> {
-    return this.apiService.post(`${this.ENDPOINT}/promote`, data);
-  }
 }
 

@@ -1,0 +1,216 @@
+<div class="student-promotion-container">
+  <mat-card class="promotion-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">trending_up</mat-icon>
+        Student Promotion
+      </mat-card-title>
+      <mat-card-subtitle>
+        Promote students to the next grade with fee handling
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <form [formGroup]="promotionForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Promotion Settings -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>settings</mat-icon>
+            Promotion Settings
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="promotionForm.get('branch_id')?.invalid && promotionForm.get('branch_id')?.touched">
+                Branch is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year *</mat-label>
+              <mat-select formControlName="academic_year">
+                <mat-option *ngFor="let year of academicYears" [value]="year">
+                  {{ year }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+              <mat-error *ngIf="promotionForm.get('academic_year')?.invalid && promotionForm.get('academic_year')?.touched">
+                Academic year is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>From Grade *</mat-label>
+              <mat-select formControlName="from_grade">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-error *ngIf="promotionForm.get('from_grade')?.invalid && promotionForm.get('from_grade')?.touched">
+                From Grade is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>To Grade *</mat-label>
+              <mat-select formControlName="to_grade">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>arrow_forward</mat-icon>
+              <mat-error *ngIf="promotionForm.get('to_grade')?.invalid && promotionForm.get('to_grade')?.touched">
+                To Grade is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="check_eligibility">
+              Check promotion eligibility before promoting
+            </mat-checkbox>
+          </div>
+        </div>
+
+        <!-- Student Selection -->
+        <div class="form-section" *ngIf="promotionForm.get('branch_id')?.value && promotionForm.get('from_grade')?.value">
+          <div class="section-header">
+            <h3 class="section-title">
+              <mat-icon>people</mat-icon>
+              Select Students
+            </h3>
+            <div class="selection-info">
+              <span class="selected-count">{{ selectedStudents.length }} of {{ fromGradeStudents.length }} selected</span>
+              <button 
+                type="button" 
+                mat-stroked-button 
+                (click)="selectAllStudents()"
+                [disabled]="fromGradeStudents.length === 0">
+                {{ selectedStudents.length === fromGradeStudents.length ? 'Deselect All' : 'Select All' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="isLoading" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading students...</p>
+          </div>
+
+          <div *ngIf="!isLoading && fromGradeStudents.length === 0" class="no-students">
+            <mat-icon>info</mat-icon>
+            <p>No active students found for the selected branch and grade.</p>
+          </div>
+
+          <div *ngIf="!isLoading && fromGradeStudents.length > 0" class="students-list">
+            <div class="student-item" 
+                 *ngFor="let student of fromGradeStudents"
+                 (click)="toggleStudentSelection(student)">
+              <mat-checkbox 
+                [checked]="isStudentSelected(student)"
+                (click)="$event.stopPropagation()"
+                (change)="toggleStudentSelection(student)">
+              </mat-checkbox>
+              <div class="student-info">
+                <span class="student-name">{{ getFullName(student) }}</span>
+                <span class="student-details">
+                  {{ student.admission_number }} 
+                  <span *ngIf="student.roll_number">• Roll: {{ student.roll_number }}</span>
+                  <span *ngIf="student.section">• Section: {{ student.section }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="form-section" *ngIf="showPreview && previewData">
+          <h3 class="section-title">
+            <mat-icon>preview</mat-icon>
+            Promotion Preview
+          </h3>
+          <mat-card class="preview-card">
+            <mat-card-content>
+              <div class="preview-summary">
+                <div class="preview-item">
+                  <span class="preview-label">Total Students:</span>
+                  <span class="preview-value">{{ previewData.total_students || selectedStudents.length }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">From Grade:</span>
+                  <span class="preview-value">{{ promotionForm.get('from_grade')?.value }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">To Grade:</span>
+                  <span class="preview-value">{{ promotionForm.get('to_grade')?.value }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Academic Year:</span>
+                  <span class="preview-value">{{ promotionForm.get('academic_year')?.value }}</span>
+                </div>
+                <div class="preview-item" *ngIf="previewData.total_fees_carry_forward">
+                  <span class="preview-label">Total Fees to Carry Forward:</span>
+                  <span class="preview-value">₹{{ previewData.total_fees_carry_forward | number:'1.2-2' }}</span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                mat-icon-button 
+                class="close-preview-btn"
+                (click)="closePreview()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <button 
+            type="button" 
+            mat-stroked-button 
+            (click)="onCancel()"
+            [disabled]="isLoading">
+            <mat-icon>cancel</mat-icon>
+            Cancel
+          </button>
+          
+          <div class="action-buttons-right">
+            <button 
+              type="button" 
+              mat-stroked-button 
+              color="primary"
+              (click)="previewPromotion()"
+              [disabled]="isLoading || isPreviewing || selectedStudents.length === 0">
+              <mat-icon>preview</mat-icon>
+              {{ isPreviewing ? 'Previewing...' : 'Preview' }}
+            </button>
+            
+            <button 
+              type="submit" 
+              mat-raised-button 
+              color="primary"
+              [disabled]="isLoading || !promotionForm.valid || selectedStudents.length === 0">
+              <mat-icon>trending_up</mat-icon>
+              {{ isLoading ? 'Promoting...' : 'Promote Students' }}
+              <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

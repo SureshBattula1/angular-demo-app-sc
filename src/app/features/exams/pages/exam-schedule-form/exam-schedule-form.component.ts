@@ -390,9 +390,17 @@ export class ExamScheduleFormComponent implements OnInit {
       branch_id: branchId
     };
 
-    this.sectionService.getSections(params).subscribe({
+    // Add pagination and is_active filter to params
+    const sectionParams = {
+      ...params,
+      per_page: 1000,
+      is_active: true
+    };
+    
+    this.sectionService.getSections(sectionParams).subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          // Double-check is_active filter (already filtered by backend, but safe to filter again)
           this.sections = response.data.filter((section: any) => section.is_active);
         } else {
           this.sections = [];
