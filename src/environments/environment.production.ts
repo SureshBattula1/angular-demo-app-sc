@@ -4,7 +4,7 @@ export const environment = {
   apiUrl: 'https://demo.schools.api.techtrendstalks.com/api',
   appName: 'School Management System',
   version: '1.0.0',
-  enableDebugTools: false,
+  enableDebugTools: false,  // Disable debug tools in production
   logLevel: 'error'
 };
 
