@@ -12,6 +12,8 @@ import { UserPreferenceService } from '../../core/services/user-preference.servi
 import { ThemeService } from '../../core/services/theme.service';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 import { THEMES, THEME_OPTIONS, DEFAULT_THEME, BREAKPOINTS, ThemeColors } from '../../shared/config/theme.config';
+import { ImpersonationService } from '../../company-portal/services/impersonation.service';
+import { CompanyAuthService } from '../../company-portal/services/company-auth.service';
 
 // Menu item interface
 interface MenuItem {
@@ -37,6 +39,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   isTablet = false;
   isMobile = false;
   currentRoute = '';  // Track current route for active state
+  isImpersonating = false; // Track impersonation state
   
   // Subscriptions for cleanup
   private routerSubscription?: Subscription;
@@ -79,7 +82,9 @@ export class MainShellComponent implements OnInit, OnDestroy {
     public permissionService: PermissionService,
     private userPreferenceService: UserPreferenceService,
     private themeService: ThemeService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private impersonationService: ImpersonationService,
+    private companyAuthService: CompanyAuthService
   ) {
     this.isHandset$ = this.breakpointObserver.observe(Breakpoints.Handset)
       .pipe(map(result => result.matches));
@@ -124,6 +129,79 @@ export class MainShellComponent implements OnInit, OnDestroy {
     
     // Load user preferences from backend
     this.loadUserPreferences();
+    
+    // Check if impersonating
+    this.checkImpersonationStatus();
+  }
+  
+  /**
+   * Check if currently in impersonation mode
+   */
+  checkImpersonationStatus(): void {
+    this.isImpersonating = this.impersonationService.hasImpersonationToken();
+    
+    // Also check active session
+    if (this.isImpersonating) {
+      this.impersonationService.getActiveSessions().subscribe({
+        next: (response) => {
+          if (response.success && response.data && response.data.length > 0) {
+            this.isImpersonating = true;
+          } else {
+            this.isImpersonating = false;
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          // If check fails, use token check
+          this.isImpersonating = this.impersonationService.hasImpersonationToken();
+          this.cdr.detectChanges();
+        }
+      });
+    }
+  }
+  
+  /**
+   * Exit impersonation and return to company portal
+   */
+  exitImpersonation(): void {
+    this.impersonationService.exitImpersonation().subscribe({
+      next: (response) => {
+        if (response.success) {
+          // Restore company portal token
+          const companyPortalToken = localStorage.getItem('company_portal_token_backup');
+          if (companyPortalToken) {
+            localStorage.setItem('company_portal_token', companyPortalToken);
+            localStorage.removeItem('company_portal_token_backup');
+          }
+          
+          // Clear impersonation token
+          localStorage.removeItem('impersonation_token');
+          localStorage.removeItem('auth_token');
+          
+          // Redirect to company portal schools list
+          this.router.navigate(['/company-portal/schools']).then(() => {
+            // Reload to refresh auth context
+            window.location.reload();
+          });
+        } else {
+          this.errorHandler.showError('Failed to exit impersonation');
+        }
+      },
+      error: (error) => {
+        // Even on error, try to restore and redirect
+        const companyPortalToken = localStorage.getItem('company_portal_token_backup');
+        if (companyPortalToken) {
+          localStorage.setItem('company_portal_token', companyPortalToken);
+          localStorage.removeItem('company_portal_token_backup');
+        }
+        localStorage.removeItem('impersonation_token');
+        localStorage.removeItem('auth_token');
+        
+        this.router.navigate(['/company-portal/schools']).then(() => {
+          window.location.reload();
+        });
+      }
+    });
   }
   
   ngOnDestroy() {

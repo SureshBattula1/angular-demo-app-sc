@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { CompanySchoolService } from '../../../services/school.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { School } from '../../../../core/models/school.model';
+import { SchoolUserSelectionComponent, SchoolUserSelectionData } from '../school-user-selection/school-user-selection.component';
 
 @Component({
   selector: 'app-school-view',
@@ -23,7 +25,8 @@ export class SchoolViewComponent implements OnInit {
     private schoolService: CompanySchoolService,
     private route: ActivatedRoute,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -132,5 +135,23 @@ export class SchoolViewComponent implements OnInit {
 
   getSchoolIcon(): string {
     return 'school';
+  }
+
+  openUserSelection(): void {
+    if (!this.school) {
+      return;
+    }
+
+    const dialogData: SchoolUserSelectionData = {
+      schoolId: this.schoolId,
+      schoolName: this.school.name
+    };
+
+    this.dialog.open(SchoolUserSelectionComponent, {
+      width: '1000px',
+      maxWidth: '90vw',
+      data: dialogData,
+      disableClose: true
+    });
   }
 }

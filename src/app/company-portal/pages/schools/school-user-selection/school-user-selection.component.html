@@ -1,0 +1,114 @@
+<div class="user-selection-dialog">
+  <div mat-dialog-title class="dialog-header">
+    <mat-icon class="header-icon">person_search</mat-icon>
+    <div class="header-content">
+      <h2>Access School</h2>
+      <p class="school-name">{{ data.schoolName }}</p>
+    </div>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Search and Filter Section -->
+    <div *ngIf="!loading && allUsers.length > 0" class="filters-section">
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search Users</mat-label>
+          <input matInput [formControl]="searchControl" placeholder="Search by name, email, role, or branch">
+          <mat-icon matPrefix>search</mat-icon>
+          <button *ngIf="searchControl.value" mat-icon-button matSuffix (click)="searchControl.setValue('')" aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="role-filter-field">
+          <mat-label>Filter by Role</mat-label>
+          <mat-select [formControl]="roleFilterControl">
+            <mat-option *ngFor="let role of availableRoles" [value]="role.value">
+              {{ role.label }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>filter_list</mat-icon>
+        </mat-form-field>
+      </div>
+      
+      <div class="results-count" *ngIf="filteredUsers.length !== allUsers.length">
+        Showing {{ filteredUsers.length }} of {{ allUsers.length }} users
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading users...</p>
+    </div>
+
+    <div *ngIf="!loading && allUsers.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">people_outline</mat-icon>
+      <p>No users available for this school</p>
+    </div>
+
+    <div *ngIf="!loading && filteredUsers.length === 0 && allUsers.length > 0" class="empty-state">
+      <mat-icon class="empty-icon">search_off</mat-icon>
+      <p>No users found matching your search criteria</p>
+      <button mat-button color="primary" (click)="clearFilters()">
+        <mat-icon>clear</mat-icon>
+        Clear Filters
+      </button>
+    </div>
+
+    <div *ngIf="!loading && filteredUsers.length > 0" class="users-list">
+      <p class="list-description">Select a user to access the school:</p>
+      
+      <div class="user-cards">
+        <mat-card 
+          *ngFor="let user of filteredUsers" 
+          class="user-card"
+          [class.branch-admin]="isBranchAdmin(user)"
+          [class.selected]="selectedUser?.id === user.id"
+          [class.impersonating]="impersonating && selectedUser?.id === user.id">
+          <mat-card-content>
+            <div class="user-info">
+              <div class="user-avatar">
+                <mat-icon [class]="'role-icon ' + getRoleColor(user.role)">
+                  {{ getRoleIcon(user.role) }}
+                </mat-icon>
+              </div>
+              <div class="user-details">
+                <h3 class="user-name">{{ user.full_name || (user.first_name + ' ' + user.last_name) }}</h3>
+                <p class="user-email">{{ user.email }}</p>
+                <div class="user-meta">
+                  <span class="role-badge" [class]="'role-' + (user.role?.toLowerCase() || '')">
+                    <mat-icon>{{ getRoleIcon(user.role) }}</mat-icon>
+                    {{ user.role }}
+                  </span>
+                  <span *ngIf="user.branch" class="branch-info">
+                    <mat-icon>business</mat-icon>
+                    {{ user.branch.name }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="user-actions">
+              <button 
+                mat-raised-button 
+                color="primary"
+                [disabled]="impersonating"
+                (click)="selectUser(user)">
+                <mat-icon *ngIf="!impersonating || selectedUser?.id !== user.id">login</mat-icon>
+                <mat-spinner *ngIf="impersonating && selectedUser?.id === user.id" diameter="20" class="spinner-inline"></mat-spinner>
+                <span>{{ impersonating && selectedUser?.id === user.id ? 'Accessing...' : 'Access' }}</span>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button (click)="cancel()" [disabled]="impersonating">
+      <mat-icon>close</mat-icon>
+      Cancel
+    </button>
+  </mat-dialog-actions>
+</div>
+

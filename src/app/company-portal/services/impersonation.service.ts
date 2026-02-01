@@ -110,5 +110,35 @@ export class ImpersonationService {
   isImpersonating(): boolean {
     return this.activeSession() !== null && this.activeSession()?.status === 'Active';
   }
+
+  /**
+   * Check if impersonation token exists in storage
+   */
+  hasImpersonationToken(): boolean {
+    return !!localStorage.getItem('impersonation_token');
+  }
+
+  /**
+   * Exit impersonation and restore company portal session
+   */
+  exitImpersonation(): Observable<ApiResponse<void>> {
+    return this.stopImpersonation().pipe(
+      tap(() => {
+        // Restore company portal token
+        const companyPortalToken = localStorage.getItem('company_portal_token_backup');
+        if (companyPortalToken) {
+          localStorage.setItem('company_portal_token', companyPortalToken);
+          localStorage.removeItem('company_portal_token_backup');
+        }
+        
+        // Clear impersonation token
+        localStorage.removeItem('impersonation_token');
+        localStorage.removeItem('auth_token');
+        
+        // Clear active session
+        this.activeSession.set(null);
+      })
+    );
+  }
 }
 

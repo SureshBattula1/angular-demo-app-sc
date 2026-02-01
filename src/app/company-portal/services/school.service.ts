@@ -101,5 +101,12 @@ export class CompanySchoolService {
   getSchoolStatistics(id: number): Observable<ApiResponse<any>> {
     return this.companyApiService.get<any>(`/schools/${id}/statistics`);
   }
+
+  /**
+   * Get users from a school
+   */
+  getSchoolUsers(schoolId: number, params?: { role?: string }): Observable<ApiResponse<any[]>> {
+    return this.companyApiService.get<any[]>(`/schools/${schoolId}/users`, params);
+  }
 }
 

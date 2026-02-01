@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -8,6 +9,7 @@ import { CompanySchoolService } from '../../../services/school.service';
 import { School } from '../../../../core/models/school.model';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { ExportService } from '../../../../shared/services/export.service';
+import { SchoolUserSelectionComponent, SchoolUserSelectionData } from '../school-user-selection/school-user-selection.component';
 
 @Component({
   selector: 'app-school-list',
@@ -94,6 +96,12 @@ export class SchoolListComponent implements OnInit {
     ],
     actions: [
       {
+        icon: 'login',
+        label: 'Access School',
+        color: 'accent',
+        action: (row) => this.accessSchool(row),
+      },
+      {
         icon: 'visibility',
         label: 'View Details',
         action: (row) => this.viewSchool(row),
@@ -167,7 +175,8 @@ export class SchoolListComponent implements OnInit {
     private schoolService: CompanySchoolService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private dialog: MatDialog
   ) {}
   
   ngOnInit(): void {
@@ -262,6 +271,23 @@ export class SchoolListComponent implements OnInit {
     this.selectedSchools = selected;
   }
   
+  /**
+   * Access school via user selection
+   */
+  accessSchool(school: School): void {
+    const dialogData: SchoolUserSelectionData = {
+      schoolId: school.id,
+      schoolName: school.name
+    };
+
+    this.dialog.open(SchoolUserSelectionComponent, {
+      width: '1000px',
+      maxWidth: '90vw',
+      data: dialogData,
+      disableClose: true
+    });
+  }
+
   /**
    * View school details
    */
