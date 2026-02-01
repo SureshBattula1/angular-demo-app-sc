@@ -4,13 +4,17 @@ import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
   {
-    path: '',
-    redirectTo: '/dashboard',
-    pathMatch: 'full'
+    path: 'company-portal',
+    loadChildren: () => import('./company-portal/company-portal.routes').then(m => m.COMPANY_PORTAL_ROUTES)
   },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
+  },
+  {
+    path: '',
+    redirectTo: '/dashboard',
+    pathMatch: 'full'
   },
   {
     path: '',
@@ -28,7 +32,7 @@ export const routes: Routes = [
         loadChildren: () => import('./features/branches/branches.routes').then(m => m.BRANCHES_ROUTES),
         canActivate: [permissionGuard],
         data: { permissions: ['branches.view', 'branches.create'], permissionMode: 'any' }
-      },     
+      },
       {
         path: 'groups',
         loadChildren: () => import('./features/groups/groups.routes').then(m => m.GROUPS_ROUTES),

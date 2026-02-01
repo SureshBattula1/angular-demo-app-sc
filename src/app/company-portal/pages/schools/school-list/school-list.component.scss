@@ -1,0 +1,111 @@
+.school-list-container {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    color: #00695c;
+  }
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+
+  .search-field {
+    flex: 1;
+    max-width: 400px;
+  }
+
+  .status-field {
+    width: 200px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.schools-table {
+  width: 100%;
+
+  th {
+    font-weight: 600;
+    color: #00695c;
+  }
+
+  td {
+    padding: 12px 16px;
+  }
+}
+
+.school-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .school-code {
+    font-size: 12px;
+    color: #666;
+  }
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #666;
+  }
+
+  .sub-text {
+    font-size: 12px;
+    color: #999;
+    margin-left: 4px;
+  }
+}
+
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #999;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+.delete-action {
+  color: #d32f2f;
+}
+

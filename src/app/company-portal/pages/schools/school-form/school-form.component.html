@@ -1,0 +1,90 @@
+<div class="school-form-container">
+  <div class="header">
+    <h1>{{ isEditMode ? 'Edit School' : 'Create New School' }}</h1>
+    <button mat-button (click)="onCancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+      </div>
+
+      <form [formGroup]="schoolForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>School Name</mat-label>
+            <input matInput formControlName="name" required>
+            <mat-error *ngIf="schoolForm.get('name')?.hasError('required') && schoolForm.get('name')?.touched">
+              School name is required
+            </mat-error>
+            <mat-error *ngIf="schoolForm.get('name')?.hasError('maxlength')">
+              School name is too long
+            </mat-error>
+            <mat-error *ngIf="schoolForm.get('name')?.hasError('serverError')">
+              {{ getErrorMessage('name') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>School Code</mat-label>
+            <input matInput formControlName="code" required>
+            <mat-hint>Unique code for the school (e.g., SCH001)</mat-hint>
+            <mat-error *ngIf="schoolForm.get('code')?.hasError('required') && schoolForm.get('code')?.touched">
+              School code is required
+            </mat-error>
+            <mat-error *ngIf="schoolForm.get('code')?.hasError('maxlength')">
+              School code is too long
+            </mat-error>
+            <mat-error *ngIf="schoolForm.get('code')?.hasError('serverError')">
+              {{ getErrorMessage('code') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status" required>
+              <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="schoolForm.get('status')?.hasError('required') && schoolForm.get('status')?.touched">
+              Status is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Main Branch ID (Optional)</mat-label>
+            <input matInput type="number" formControlName="main_branch_id">
+            <mat-hint>ID of the main branch for this school</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="errorMessage" class="error-message">
+          <mat-icon>error</mat-icon>
+          {{ errorMessage }}
+        </div>
+
+        <div class="form-actions">
+          <button mat-button type="button" (click)="onCancel()" [disabled]="isSubmitting">
+            Cancel
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting || schoolForm.invalid">
+            <mat-spinner *ngIf="isSubmitting" diameter="20" class="spinner"></mat-spinner>
+            <span *ngIf="!isSubmitting">{{ isEditMode ? 'Update' : 'Create' }} School</span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
+

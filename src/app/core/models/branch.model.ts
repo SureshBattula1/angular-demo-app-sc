@@ -4,6 +4,7 @@ export interface Branch {
   code: string;
   branch_type: 'HeadOffice' | 'RegionalOffice' | 'School' | 'Campus' | 'SubBranch';
   parent_branch_id?: number;
+  school_id?: number;
   
   // Location
   address: string;

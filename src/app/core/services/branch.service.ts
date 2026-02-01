@@ -8,6 +8,7 @@ export interface Branch {
   name: string;
   code: string;
   city?: string;
+  school_id?: number;
   is_active: boolean;
 }
 
