@@ -20,12 +20,28 @@ export interface School {
     id: number;
     name: string;
     code: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+    phone?: string;
+    email?: string;
+    website?: string;
   };
   branches?: Array<{
     id: number;
     name: string;
     code: string;
   }>;
+  admin_user?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    role: string;
+  };
   
   // Stats
   branches_count?: number;

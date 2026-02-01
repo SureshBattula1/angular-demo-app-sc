@@ -29,7 +29,10 @@ export class SchoolFormComponent implements OnInit {
     { value: 'UnderConstruction', label: 'Under Construction' }
   ];
   
-  mainBranches: Array<{ id: number; name: string; code: string }> = [];
+  adminRoleOptions = [
+    { value: 'BranchAdmin', label: 'Branch Admin' },
+    { value: 'SuperAdmin', label: 'Super Admin' }
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -41,7 +44,6 @@ export class SchoolFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadMainBranches();
     
     // Check if edit mode
     this.route.params.subscribe(params => {
@@ -49,8 +51,20 @@ export class SchoolFormComponent implements OnInit {
         this.schoolId = +params['id'];
         this.isEditMode = this.router.url.includes('/edit');
         if (this.isEditMode) {
+          // In edit mode, make password optional (user can leave blank to keep current password)
+          this.schoolForm.get('admin_user.password')?.clearValidators();
+          this.schoolForm.get('admin_user.password')?.setValidators([Validators.minLength(8)]);
+          this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
           this.loadSchool(this.schoolId);
+        } else {
+          // In create mode, password is required
+          this.schoolForm.get('admin_user.password')?.setValidators([Validators.required, Validators.minLength(8)]);
+          this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
         }
+      } else {
+        // Create mode - password is required
+        this.schoolForm.get('admin_user.password')?.setValidators([Validators.required, Validators.minLength(8)]);
+        this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
       }
     });
   }
@@ -60,10 +74,33 @@ export class SchoolFormComponent implements OnInit {
       // Basic Information
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
-      main_branch_id: [null],
       
       // Status
-      status: ['Active', Validators.required]
+      status: ['Active', Validators.required],
+      
+      // Branch Information (required for new schools)
+      branch: this.fb.group({
+        name: ['', [Validators.required, Validators.maxLength(255)]],
+        code: ['', [Validators.required, Validators.maxLength(50)]],
+        address: ['', [Validators.required, Validators.maxLength(500)]],
+        city: ['', [Validators.required, Validators.maxLength(100)]],
+        state: ['', [Validators.required, Validators.maxLength(100)]],
+        country: ['', [Validators.required, Validators.maxLength(100)]],
+        pincode: ['', [Validators.required, Validators.maxLength(10)]],
+        phone: ['', [Validators.required, Validators.maxLength(20)]],
+        email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
+        website: ['', [Validators.maxLength(255)]]
+      }),
+      
+      // Admin User Information (required for new schools)
+      admin_user: this.fb.group({
+        first_name: ['', [Validators.required, Validators.maxLength(255)]],
+        last_name: ['', [Validators.required, Validators.maxLength(255)]],
+        email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
+        password: ['', [Validators.minLength(8)]], // Required only for new schools, optional for edit
+        phone: ['', [Validators.maxLength(20)]],
+        role: ['BranchAdmin', [Validators.required]]
+      })
     });
   }
 
@@ -74,12 +111,45 @@ export class SchoolFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.currentSchool = response.data;
+          const school = response.data;
+          
+          // Patch basic school info
           this.schoolForm.patchValue({
-            name: response.data.name,
-            code: response.data.code,
-            main_branch_id: response.data.main_branch_id || null,
-            status: response.data.status
+            name: school.name,
+            code: school.code,
+            status: school.status
           });
+          
+          // Patch branch info if mainBranch exists
+          if (school.main_branch) {
+            const branch = school.main_branch;
+            this.schoolForm.get('branch')?.patchValue({
+              name: branch.name || '',
+              code: branch.code || '',
+              address: branch.address || '',
+              city: branch.city || '',
+              state: branch.state || '',
+              country: branch.country || '',
+              pincode: branch.pincode || '',
+              phone: branch.phone || '',
+              email: branch.email || '',
+              website: branch.website || ''
+            });
+          }
+          
+          // Patch admin user info if admin_user exists
+          if (school.admin_user) {
+            const adminUser = school.admin_user;
+            this.schoolForm.get('admin_user')?.patchValue({
+              first_name: adminUser.first_name || '',
+              last_name: adminUser.last_name || '',
+              email: adminUser.email || '',
+              phone: adminUser.phone || '',
+              role: adminUser.role || 'BranchAdmin'
+              // Don't patch password - leave it empty for user to change if needed
+            });
+          }
+          
           this.isLoading = false;
         }
       },
@@ -89,13 +159,6 @@ export class SchoolFormComponent implements OnInit {
         this.router.navigate(['/company-portal/schools']);
       }
     });
-  }
-
-  private loadMainBranches(): void {
-    // Load branches that could be main branches
-    // This would need a service method to get branches
-    // For now, we'll leave it empty or implement if needed
-    this.mainBranches = [];
   }
 
   onSubmit(): void {
@@ -108,9 +171,9 @@ export class SchoolFormComponent implements OnInit {
     this.isLoading = true;
     const formData = { ...this.schoolForm.value };
     
-    // Remove main_branch_id if null or empty
-    if (!formData.main_branch_id || formData.main_branch_id === '') {
-      delete formData.main_branch_id;
+    // For edit mode, remove password if it's empty (user doesn't want to change it)
+    if (this.isEditMode && formData.admin_user && !formData.admin_user.password) {
+      delete formData.admin_user.password;
     }
 
     const request = this.isEditMode && this.schoolId
@@ -121,9 +184,10 @@ export class SchoolFormComponent implements OnInit {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
-          this.errorHandler.showSuccess(
-            this.isEditMode ? 'School updated successfully' : 'School created successfully'
-          );
+          const message = this.isEditMode 
+            ? 'School updated successfully' 
+            : 'School created successfully with main branch and admin user';
+          this.errorHandler.showSuccess(message);
           this.router.navigate(['/company-portal/schools']);
         }
       },
@@ -150,25 +214,39 @@ export class SchoolFormComponent implements OnInit {
   }
 
   getErrorMessage(fieldName: string): string {
-    const control = this.schoolForm.get(fieldName);
+    // Handle nested form groups (branch.*, admin_user.*)
+    const parts = fieldName.split('.');
+    let control = this.schoolForm;
     
-    if (control?.hasError('required')) {
+    for (const part of parts) {
+      control = control.get(part) as any;
+      if (!control) break;
+    }
+    
+    if (!control) return '';
+    
+    if (control.hasError('required')) {
       return `${this.getFieldLabel(fieldName)} is required`;
     }
     
-    if (control?.hasError('email')) {
+    if (control.hasError('email')) {
       return 'Please enter a valid email address';
     }
     
-    if (control?.hasError('pattern')) {
+    if (control.hasError('minlength')) {
+      const minLength = control.getError('minlength')?.requiredLength;
+      return `Minimum ${minLength} characters required`;
+    }
+    
+    if (control.hasError('pattern')) {
       return `Invalid ${this.getFieldLabel(fieldName)} format`;
     }
     
-    if (control?.hasError('maxlength')) {
+    if (control.hasError('maxlength')) {
       return `${this.getFieldLabel(fieldName)} is too long`;
     }
     
-    if (control?.hasError('serverError')) {
+    if (control.hasError('serverError')) {
       return control.getError('serverError');
     }
     
@@ -180,8 +258,31 @@ export class SchoolFormComponent implements OnInit {
       name: 'School Name',
       code: 'School Code',
       status: 'Status',
-      main_branch_id: 'Main Branch'
+      'branch.name': 'Branch Name',
+      'branch.code': 'Branch Code',
+      'branch.address': 'Address',
+      'branch.city': 'City',
+      'branch.state': 'State',
+      'branch.country': 'Country',
+      'branch.pincode': 'Pincode',
+      'branch.phone': 'Phone',
+      'branch.email': 'Email',
+      'branch.website': 'Website',
+      'admin_user.first_name': 'First Name',
+      'admin_user.last_name': 'Last Name',
+      'admin_user.email': 'Email',
+      'admin_user.password': 'Password',
+      'admin_user.phone': 'Phone',
+      'admin_user.role': 'Role'
     };
     return labels[fieldName] || fieldName;
+  }
+  
+  getBranchForm(): FormGroup {
+    return this.schoolForm.get('branch') as FormGroup;
+  }
+  
+  getAdminUserForm(): FormGroup {
+    return this.schoolForm.get('admin_user') as FormGroup;
   }
 }
