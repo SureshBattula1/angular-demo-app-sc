@@ -58,6 +58,14 @@ export class LoginComponent implements OnInit {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
+          // Check if password change is required (first-time login)
+          if (response.requires_password_change) {
+            this.errorHandler.showInfo('Please change your password to continue');
+            // Redirect to password change page
+            this.router.navigate(['/auth/change-password-first-time'], { replaceUrl: true });
+            return;
+          }
+
           this.errorHandler.showSuccess('Login successful! Welcome back.');
           
           // Check if user is a student and redirect to their profile

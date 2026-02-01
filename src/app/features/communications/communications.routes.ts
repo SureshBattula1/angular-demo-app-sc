@@ -1,11 +1,18 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/guards/auth.guard';
+import { permissionGuard } from '../../core/guards/permission.guard';
 
 export const COMMUNICATIONS_ROUTES: Routes = [
   {
     path: '',
-    redirectTo: '/dashboard',
+    redirectTo: 'send-message',
     pathMatch: 'full'
+  },
+  {
+    path: 'send-message',
+    loadComponent: () => import('./pages/message-sender/message-sender.component').then(m => m.MessageSenderComponent),
+    canActivate: [authGuard, permissionGuard],
+    data: { permissions: ['communications.view', 'communications.create'], permissionMode: 'any' }
   }
   // TODO: Uncomment when components are created
   // {

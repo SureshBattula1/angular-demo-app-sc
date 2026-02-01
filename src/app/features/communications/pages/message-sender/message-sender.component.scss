@@ -1,0 +1,91 @@
+.message-sender-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 200px);
+  padding: 24px;
+  background: #f5f5f5;
+}
+
+.card-wrapper {
+  width: 100%;
+  max-width: 600px;
+}
+
+.message-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+mat-card-header {
+  padding: 24px 24px 16px;
+  
+  .header-icon {
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+}
+
+mat-card-content {
+  padding: 24px;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  
+  .action-button {
+    flex: 1;
+    min-width: 140px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    
+    mat-icon {
+      margin-right: 4px;
+    }
+    
+    .button-spinner {
+      display: inline-block;
+      margin-right: 4px;
+    }
+  }
+}
+
+mat-form-field {
+  mat-icon[matPrefix] {
+    margin-right: 8px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .message-sender-container {
+    padding: 16px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    
+    .action-button {
+      width: 100%;
+    }
+  }
+}
+
+// Loading state
+button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

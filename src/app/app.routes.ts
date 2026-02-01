@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
+import { passwordChangeGuard } from './core/guards/password-change.guard';
 
 export const routes: Routes = [
   {
@@ -15,7 +16,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./layouts/main-shell/main-shell.component').then(m => m.MainShellComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, passwordChangeGuard],
     children: [
       {
         path: 'dashboard',
@@ -170,7 +171,7 @@ export const routes: Routes = [
   {
     path: 'settings',
     loadChildren: () => import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES),
-    canActivate: [authGuard]
+    canActivate: [authGuard, passwordChangeGuard]
   },
   {
     path: '**',

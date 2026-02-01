@@ -18,6 +18,7 @@ export interface User {
   is_active: boolean;
   last_login?: string;
   full_name?: string;
+  is_password_changed?: boolean;
 }
 
 export interface LoginCredentials {
@@ -30,6 +31,7 @@ export interface LoginResponse extends ApiResponse<User> {
   access_token: string;
   token_type: string;
   expires_in: string;
+  requires_password_change?: boolean;
 }
 
 export interface RegisterData {
@@ -182,6 +184,38 @@ export class AuthService {
       password,
       password_confirmation
     });
+  }
+
+  /**
+   * Request OTP for password change (first-time login)
+   */
+  requestPasswordChangeOtp(): Observable<ApiResponse> {
+    return this.apiService.post('/request-password-change-otp', {});
+  }
+
+  /**
+   * Verify OTP only (without changing password)
+   */
+  verifyOtpOnly(otp: string): Observable<ApiResponse> {
+    return this.apiService.post('/verify-otp-only', { otp });
+  }
+
+  /**
+   * Verify OTP and change password (first-time login)
+   */
+  verifyOtpAndChangePassword(otp: string, password: string, password_confirmation: string): Observable<ApiResponse> {
+    return this.apiService.post('/verify-otp-change-password', {
+      otp,
+      password,
+      password_confirmation
+    });
+  }
+
+  /**
+   * Check password change status
+   */
+  checkPasswordChangeStatus(): Observable<ApiResponse<{is_password_changed: boolean, password_changed_at: string | null, needs_password_change: boolean}>> {
+    return this.apiService.get('/password-change-status');
   }
 
   /**
