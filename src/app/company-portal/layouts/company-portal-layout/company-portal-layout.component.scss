@@ -1,38 +1,42 @@
-.sidenav-container {
+// Using CSS variables from styles.css (no SCSS import needed)
+
+.app-container {
+  display: flex;
+  flex-direction: column;
   height: 100vh;
+  overflow: hidden;
 }
 
-.sidenav {
-  width: 250px;
-  background-color: #e0f2f1;
-}
-
-.sidenav-header {
-  padding: 16px;
-  background-color: #00695c;
-  color: white;
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding-left: 4px;
+  padding-right: 16px;
+  display: flex;
+  align-items: center;
   
-  h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 500;
+  @media (max-width: 960px) {
+    height: 56px;
+    padding: 0 4px;
   }
 }
 
-mat-nav-list {
-  padding-top: 0;
+.sidebar-toggle {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin-left: 8px;
   
-  a {
-    color: #00695c;
-    
-    &.active {
-      background-color: #b2dfdb;
-      color: #004d40;
-    }
-    
-    mat-icon {
-      margin-right: 16px;
-    }
+  @media (max-width: 960px) {
+    font-size: 18px;
+    margin-left: 4px;
   }
 }
 
@@ -40,24 +44,365 @@ mat-nav-list {
   flex: 1 1 auto;
 }
 
-.main-content {
-  padding: 24px;
-  background-color: #f5f5f5;
-  min-height: calc(100vh - 64px);
+.app-sidenav-container {
+  flex: 1;
+  margin-top: 52px;
+  
+  @media (max-width: 960px) {
+    margin-top: 56px;
+  }
 }
 
-.user-info {
-  padding: 16px;
+.app-sidenav {
+  width: 250px;
+  transition: width var(--transition-normal);
   
-  .user-name {
-    margin: 0;
-    font-weight: 500;
+  @media (max-width: 960px) {
+    width: 280px;
   }
   
-  .user-email {
-    margin: 4px 0 0 0;
-    font-size: 12px;
-    color: #666;
+  /* Collapsed state */
+  &.collapsed {
+    width: 64px;
+    
+    mat-nav-list {
+      padding: 8px 0;
+      
+      a.mat-mdc-list-item {
+        justify-content: center;
+        padding: 0 12px;
+        
+        ::ng-deep .mdc-list-item__content {
+          justify-content: center;
+          padding: 0;
+        }
+        
+        ::ng-deep .mat-mdc-list-item-icon {
+          margin: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        mat-icon {
+          margin: 0 !important;
+          margin-right: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .hidden {
+          display: none;
+        }
+      }
+    }
+  }
+  
+  mat-nav-list {
+    padding-top: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+    
+    a.mat-mdc-list-item {
+      display: flex;
+      align-items: center;
+      padding-left: 0;
+      padding-right: 12px;
+      
+      &.active {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
+        
+        mat-icon {
+          color: var(--primary-color);
+        }
+      }
+      
+      &:hover {
+        background-color: rgba(var(--primary-rgb), 0.05);
+      }
+      
+      mat-icon {
+        margin-right: 16px;
+        color: var(--text-secondary);
+        transition: margin var(--transition-normal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      ::ng-deep .mdc-list-item__content {
+        display: flex;
+        align-items: center;
+      }
+      
+      .hidden {
+        opacity: 0;
+        transition: opacity var(--transition-normal);
+      }
+    }
+  }
+}
+
+/* Tooltip styling for collapsed sidebar */
+::ng-deep .mat-mdc-tooltip {
+  font-size: 12px;
+  background-color: var(--gray-800);
+}
+
+.app-content {
+  padding: 8px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--background-color);
+  transition: margin-left var(--transition-normal);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 52px);
+  
+  @media (max-width: 960px) {
+    padding: 6px 8px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    min-height: calc(100vh - 56px);
+  }
+}
+
+/* Adjust content margin based on sidebar state */
+.app-sidenav-container {
+  ::ng-deep .mat-drawer-content {
+    transition: margin-left var(--transition-normal) !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Desktop only: sidebar creates margin */
+  @media (min-width: 961px) {
+    /* Desktop: sidebar expanded */
+    &:not(.sidebar-collapsed) {
+      ::ng-deep .mat-drawer-content {
+        margin-left: 250px !important;
+        width: calc(100% - 250px) !important;
+      }
+    }
+    
+    /* Desktop: sidebar collapsed (mini variant) */
+    &.sidebar-collapsed {
+      ::ng-deep .mat-drawer-content {
+        margin-left: 64px !important;
+        width: calc(100% - 64px) !important;
+      }
+    }
+  }
+  
+  /* Mobile and Tablet: no margin, overlay mode */
+  @media (max-width: 960px) {
+    ::ng-deep .mat-drawer-content {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      width: 100% !important;
+    }
+  }
+  
+  ::ng-deep .mat-drawer-side {
+    border-right: none;
+  }
+}
+
+/* User Avatar Button in Header */
+.user-avatar-btn {
+  padding: 0 !important;
+  min-width: auto !important;
+  margin-left: 8px;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  .header-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--white);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--white);
+    
+    @media (max-width: 960px) {
+      width: 36px;
+      height: 36px;
+      font-size: 14px;
+    }
+  }
+  
+  &:hover .header-user-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* User Menu Styles */
+::ng-deep .user-menu {
+  .user-menu-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    cursor: default !important;
+    position: relative;
+    overflow: hidden;
+    
+    .user-avatar {
+      position: relative;
+      margin-right: 16px;
+      flex-shrink: 0;
+      z-index: 1;
+      
+      .user-initials {
+        font-size: 28px;
+        width: 50px;
+        height: 50px;
+        color: var(--primary-color);
+        background: var(--white);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        border: 3px solid var(--white);
+      }
+      
+      &:hover .user-initials {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      min-width: 0;
+      
+      .user-name {
+        font-weight: 500;
+        font-size: 16px;
+        color: var(--white);
+        margin-bottom: 2px;
+        line-height: 1.3;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        
+        @media (max-width: 960px) {
+          font-size: 15px;
+        }
+      }
+      
+      .user-email {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 6px;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        
+        @media (max-width: 960px) {
+          font-size: 12px;
+        }
+      }
+      
+      .user-role {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+        color: var(--white);
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        backdrop-filter: blur(10px);
+        align-self: flex-start;
+        max-width: fit-content;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        
+        .role-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          margin-right: 6px;
+          flex-shrink: 0;
+          color: var(--white);
+        }
+        
+        @media (max-width: 960px) {
+          font-size: 11px;
+          padding: 3px 8px;
+          
+          .role-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            margin-right: 4px;
+            color: var(--white);
+          }
+        }
+      }
+    }
+    
+    @media (max-width: 960px) {
+      padding: 16px 12px;
+      
+      .user-avatar .user-initials {
+        font-size: 24px;
+        width: 64px;
+        height: 64px;
+        letter-spacing: 1px;
+      }
+    }
+  }
+  
+  .logout-menu-item {
+    color: var(--error-color);
+    
+    mat-icon {
+      color: var(--error-color);
+    }
+    
+    &:hover {
+      background-color: rgba(var(--error-rgb), 0.08);
+    }
+  }
+}
+
+/* User menu animation and styling */
+::ng-deep .mat-mdc-menu-panel {
+  min-width: 300px;
+  max-width: 360px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  
+  @media (max-width: 960px) {
+    min-width: 280px;
+    max-width: calc(100vw - 32px);
   }
 }
 

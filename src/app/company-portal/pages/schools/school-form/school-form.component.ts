@@ -2,110 +2,116 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { CompanySchoolService } from '../../../services/school.service';
+import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { School } from '../../../../core/models/school.model';
 
 @Component({
   selector: 'app-school-form',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './school-form.component.html',
   styleUrl: './school-form.component.scss'
 })
 export class SchoolFormComponent implements OnInit {
   schoolForm!: FormGroup;
   isEditMode = false;
-  schoolId: number | null = null;
   isLoading = false;
-  isSubmitting = false;
-  errorMessage = '';
-
+  schoolId?: number;
+  currentSchool?: School;
+  
+  // Dropdown options
   statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Inactive', label: 'Inactive' },
     { value: 'Suspended', label: 'Suspended' },
     { value: 'UnderConstruction', label: 'Under Construction' }
   ];
+  
+  mainBranches: Array<{ id: number; name: string; code: string }> = [];
 
   constructor(
     private fb: FormBuilder,
     private schoolService: CompanySchoolService,
     private router: Router,
-    private route: ActivatedRoute
-  ) {
-    this.initForm();
-  }
+    private route: ActivatedRoute,
+    private errorHandler: ErrorHandlerService
+  ) {}
 
   ngOnInit(): void {
+    this.initForm();
+    this.loadMainBranches();
+    
+    // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.schoolId = +params['id'];
         this.isEditMode = this.router.url.includes('/edit');
-        this.loadSchool();
+        if (this.isEditMode) {
+          this.loadSchool(this.schoolId);
+        }
       }
     });
   }
 
-  initForm(): void {
+  private initForm(): void {
     this.schoolForm = this.fb.group({
+      // Basic Information
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
-      status: ['Active', Validators.required],
-      main_branch_id: [null]
+      main_branch_id: [null],
+      
+      // Status
+      status: ['Active', Validators.required]
     });
   }
 
-  loadSchool(): void {
-    if (!this.schoolId) return;
-
+  private loadSchool(id: number): void {
     this.isLoading = true;
-    this.schoolService.getSchool(this.schoolId).subscribe({
+    
+    this.schoolService.getSchool(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          const school = response.data;
+          this.currentSchool = response.data;
           this.schoolForm.patchValue({
-            name: school.name,
-            code: school.code,
-            status: school.status,
-            main_branch_id: school.main_branch_id || null
+            name: response.data.name,
+            code: response.data.code,
+            main_branch_id: response.data.main_branch_id || null,
+            status: response.data.status
           });
+          this.isLoading = false;
         }
-        this.isLoading = false;
       },
       error: (error) => {
-        this.errorMessage = error.error?.message || 'Failed to load school';
+        this.errorHandler.showError(error);
         this.isLoading = false;
+        this.router.navigate(['/company-portal/schools']);
       }
     });
+  }
+
+  private loadMainBranches(): void {
+    // Load branches that could be main branches
+    // This would need a service method to get branches
+    // For now, we'll leave it empty or implement if needed
+    this.mainBranches = [];
   }
 
   onSubmit(): void {
     if (this.schoolForm.invalid) {
       this.markFormGroupTouched(this.schoolForm);
+      this.errorHandler.showWarning('Please fill in all required fields');
       return;
     }
 
-    this.isSubmitting = true;
-    this.errorMessage = '';
-
-    const formData = this.schoolForm.value;
+    this.isLoading = true;
+    const formData = { ...this.schoolForm.value };
+    
+    // Remove main_branch_id if null or empty
+    if (!formData.main_branch_id || formData.main_branch_id === '') {
+      delete formData.main_branch_id;
+    }
 
     const request = this.isEditMode && this.schoolId
       ? this.schoolService.updateSchool(this.schoolId, formData)
@@ -113,25 +119,17 @@ export class SchoolFormComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
+        this.isLoading = false;
         if (response.success) {
+          this.errorHandler.showSuccess(
+            this.isEditMode ? 'School updated successfully' : 'School created successfully'
+          );
           this.router.navigate(['/company-portal/schools']);
-        } else {
-          this.errorMessage = response.message || 'Operation failed';
-          this.isSubmitting = false;
         }
       },
       error: (error) => {
-        this.errorMessage = error.error?.message || 'An error occurred';
-        if (error.error?.errors) {
-          // Handle validation errors
-          Object.keys(error.error.errors).forEach(key => {
-            const control = this.schoolForm.get(key);
-            if (control) {
-              control.setErrors({ serverError: error.error.errors[key][0] });
-            }
-          });
-        }
-        this.isSubmitting = false;
+        this.isLoading = false;
+        this.errorHandler.showError(error);
       }
     });
   }
@@ -140,7 +138,7 @@ export class SchoolFormComponent implements OnInit {
     this.router.navigate(['/company-portal/schools']);
   }
 
-  markFormGroupTouched(formGroup: FormGroup): void {
+  private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
       control?.markAsTouched();
@@ -151,17 +149,39 @@ export class SchoolFormComponent implements OnInit {
     });
   }
 
-  getErrorMessage(controlName: string): string {
-    const control = this.schoolForm.get(controlName);
+  getErrorMessage(fieldName: string): string {
+    const control = this.schoolForm.get(fieldName);
+    
     if (control?.hasError('required')) {
-      return `${controlName} is required`;
+      return `${this.getFieldLabel(fieldName)} is required`;
     }
+    
+    if (control?.hasError('email')) {
+      return 'Please enter a valid email address';
+    }
+    
+    if (control?.hasError('pattern')) {
+      return `Invalid ${this.getFieldLabel(fieldName)} format`;
+    }
+    
     if (control?.hasError('maxlength')) {
-      return `${controlName} exceeds maximum length`;
+      return `${this.getFieldLabel(fieldName)} is too long`;
     }
+    
     if (control?.hasError('serverError')) {
       return control.getError('serverError');
     }
+    
     return '';
+  }
+
+  private getFieldLabel(fieldName: string): string {
+    const labels: Record<string, string> = {
+      name: 'School Name',
+      code: 'School Code',
+      status: 'Status',
+      main_branch_id: 'Main Branch'
+    };
+    return labels[fieldName] || fieldName;
   }
 }

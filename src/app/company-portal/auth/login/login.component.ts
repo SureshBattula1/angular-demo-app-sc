@@ -3,7 +3,6 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CompanyAuthService, CompanyLoginCredentials } from '../../services/company-auth.service';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +15,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -31,6 +29,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
   hidePassword = true;
+  currentYear = new Date().getFullYear();
 
   constructor(
     private fb: FormBuilder,

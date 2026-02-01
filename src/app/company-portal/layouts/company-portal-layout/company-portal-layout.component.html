@@ -1,53 +1,109 @@
-<mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav mode="side" opened="true" class="sidenav">
-    <div class="sidenav-header">
-      <h2>Company Portal</h2>
-    </div>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/company-portal/dashboard" routerLinkActive="active">
-        <mat-icon>dashboard</mat-icon>
-        <span>Dashboard</span>
-      </a>
-      <a mat-list-item routerLink="/company-portal/schools" routerLinkActive="active">
-        <mat-icon>school</mat-icon>
-        <span>Schools</span>
-      </a>
-      <a mat-list-item routerLink="/company-portal/companies" routerLinkActive="active">
-        <mat-icon>business</mat-icon>
-        <span>Companies</span>
-      </a>
-      <a mat-list-item routerLink="/company-portal/impersonation" routerLinkActive="active">
-        <mat-icon>person_search</mat-icon>
-        <span>Virtual Onboarding</span>
-      </a>
-    </mat-nav-list>
-  </mat-sidenav>
+<div class="app-container">
+  <!-- Header Toolbar -->
+  <mat-toolbar class="app-header" color="primary">
+    <button mat-icon-button 
+            (click)="toggleSidebar()" 
+            class="sidebar-toggle"
+            aria-label="Toggle sidebar">
+      <mat-icon>{{ isSidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+    </button>
+    
+    <span class="app-title">Company Portal</span>
+    <span class="spacer"></span>
+    
+    <button mat-button [matMenuTriggerFor]="userMenu" aria-label="User menu" class="user-avatar-btn">
+      <div class="header-user-avatar">
+        {{ getUserInitials() }}
+      </div>
+    </button>
+  </mat-toolbar>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      <button mat-icon-button (click)="toggleSidenav()">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <span class="spacer"></span>
-      <button mat-icon-button [matMenuTriggerFor]="userMenu">
-        <mat-icon>account_circle</mat-icon>
-      </button>
-      <mat-menu #userMenu="matMenu">
-        <div class="user-info">
-          <p class="user-name">{{ getUserName() }}</p>
-          <p class="user-email">{{ currentUser()?.email }}</p>
-        </div>
-        <mat-divider></mat-divider>
-        <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>Logout</span>
-        </button>
-      </mat-menu>
-    </mat-toolbar>
+  <!-- Sidenav Container -->
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed">
+    
+    <mat-sidenav
+      #drawer
+      [mode]="isMobileOrTablet() ? 'over' : 'side'"
+      [opened]="isMobileOrTablet() ? !isSidebarCollapsed : true"
+      [class.collapsed]="isSidebarCollapsed && !isMobileOrTablet()"
+      (closedStart)="onSidenavClosed()"
+      class="app-sidenav">
+      
+      <mat-nav-list>
+        <a mat-list-item 
+           routerLink="/company-portal/dashboard"
+           [class.active]="isRouteActive('/company-portal/dashboard')"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Dashboard' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>dashboard</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Dashboard</span>
+        </a>
+        <a mat-list-item 
+           routerLink="/company-portal/schools"
+           [class.active]="isRouteActive('/company-portal/schools')"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Schools' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>school</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Schools</span>
+        </a>
+        <a mat-list-item 
+           routerLink="/company-portal/companies"
+           [class.active]="isRouteActive('/company-portal/companies')"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Companies' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>business</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Companies</span>
+        </a>
+        <a mat-list-item 
+           routerLink="/company-portal/impersonation"
+           [class.active]="isRouteActive('/company-portal/impersonation')"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Virtual Onboarding' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>person_search</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Virtual Onboarding</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
 
-    <main class="main-content">
+    <!-- Main Content -->
+    <mat-sidenav-content class="app-content">
       <router-outlet></router-outlet>
-    </main>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
+
+<!-- User Menu -->
+<mat-menu #userMenu="matMenu" class="user-menu">
+  <!-- User Info Header -->
+  <div mat-menu-item disabled>
+    <div class="user-menu-header">
+      <div class="user-avatar">
+        <div class="user-initials">{{ getUserInitials() }}</div>
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ getUserName() }}</div>
+        <div class="user-email">{{ currentUser()?.email }}</div>
+        <div class="user-role">
+          <mat-icon class="role-icon">badge</mat-icon>
+          Company Admin
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <mat-divider></mat-divider>
+  
+  <button mat-menu-item (click)="logout()" class="logout-menu-item">
+    <mat-icon>logout</mat-icon>
+    <span>Logout</span>
+  </button>
+</mat-menu>
 
