@@ -138,26 +138,10 @@ export class MainShellComponent implements OnInit, OnDestroy {
    * Check if currently in impersonation mode
    */
   checkImpersonationStatus(): void {
+    // Simply check if impersonation token exists
+    // Don't call API because we're using school API, not company portal API
     this.isImpersonating = this.impersonationService.hasImpersonationToken();
-    
-    // Also check active session
-    if (this.isImpersonating) {
-      this.impersonationService.getActiveSessions().subscribe({
-        next: (response) => {
-          if (response.success && response.data && response.data.length > 0) {
-            this.isImpersonating = true;
-          } else {
-            this.isImpersonating = false;
-          }
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          // If check fails, use token check
-          this.isImpersonating = this.impersonationService.hasImpersonationToken();
-          this.cdr.detectChanges();
-        }
-      });
-    }
+    this.cdr.detectChanges();
   }
   
   /**
@@ -174,15 +158,14 @@ export class MainShellComponent implements OnInit, OnDestroy {
             localStorage.removeItem('company_portal_token_backup');
           }
           
-          // Clear impersonation token
+          // Clear impersonation token and flag
           localStorage.removeItem('impersonation_token');
           localStorage.removeItem('auth_token');
+          localStorage.removeItem('is_impersonating');
+          localStorage.removeItem('current_user'); // Clear school user data
           
           // Redirect to company portal schools list
-          this.router.navigate(['/company-portal/schools']).then(() => {
-            // Reload to refresh auth context
-            window.location.reload();
-          });
+          window.location.href = '/company-portal/schools';
         } else {
           this.errorHandler.showError('Failed to exit impersonation');
         }
@@ -196,10 +179,10 @@ export class MainShellComponent implements OnInit, OnDestroy {
         }
         localStorage.removeItem('impersonation_token');
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('is_impersonating');
+        localStorage.removeItem('current_user');
         
-        this.router.navigate(['/company-portal/schools']).then(() => {
-          window.location.reload();
-        });
+        window.location.href = '/company-portal/schools';
       }
     });
   }

@@ -131,9 +131,11 @@ export class ImpersonationService {
           localStorage.removeItem('company_portal_token_backup');
         }
         
-        // Clear impersonation token
+        // Clear impersonation token and flag
         localStorage.removeItem('impersonation_token');
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('is_impersonating');
+        localStorage.removeItem('current_user'); // Clear school user data
         
         // Clear active session
         this.activeSession.set(null);

@@ -239,8 +239,42 @@ export class AuthService {
           this.branchService.getAccessibleBranches().subscribe();
         }
       } catch {
-        this.clearSession();
+        // If parsing fails, try to fetch user from API (might be impersonation)
+        if (token) {
+          this.getCurrentUser().subscribe({
+            next: (response) => {
+              if (response.success && response.data) {
+                // User loaded successfully
+              } else {
+                // If fetch fails, clear session
+                this.clearSession();
+              }
+            },
+            error: () => {
+              // If API call fails, clear session
+              this.clearSession();
+            }
+          });
+        } else {
+          this.clearSession();
+        }
       }
+    } else if (token && !userStr) {
+      // Token exists but no user data - fetch from API (impersonation scenario)
+      this.getCurrentUser().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            // User loaded successfully
+          } else {
+            // If fetch fails, clear session
+            this.clearSession();
+          }
+        },
+        error: () => {
+          // If API call fails, clear session
+          this.clearSession();
+        }
+      });
     }
   }
 
