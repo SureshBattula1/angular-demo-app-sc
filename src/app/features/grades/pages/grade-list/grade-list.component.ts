@@ -41,63 +41,63 @@ import { Grade } from '../../../../core/models/grade.model';
 })
 export class GradeListComponent implements OnInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
-  
+
   loading = false;
   grades: Grade[] = [];
   selectedGrades: Grade[] = [];
-  
+
   // Current request state
   currentFilters: Record<string, unknown> = {};
-  
+
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
-      { 
-        key: 'order', 
-        header: 'Order', 
-        sortable: true, 
+      {
+        key: 'order',
+        header: 'Order',
+        sortable: true,
         type: 'number',
         align: 'center',
         width: '80px'
       },
-      { 
-        key: 'value', 
-        header: 'Grade', 
-        sortable: true, 
+      {
+        key: 'value',
+        header: 'Grade',
+        sortable: true,
         width: '100px',
         searchable: true
       },
-      { 
-        key: 'label', 
-        header: 'Name', 
-        sortable: true, 
+      {
+        key: 'label',
+        header: 'Name',
+        sortable: true,
         searchable: true,
         width: '180px'
       },
-      { 
-        key: 'category', 
-        header: 'Category', 
+      {
+        key: 'category',
+        header: 'Category',
         type: 'text',
         sortable: true,
         width: '150px',
         searchable: true
       },
-      { 
-        key: 'students_count', 
-        header: 'Students', 
+      {
+        key: 'students_count',
+        header: 'Students',
         type: 'number',
         align: 'center',
         width: '100px'
       },
-      { 
-        key: 'sections', 
-        header: 'Sections', 
+      {
+        key: 'sections',
+        header: 'Sections',
         width: '120px',
         align: 'center'
       },
-      { 
-        key: 'is_active', 
-        header: 'Status', 
+      {
+        key: 'is_active',
+        header: 'Status',
         type: 'badge',
         width: '100px',
         align: 'center'
@@ -144,7 +144,7 @@ export class GradeListComponent implements OnInit {
     showAddButton: true,
     addButtonPermission: 'grades.create'
   };
-  
+
   // Advanced Search Configuration
   advancedSearchConfig: AdvancedSearchConfig = {
     title: 'Advanced Grade Search',
@@ -159,7 +159,6 @@ export class GradeListComponent implements OnInit {
         placeholder: 'Select branch',
         icon: 'business',
         options: [], // Will be populated dynamically
-        group: 'Basic Information'
       },
       {
         key: 'value',
@@ -167,7 +166,6 @@ export class GradeListComponent implements OnInit {
         type: 'text',
         placeholder: 'e.g., LKG, UKG, 1, 2...',
         icon: 'tag',
-        group: 'Basic Information'
       },
       {
         key: 'label',
@@ -175,7 +173,6 @@ export class GradeListComponent implements OnInit {
         type: 'text',
         placeholder: 'Search by label',
         icon: 'label',
-        group: 'Basic Information'
       },
       {
         key: 'category',
@@ -190,18 +187,17 @@ export class GradeListComponent implements OnInit {
           { value: 'Secondary', label: 'Secondary' },
           { value: 'Senior-Secondary', label: 'Senior-Secondary' }
         ],
-        group: 'Basic Information'
       },
-      {
-        key: 'is_active',
-        label: 'Active Only',
-        type: 'checkbox',
-        icon: 'check_circle',
-       group: 'Status'
-      }
+      // {
+      //   key: 'is_active',
+      //   label: 'Active Only',
+      //   type: 'checkbox',
+      //   icon: 'check_circle',
+      //   group: 'Status'
+      // }
     ]
   };
-  
+
   constructor(
     private gradeService: GradeService,
     private branchService: BranchService,
@@ -210,13 +206,13 @@ export class GradeListComponent implements OnInit {
     private errorHandler: ErrorHandlerService,
     private exportService: ExportService,
     private permissionService: PermissionService
-  ) {}
-  
+  ) { }
+
   ngOnInit(): void {
     this.loadBranches();
     this.loadGrades();
   }
-  
+
   /**
    * Load branches dynamically for advanced search filter
    */
@@ -237,13 +233,13 @@ export class GradeListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Load grades from server
    */
   loadGrades(): void {
     this.loading = true;
-    
+
     this.gradeService.getGrades(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
@@ -262,7 +258,7 @@ export class GradeListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Handle pagination changes
    */
@@ -274,7 +270,7 @@ export class GradeListComponent implements OnInit {
     };
     this.loadGrades();
   }
-  
+
   /**
    * Handle sort changes
    */
@@ -286,7 +282,7 @@ export class GradeListComponent implements OnInit {
     };
     this.loadGrades();
   }
-  
+
   /**
    * Handle advanced search changes
    */
@@ -298,46 +294,46 @@ export class GradeListComponent implements OnInit {
     };
     this.loadGrades();
   }
-  
+
   onAction(event: { action: string, row: Grade | null }): void {
-    
+
     // Handle add action
     if (event.action === 'add') {
       this.router.navigate(['/grades/create']);
     }
   }
-  
+
   onRowClick(row: Grade): void {
     this.viewGrade(row);
   }
-  
+
   onSelectionChange(selected: Grade[]): void {
     this.selectedGrades = selected;
   }
-  
+
   /**
    * View grade details
    */
   viewGrade(grade: Grade): void {
     this.router.navigate(['/grades/view', grade.value]);
   }
-  
+
   /**
    * Edit grade
    */
   editGrade(grade: Grade): void {
     this.router.navigate(['/grades/edit', grade.value]);
   }
-  
+
   /**
    * View students in grade
    */
   viewStudents(grade: Grade): void {
-    this.router.navigate(['/students'], { 
+    this.router.navigate(['/students'], {
       queryParams: { grade: grade.value }
     });
   }
-  
+
   /**
    * View grade statistics
    */
@@ -355,14 +351,14 @@ export class GradeListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Export grades
    */
   onExport(format: 'excel' | 'pdf' | 'csv'): void {
     // Show loading message
     this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
-    
+
     // Call export service (grades don't have complex filters, so pass empty object)
     this.exportService.export(
       {

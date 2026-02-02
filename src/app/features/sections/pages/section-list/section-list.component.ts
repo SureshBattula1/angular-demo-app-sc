@@ -37,16 +37,16 @@ import { Section } from '../../../../core/models/section.model';
 })
 export class SectionListComponent implements OnInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
-  
+
   loading = false;
   sections: Section[] = [];
   selectedSections: Section[] = [];
   currentFilters: Record<string, unknown> = {};
-  
+
   tableConfig: TableConfig = {
     columns: [
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
-      { key: 'name', header: 'Section ', sortable: true, searchable: true , width: '120px'  },
+      { key: 'name', header: 'Section ', sortable: true, searchable: true, width: '120px' },
       { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'grade_label', header: 'Class (Grade)', sortable: true, width: '120px' },
       { key: 'capacity', header: 'Capacity', type: 'number', align: 'center', width: '100px' },
@@ -55,23 +55,23 @@ export class SectionListComponent implements OnInit {
       { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
     ],
     actions: [
-      { 
-        icon: 'visibility', 
-        label: 'View Details', 
+      {
+        icon: 'visibility',
+        label: 'View Details',
         action: (row) => this.viewSection(row),
         permission: 'sections.view'
       },
-      { 
-        icon: 'edit', 
-        label: 'Edit', 
-        color: 'primary', 
+      {
+        icon: 'edit',
+        label: 'Edit',
+        color: 'primary',
         action: (row) => this.editSection(row),
         permission: 'sections.edit'
       },
-      { 
-        icon: 'delete', 
-        label: 'Delete', 
-        color: 'warn', 
+      {
+        icon: 'delete',
+        label: 'Delete',
+        color: 'warn',
         action: (row) => this.deleteSection(row),
         permission: 'sections.delete'
       }
@@ -88,7 +88,7 @@ export class SectionListComponent implements OnInit {
     defaultPageSize: 25,
     addButtonPermission: 'sections.create'
   };
-  
+
   advancedSearchConfig: AdvancedSearchConfig = {
     title: 'Advanced Section Search',
     width: '450px',
@@ -104,12 +104,13 @@ export class SectionListComponent implements OnInit {
         options: [], // Will be populated dynamically
         group: 'Basic Information'
       },
+
       {
-        key: 'code',
-        label: 'Section Code',
-        type: 'text',
-        placeholder: 'Enter section code',
-        icon: 'qr_code',
+        key: 'grade_level',
+        label: 'Grade Level',
+        type: 'select',
+        icon: 'school',
+        options: [], // Will be populated dynamically
         group: 'Basic Information'
       },
       {
@@ -121,11 +122,11 @@ export class SectionListComponent implements OnInit {
         group: 'Basic Information'
       },
       {
-        key: 'grade_level',
-        label: 'Grade Level',
-        type: 'select',
-        icon: 'school',
-        options: [], // Will be populated dynamically
+        key: 'code',
+        label: 'Section Code',
+        type: 'text',
+        placeholder: 'Enter section code',
+        icon: 'qr_code',
         group: 'Basic Information'
       },
       {
@@ -137,7 +138,7 @@ export class SectionListComponent implements OnInit {
       }
     ]
   };
-  
+
   constructor(
     private sectionService: SectionService,
     private gradeService: GradeService,
@@ -146,14 +147,14 @@ export class SectionListComponent implements OnInit {
     private errorHandler: ErrorHandlerService,
     private exportService: ExportService,
     private permissionService: PermissionService
-  ) {}
-  
+  ) { }
+
   ngOnInit(): void {
     this.loadBranches();
     this.loadGrades();
     this.loadSections();
   }
-  
+
   /**
    * Load branches dynamically for advanced search filter
    */
@@ -174,7 +175,7 @@ export class SectionListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Load grades dynamically for advanced search filter
    */
@@ -214,10 +215,10 @@ export class SectionListComponent implements OnInit {
       }
     });
   }
-  
+
   loadSections(): void {
     this.loading = true;
-    
+
     this.sectionService.getSections(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
@@ -234,7 +235,7 @@ export class SectionListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Handle pagination changes
    */
@@ -246,7 +247,7 @@ export class SectionListComponent implements OnInit {
     };
     this.loadSections();
   }
-  
+
   /**
    * Handle sort changes
    */
@@ -261,9 +262,9 @@ export class SectionListComponent implements OnInit {
       'room_number': 'room_number',
       'is_active': 'is_active'
     };
-    
+
     const sortColumn = columnMapping[event.field] || event.field;
-    
+
     this.currentFilters = {
       ...this.currentFilters,
       sort_by: sortColumn,
@@ -271,7 +272,7 @@ export class SectionListComponent implements OnInit {
     };
     this.loadSections();
   }
-  
+
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
@@ -280,7 +281,7 @@ export class SectionListComponent implements OnInit {
     };
     this.loadSections();
   }
-  
+
   onAction(event: { action: string, row: Section | null }): void {
     if (event.action === 'add') {
       // Check permission before allowing create
@@ -291,23 +292,23 @@ export class SectionListComponent implements OnInit {
       }
     }
   }
-  
+
   onRowClick(row: Section): void {
     this.viewSection(row);
   }
-  
+
   onSelectionChange(selected: Section[]): void {
     this.selectedSections = selected;
   }
-  
+
   viewSection(section: Section): void {
     this.router.navigate(['/sections/view', section.id]);
   }
-  
+
   editSection(section: Section): void {
     this.router.navigate(['/sections/edit', section.id]);
   }
-  
+
   deleteSection(section: Section): void {
     if (confirm(`Are you sure you want to delete section "${section.name}"?`)) {
       this.sectionService.deleteSection(section.id).subscribe({
@@ -323,17 +324,17 @@ export class SectionListComponent implements OnInit {
       });
     }
   }
-  
+
   onExport(format: 'excel' | 'pdf' | 'csv'): void {
     // Check permission before allowing export
     if (!this.permissionService.hasPermission('sections.export')) {
       this.errorHandler.showError('You do not have permission to export sections');
       return;
     }
-    
+
     // Show loading message
     this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
-    
+
     // Call export service with current filters
     this.exportService.export(
       {
