@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
@@ -15,38 +16,87 @@ import { ExportService } from '../../../../shared/services/export.service';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { StudentAttendance, TeacherAttendance } from '../../../../core/models/attendance.model';
 import { Section } from '../../../../core/models/section.model';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTableModule } from '@angular/material/table';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-attendance-list',
   standalone: true,
-  imports: [CommonModule, MaterialModule, DataTableComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MaterialModule,
+    DataTableComponent,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatButtonToggleModule,
+    MatTableModule
+  ],
   templateUrl: './attendance-list.component.html',
   styleUrls: ['./attendance-list.component.scss']
 })
 export class AttendanceListComponent implements OnInit {
   @ViewChild('studentDataTable') studentDataTable!: DataTableComponent;
   @ViewChild('teacherDataTable') teacherDataTable!: DataTableComponent;
-  
+
   loading = false;
-  activeTab: 'student' | 'teacher' = 'student';
-  loadedTabs = new Set<string>(['student']); // Track which tabs have been loaded for lazy loading
-  
+  activeTab: 'dashboard' | 'student' | 'teacher' = 'dashboard'; // Default to dashboard
+  loadedTabs = new Set<string>(['dashboard']); // Track which tabs have been loaded for lazy loading
+
+  // Dashboard data
+  teacherAttendanceDashboard: any = null;
+  studentAttendanceDashboard: any = null;
+
   // Separate data arrays for each tab
   studentRecords: StudentAttendance[] = [];
   teacherRecords: TeacherAttendance[] = [];
   selectedRecords: (StudentAttendance | TeacherAttendance)[] = [];
-  
+
   // Counts for tab badges
   studentCount = 0;
   teacherCount = 0;
-  
+
   // Current filters
   currentFilters: Record<string, unknown> = {};
+  dashboardFilters: Record<string, unknown> = {};
   branches: any[] = [];
+  grades: any[] = [];
   allSections: Section[] = [];
+  sections: any[] = [];
   currentGrade: string | null = null; // Track current grade selection
   currentBranch: string | null = null; // Track current branch selection
-  
+  selectedBranch: string | number | null = null;
+
+  // Date range filters for dashboard
+  selectedPeriod = new FormControl('today');
+  customFromDate = new FormControl();
+  customToDate = new FormControl();
+
+  // Selected grade and section for student attendance breakdown
+  selectedGrade: string | null = null;
+  selectedSection: string | null = null;
+  selectedStatus: string | null = null; // Status filter for student attendance
+  studentAttendanceByClassSection: any = null;
+
+  // Attendance status options
+  attendanceStatuses = [
+    { value: '', label: 'All Statuses' },
+    { value: 'Present', label: 'Present' },
+    { value: 'Absent', label: 'Absent' },
+    { value: 'Late', label: 'Late' },
+    { value: 'Leave', label: 'Leave' },
+    { value: 'Sick Leave', label: 'Sick Leave' },
+    { value: 'Half-Day', label: 'Half-Day' }
+  ];
+
+  // Branch-wise teacher attendance
+  selectedBranchForTeachers: string | number | null = null;
+  selectedStatusForTeachers: string | null = null; // Status filter for teacher attendance
+  teacherAttendanceByBranch: any = null;
+
   // Separate table configurations
   studentTableConfig: TableConfig = {
     columns: this.getStudentColumns(),
@@ -179,7 +229,7 @@ export class AttendanceListComponent implements OnInit {
       }
     ]
   };
-  
+
   constructor(
     private attendanceService: AttendanceService,
     private errorHandler: ErrorHandlerService,
@@ -190,30 +240,58 @@ export class AttendanceListComponent implements OnInit {
     private gradeService: GradeService,
     private sectionService: SectionService,
     private departmentService: DepartmentService
-  ) {}
-  
+  ) { }
+
   ngOnInit(): void {
     // Check query parameters to restore active tab
     this.route.queryParams.subscribe(params => {
       // Check both 'tab' and 'returnTab' params to restore correct tab
       const tabType = params['tab'] || params['returnTab'];
-      if (tabType === 'teacher') {
+      if (tabType === 'dashboard') {
+        this.activeTab = 'dashboard';
+        this.loadedTabs.add('dashboard');
+      } else if (tabType === 'teacher') {
         this.activeTab = 'teacher';
         this.loadedTabs.add('teacher');
-      } else {
+      } else if (tabType === 'student') {
         this.activeTab = 'student';
         this.loadedTabs.add('student');
+      } else {
+        this.activeTab = 'dashboard'; // Default to dashboard
+        this.loadedTabs.add('dashboard');
       }
     });
-    
+
     // Load filter options
     this.loadBranches();
     this.loadGrades();
     this.loadSections();
     this.loadDepartments();
-    
+
     // Only load data for the active tab (lazy loading)
-    if (this.activeTab === 'student') {
+    this.loadActiveTabData();
+
+    // Listen to period changes for dashboard
+    this.selectedPeriod.valueChanges.subscribe(() => {
+      if (this.activeTab === 'dashboard') {
+        this.loadDashboardData();
+        // Reload branch-wise teacher attendance if branch is selected
+        if (this.selectedBranchForTeachers) {
+          this.loadTeacherAttendanceByBranch();
+        }
+        // Reload student attendance by class/section if grade and section are selected
+        if (this.selectedGrade && this.selectedSection) {
+          this.loadStudentAttendanceByClassSection();
+        }
+      }
+    });
+  }
+
+  // Load data for active tab
+  private loadActiveTabData(): void {
+    if (this.activeTab === 'dashboard') {
+      this.loadDashboardData();
+    } else if (this.activeTab === 'student') {
       this.loadStudentAttendance();
     } else {
       this.loadTeacherAttendance();
@@ -224,26 +302,21 @@ export class AttendanceListComponent implements OnInit {
    * Tab switching with lazy loading
    * Only load data when user clicks on a tab for the first time
    */
-  switchTab(tab: 'student' | 'teacher'): void {
+  switchTab(tab: 'dashboard' | 'student' | 'teacher'): void {
     this.activeTab = tab;
-    
-    // Lazy load data only if not already loaded
-    if (!this.loadedTabs.has(tab)) {
-      this.loadedTabs.add(tab);
-      
-      if (tab === 'student') {
-        this.loadStudentAttendance();
-      } else {
-        this.loadTeacherAttendance();
-      }
-    }
-    
+
+    // Mark tab as loaded for lazy loading
+    this.loadedTabs.add(tab);
+
     // Update URL query params
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab },
       queryParamsHandling: 'merge'
     });
+
+    // Load data for the tab
+    this.loadActiveTabData();
   }
 
   /**
@@ -253,11 +326,282 @@ export class AttendanceListComponent implements OnInit {
     return this.loadedTabs.has(tab);
   }
 
+  // Load dashboard data
+  loadDashboardData(filters: Record<string, any> = {}): void {
+    this.loading = true;
+
+    // Build filters with date range
+    const dateFilters: Record<string, any> = {
+      period: this.selectedPeriod.value || 'today'
+    };
+
+    // Add custom date range if selected
+    if (this.selectedPeriod.value === 'custom') {
+      if (this.customFromDate.value) {
+        dateFilters['from_date'] = this.formatDate(this.customFromDate.value);
+      }
+      if (this.customToDate.value) {
+        dateFilters['to_date'] = this.formatDate(this.customToDate.value);
+      }
+    }
+
+    // Merge with existing filters
+    this.dashboardFilters = { ...this.dashboardFilters, ...filters, ...dateFilters };
+
+    // Load both teacher and student dashboard data in parallel
+    const teacherFilters = { ...this.dashboardFilters, type: 'teacher' };
+    const studentFilters = { ...this.dashboardFilters, type: 'student' };
+
+    forkJoin({
+      teacher: this.attendanceService.getTodayAttendance(teacherFilters),
+      student: this.attendanceService.getTodayAttendance(studentFilters)
+    }).subscribe({
+      next: (responses) => {
+        // Handle teacher response
+        if (responses.teacher.success && responses.teacher.data) {
+          // The API returns { success: true, data: { summary: {...}, by_status: [...], ... } }
+          this.teacherAttendanceDashboard = responses.teacher.data;
+        } else {
+          this.teacherAttendanceDashboard = null;
+        }
+
+        // Handle student response
+        if (responses.student.success && responses.student.data) {
+          // The API returns { success: true, data: { summary: {...}, by_status: [...], ... } }
+          this.studentAttendanceDashboard = responses.student.data;
+        } else {
+          this.studentAttendanceDashboard = null;
+        }
+
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.teacherAttendanceDashboard = null;
+        this.studentAttendanceDashboard = null;
+        this.loading = false;
+      }
+    });
+  }
+
+  onBranchFilterChange(): void {
+    const filters: Record<string, any> = {};
+    if (this.selectedBranch) {
+      filters['branch_id'] = this.selectedBranch;
+    }
+
+    if (this.activeTab === 'dashboard') {
+      this.loadDashboardData(filters);
+    } else if (this.activeTab === 'student') {
+      this.loadStudentAttendance(filters);
+    } else {
+      this.loadTeacherAttendance(filters);
+    }
+  }
+
+  onCustomRangeChange(): void {
+    if (this.customFromDate.value && this.customToDate.value) {
+      if (this.activeTab === 'dashboard') {
+        this.loadDashboardData();
+        // Reload branch-wise teacher attendance if branch is selected
+        if (this.selectedBranchForTeachers) {
+          this.loadTeacherAttendanceByBranch();
+        }
+        // Reload student attendance by class/section if grade and section are selected
+        if (this.selectedGrade && this.selectedSection) {
+          this.loadStudentAttendanceByClassSection();
+        }
+      }
+    }
+  }
+
+  onGradeChange(): void {
+    if (this.selectedGrade) {
+      this.loadSectionsForDashboard();
+    } else {
+      this.sections = [];
+      this.selectedSection = null;
+    }
+  }
+
+  onSectionChange(): void {
+    if (this.selectedGrade && this.selectedSection) {
+      this.loadStudentAttendanceByClassSection();
+    }
+  }
+
+  onStatusChange(): void {
+    if (this.selectedGrade && this.selectedSection) {
+      this.loadStudentAttendanceByClassSection();
+    }
+  }
+
+  loadStudentAttendanceByClassSection(): void {
+    if (!this.selectedGrade || !this.selectedSection) {
+      return;
+    }
+
+    this.loading = true;
+
+    const filters: Record<string, any> = {
+      grade: this.selectedGrade,
+      section: this.selectedSection,
+      period: this.selectedPeriod.value || 'today',
+      type: 'student'
+    };
+
+    // Add custom date range if selected
+    if (this.selectedPeriod.value === 'custom') {
+      if (this.customFromDate.value) {
+        filters['from_date'] = this.formatDate(this.customFromDate.value);
+      }
+      if (this.customToDate.value) {
+        filters['to_date'] = this.formatDate(this.customToDate.value);
+      }
+    }
+
+    // Add branch filter if selected
+    if (this.selectedBranch) {
+      filters['branch_id'] = this.selectedBranch;
+    }
+
+    // Add status filter if selected (optional - only if a specific status is chosen)
+    if (this.selectedStatus) {
+      filters['status'] = this.selectedStatus;
+    }
+
+    this.attendanceService.getTodayAttendance(filters).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.studentAttendanceByClassSection = response.data;
+        } else {
+          this.studentAttendanceByClassSection = null;
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.studentAttendanceByClassSection = null;
+        this.loading = false;
+      }
+    });
+  }
+
+  loadSectionsForDashboard(): void {
+    if (!this.selectedGrade) {
+      this.sections = [];
+      return;
+    }
+
+    const filters: any = {
+      grade_level: this.selectedGrade,
+      is_active: true,
+      per_page: 1000
+    };
+
+    if (this.selectedBranch) {
+      filters.branch_id = this.selectedBranch;
+    }
+
+    this.sectionService.getSections(filters).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.sections = response.data;
+        } else {
+          this.sections = [];
+        }
+      },
+      error: (error) => {
+        this.sections = [];
+      }
+    });
+  }
+
+  // Format date for API
+  formatDate(date: Date | string): string {
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Get grade label
+  getGradeLabel(gradeValue: string): string {
+    const grade = this.grades.find(g => g.value === gradeValue);
+    return grade ? grade.label : `Grade ${gradeValue}`;
+  }
+
+  // Get branch name
+  getBranchName(branchId: string | number): string {
+    const branch = this.branches.find(b => b.id === branchId);
+    return branch ? branch.name : `Branch ${branchId}`;
+  }
+
+  // Load branch-wise teacher attendance
+  loadTeacherAttendanceByBranch(): void {
+    if (!this.selectedBranchForTeachers) {
+      this.teacherAttendanceByBranch = null;
+      return;
+    }
+
+    this.loading = true;
+
+    const filters: Record<string, any> = {
+      branch_id: this.selectedBranchForTeachers,
+      period: this.selectedPeriod.value || 'today',
+      type: 'teacher',
+      return_teachers: true // Request teacher list instead of breakdowns
+    };
+
+    // Add custom date range if selected
+    if (this.selectedPeriod.value === 'custom') {
+      if (this.customFromDate.value) {
+        filters['from_date'] = this.formatDate(this.customFromDate.value);
+      }
+      if (this.customToDate.value) {
+        filters['to_date'] = this.formatDate(this.customToDate.value);
+      }
+    }
+
+    // Add status filter if selected (optional - only if a specific status is chosen)
+    if (this.selectedStatusForTeachers) {
+      filters['status'] = this.selectedStatusForTeachers;
+    }
+
+    this.attendanceService.getTodayAttendance(filters).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.teacherAttendanceByBranch = response.data;
+        } else {
+          this.teacherAttendanceByBranch = null;
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.teacherAttendanceByBranch = null;
+        this.loading = false;
+      }
+    });
+  }
+
+  onBranchForTeachersChange(): void {
+    this.loadTeacherAttendanceByBranch();
+  }
+
+  onStatusForTeachersChange(): void {
+    if (this.selectedBranchForTeachers) {
+      this.loadTeacherAttendanceByBranch();
+    }
+  }
+
   // Load student attendance
   loadStudentAttendance(filters: Record<string, any> = {}): void {
     this.loading = true;
     const params = { ...filters, type: 'student' as const };
-    
+
     this.attendanceService.getAttendance(params).subscribe({
       next: (response: any) => {
         if (response.success) {
@@ -293,7 +637,7 @@ export class AttendanceListComponent implements OnInit {
   loadTeacherAttendance(filters: Record<string, any> = {}): void {
     this.loading = true;
     const params = { ...filters, type: 'teacher' as const };
-    
+
     this.attendanceService.getAttendance(params).subscribe({
       next: (response: any) => {
         if (response.success) {
@@ -324,7 +668,7 @@ export class AttendanceListComponent implements OnInit {
       }
     });
   }
-  
+
   getStudentColumns(): TableColumn[] {
     return [
       { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
@@ -336,7 +680,7 @@ export class AttendanceListComponent implements OnInit {
       { key: 'remarks', header: 'Remarks', width: '200px' }
     ];
   }
-  
+
   getTeacherColumns(): TableColumn[] {
     return [
       { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
@@ -347,7 +691,7 @@ export class AttendanceListComponent implements OnInit {
       { key: 'remarks', header: 'Remarks', width: '200px' }
     ];
   }
-  
+
   /**
    * Load all sections for filtering
    */
@@ -363,41 +707,41 @@ export class AttendanceListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Update section options based on selected grade and branch
    */
   updateSectionOptions(selectedGrade: string | null, selectedBranch: string | null = null): void {
     let filteredSections = this.allSections;
-    
+
     // Filter by grade if selected
     if (selectedGrade) {
       filteredSections = filteredSections.filter(
         section => String(section.grade_level) === String(selectedGrade)
       );
     }
-    
+
     // Filter by branch if selected
     if (selectedBranch) {
       filteredSections = filteredSections.filter(
         section => Number(section.branch_id) === Number(selectedBranch)
       );
     }
-    
+
     // Only show active sections
     filteredSections = filteredSections.filter(section => section.is_active);
-    
+
     const sectionOptions = filteredSections.map(section => ({
       value: section.name,
       label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
     }));
-    
+
     const studentSectionField = this.studentSearchConfig.fields.find(f => f.key === 'section');
     if (studentSectionField) {
       studentSectionField.options = sectionOptions;
     }
   }
-  
+
   /**
    * Load grades dynamically for advanced search filter
    */
@@ -405,11 +749,12 @@ export class AttendanceListComponent implements OnInit {
     this.gradeService.getGrades().subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          this.grades = response.data;
           const gradeOptions = response.data.map(grade => ({
             value: grade.value,
             label: grade.label
           }));
-          
+
           const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
           if (studentGradeField) {
             studentGradeField.options = gradeOptions;
@@ -420,23 +765,23 @@ export class AttendanceListComponent implements OnInit {
       }
     });
   }
-  
+
   loadBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.branches = response.data;
-          
+
           const branchOptions = this.branches.map((b: any) => ({
             value: b.id.toString(),
             label: b.name
           }));
-          
+
           const studentBranchField = this.studentSearchConfig.fields.find(f => f.key === 'branch_id');
           if (studentBranchField) {
             studentBranchField.options = branchOptions;
           }
-          
+
           const teacherBranchField = this.teacherSearchConfig.fields.find(f => f.key === 'branch_id');
           if (teacherBranchField) {
             teacherBranchField.options = branchOptions;
@@ -459,7 +804,7 @@ export class AttendanceListComponent implements OnInit {
             value: dept.name,
             label: dept.name
           }));
-          
+
           const teacherDeptField = this.teacherSearchConfig.fields.find(f => f.key === 'department');
           if (teacherDeptField) {
             teacherDeptField.options = departmentOptions;
@@ -470,11 +815,11 @@ export class AttendanceListComponent implements OnInit {
       }
     });
   }
-  
+
   // Student tab actions
   onStudentAction(event: { action: string; row: any }): void {
     const attendance = event.row as StudentAttendance;
-    
+
     switch (event.action) {
       case 'add':
         this.markStudentAttendance();
@@ -498,7 +843,7 @@ export class AttendanceListComponent implements OnInit {
   // Teacher tab actions
   onTeacherAction(event: { action: string; row: any }): void {
     const attendance = event.row as TeacherAttendance;
-    
+
     switch (event.action) {
       case 'add':
         this.markTeacherAttendance();
@@ -518,26 +863,26 @@ export class AttendanceListComponent implements OnInit {
       default:
     }
   }
-  
+
   onRowClick(row: StudentAttendance | TeacherAttendance): void {
     this.viewAttendance(row);
   }
-  
+
   onSelectionChange(selected: (StudentAttendance | TeacherAttendance)[]): void {
     this.selectedRecords = selected;
   }
-  
+
   onExport(format: string): void {
     const type = this.activeTab;
     const recordCount = this.selectedRecords.length || (type === 'student' ? this.studentCount : this.teacherCount);
-    
+
     this.errorHandler.showInfo(`Exporting ${recordCount} ${type} attendance records as ${format.toUpperCase()}...`);
-    
+
     const exportConfig = {
       endpoint: '/attendance/export',
       filename: `${type}_attendance_export`
     };
-    
+
     const exportOptions = {
       format: format as 'excel' | 'pdf' | 'csv',
       filters: {
@@ -545,10 +890,10 @@ export class AttendanceListComponent implements OnInit {
         type: type
       }
     };
-    
+
     this.exportService.export(exportConfig, exportOptions);
   }
-  
+
   onSearchChange(query: string): void {
     if (this.activeTab === 'student') {
       this.loadStudentAttendance({ search: query });
@@ -556,7 +901,7 @@ export class AttendanceListComponent implements OnInit {
       this.loadTeacherAttendance({ search: query });
     }
   }
-  
+
   onSearchFieldChanged(event: { field: string, value: any }): void {
     // Update sections when grade or branch field changes
     if (event.field === 'grade') {
@@ -567,7 +912,7 @@ export class AttendanceListComponent implements OnInit {
       this.updateSectionOptions(this.currentGrade, this.currentBranch);
     }
   }
-  
+
   /**
    * Handle pagination changes
    */
@@ -577,14 +922,14 @@ export class AttendanceListComponent implements OnInit {
       page: event.page + 1,
       per_page: event.pageSize
     };
-    
+
     if (this.activeTab === 'student') {
       this.loadStudentAttendance(this.currentFilters);
     } else {
       this.loadTeacherAttendance(this.currentFilters);
     }
   }
-  
+
   /**
    * Handle sort changes
    */
@@ -599,15 +944,15 @@ export class AttendanceListComponent implements OnInit {
       'status': this.activeTab === 'student' ? 'student_attendance.status' : 'teacher_attendance.status',
       'employee_id': 'teachers.employee_id'
     };
-    
+
     const sortColumn = columnMapping[event.field] || event.field;
-    
+
     this.currentFilters = {
       ...this.currentFilters,
       sort_by: sortColumn,
       sort_direction: event.direction
     };
-    
+
     if (this.activeTab === 'student') {
       this.loadStudentAttendance(this.currentFilters);
     } else {
@@ -621,62 +966,62 @@ export class AttendanceListComponent implements OnInit {
       search: event.query,
       page: 1
     };
-    
+
     this.currentFilters = filters;
-    
+
     if (this.activeTab === 'student') {
       this.loadStudentAttendance(filters);
     } else {
       this.loadTeacherAttendance(filters);
     }
   }
-  
+
   onSearchReset(): void {
     this.updateSectionOptions(null);
-    
+
     if (this.activeTab === 'student') {
       this.loadStudentAttendance();
     } else {
       this.loadTeacherAttendance();
     }
   }
-  
+
   viewAttendance(attendance: StudentAttendance | TeacherAttendance): void {
     // Preserve the current tab when navigating away
     this.router.navigate(['/attendance/view', attendance.id], {
       queryParams: { returnTab: this.activeTab }
     });
   }
-  
+
   editAttendance(attendance: StudentAttendance | TeacherAttendance): void {
     // Preserve the current tab when navigating away
     this.router.navigate(['/attendance/edit', attendance.id], {
       queryParams: { returnTab: this.activeTab }
     });
   }
-  
+
   deleteAttendance(attendance: StudentAttendance | TeacherAttendance): void {
     if (confirm(`Are you sure you want to delete this attendance record for ${attendance.first_name} ${attendance.last_name}?`)) {
       this.errorHandler.showInfo('Delete functionality will be implemented with backend integration');
     }
   }
-  
+
   viewStudentReport(attendance: StudentAttendance | TeacherAttendance): void {
     if ('student_id' in attendance) {
-      this.router.navigate(['/attendance/view', attendance.student_id], { 
-        queryParams: { report: 'true', type: 'student', returnTab: this.activeTab } 
+      this.router.navigate(['/attendance/view', attendance.student_id], {
+        queryParams: { report: 'true', type: 'student', returnTab: this.activeTab }
       });
     }
   }
-  
+
   viewTeacherReport(attendance: StudentAttendance | TeacherAttendance): void {
     if ('teacher_id' in attendance) {
-      this.router.navigate(['/attendance/view', attendance.teacher_id], { 
-        queryParams: { report: 'true', type: 'teacher', returnTab: this.activeTab } 
+      this.router.navigate(['/attendance/view', attendance.teacher_id], {
+        queryParams: { report: 'true', type: 'teacher', returnTab: this.activeTab }
       });
     }
   }
-  
+
   markStudentAttendance(): void {
     this.router.navigate(['/attendance/mark'], {
       queryParams: { type: 'student' }

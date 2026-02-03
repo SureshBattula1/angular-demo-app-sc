@@ -146,6 +146,28 @@ export class AttendanceService {
       { params }
     );
   }
+
+  /**
+   * Get today's attendance dashboard data
+   * Similar to fee payments dashboard
+   */
+  getTodayAttendance(filters?: Record<string, any>): Observable<ApiResponse<any>> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const value = filters[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/dashboard`,
+      { params }
+    );
+  }
 }
 
 

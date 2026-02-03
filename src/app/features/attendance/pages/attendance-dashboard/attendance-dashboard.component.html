@@ -1,0 +1,531 @@
+<div class="page-container">
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="attendance-toolbar">
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'teacher'"
+        (click)="switchTab('teacher')">
+        <mat-icon>person</mat-icon>
+        <span>Teacher Attendance</span>
+        <span class="tab-badge" *ngIf="teacherAttendanceCount > 0">{{ teacherAttendanceCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'student'"
+        (click)="switchTab('student')">
+        <mat-icon>school</mat-icon>
+        <span>Student Attendance</span>
+        <span class="tab-badge" *ngIf="studentAttendanceCount > 0">{{ studentAttendanceCount }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Teacher Attendance Dashboard Tab -->
+  <div *ngIf="activeTab === 'teacher'" class="attendance-dashboard">
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <mat-spinner></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div *ngIf="!loading && teacherAttendanceDashboard">
+      
+      <!-- Filters Row: Branch + Date Range -->
+      <div class="filters-container">
+        <!-- Branch Filter -->
+        <mat-form-field appearance="outline" class="branch-filter">
+          <mat-label>
+            <mat-icon>business</mat-icon>
+            Branch
+          </mat-label>
+          <mat-select [(value)]="selectedBranch" (selectionChange)="onBranchFilterChange()">
+            <mat-option value="">All Branches</mat-option>
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">
+              {{ branch.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Date Range Selector -->
+        <div class="date-range-selector">
+          <mat-button-toggle-group [formControl]="selectedPeriod" class="period-toggle">
+            <mat-button-toggle value="today">
+              <mat-icon>today</mat-icon>
+              <span class="toggle-label">Today</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="week">
+              <mat-icon>view_week</mat-icon>
+              <span class="toggle-label">Week</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="month">
+              <mat-icon>calendar_month</mat-icon>
+              <span class="toggle-label">Month</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="custom">
+              <mat-icon>date_range</mat-icon>
+              <span class="toggle-label">Custom</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </div>
+      
+      <!-- Custom Date Range (shown only when custom selected) -->
+      <div class="custom-range-row" *ngIf="selectedPeriod.value === 'custom'">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [formControl]="customFromDate" 
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="toPicker" [formControl]="customToDate"
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-section">
+        <mat-card class="summary-card total-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Present</h3>
+              <p class="summary-value">{{ teacherAttendanceDashboard.summary?.present || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>cancel</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Absent</h3>
+              <p class="summary-value">{{ teacherAttendanceDashboard.summary?.absent || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Late</h3>
+              <p class="summary-value">{{ teacherAttendanceDashboard.summary?.late || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>event_busy</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Leaves</h3>
+              <p class="summary-value">{{ teacherAttendanceDashboard.summary?.leaves || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Breakdown Section -->
+      <div class="breakdown-section">
+        <!-- Attendance Status Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="teacherAttendanceDashboard.by_status && teacherAttendanceDashboard.by_status.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="status-icon">fact_check</mat-icon>
+              Attendance by Status
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of teacherAttendanceDashboard.by_status">
+                <div class="category-info">
+                  <span class="category-name" [class.status-present]="item.status === 'Present'" 
+                        [class.status-absent]="item.status === 'Absent'"
+                        [class.status-late]="item.status === 'Late'">
+                    {{ item.status }}
+                  </span>
+                  <span class="category-meta">{{ item.count }} teachers</span>
+                </div>
+                <span class="category-amount">{{ item.percentage || 0 }}%</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Department Wise Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="teacherAttendanceDashboard.by_department && teacherAttendanceDashboard.by_department.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="department-icon">business</mat-icon>
+              Attendance by Department
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of teacherAttendanceDashboard.by_department">
+                <div class="category-info">
+                  <span class="category-name">{{ item.department_name }}</span>
+                  <span class="category-meta">
+                    {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                  </span>
+                </div>
+                <span class="category-amount">{{ item.attendance_percentage || 0 }}%</span>
+              </div>
+              <div *ngIf="teacherAttendanceDashboard.by_department.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No department data available</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Attendance Dashboard Tab -->
+  <div *ngIf="activeTab === 'student'" class="attendance-dashboard">
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <mat-spinner></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div *ngIf="!loading && studentAttendanceDashboard">
+      
+      <!-- Filters Row: Branch + Date Range -->
+      <div class="filters-container">
+        <!-- Branch Filter -->
+        <mat-form-field appearance="outline" class="branch-filter">
+          <mat-label>
+            <mat-icon>business</mat-icon>
+            Branch
+          </mat-label>
+          <mat-select [(value)]="selectedBranch" (selectionChange)="onBranchFilterChange()">
+            <mat-option value="">All Branches</mat-option>
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">
+              {{ branch.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Date Range Selector -->
+        <div class="date-range-selector">
+          <mat-button-toggle-group [formControl]="selectedPeriod" class="period-toggle">
+            <mat-button-toggle value="today">
+              <mat-icon>today</mat-icon>
+              <span class="toggle-label">Today</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="week">
+              <mat-icon>view_week</mat-icon>
+              <span class="toggle-label">Week</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="month">
+              <mat-icon>calendar_month</mat-icon>
+              <span class="toggle-label">Month</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="custom">
+              <mat-icon>date_range</mat-icon>
+              <span class="toggle-label">Custom</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </div>
+      
+      <!-- Custom Date Range (shown only when custom selected) -->
+      <div class="custom-range-row" *ngIf="selectedPeriod.value === 'custom'">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [formControl]="customFromDate" 
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="toPicker" [formControl]="customToDate"
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-section">
+        <mat-card class="summary-card total-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Present</h3>
+              <p class="summary-value">{{ studentAttendanceDashboard.summary?.present || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>cancel</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Absent</h3>
+              <p class="summary-value">{{ studentAttendanceDashboard.summary?.absent || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Late</h3>
+              <p class="summary-value">{{ studentAttendanceDashboard.summary?.late || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>people</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Students</h3>
+              <p class="summary-value">{{ studentAttendanceDashboard.summary?.total_count || 0 }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Breakdown Section -->
+      <div class="breakdown-section">
+        <!-- Attendance Status Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="studentAttendanceDashboard.by_status && studentAttendanceDashboard.by_status.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="status-icon">fact_check</mat-icon>
+              Attendance by Status
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of studentAttendanceDashboard.by_status">
+                <div class="category-info">
+                  <span class="category-name" [class.status-present]="item.status === 'Present'" 
+                        [class.status-absent]="item.status === 'Absent'"
+                        [class.status-late]="item.status === 'Late'">
+                    {{ item.status }}
+                  </span>
+                  <span class="category-meta">{{ item.count }} students</span>
+                </div>
+                <span class="category-amount">{{ item.percentage || 0 }}%</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Class/Grade Wise Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="studentAttendanceDashboard.by_grade && studentAttendanceDashboard.by_grade.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="grade-icon">school</mat-icon>
+              Attendance by Class/Grade
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of studentAttendanceDashboard.by_grade">
+                <div class="category-info">
+                  <span class="category-name">{{ getGradeLabel(item.grade) }}</span>
+                  <span class="category-meta">
+                    {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                  </span>
+                </div>
+                <div class="amount-group">
+                  <span class="category-amount">{{ item.attendance_percentage || 0 }}%</span>
+                </div>
+              </div>
+              <div *ngIf="studentAttendanceDashboard.by_grade.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No attendance data by class</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Section Wise Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="studentAttendanceDashboard.by_section && studentAttendanceDashboard.by_section.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="section-icon">class</mat-icon>
+              Attendance by Section
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of studentAttendanceDashboard.by_section">
+                <div class="category-info">
+                  <span class="category-name">{{ getGradeLabel(item.grade) }} - Section {{ item.section }}</span>
+                  <span class="category-meta">
+                    {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                  </span>
+                </div>
+                <span class="category-amount">{{ item.attendance_percentage || 0 }}%</span>
+              </div>
+              <div *ngIf="studentAttendanceDashboard.by_section.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No attendance data by section</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Class and Section Wise Attendance Detail -->
+      <div class="class-section-detail-section" *ngIf="activeTab === 'student'">
+        <mat-card class="detail-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>view_list</mat-icon>
+              Student Attendance by Class and Section
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <!-- Grade and Section Selection -->
+            <div class="selection-filters">
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Select Class/Grade</mat-label>
+                <mat-select [(value)]="selectedGrade" (selectionChange)="onGradeChange()">
+                  <mat-option value="">All Grades</mat-option>
+                  <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                    {{ grade.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>school</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="filter-field" *ngIf="selectedGrade">
+                <mat-label>Select Section</mat-label>
+                <mat-select [(value)]="selectedSection" (selectionChange)="onSectionChange()">
+                  <mat-option value="">All Sections</mat-option>
+                  <mat-option *ngFor="let section of sections" [value]="section.name">
+                    {{ section.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>class</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Attendance Details Table -->
+            <div *ngIf="studentAttendanceByClassSection && selectedGrade && selectedSection" class="attendance-details">
+              <div class="details-header">
+                <h3>{{ getGradeLabel(selectedGrade) }} - Section {{ selectedSection }}</h3>
+                <div class="details-summary">
+                  <span class="summary-item">
+                    <mat-icon>check_circle</mat-icon>
+                    Present: {{ studentAttendanceByClassSection.summary?.present || 0 }}
+                  </span>
+                  <span class="summary-item">
+                    <mat-icon>cancel</mat-icon>
+                    Absent: {{ studentAttendanceByClassSection.summary?.absent || 0 }}
+                  </span>
+                  <span class="summary-item">
+                    <mat-icon>schedule</mat-icon>
+                    Late: {{ studentAttendanceByClassSection.summary?.late || 0 }}
+                  </span>
+                  <span class="summary-item">
+                    <mat-icon>people</mat-icon>
+                    Total: {{ studentAttendanceByClassSection.summary?.total_count || 0 }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="attendance-table" *ngIf="studentAttendanceByClassSection.data && studentAttendanceByClassSection.data.length > 0">
+                <table mat-table [dataSource]="studentAttendanceByClassSection.data" class="mat-elevation-z2">
+                  <ng-container matColumnDef="roll_number">
+                    <th mat-header-cell *matHeaderCellDef>Roll No.</th>
+                    <td mat-cell *matCellDef="let student">{{ student.roll_number || '-' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="student_name">
+                    <th mat-header-cell *matHeaderCellDef>Student Name</th>
+                    <td mat-cell *matCellDef="let student">
+                      {{ student.first_name }} {{ student.last_name }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="admission_number">
+                    <th mat-header-cell *matHeaderCellDef>Admission No.</th>
+                    <td mat-cell *matCellDef="let student">{{ student.admission_number || '-' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let student">
+                      <span class="status-badge" 
+                            [class.status-present]="student.status === 'Present'"
+                            [class.status-absent]="student.status === 'Absent'"
+                            [class.status-late]="student.status === 'Late'"
+                            [class.status-leave]="student.status === 'Leave' || student.status === 'Sick Leave'">
+                        {{ student.status }}
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>Date</th>
+                    <td mat-cell *matCellDef="let student">{{ student.date | date: 'shortDate' }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['roll_number', 'student_name', 'admission_number', 'status', 'date']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['roll_number', 'student_name', 'admission_number', 'status', 'date']"></tr>
+                </table>
+              </div>
+
+              <div *ngIf="!studentAttendanceByClassSection.data || studentAttendanceByClassSection.data.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No attendance records found for this class and section</p>
+              </div>
+            </div>
+
+            <div *ngIf="!selectedGrade || !selectedSection" class="empty-state">
+              <mat-icon>info</mat-icon>
+              <p>Please select both class and section to view detailed attendance</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>
+

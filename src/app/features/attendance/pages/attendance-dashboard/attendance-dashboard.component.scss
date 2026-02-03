@@ -1,4 +1,4 @@
-// Professional Attendance List Component Styles
+// Professional Attendance Dashboard Component Styles
 // Uses global CSS variables for dynamic theming
 
 :host { 
@@ -112,7 +112,7 @@
 }
 
 // Component Animation
-app-data-table {
+.attendance-dashboard {
   display: block;
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -222,34 +222,10 @@ app-data-table {
 // ATTENDANCE DASHBOARD STYLES
 // ========================================
 
-.attendance-dashboard-tab {
+.attendance-dashboard {
   padding: var(--spacing-lg);
   max-width: 1600px;
   margin: 0 auto;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.dashboard-section {
-  margin-bottom: var(--spacing-2xl);
-  
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid var(--gray-200);
-    
-    mat-icon {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
-      color: var(--primary-color);
-    }
-  }
 }
 
 .loading-state {
@@ -684,166 +660,10 @@ app-data-table {
         color: var(--info-color);
       }
     }
-    
-    .count-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 600;
-      min-width: 30px;
-      text-align: center;
-      
-      &.present-badge {
-        background: rgba(var(--success-rgb), 0.1);
-        color: var(--success-color);
-      }
-      
-      &.absent-badge {
-        background: rgba(var(--danger-rgb, 244, 67, 54), 0.1);
-        color: var(--danger-color, #f44336);
-      }
-      
-      &.late-badge {
-        background: rgba(var(--warning-rgb, 255, 152, 0), 0.1);
-        color: var(--warning-color, #ff9800);
-      }
-      
-      &.leave-badge {
-        background: rgba(var(--info-rgb), 0.1);
-        color: var(--info-color);
-      }
-    }
-    
-    .percentage-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      
-      &.high-attendance {
-        background: rgba(var(--success-rgb), 0.1);
-        color: var(--success-color);
-      }
-      
-      &.medium-attendance {
-        background: rgba(var(--warning-rgb, 255, 152, 0), 0.1);
-        color: var(--warning-color, #ff9800);
-      }
-      
-      &.low-attendance {
-        background: rgba(var(--danger-rgb, 244, 67, 54), 0.1);
-        color: var(--danger-color, #f44336);
-      }
-    }
   }
 }
 
-// Branch-wise Teacher Attendance Section
-.branch-teacher-detail-section {
-  margin-top: var(--spacing-xl);
-}
-
-.breakdown-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid var(--gray-200);
-  
-  mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    color: var(--primary-color);
-  }
-}
-
-.breakdown-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  
-  .breakdown-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md);
-    background: var(--gray-50);
-    border-radius: var(--radius-md);
-    border-left: 3px solid var(--primary-color);
-    transition: all var(--transition-fast);
-    
-    &:hover {
-      background: var(--gray-100);
-      transform: translateX(4px);
-    }
-    
-    .breakdown-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
-      
-      .breakdown-name {
-        font-weight: 600;
-        color: var(--text-primary);
-        font-size: 15px;
-        
-        &.status-present {
-          color: var(--success-color);
-        }
-        
-        &.status-absent {
-          color: var(--danger-color, #f44336);
-        }
-        
-        &.status-late {
-          color: var(--warning-color, #ff9800);
-        }
-      }
-      
-      .breakdown-meta {
-        font-size: 12px;
-        color: var(--text-secondary);
-      }
-    }
-    
-    .breakdown-stats {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: var(--spacing-xs);
-      
-      .breakdown-percentage {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--primary-color);
-      }
-      
-      .breakdown-total {
-        font-size: 12px;
-        color: var(--text-secondary);
-      }
-    }
-  }
-}
-
-.department-breakdown,
-.status-breakdown {
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-md);
-  background: var(--white);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-200);
-}
-
-// Responsive Design for Dashboard
+// Responsive Design
 @media (max-width: 991px) {
   .summary-section {
     grid-template-columns: 1fr;
@@ -864,16 +684,6 @@ app-data-table {
   .details-summary {
     flex-direction: column;
     gap: var(--spacing-sm) !important;
-  }
-  
-  .breakdown-item {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: var(--spacing-sm);
-    
-    .breakdown-stats {
-      align-items: flex-start !important;
-    }
   }
 }
 
