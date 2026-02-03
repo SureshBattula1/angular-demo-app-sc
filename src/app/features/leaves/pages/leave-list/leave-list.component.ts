@@ -259,9 +259,9 @@ export class LeaveListComponent implements OnInit {
     columns: this.getStudentColumns(),
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewLeave(row) },
-      { icon: 'check', label: 'Approve', color: 'primary', action: (row) => this.approveLeave(row) },
-      { icon: 'close', label: 'Reject', color: 'warn', action: (row) => this.rejectLeave(row) },
-      { icon: 'edit', label: 'Edit', color: 'accent', action: (row) => this.editLeave(row) },
+      { icon: 'check', label: 'Approve', color: 'primary', action: (row) => this.approveLeave(row), show: (row) => row.status === 'Pending' },
+      { icon: 'close', label: 'Reject', color: 'warn', action: (row) => this.rejectLeave(row), show: (row) => row.status === 'Pending' },
+      { icon: 'edit', label: 'Edit', color: 'accent', action: (row) => this.editLeave(row), show: (row) => row.status === 'Pending' },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteLeave(row) }
     ],
     selectable: true,
@@ -280,9 +280,9 @@ export class LeaveListComponent implements OnInit {
     columns: this.getTeacherColumns(),
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewLeave(row) },
-      { icon: 'check', label: 'Approve', color: 'primary', action: (row) => this.approveLeave(row) },
-      { icon: 'close', label: 'Reject', color: 'warn', action: (row) => this.rejectLeave(row) },
-      { icon: 'edit', label: 'Edit', color: 'accent', action: (row) => this.editLeave(row) },
+      { icon: 'check', label: 'Approve', color: 'primary', action: (row) => this.approveLeave(row), show: (row) => row.status === 'Pending' },
+      { icon: 'close', label: 'Reject', color: 'warn', action: (row) => this.rejectLeave(row), show: (row) => row.status === 'Pending' },
+      { icon: 'edit', label: 'Edit', color: 'accent', action: (row) => this.editLeave(row), show: (row) => row.status === 'Pending' },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteLeave(row) }
     ],
     selectable: true,
@@ -460,7 +460,7 @@ export class LeaveListComponent implements OnInit {
     this.leaveService.getLeaves(params).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.studentRecords = response.data || [];
+          this.studentRecords = this.processLeaveData(response.data || []);
           if (response.meta) {
             this.studentTableConfig = { ...this.studentTableConfig, totalCount: response.meta.total };
             this.studentCount = response.meta.total;
@@ -492,7 +492,7 @@ export class LeaveListComponent implements OnInit {
     this.leaveService.getLeaves(params).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.teacherRecords = response.data || [];
+          this.teacherRecords = this.processLeaveData(response.data || []);
           if (response.meta) {
             this.teacherTableConfig = { ...this.teacherTableConfig, totalCount: response.meta.total };
             this.teacherCount = response.meta.total;
@@ -517,10 +517,20 @@ export class LeaveListComponent implements OnInit {
     });
   }
   
+  /**
+   * Process leave data to add full_name field
+   */
+  processLeaveData(leaves: any[]): any[] {
+    return leaves.map(leave => ({
+      ...leave,
+      full_name: [leave.first_name, leave.last_name].filter(Boolean).join(' ').trim() || '-'
+    }));
+  }
+  
   getStudentColumns(): TableColumn[] {
     return [
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
+      { key: 'branch_name', header: 'Branch', sortable: true, searchable: true, width: '150px' },
       { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
       { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
@@ -535,8 +545,8 @@ export class LeaveListComponent implements OnInit {
   
   getTeacherColumns(): TableColumn[] {
     return [
-      { key: 'first_name', header: 'First Name', sortable: true, searchable: true },
-      { key: 'last_name', header: 'Last Name', sortable: true, searchable: true },
+      { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
+      { key: 'branch_name', header: 'Branch', sortable: true, searchable: true, width: '150px' },
       { key: 'employee_id', header: 'Employee ID', searchable: true, width: '140px' },
       { key: 'designation', header: 'Designation', width: '150px' },
       { key: 'from_date', header: 'From Date', sortable: true, width: '120px' },
@@ -737,8 +747,10 @@ export class LeaveListComponent implements OnInit {
     const columnMapping: Record<string, string> = {
       'from_date': this.activeTab === 'student' ? 'student_leaves.from_date' : 'teacher_leaves.from_date',
       'to_date': this.activeTab === 'student' ? 'student_leaves.to_date' : 'teacher_leaves.to_date',
+      'full_name': 'users.first_name', // Sort by first_name for full_name column
       'first_name': 'users.first_name',
       'last_name': 'users.last_name',
+      'branch_name': this.activeTab === 'student' ? 'branches.name' : 'branches.name',
       'admission_number': 'students.admission_number',
       'grade_label': 'students.grade',
       'section': 'students.section',
@@ -789,11 +801,15 @@ export class LeaveListComponent implements OnInit {
   }
   
   viewLeave(leave: StudentLeave | TeacherLeave): void {
-    this.router.navigate(['/leaves/view', leave.id]);
+    this.router.navigate(['/leaves/view', leave.id], { 
+      queryParams: { type: this.activeTab } 
+    });
   }
   
   editLeave(leave: StudentLeave | TeacherLeave): void {
-    this.router.navigate(['/leaves/edit', leave.id]);
+    this.router.navigate(['/leaves/edit', leave.id], { 
+      queryParams: { type: this.activeTab } 
+    });
   }
   
   approveLeave(leave: StudentLeave | TeacherLeave): void {

@@ -23,6 +23,7 @@ export interface Leave {
   // Additional fields from joins
   first_name?: string;
   last_name?: string;
+  full_name?: string; // Computed field: first_name + last_name
   email?: string;
   admission_number?: string;
   employee_id?: string;
@@ -30,6 +31,7 @@ export interface Leave {
   grade_label?: string;
   section?: string;
   designation?: string;
+  branch_name?: string; // Branch name from join
   leave_for?: 'student' | 'teacher';
 }
 

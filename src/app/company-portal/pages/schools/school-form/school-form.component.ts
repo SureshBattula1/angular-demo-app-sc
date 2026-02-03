@@ -20,7 +20,7 @@ export class SchoolFormComponent implements OnInit {
   isLoading = false;
   schoolId?: number;
   currentSchool?: School;
-  
+
   // Dropdown options
   statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -28,7 +28,7 @@ export class SchoolFormComponent implements OnInit {
     { value: 'Suspended', label: 'Suspended' },
     { value: 'UnderConstruction', label: 'Under Construction' }
   ];
-  
+
   adminRoleOptions = [
     { value: 'BranchAdmin', label: 'Branch Admin' },
     { value: 'SuperAdmin', label: 'Super Admin' }
@@ -40,11 +40,11 @@ export class SchoolFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initForm();
-    
+
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -74,10 +74,10 @@ export class SchoolFormComponent implements OnInit {
       // Basic Information
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
-      
+
       // Status
       status: ['Active', Validators.required],
-      
+
       // Branch Information (required for new schools)
       branch: this.fb.group({
         name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -91,7 +91,7 @@ export class SchoolFormComponent implements OnInit {
         email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
         website: ['', [Validators.maxLength(255)]]
       }),
-      
+
       // Admin User Information (required for new schools)
       admin_user: this.fb.group({
         first_name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -106,20 +106,20 @@ export class SchoolFormComponent implements OnInit {
 
   private loadSchool(id: number): void {
     this.isLoading = true;
-    
+
     this.schoolService.getSchool(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.currentSchool = response.data;
           const school = response.data;
-          
+
           // Patch basic school info
           this.schoolForm.patchValue({
             name: school.name,
             code: school.code,
             status: school.status
           });
-          
+
           // Patch branch info if mainBranch exists
           if (school.main_branch) {
             const branch = school.main_branch;
@@ -136,7 +136,7 @@ export class SchoolFormComponent implements OnInit {
               website: branch.website || ''
             });
           }
-          
+
           // Patch admin user info if admin_user exists
           if (school.admin_user) {
             const adminUser = school.admin_user;
@@ -149,7 +149,7 @@ export class SchoolFormComponent implements OnInit {
               // Don't patch password - leave it empty for user to change if needed
             });
           }
-          
+
           this.isLoading = false;
         }
       },
@@ -170,7 +170,7 @@ export class SchoolFormComponent implements OnInit {
 
     this.isLoading = true;
     const formData = { ...this.schoolForm.value };
-    
+
     // For edit mode, remove password if it's empty (user doesn't want to change it)
     if (this.isEditMode && formData.admin_user && !formData.admin_user.password) {
       delete formData.admin_user.password;
@@ -184,8 +184,8 @@ export class SchoolFormComponent implements OnInit {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
-          const message = this.isEditMode 
-            ? 'School updated successfully' 
+          const message = this.isEditMode
+            ? 'School updated successfully'
             : 'School created successfully with main branch and admin user';
           this.errorHandler.showSuccess(message);
           this.router.navigate(['/company-portal/schools']);
@@ -217,39 +217,39 @@ export class SchoolFormComponent implements OnInit {
     // Handle nested form groups (branch.*, admin_user.*)
     const parts = fieldName.split('.');
     let control = this.schoolForm;
-    
+
     for (const part of parts) {
       control = control.get(part) as any;
       if (!control) break;
     }
-    
+
     if (!control) return '';
-    
+
     if (control.hasError('required')) {
       return `${this.getFieldLabel(fieldName)} is required`;
     }
-    
+
     if (control.hasError('email')) {
       return 'Please enter a valid email address';
     }
-    
+
     if (control.hasError('minlength')) {
       const minLength = control.getError('minlength')?.requiredLength;
       return `Minimum ${minLength} characters required`;
     }
-    
+
     if (control.hasError('pattern')) {
       return `Invalid ${this.getFieldLabel(fieldName)} format`;
     }
-    
+
     if (control.hasError('maxlength')) {
       return `${this.getFieldLabel(fieldName)} is too long`;
     }
-    
+
     if (control.hasError('serverError')) {
       return control.getError('serverError');
     }
-    
+
     return '';
   }
 
@@ -277,11 +277,11 @@ export class SchoolFormComponent implements OnInit {
     };
     return labels[fieldName] || fieldName;
   }
-  
+
   getBranchForm(): FormGroup {
     return this.schoolForm.get('branch') as FormGroup;
   }
-  
+
   getAdminUserForm(): FormGroup {
     return this.schoolForm.get('admin_user') as FormGroup;
   }

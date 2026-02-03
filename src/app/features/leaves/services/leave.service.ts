@@ -32,8 +32,12 @@ export class LeaveService {
   /**
    * Get single leave by ID
    */
-  getLeave(id: number): Observable<LeaveResponse> {
-    return this.http.get<LeaveResponse>(`${this.apiUrl}/${id}`);
+  getLeave(id: number, type?: 'student' | 'teacher'): Observable<LeaveResponse> {
+    let params = new HttpParams();
+    if (type) {
+      params = params.set('type', type);
+    }
+    return this.http.get<LeaveResponse>(`${this.apiUrl}/${id}`, { params });
   }
 
   /**

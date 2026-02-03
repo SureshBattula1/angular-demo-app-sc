@@ -257,14 +257,17 @@ export class LeaveViewComponent implements OnInit {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.leaveId = +params['id'];
-        this.loadLeave();
+        // Get type from query params
+        const snapshot = this.route.snapshot.queryParams;
+        const type = snapshot['type'] === 'teacher' ? 'teacher' : 'student';
+        this.loadLeave(type);
       }
     });
   }
 
-  loadLeave(): void {
+  loadLeave(type: 'student' | 'teacher' = 'student'): void {
     this.isLoading = true;
-    this.leaveService.getLeave(this.leaveId).subscribe({
+    this.leaveService.getLeave(this.leaveId, type).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.leave = Array.isArray(response.data) ? response.data[0] : response.data;
