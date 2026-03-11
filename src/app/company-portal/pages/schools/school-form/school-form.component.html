@@ -26,6 +26,24 @@
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Company</mat-label>
+              <mat-select formControlName="company_id">
+                <mat-option *ngIf="companiesLoading" disabled>
+                  Loading companies...
+                </mat-option>
+                <mat-option *ngFor="let company of companies" [value]="company.id">
+                  {{ company.name }} ({{ company.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="schoolForm.get('company_id')?.invalid && schoolForm.get('company_id')?.touched">
+                {{ getErrorMessage('company_id') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>School Name</mat-label>
               <input matInput formControlName="name" placeholder="Enter school name">
               <mat-icon matPrefix>school</mat-icon>

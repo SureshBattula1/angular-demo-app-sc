@@ -4,8 +4,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { CompanySchoolService } from '../../../services/school.service';
+import { CompanyService } from '../../../services/company.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { School } from '../../../../core/models/school.model';
+import { School, Company } from '../../../../core/models/school.model';
 
 @Component({
   selector: 'app-school-form',
@@ -20,6 +21,9 @@ export class SchoolFormComponent implements OnInit {
   isLoading = false;
   schoolId?: number;
   currentSchool?: School;
+
+  companies: Company[] = [];
+  companiesLoading = false;
 
   // Dropdown options
   statusOptions = [
@@ -37,6 +41,7 @@ export class SchoolFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private schoolService: CompanySchoolService,
+    private companyService: CompanyService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -44,6 +49,9 @@ export class SchoolFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+
+    // Load companies for dropdown (current company for company admins)
+    this.loadCompanies();
 
     // Check if edit mode
     this.route.params.subscribe(params => {
@@ -72,6 +80,7 @@ export class SchoolFormComponent implements OnInit {
   private initForm(): void {
     this.schoolForm = this.fb.group({
       // Basic Information
+      company_id: [null, [Validators.required]],
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
 
@@ -104,6 +113,30 @@ export class SchoolFormComponent implements OnInit {
     });
   }
 
+  private loadCompanies(): void {
+    this.companiesLoading = true;
+
+    // Fetch companies; for CompanyAdmin this should normally return only their company
+    this.companyService.getCompanies({ per_page: 1000 }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.companies = response.data;
+
+          // In create mode, if there's exactly one company, pre-select it
+          if (!this.isEditMode && this.companies.length === 1) {
+            this.schoolForm.get('company_id')?.setValue(this.companies[0].id);
+          }
+        }
+        this.companiesLoading = false;
+      },
+      error: (error) => {
+        // If companies fail to load, surface error – creation depends on this
+        this.errorHandler.showError(error);
+        this.companiesLoading = false;
+      }
+    });
+  }
+
   private loadSchool(id: number): void {
     this.isLoading = true;
 
@@ -115,10 +148,16 @@ export class SchoolFormComponent implements OnInit {
 
           // Patch basic school info
           this.schoolForm.patchValue({
+            company_id: school.company?.id ?? null,
             name: school.name,
             code: school.code,
             status: school.status
           });
+
+          // In edit mode, prevent changing the company
+          if (school.company?.id) {
+            this.schoolForm.get('company_id')?.disable({ emitEvent: false });
+          }
 
           // Patch branch info if mainBranch exists
           if (school.main_branch) {
@@ -169,7 +208,8 @@ export class SchoolFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = { ...this.schoolForm.value };
+    // Use getRawValue so disabled controls (like company_id in edit mode) are included
+    const formData = this.schoolForm.getRawValue();
 
     // For edit mode, remove password if it's empty (user doesn't want to change it)
     if (this.isEditMode && formData.admin_user && !formData.admin_user.password) {
@@ -255,6 +295,7 @@ export class SchoolFormComponent implements OnInit {
 
   private getFieldLabel(fieldName: string): string {
     const labels: Record<string, string> = {
+      company_id: 'Company',
       name: 'School Name',
       code: 'School Code',
       status: 'Status',
