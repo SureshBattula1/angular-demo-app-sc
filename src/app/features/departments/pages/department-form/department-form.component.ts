@@ -81,7 +81,13 @@ export class DepartmentFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           this.currentDepartment = response.data;
-          this.departmentForm.patchValue(response.data);
+          const data = { ...response.data };
+          // Convert established_date to YYYY-MM-DD for HTML date input (required format)
+          if (data.established_date) {
+            const str = String(data.established_date).trim();
+            data.established_date = str.includes('T') ? str.split('T')[0] : str;
+          }
+          this.departmentForm.patchValue(data);
           this.isLoading = false;
         }
       },

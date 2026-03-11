@@ -374,6 +374,17 @@ export class TeacherFormComponent implements OnInit {
           fieldsToRemove.forEach(field => {
             delete formData[field];
           });
+
+          // Convert date fields to YYYY-MM-DD for HTML date inputs (required format)
+          const dateFields = ['date_of_birth', 'joining_date', 'leaving_date', 'probation_end_date',
+            'confirmation_date', 'spouse_date_of_birth', 'passport_expiry', 'driving_license_expiry',
+            'last_medical_checkup'];
+          dateFields.forEach(field => {
+            if (formData[field]) {
+              const str = String(formData[field]).trim();
+              formData[field] = str.includes('T') ? str.split('T')[0] : str;
+            }
+          });
           
           this.teacherForm.patchValue(formData);
           
