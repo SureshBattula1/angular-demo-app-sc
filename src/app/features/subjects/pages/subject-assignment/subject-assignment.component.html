@@ -158,7 +158,7 @@
                 <mat-select [(ngModel)]="assignment.teacher_id">
                   <mat-option [value]="null">Not Assigned</mat-option>
                   <mat-option *ngFor="let teacher of teachers" [value]="teacher.id || teacher.user_id">
-                    {{ teacher.first_name }} {{ teacher.last_name }}
+                    {{ teacher.user?.first_name || teacher.first_name }} {{ teacher.user?.last_name || teacher.last_name }}
                     <span *ngIf="teacher.employee_id"> ({{ teacher.employee_id }})</span>
                   </mat-option>
                 </mat-select>

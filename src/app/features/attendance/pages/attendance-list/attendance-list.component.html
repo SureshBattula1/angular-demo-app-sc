@@ -561,7 +561,7 @@
                     <ng-container matColumnDef="teacher_name">
                       <th mat-header-cell *matHeaderCellDef>Teacher Name</th>
                       <td mat-cell *matCellDef="let teacher">
-                        {{ teacher.first_name }} {{ teacher.last_name }}
+                        {{ teacher.user?.first_name || teacher.first_name }} {{ teacher.user?.last_name || teacher.last_name }}
                       </td>
                     </ng-container>
 

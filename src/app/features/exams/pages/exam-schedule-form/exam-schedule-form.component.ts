@@ -439,7 +439,7 @@ export class ExamScheduleFormComponent implements OnInit {
             passing_marks: schedule.passing_marks || '',
             room_number: schedule.room_number || '',
             invigilator_id: schedule.invigilator_id || '',
-            instructions: '',
+            instructions: schedule.instructions || '',
             status: 'Scheduled',
             is_active: true
           };

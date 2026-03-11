@@ -124,7 +124,7 @@
       <mat-card-content>
         <div class="detail-row">
           <span class="detail-label">Name:</span>
-          <span class="detail-value">{{ subject.teacher.first_name }} {{ subject.teacher.last_name }}</span>
+          <span class="detail-value">{{ subject.teacher?.first_name }} {{ subject.teacher?.last_name }}</span>
         </div>
         <div class="detail-row" *ngIf="subject.teacher.email">
           <span class="detail-label">Email:</span>
