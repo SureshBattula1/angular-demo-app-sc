@@ -204,7 +204,8 @@ export class TeacherFormComponent implements OnInit {
       gender: ['', Validators.required],
       date_of_birth: ['', Validators.required],
       place_of_birth: [''],
-      pan_number: ['', [Validators.required, Validators.maxLength(20), Validators.pattern(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/)]],
+      // PAN format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F). Pattern accepts a-z/A-Z; we normalize to uppercase on blur.
+      pan_number: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10), Validators.pattern(/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/)]],
       aadhaar_number: ['', [Validators.pattern(/^[0-9]{12}$/)]],
       passport_number: [''],
       passport_expiry: [''],
@@ -517,6 +518,11 @@ export class TeacherFormComponent implements OnInit {
     const permanentAddr = (formData.permanent_address || '').trim();
     formData.address = currentAddr || permanentAddr || 'N/A';
 
+    // Normalize PAN to uppercase (format ABCDE1234F)
+    if (formData.pan_number && typeof formData.pan_number === 'string') {
+      formData.pan_number = formData.pan_number.trim().toUpperCase();
+    }
+
     // Save the teacher (profile picture already uploaded if it was a file)
     this.saveTeacher(formData);
   }
@@ -644,6 +650,19 @@ export class TeacherFormComponent implements OnInit {
     }
   }
 
+  /** Normalize PAN number to uppercase and trim so validation and display match format ABCDE1234F */
+  normalizePanNumber(): void {
+    const control = this.teacherForm.get('pan_number');
+    if (!control) return;
+    const raw = control.value;
+    if (typeof raw === 'string' && raw.trim()) {
+      const normalized = raw.trim().toUpperCase();
+      if (normalized !== raw) {
+        control.setValue(normalized, { emitEvent: false });
+      }
+    }
+  }
+
   getErrorMessage(fieldName: string): string {
     const control = this.teacherForm.get(fieldName);
     
@@ -678,7 +697,7 @@ export class TeacherFormComponent implements OnInit {
     
     if (control?.hasError('pattern')) {
       if (fieldName === 'pan_number') {
-        return 'PAN number must be in format ABCDE1234F';
+        return 'PAN must be in format ABCDE1234F (5 letters, 4 digits, 1 letter)';
       }
       if (fieldName === 'aadhaar_number') {
         return 'Aadhaar number must be 12 digits';

@@ -626,8 +626,10 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>PAN Number *</mat-label>
-              <input matInput formControlName="pan_number" style="text-transform: uppercase">
+              <input matInput formControlName="pan_number" maxlength="10" placeholder="ABCDE1234F"
+                     style="text-transform: uppercase" (blur)="normalizePanNumber()">
               <mat-icon matPrefix>credit_card</mat-icon>
+              <mat-hint>Format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F)</mat-hint>
               <mat-error>{{ getErrorMessage('pan_number') }}</mat-error>
             </mat-form-field>
 
