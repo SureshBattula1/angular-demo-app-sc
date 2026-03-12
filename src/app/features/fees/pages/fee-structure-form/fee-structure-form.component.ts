@@ -49,7 +49,7 @@ export class FeeStructureFormComponent implements OnInit {
     this.initForm();
     this.loadBranches();
     this.loadGrades();
-    this.loadFeeTypes();
+    this.loadFeeTypes(); // Loads fee types for user's school; branch filter applied when branch selected
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -89,6 +89,11 @@ export class FeeStructureFormComponent implements OnInit {
       }
       recurrenceControl?.updateValueAndValidity();
     });
+
+    // Reload fee types when branch changes - show only fee types for the selected branch
+    this.feeForm.get('branch_id')?.valueChanges.subscribe(branchId => {
+      this.loadFeeTypes(branchId);
+    });
   }
   
   loadBranches(): void {
@@ -115,8 +120,12 @@ export class FeeStructureFormComponent implements OnInit {
     });
   }
   
-  loadFeeTypes(): void {
-    this.feeTypeService.getFeeTypes({ is_active: true }).subscribe({
+  loadFeeTypes(branchId?: number | null): void {
+    const params: Record<string, unknown> = { is_active: true };
+    if (branchId) {
+      params['branch_id'] = branchId;
+    }
+    this.feeTypeService.getFeeTypes(params).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.feeTypes = response.data.map((ft: any) => ({
@@ -140,7 +149,14 @@ export class FeeStructureFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           const structure = response.data;
-          this.feeForm.patchValue(structure);
+          const formData = { ...structure };
+          if (structure.due_date) {
+            const d = structure.due_date;
+            formData.due_date = typeof d === 'string'
+              ? d.includes('T') ? d.split('T')[0] : d
+              : d instanceof Date ? d.toISOString().split('T')[0] : d;
+          }
+          this.feeForm.patchValue(formData);
         }
         this.isLoading = false;
       },
