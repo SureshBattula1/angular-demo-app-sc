@@ -8,6 +8,7 @@ import { UniversalAttachmentsComponent } from '../../../../shared/components/uni
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FileUploadService } from '../../../../core/services/file-upload.service';
+import { SchoolService } from '../../../../core/services/school.service';
 import { Branch } from '../../../../core/models/branch.model';
 import { environment } from '../../../../../environments/environment';
 
@@ -30,6 +31,8 @@ export class BranchFormComponent implements OnInit {
   
   // For attachments - will be set after branch is created/updated
   attachmentModuleId: number | null = null;
+
+  hideBranchAdminPassword = true;
   
   // Dropdown options
   branchTypes = [
@@ -55,7 +58,8 @@ export class BranchFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
-    private fileUploadService: FileUploadService
+    private fileUploadService: FileUploadService,
+    private schoolService: SchoolService
   ) {}
 
   ngOnInit(): void {
@@ -73,13 +77,15 @@ export class BranchFormComponent implements OnInit {
   }
 
   private initForm(): void {
+    const currentSchoolId = this.schoolService.currentSchoolId();
     this.branchForm = this.fb.group({
       // Basic Information
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
       branch_type: ['School', Validators.required],
       parent_branch_id: [null],
-      
+      school_id: [currentSchoolId ?? null],
+
       // Location
       address: ['', [Validators.required, Validators.maxLength(500)]],
       city: ['', [Validators.required, Validators.maxLength(100)]],
@@ -101,7 +107,9 @@ export class BranchFormComponent implements OnInit {
       principal_name: [''],
       principal_contact: [''],
       principal_email: ['', Validators.email],
-      
+      // Branch Admin: when creating branch, optional password to create Branch Admin user with principal name/email
+      branch_admin_password: ['', [Validators.minLength(8)]],
+
       // Academic
       board: [''],
       affiliation_number: [''],
@@ -234,7 +242,12 @@ export class BranchFormComponent implements OnInit {
 
     this.isLoading = true;
     const formData = { ...this.branchForm.value };
-    
+
+    // Branch admin password: only send when creating and non-empty (backend creates Branch Admin user)
+    if (this.isEditMode || !formData.branch_admin_password || formData.branch_admin_password.length < 8) {
+      delete formData.branch_admin_password;
+    }
+
     // Clean up logo field - logo is OPTIONAL, remove if not set
     if (!formData.logo || formData.logo === '' || formData.logo === null || formData.logo === undefined) {
       delete formData.logo; // Remove logo field completely if not provided

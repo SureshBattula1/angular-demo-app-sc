@@ -138,7 +138,8 @@ export class TeacherListComponent implements OnInit {
         icon: 'category',
         options: [
           { value: 'Teaching', label: 'Teaching' },
-          { value: 'Non-Teaching', label: 'Non-Teaching' }
+          { value: 'Staff', label: 'Staff' },
+          { value: 'Account', label: 'Account' }
         ]
       },
       {

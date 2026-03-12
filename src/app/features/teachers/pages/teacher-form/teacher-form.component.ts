@@ -76,11 +76,10 @@ export class TeacherFormComponent implements OnInit {
     'Counselor'
   ];
 
-  // Non-Teaching designations
-  nonTeachingDesignations = [
+  // Staff designations
+  staffDesignations = [
     'Administrative Officer',
     'Office Manager',
-    'Accountant',
     'Clerk',
     'Receptionist',
     'Lab Assistant',
@@ -91,6 +90,15 @@ export class TeacherFormComponent implements OnInit {
     'Driver',
     'IT Support',
     'Maintenance Staff'
+  ];
+
+  // Account designations
+  accountDesignations = [
+    'Accountant',
+    'Senior Accountant',
+    'Finance Manager',
+    'Accounts Officer',
+    'Finance Assistant'
   ];
 
   // Technical Skills options
@@ -196,7 +204,7 @@ export class TeacherFormComponent implements OnInit {
       
       // Teacher Specific
       employee_id: ['', [Validators.required, Validators.maxLength(50)]],
-      category_type: ['Teaching', Validators.required],
+      category_type: ['Teaching', Validators.required], // Teaching→Teacher, Staff→Staff, Account→Accountant
       designation: ['', [Validators.required, Validators.maxLength(255)]],
       department_id: [null],
       
@@ -386,7 +394,12 @@ export class TeacherFormComponent implements OnInit {
             }
           });
           
-          this.teacherForm.patchValue(formData);
+          // Map legacy Non-Teaching to Staff for backward compatibility
+          if (formData.category_type === 'Non-Teaching') {
+            formData.category_type = 'Staff';
+          }
+          // Use emitEvent: false to prevent category_type valueChanges from clearing designation
+          this.teacherForm.patchValue(formData, { emitEvent: false });
           
           // Load reporting managers for the current branch
           if (teacher.branch_id) {
@@ -463,8 +476,10 @@ export class TeacherFormComponent implements OnInit {
     const categoryType = this.teacherForm.get('category_type')?.value;
     if (categoryType === 'Teaching') {
       return this.teachingDesignations;
-    } else if (categoryType === 'Non-Teaching') {
-      return this.nonTeachingDesignations;
+    } else if (categoryType === 'Staff') {
+      return this.staffDesignations;
+    } else if (categoryType === 'Account') {
+      return this.accountDesignations;
     }
     return [];
   }

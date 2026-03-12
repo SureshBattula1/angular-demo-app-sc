@@ -118,6 +118,7 @@ export interface BranchFormData {
   code: string;
   branch_type: string;
   parent_branch_id?: number | null;
+  school_id?: number | null;
   address: string;
   city: string;
   state: string;
@@ -130,6 +131,7 @@ export interface BranchFormData {
   principal_name?: string;
   principal_contact?: string;
   principal_email?: string;
+  branch_admin_password?: string;
   established_date?: string;
   board?: string;
   affiliation_number?: string;

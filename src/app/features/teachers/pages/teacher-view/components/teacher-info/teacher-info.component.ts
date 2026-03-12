@@ -46,7 +46,9 @@ export class TeacherInfoComponent {
   }
 
   getCategoryColor(category: string): string {
-    return category === 'Teaching' ? 'category-teaching' : 'category-non-teaching';
+    if (category === 'Teaching') return 'category-teaching';
+    if (category === 'Account') return 'category-account';
+    return 'category-staff';
   }
 }
 

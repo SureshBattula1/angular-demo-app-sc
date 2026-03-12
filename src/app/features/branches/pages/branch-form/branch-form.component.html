@@ -191,6 +191,22 @@
               </mat-error>
             </mat-form-field>
           </div>
+
+          <!-- Branch Admin: create user with principal name/email (create mode only) -->
+          <div *ngIf="!isEditMode" class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Admin Password</mat-label>
+              <input matInput [type]="hideBranchAdminPassword ? 'password' : 'text'" formControlName="branch_admin_password" placeholder="Min 8 characters to create Branch Admin">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="hideBranchAdminPassword = !hideBranchAdminPassword" tabindex="-1">
+                <mat-icon>{{ hideBranchAdminPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint>Optional. Creates a Branch Admin user for this branch using Principal name and email.</mat-hint>
+              <mat-error *ngIf="branchForm.get('branch_admin_password')?.invalid && branchForm.get('branch_admin_password')?.touched">
+                Minimum 8 characters required
+              </mat-error>
+            </mat-form-field>
+          </div>
         </div>
 
         <!-- Academic & Capacity Section -->
