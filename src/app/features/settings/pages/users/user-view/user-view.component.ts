@@ -199,7 +199,6 @@ export class UserViewComponent implements OnInit {
       'fees': 'payments',
       'accounts': 'account_balance',
       'transactions': 'receipt_long',
-      'invoices': 'receipt',
       'holidays': 'event',
       'exams': 'quiz',
       'library': 'local_library',

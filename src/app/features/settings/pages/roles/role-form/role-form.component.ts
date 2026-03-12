@@ -111,7 +111,6 @@ export class RoleFormComponent implements OnInit {
       'fee_management': 'payments',
       'accounts': 'account_balance',
       'transactions': 'receipt_long',
-      'invoices': 'receipt',
       'holidays': 'event',
       'exams': 'quiz',
       'library': 'local_library',

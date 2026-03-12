@@ -122,7 +122,6 @@ export class PermissionListComponent implements OnInit {
           { value: 'subjects', label: 'Subjects' },
           { value: 'departments', label: 'Departments' },
           { value: 'holidays', label: 'Holidays' },
-          { value: 'invoices', label: 'Invoices' },
           { value: 'groups', label: 'Groups' },
           { value: 'reports', label: 'Reports' },
           { value: 'settings', label: 'Settings' },

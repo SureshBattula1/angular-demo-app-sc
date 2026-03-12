@@ -92,12 +92,6 @@ export const routes: Routes = [
         loadChildren: () => import('./features/leaves/leaves.routes').then(m => m.leavesRoutes)
       },
       {
-        path: 'invoices',
-        loadChildren: () => import('./features/invoices/invoices.routes').then(m => m.INVOICES_ROUTES),
-        canActivate: [permissionGuard],
-        data: { permissions: 'invoices.view' }
-      },
-      {
         path: 'accounts',
         loadChildren: () => import('./features/accounts/accounts.routes').then(m => m.ACCOUNTS_ROUTES),
         canActivate: [permissionGuard],
