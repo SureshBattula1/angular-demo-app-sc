@@ -108,7 +108,7 @@ export class SchoolFormComponent implements OnInit {
         email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
         password: ['', [Validators.minLength(8)]], // Required only for new schools, optional for edit
         phone: ['', [Validators.maxLength(20)]],
-        role: ['BranchAdmin', [Validators.required]]
+        role: ['SuperAdmin', [Validators.required]]  // Company portal creates school admin as Super Admin
       })
     });
   }
