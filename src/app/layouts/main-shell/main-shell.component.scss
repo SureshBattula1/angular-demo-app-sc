@@ -1,6 +1,8 @@
 @use '../../../styles/assets/variables' as vars;
 @use '../../../styles/assets/mixins/responsive' as responsive;
 
+$impersonation-banner-height: 48px;
+
 .app-container {
   display: flex;
   flex-direction: column;
@@ -14,6 +16,10 @@
   left: 0;
   right: 0;
   z-index: 100;
+  
+  .app-container.with-impersonation-banner & {
+    top: $impersonation-banner-height;
+  }
   padding-left: 4px; /* Minimal left padding for alignment */
   padding-right: 16px;
   display: flex;
@@ -103,20 +109,21 @@
   flex: 1 1 auto;
 }
 
+// Banner at very top of app (above app-container)
 .impersonation-banner {
   position: fixed;
-  top: 64px; // vars.$header-height
+  top: 0;
   left: 0;
   right: 0;
-  z-index: 99;
-  background: linear-gradient(135deg, var(--warning-color), #f57c00);
+  z-index: 101; // above app-header (100)
+  height: $impersonation-banner-height;
+  min-height: $impersonation-banner-height;
+  background: #1a1a1a;
   color: var(--white);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0 var(--spacing-md);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
-  @include responsive.mobile-only {
-    top: 56px; // vars.$header-height-mobile
-  }
+  display: flex;
+  align-items: center;
   
   .banner-content {
     display: flex;
@@ -161,12 +168,12 @@
     margin-top: vars.$header-height-mobile;
   }
   
-  // Adjust margin when impersonation banner is shown
-  &.with-banner {
-    margin-top: calc(64px + 48px); // header + banner height
+  // When impersonation banner is at top, push content below header + banner
+  .app-container.with-impersonation-banner & {
+    margin-top: calc(#{$impersonation-banner-height} + #{vars.$header-height});
     
     @include responsive.mobile-only {
-      margin-top: calc(56px + 48px);
+      margin-top: calc(#{$impersonation-banner-height} + #{vars.$header-height-mobile});
     }
   }
 }

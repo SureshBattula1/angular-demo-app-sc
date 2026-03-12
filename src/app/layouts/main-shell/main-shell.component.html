@@ -1,4 +1,16 @@
-<div class="app-container">
+<!-- Impersonation Banner - at top of app, above app-container -->
+<div *ngIf="isImpersonating" class="impersonation-banner">
+  <div class="banner-content">
+    <mat-icon class="banner-icon">info</mat-icon>
+    <span class="banner-text">You are logged in virtually</span>
+    <button mat-button color="primary" (click)="exitImpersonation()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+  </div>
+</div>
+
+<div class="app-container" [class.with-impersonation-banner]="isImpersonating">
   <!-- Header Toolbar -->
   <mat-toolbar class="app-header" color="primary">
     <!-- Toggle Button - Hide for students -->
@@ -35,20 +47,8 @@
     </button>
   </mat-toolbar>
 
-  <!-- Impersonation Banner -->
-  <div *ngIf="isImpersonating" class="impersonation-banner">
-    <div class="banner-content">
-      <mat-icon class="banner-icon">info</mat-icon>
-      <span class="banner-text">You are logged in virtually</span>
-      <button mat-button color="primary" (click)="exitImpersonation()" class="back-button">
-        <mat-icon>arrow_back</mat-icon>
-        Back
-      </button>
-    </div>
-  </div>
-
   <!-- Sidenav Container -->
-  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed || isStudentRole()" [class.with-banner]="isImpersonating">
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed || isStudentRole()">
     <!-- Sidenav - Hide for students -->
     <mat-sidenav
       #drawer
