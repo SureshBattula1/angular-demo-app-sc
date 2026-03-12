@@ -65,6 +65,12 @@ export class SchoolListComponent implements OnInit {
         searchable: true
       },
       { 
+        key: 'company.name', 
+        header: 'Company', 
+        sortable: false,
+        width: '160px'
+      },
+      { 
         key: 'status', 
         header: 'Status', 
         sortable: true,
