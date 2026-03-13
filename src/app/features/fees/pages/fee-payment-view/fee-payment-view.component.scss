@@ -44,6 +44,42 @@
   color: var(--primary-color, #1976d2);
 }
 
+.remaining-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--warning-dark, #e65100);
+}
+
+.past-transactions-card {
+  grid-column: 1 / -1;
+}
+
+.past-transactions-table-wrapper {
+  overflow-x: auto;
+}
+
+.past-transactions-table {
+  width: 100%;
+  min-width: 400px;
+
+  th {
+    font-weight: 600;
+    color: var(--text-secondary, #666);
+  }
+
+  td, th {
+    padding: 12px 16px;
+  }
+
+  .discount-value {
+    color: var(--info-color, #2196f3);
+  }
+
+  .late-fee-value {
+    color: var(--danger-color, #f44336);
+  }
+}
+
 .fee-type-badge {
   display: inline-block;
   background: var(--primary-light, #e3f2fd);

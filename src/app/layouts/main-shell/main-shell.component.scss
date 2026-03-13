@@ -559,3 +559,28 @@ $impersonation-banner-height: 48px;
   }
 }
 
+@media print {
+  .app-header,
+  .app-sidenav,
+  .impersonation-banner,
+  .theme-selector,
+  .user-avatar-btn {
+    display: none !important;
+  }
+
+  .app-sidenav-container {
+    margin-top: 0 !important;
+
+    ::ng-deep .mat-drawer-content {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+  }
+
+  .app-content {
+    padding: 0 !important;
+    background: #ffffff !important;
+    min-height: auto !important;
+  }
+}
+

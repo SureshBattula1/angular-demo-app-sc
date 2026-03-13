@@ -335,37 +335,35 @@ export class FeePaymentFormComponent implements OnInit {
   calculateTotal(): void {
     const amountPaid = this.paymentForm.get('amount_paid')?.value || 0;
     const lateFee = this.paymentForm.get('late_fee')?.value || 0;
-    const discount = this.paymentForm.get('discount_amount')?.value || 0;
-    
-    const total = amountPaid + lateFee - discount;
-    // Store calculated total (optional - can display in UI)
+    const total = amountPaid + lateFee;
+    // Currently used via getTotalAmount() for UI only
   }
   
   getTotalAmount(): number {
     const amountPaid = this.paymentForm.get('amount_paid')?.value || 0;
     const lateFee = this.paymentForm.get('late_fee')?.value || 0;
-    const discount = this.paymentForm.get('discount_amount')?.value || 0;
-    
-    return amountPaid + lateFee - discount;
+    // Discount applies to the fee amount, not this payment amount
+    return amountPaid + lateFee;
   }
   
   validatePaymentAmount(): void {
     if (!this.selectedFeeStructure) return;
     
+    this.validateAmountWithinMax();
+    
     // Get the full fee amount
     const feeAmount = parseFloat(this.selectedFeeStructure.amount || 0);
     // Get amount already paid (from previous partial payments)
     const alreadyPaid = parseFloat((this.selectedFeeStructure as any).amount_paid || 0);
-    // Calculate remaining amount to be paid
-    const remainingAmount = feeAmount - alreadyPaid;
+    // Total discount (previous payments + current entry)
+    const totalDiscount = this.getTotalDiscountAmount();
+    // Remaining amount to be paid BEFORE this payment (after all discounts)
+    const remainingAmount = Math.max(0, feeAmount - totalDiscount - alreadyPaid);
     
     const amountPaid = parseFloat(this.paymentForm.get('amount_paid')?.value || 0);
-    const discount = parseFloat(this.paymentForm.get('discount_amount')?.value || 0);
     const lateFee = parseFloat(this.paymentForm.get('late_fee')?.value || 0);
     
-    // Calculate net amount after discount and late fee
-    const netAmount = amountPaid + lateFee - discount;
-    // Calculate remaining balance after this payment
+    const netAmount = amountPaid + lateFee;
     const remainingBalance = remainingAmount - netAmount;
     
     // Auto-suggest payment status based on amount
@@ -409,8 +407,10 @@ export class FeePaymentFormComponent implements OnInit {
     const feeAmount = parseFloat(this.selectedFeeStructure.amount || 0);
     // Get amount already paid (from previous partial payments)
     const alreadyPaid = parseFloat((this.selectedFeeStructure as any).amount_paid || 0);
-    // Calculate remaining amount before this payment
-    const remainingAmount = feeAmount - alreadyPaid;
+    // Total discount (previous + current)
+    const totalDiscount = this.getTotalDiscountAmount();
+    // Remaining amount BEFORE this payment (after all discounts)
+    const remainingAmount = Math.max(0, feeAmount - alreadyPaid - totalDiscount);
     // Get current payment amount
     const netAmount = this.getTotalAmount();
     // Calculate remaining balance after this payment
@@ -421,12 +421,26 @@ export class FeePaymentFormComponent implements OnInit {
     if (!this.selectedFeeStructure) return 0;
     return parseFloat((this.selectedFeeStructure as any).amount_paid || 0);
   }
+
+  getPreviousDiscountAmount(): number {
+    if (!this.selectedStudent || !this.selectedFeeStructure) return 0;
+    const payments = (this.selectedStudent.payments || []) as any[];
+    return payments
+      .filter(p => String(p.fee_structure_id) === String(this.selectedFeeStructure.id))
+      .reduce((sum, p) => sum + (parseFloat(p.discount_amount ?? 0) || 0), 0);
+  }
+
+  getTotalDiscountAmount(): number {
+    const currentDiscount = parseFloat(this.paymentForm.get('discount_amount')?.value || 0);
+    return this.getPreviousDiscountAmount() + currentDiscount;
+  }
   
   getRemainingAmountBeforePayment(): number {
     if (!this.selectedFeeStructure) return 0;
     const feeAmount = parseFloat(this.selectedFeeStructure.amount || 0);
     const alreadyPaid = this.getAlreadyPaidAmount();
-    return Math.max(0, feeAmount - alreadyPaid);
+    const totalDiscount = this.getTotalDiscountAmount();
+    return Math.max(0, feeAmount - alreadyPaid - totalDiscount);
   }
   
   getFeeStructureAmount(): number {
@@ -441,11 +455,46 @@ export class FeePaymentFormComponent implements OnInit {
     
     return netAmount > 0 && netAmount < remainingAmount;
   }
+
+  /** Max allowed: Remaining Before Payment + Late Fee (late fee is acceptable) */
+  getMaxAllowedAmount(): number {
+    const remaining = this.getRemainingAmountBeforePayment();
+    const lateFee = parseFloat(this.paymentForm.get('late_fee')?.value || 0);
+    return remaining + lateFee;
+  }
+
+  /** Amount Paid exceeds max (Remaining + Late Fee) */
+  isAmountExceedsMax(): boolean {
+    const amountPaid = parseFloat(this.paymentForm.get('amount_paid')?.value || 0);
+    return amountPaid > this.getMaxAllowedAmount();
+  }
+
+  private validateAmountWithinMax(): void {
+    const ctrl = this.paymentForm.get('amount_paid');
+    if (!ctrl || !this.selectedFeeStructure) return;
+    if (this.isAmountExceedsMax()) {
+      ctrl.setErrors({ ...ctrl.errors, overAmount: true });
+    } else if (ctrl.hasError('overAmount')) {
+      const { overAmount, ...rest } = ctrl.errors || {};
+      ctrl.setErrors(Object.keys(rest).length ? rest : null);
+    }
+  }
   
   onSubmit(): void {
     if (this.paymentForm.invalid) {
       this.markFormGroupTouched(this.paymentForm);
       this.errorHandler.showWarning('Please fill in all required fields');
+      return;
+    }
+
+    this.validateAmountWithinMax();
+    if (this.isAmountExceedsMax()) {
+      const max = this.getMaxAllowedAmount();
+      const remaining = this.getRemainingAmountBeforePayment();
+      const lateFee = parseFloat(this.paymentForm.get('late_fee')?.value || 0);
+      this.errorHandler.showWarning(
+        `You entered more than the actual amount. Maximum allowed: ₹${max.toLocaleString('en-IN')} (Remaining: ₹${remaining.toLocaleString('en-IN')} + Late Fee: ₹${lateFee.toLocaleString('en-IN')})`
+      );
       return;
     }
     
@@ -527,6 +576,11 @@ export class FeePaymentFormComponent implements OnInit {
     
     if (control?.hasError('min')) {
       return `${this.getFieldLabel(fieldName)} must be at least ${control.errors?.['min'].min}`;
+    }
+
+    if (control?.hasError('overAmount') && fieldName === 'amount_paid') {
+      const max = this.getMaxAllowedAmount();
+      return `You entered more than the actual amount. Maximum allowed: ₹${max.toLocaleString('en-IN')} (Remaining + Late Fee)`;
     }
     
     return '';

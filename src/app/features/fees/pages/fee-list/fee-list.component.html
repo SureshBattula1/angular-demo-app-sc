@@ -138,6 +138,30 @@
             </div>
           </mat-card-content>
         </mat-card>
+
+        <mat-card class="summary-card discount-card" *ngIf="todayPaymentsDashboard.summary.total_discount > 0">
+          <mat-card-content>
+            <div class="summary-icon discount-icon">
+              <mat-icon>discount</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Discount</h3>
+              <p class="summary-value discount-value">-₹{{ todayPaymentsDashboard.summary.total_discount | indianCurrency }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card latefee-card" *ngIf="todayPaymentsDashboard.summary.total_late_fee > 0">
+          <mat-card-content>
+            <div class="summary-icon latefee-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Late Fee</h3>
+              <p class="summary-value latefee-value">+₹{{ todayPaymentsDashboard.summary.total_late_fee | indianCurrency }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
 
       <!-- Breakdown Section -->
@@ -183,6 +207,8 @@
                   <span class="category-name">{{ item.grade_label }}</span>
                   <span class="category-meta">
                     {{ item.student_count }} students • {{ item.payment_count }} payments
+                    <span *ngIf="item.total_discount > 0" class="discount-badge">• Discount: ₹{{ item.total_discount | indianCurrency }}</span>
+                    <span *ngIf="item.total_late_fee > 0" class="latefee-badge">• Late Fee: ₹{{ item.total_late_fee | indianCurrency }}</span>
                     <span *ngIf="item.pending_amount > 0" class="pending-badge">
                       • Pending: ₹{{ item.pending_amount | indianCurrency }}
                     </span>

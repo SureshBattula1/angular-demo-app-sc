@@ -34,7 +34,7 @@ export interface FeePayment {
   discount_amount?: number;
   late_fee?: number;
   total_amount?: number;
-  payment_status: 'Pending' | 'Completed' | 'Failed' | 'Refunded';
+  payment_status: 'Pending' | 'Partial' | 'Completed' | 'Failed' | 'Refunded';
   remarks?: string;
   created_by?: string;
   updated_by?: string;
@@ -44,6 +44,17 @@ export interface FeePayment {
   fee_structure?: FeeStructure;
   student?: any;
   creator?: any;
+  past_transactions?: Array<{
+    id: string | number;
+    receipt_number?: string;
+    payment_date: string;
+    payment_method?: string;
+    amount_paid: number;
+    discount_amount?: number;
+    late_fee?: number;
+    total_amount?: number;
+    payment_status?: string;
+  }>;
 }
 
 export interface StudentFees {

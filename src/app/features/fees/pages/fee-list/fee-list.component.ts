@@ -836,8 +836,24 @@ export class FeeListComponent implements OnInit {
   }
   
   printReceipt(payment: FeePayment): void {
-    this.errorHandler.showInfo('Opening receipt for printing...');
-    // Implement print logic
+    if (!payment?.id) {
+      this.errorHandler.showWarning('Payment information is not available.');
+      return;
+    }
+    this.errorHandler.showInfo('Preparing receipt PDF...');
+    this.feeService.downloadFeePaymentReceipt(payment.id).subscribe({
+      next: (blob: Blob) => {
+        const fileName = (payment.receipt_number ? `fee-receipt-${payment.receipt_number}` : `fee-receipt-${payment.id}`) + '.pdf';
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.errorHandler.showSuccess('Receipt downloaded.');
+      },
+      error: (err) => this.errorHandler.showError(err),
+    });
   }
   
   onRowClick(row: FeeStructure | FeePayment | FeeType): void {

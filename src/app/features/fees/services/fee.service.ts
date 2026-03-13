@@ -119,5 +119,14 @@ export class FeeService {
       { params }
     );
   }
+
+  downloadFeePaymentReceipt(id: string | number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/fee-payments/${id}/receipt`,
+      {
+        responseType: 'blob'
+      }
+    );
+  }
 }
 

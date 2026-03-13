@@ -18,6 +18,7 @@ export class FeePaymentViewComponent implements OnInit {
   feePayment?: FeePayment;
   paymentId?: string | number;
   returnTab = 'payments';
+  pastTransactionsColumns = ['date', 'payment_method', 'amount_paid', 'discount', 'late_fee', 'total'];
   
   constructor(
     private route: ActivatedRoute,
@@ -67,13 +68,34 @@ export class FeePaymentViewComponent implements OnInit {
     });
   }
   
-  onPrint(): void {
-    window.print();
-  }
-  
   onDownloadReceipt(): void {
-    this.errorHandler.showInfo('Downloading receipt...');
-    // Implement download logic
+    if (!this.paymentId) {
+      this.errorHandler.showWarning('Payment information is not loaded yet.');
+      return;
+    }
+
+    this.errorHandler.showInfo('Preparing receipt PDF...');
+
+    this.feeService.downloadFeePaymentReceipt(this.paymentId).subscribe({
+      next: (blob: Blob) => {
+        const fileName =
+          (this.feePayment?.receipt_number
+            ? `fee-receipt-${this.feePayment.receipt_number}`
+            : `fee-receipt-${this.paymentId}`) + '.pdf';
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+        this.errorHandler.showSuccess('Receipt downloaded.');
+      },
+      error: (error: unknown) => {
+        this.errorHandler.showError(error);
+      }
+    });
   }
   
   getPaymentStatusClass(status: string): string {
@@ -86,6 +108,53 @@ export class FeePaymentViewComponent implements OnInit {
     return statusMap[status] || 'status-default';
   }
   
+  /** Total discount from all past transactions */
+  getTotalDiscount(): number {
+    const txns = this.feePayment?.past_transactions ?? [];
+    return txns.reduce((sum, t) => sum + (Number(t.discount_amount ?? 0) || 0), 0);
+  }
+
+  /** Amount after discount = Full Fee - Total Discount (all transactions) */
+  getAmountAfterDiscount(): number {
+    const fullFee = this.feePayment?.fee_structure?.amount;
+    const totalDiscount = this.getTotalDiscount();
+    if (fullFee == null) return 0;
+    return Math.max(0, Number(fullFee) - totalDiscount);
+  }
+
+  /** Total amount paid toward fee from all transactions (excludes late fee) */
+  getTotalAmountPaid(): number {
+    const txns = this.feePayment?.past_transactions ?? [];
+    return txns.reduce((sum, t) => sum + (Number(t.amount_paid ?? 0) || 0), 0);
+  }
+
+  /** Already paid from OLD/previous payments only (excludes current payment) */
+  getAlreadyPaidExcludingCurrent(): number {
+    const txns = this.feePayment?.past_transactions ?? [];
+    const currentId = this.feePayment?.id != null ? String(this.feePayment.id) : null;
+    return txns
+      .filter(t => currentId == null || String(t.id) !== currentId)
+      .reduce((sum, t) => sum + (Number(t.amount_paid ?? 0) || 0), 0);
+  }
+
+  /** Remaining = Amount After Discount - Total Amount Paid (no late fee) */
+  getRemainingAmount(): number {
+    const amountAfterDiscount = this.getAmountAfterDiscount();
+    const totalPaid = this.getTotalAmountPaid();
+    return Math.max(0, amountAfterDiscount - totalPaid);
+  }
+
+  /** Sum of late fee from all transactions */
+  getTotalLateFee(): number {
+    const txns = this.feePayment?.past_transactions ?? [];
+    return txns.reduce((sum, t) => sum + (Number(t.late_fee ?? 0) || 0), 0);
+  }
+
+  /** Total Amount = sum of all amount_paid + sum of all late_fee */
+  getTotalCollectedAmount(): number {
+    return this.getTotalAmountPaid() + this.getTotalLateFee();
+  }
+
   getPaymentMethodIcon(method: string): string {
     const iconMap: Record<string, string> = {
       'Cash': 'payments',

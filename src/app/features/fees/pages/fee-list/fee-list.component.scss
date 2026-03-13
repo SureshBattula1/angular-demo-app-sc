@@ -430,6 +430,32 @@ app-data-table {
       color: var(--primary-color);
     }
   }
+
+  &.discount-card {
+    border-left: 4px solid var(--info-color, #2196f3);
+
+    .summary-icon {
+      background: rgba(33, 150, 243, 0.1);
+      color: var(--info-color, #2196f3);
+    }
+
+    .summary-value.discount-value {
+      color: var(--info-color, #2196f3);
+    }
+  }
+
+  &.latefee-card {
+    border-left: 4px solid var(--warning-color, #ff9800);
+
+    .summary-icon {
+      background: rgba(255, 152, 0, 0.1);
+      color: var(--warning-color, #ff9800);
+    }
+
+    .summary-value.latefee-value {
+      color: var(--warning-color, #ff9800);
+    }
+  }
 }
 
 .breakdown-section {
@@ -538,6 +564,18 @@ app-data-table {
       }
     }
     
+    .discount-badge {
+      color: var(--info-color, #2196f3);
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    .latefee-badge {
+      color: var(--warning-color, #ff9800);
+      font-weight: 500;
+      font-size: 12px;
+    }
+
     .pending-badge {
       color: var(--warning-color, #ff9800);
       font-weight: 500;
