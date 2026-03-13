@@ -54,7 +54,8 @@ export class IncomeListComponent implements OnInit {
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewTransaction(row) },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTransaction(row) },
-      { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row) }
+      { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row), show: (row) => (row?.status ?? '') === 'Pending' },
+      { icon: 'download', label: 'Download Receipt', color: 'primary', action: (row) => this.downloadReceipt(row) }
     ],
     selectable: true,
     pagination: true,
@@ -214,6 +215,27 @@ export class IncomeListComponent implements OnInit {
     }
   }
   
+  downloadReceipt(transaction: Transaction): void {
+    if (transaction.status !== 'Approved') {
+      this.errorHandler.showWarning('Receipt is only available for approved transactions.');
+      return;
+    }
+    this.errorHandler.showInfo('Preparing receipt PDF...');
+    this.accountService.downloadTransactionReceipt(transaction.id).subscribe({
+      next: (blob: Blob) => {
+        const fileName = (transaction.transaction_number ? `income-receipt-${transaction.transaction_number}` : `income-receipt-${transaction.id}`).replace(/[#\s]/g, '-') + '.pdf';
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.errorHandler.showSuccess('Receipt downloaded.');
+      },
+      error: (err) => this.errorHandler.showError(err)
+    });
+  }
+
   approveTransaction(transaction: Transaction): void {
     if (transaction.status !== 'Pending') {
       this.errorHandler.showWarning('Transaction is already ' + transaction.status);

@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 import {
   AccountCategory,
@@ -15,6 +17,8 @@ import {
 export class AccountService {
   private readonly ENDPOINT = '/accounts';
   private readonly TRANSACTION_ENDPOINT = '/transactions';
+  private readonly apiUrl = environment.apiUrl || 'http://localhost:8000/api';
+  private http = inject(HttpClient);
 
   constructor(private apiService: ApiService) {}
 
@@ -114,6 +118,17 @@ export class AccountService {
    */
   rejectTransaction(id: number): Observable<ApiResponse> {
     return this.apiService.post(`${this.TRANSACTION_ENDPOINT}/${id}/reject`, {});
+  }
+
+  /**
+   * Download transaction receipt as PDF (approved transactions only)
+   */
+  downloadTransactionReceipt(id: number): Observable<Blob> {
+    const url = `${this.apiUrl.replace(/\/$/, '')}${this.TRANSACTION_ENDPOINT}/${id}/receipt`;
+    return this.http.get(url, {
+      responseType: 'blob',
+      withCredentials: true
+    });
   }
 }
 

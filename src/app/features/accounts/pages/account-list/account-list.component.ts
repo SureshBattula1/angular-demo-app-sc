@@ -81,6 +81,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTransaction(row), permission: 'accounts.edit', show: (row) => row.status === 'Pending' },
       { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
       { icon: 'cancel', label: 'Reject', color: 'warn', action: (row) => this.rejectTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
+      { icon: 'download', label: 'Download Receipt', color: 'primary', action: (row) => this.downloadReceipt(row), permission: 'accounts.view' },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteTransaction(row), permission: 'accounts.delete', show: (row) => row.status !== 'Approved' }
     ],
     selectable: true,
@@ -111,6 +112,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTransaction(row), permission: 'accounts.edit', show: (row) => row.status === 'Pending' },
       { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
       { icon: 'cancel', label: 'Reject', color: 'warn', action: (row) => this.rejectTransaction(row), permission: 'accounts.approve', show: (row) => row.status === 'Pending' },
+      { icon: 'download', label: 'Download Receipt', color: 'primary', action: (row) => this.downloadReceipt(row), permission: 'accounts.view' },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteTransaction(row), permission: 'accounts.delete', show: (row) => row.status !== 'Approved' }
     ],
     selectable: true,
@@ -593,6 +595,27 @@ export class AccountListComponent implements OnInit, OnDestroy {
     });
   }
   
+  downloadReceipt(transaction: Transaction): void {
+    if (transaction.status !== 'Approved') {
+      this.snackBar.open('Receipt is only available for approved transactions.', 'Close', { duration: 3000 });
+      return;
+    }
+    this.snackBar.open('Preparing receipt PDF...', 'Close', { duration: 2000 });
+    this.accountService.downloadTransactionReceipt(transaction.id).subscribe({
+      next: (blob: Blob) => {
+        const fileName = (transaction.transaction_number ? `${transaction.type.toLowerCase()}-receipt-${transaction.transaction_number}` : `${transaction.type.toLowerCase()}-receipt-${transaction.id}`).replace(/[#\s]/g, '-') + '.pdf';
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.snackBar.open('Receipt downloaded.', 'Close', { duration: 2000 });
+      },
+      error: (err) => this.errorHandler.handleError(err)
+    });
+  }
+
   deleteTransaction(transaction: Transaction): void {
     const confirmed = confirm(`Are you sure you want to delete transaction "${transaction.transaction_number}"?`);
     
