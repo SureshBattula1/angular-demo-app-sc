@@ -144,8 +144,13 @@ export class BranchFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.currentBranch = response.data;
-          
-          this.branchForm.patchValue(response.data);
+          const data = { ...response.data };
+          // Convert established_date to YYYY-MM-DD for HTML date input (required format)
+          if (data.established_date) {
+            const str = String(data.established_date).trim();
+            data.established_date = str.includes('T') ? str.split('T')[0] : str;
+          }
+          this.branchForm.patchValue(data);
           this.logoUrl = response.data.logo; // Set logo URL if exists
           
           // Set full logo URL for preview
