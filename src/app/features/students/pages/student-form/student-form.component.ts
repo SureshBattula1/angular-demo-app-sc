@@ -52,6 +52,8 @@ export class StudentFormComponent implements OnInit {
   showAdditionalInfo = false;
   showSiblingInfo = false;
   showScholarshipInfo = false;
+
+  hidePassword = true;
   
   // Static dropdowns
   genders = ['Male', 'Female', 'Other'].map(g => ({ value: g, label: g }));

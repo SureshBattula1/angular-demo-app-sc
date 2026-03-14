@@ -46,6 +46,8 @@ export class TeacherFormComponent implements OnInit {
   showHealthInfo = false;
   showAdditionalInfo = false;
 
+  hidePassword = true;
+
   // Language options
   languageOptions = [
     'English', 'Hindi', 'Bengali', 'Telugu', 'Marathi', 'Tamil', 'Gujarati',
@@ -889,8 +891,7 @@ export class TeacherFormComponent implements OnInit {
         if (uploadResponse.success && uploadResponse.data?.file_path) {
           // Store the file path in the form
           this.teacherForm.get('profile_picture')?.setValue(uploadResponse.data.file_path);
-          // Use the file_url from the upload response for preview
-          this.profilePicturePreview = uploadResponse.data.file_url || this.getFullImageUrl(uploadResponse.data.file_path);
+          // Keep FileReader base64 preview - it already shows the new image; using server URL would risk browser cache showing old image
           
           // Update teacher record with the new path
           const updateData = { profile_picture: uploadResponse.data.file_path };
