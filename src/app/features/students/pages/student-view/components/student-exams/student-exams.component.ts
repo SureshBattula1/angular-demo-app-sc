@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
 import { Student } from '../../../../../../core/models/student.model';
@@ -13,7 +13,7 @@ import { ErrorHandlerService } from '../../../../../../core/services/error-handl
   templateUrl: './student-exams.component.html',
   styleUrls: ['./student-exams.component.scss']
 })
-export class StudentExamsComponent implements OnInit {
+export class StudentExamsComponent implements OnInit, OnChanges {
   @Input() student?: Student;
   
   upcomingExams: any[] = [];
@@ -28,6 +28,12 @@ export class StudentExamsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadExamsData();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['student'] && this.student?.user_id) {
+      this.loadExamsData();
+    }
   }
 
   loadExamsData(): void {

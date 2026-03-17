@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
@@ -13,7 +13,7 @@ import { ErrorHandlerService } from '../../../../../../core/services/error-handl
   templateUrl: './student-attendance.component.html',
   styleUrls: ['./student-attendance.component.scss']
 })
-export class StudentAttendanceComponent implements OnInit {
+export class StudentAttendanceComponent implements OnInit, OnChanges {
   @Input() student?: Student;
   
   isLoading = false;
@@ -43,6 +43,12 @@ export class StudentAttendanceComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAttendanceData();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['student'] && this.student?.user_id) {
+      this.loadAttendanceData();
+    }
   }
 
   loadAttendanceData(): void {
