@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AdmissionService, AdmissionApplication } from '../../services/admission.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -19,9 +20,11 @@ export class AdmissionViewComponent implements OnInit {
   applicationId!: number;
   activeTabIndex = 0; // For mat-tab-group selectedIndex
   isEditMode = false; // Track if we're in edit mode (viewing existing application)
+  branches: any[] = [];
 
   constructor(
     private admissionService: AdmissionService,
+    private branchService: BranchService,
     private route: ActivatedRoute,
     private router: Router,
     private errorHandler: ErrorHandlerService,
@@ -29,10 +32,25 @@ export class AdmissionViewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadBranches();
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.applicationId = +params['id'];
         this.loadApplication();
+      }
+    });
+  }
+
+  loadBranches(): void {
+    this.branchService.getBranches().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.branches = Array.isArray(response.data) ? response.data : [];
+          this.applyBranchName();
+        }
+      },
+      error: () => {
+        this.branches = [];
       }
     });
   }
@@ -44,6 +62,7 @@ export class AdmissionViewComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.application = response.data;
+          this.applyBranchName();
           this.isEditMode = true; // We have an existing application
           this.isLoading = false;
         }
@@ -54,6 +73,29 @@ export class AdmissionViewComponent implements OnInit {
         this.router.navigate(['/admissions']);
       }
     });
+  }
+
+  private applyBranchName(): void {
+    if (!this.application) return;
+
+    // If API already provided a branch name, keep it.
+    const anyApp = this.application as any;
+    if (anyApp.branch_name) return;
+
+    // Try to resolve from embedded object first, then from branch_id lookup.
+    const embedded = anyApp.branch;
+    if (embedded?.name || embedded?.code) {
+      anyApp.branch_name = embedded.name || embedded.code;
+      return;
+    }
+
+    const branchId = anyApp.branch_id;
+    if (!branchId || !this.branches?.length) return;
+
+    const b = this.branches.find(x => x?.id === branchId);
+    if (b) {
+      anyApp.branch_name = b.name || b.code;
+    }
   }
 
   onEdit(): void {

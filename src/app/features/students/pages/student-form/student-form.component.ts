@@ -2,11 +2,14 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { StudentCrudService } from '../../services/student-crud.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FileUploadService } from '../../../../core/services/file-upload.service';
 import { Student } from '../../../../core/models/student.model';
@@ -36,6 +39,8 @@ export class StudentFormComponent implements OnInit {
   sections: Section[] = [];
   loadingGrades = false;
   loadingSections = false;
+  academicYears: AcademicYear[] = [];
+  loadingAcademicYears = false;
   
   // Profile picture
   profilePicturePreview: string | null = null;
@@ -100,6 +105,8 @@ export class StudentFormComponent implements OnInit {
     private branchService: BranchService,
     private gradeService: GradeService,
     private sectionService: SectionService,
+    private academicYearService: AcademicYearService,
+    private academicYearContext: AcademicYearContextService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
@@ -110,7 +117,15 @@ export class StudentFormComponent implements OnInit {
     this.initForm();
     this.loadBranches();
     this.loadGrades();
-    
+    this.loadAcademicYears();
+
+    // Default academic year from global context (create mode only)
+    this.academicYearContext.selectedYear$.pipe(take(1)).subscribe(y => {
+      if (!this.isEditMode && y?.name) {
+        this.studentForm.patchValue({ academic_year: y.name });
+      }
+    });
+
     // Setup dynamic section loading based on grade and branch
     this.setupDynamicSectionLoading();
     
@@ -153,9 +168,6 @@ export class StudentFormComponent implements OnInit {
   }
 
   private initForm(): void {
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-
     this.studentForm = this.fb.group({
       // User Details
       first_name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -173,7 +185,7 @@ export class StudentFormComponent implements OnInit {
       // Academic
       grade: ['', Validators.required],
       section: [null],
-      academic_year: [`${currentYear}-${nextYear}`, Validators.required],
+      academic_year: ['', Validators.required],
       stream: [null],
       
       // Personal
@@ -345,6 +357,24 @@ export class StudentFormComponent implements OnInit {
       
       // Profile picture
       profile_picture: [null]
+    });
+  }
+
+  private loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        this.loadingAcademicYears = false;
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+        } else {
+          this.academicYears = [];
+        }
+      },
+      error: () => {
+        this.loadingAcademicYears = false;
+        this.academicYears = [];
+      }
     });
   }
 

@@ -46,7 +46,10 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year *</mat-label>
-              <input matInput formControlName="academic_year" placeholder="2024-2025">
+              <mat-select formControlName="academic_year">
+                <mat-option *ngIf="loadingAcademicYears" disabled>Loading academic years...</mat-option>
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.name">{{ ay.name }}</mat-option>
+              </mat-select>
               <mat-icon matPrefix>event</mat-icon>
               <mat-error *ngIf="admissionForm.get('academic_year')?.invalid">{{ getErrorMessage('academic_year') }}</mat-error>
             </mat-form-field>
@@ -112,7 +115,9 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Date of Birth *</mat-label>
-              <input matInput type="date" formControlName="date_of_birth">
+              <input matInput [matDatepicker]="dobPicker" formControlName="date_of_birth">
+              <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+              <mat-datepicker #dobPicker></mat-datepicker>
               <mat-icon matPrefix>cake</mat-icon>
               <mat-error *ngIf="admissionForm.get('date_of_birth')?.invalid">{{ getErrorMessage('date_of_birth') }}</mat-error>
             </mat-form-field>
@@ -462,7 +467,9 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>TC Date</mat-label>
-              <input matInput type="date" formControlName="tc_date">
+              <input matInput [matDatepicker]="tcDatePicker" formControlName="tc_date">
+              <mat-datepicker-toggle matSuffix [for]="tcDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #tcDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
@@ -520,63 +527,70 @@
 
             <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('admission_decision')?.value === 'Approved'">
               <mat-label>Decision Date</mat-label>
-              <input matInput type="date" formControlName="admission_decision_date">
+              <input matInput [matDatepicker]="decisionDatePicker" formControlName="admission_decision_date">
+              <mat-datepicker-toggle matSuffix [for]="decisionDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #decisionDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
 
           <!-- Application Fee Section -->
           <div class="form-row">
-            <div class="form-field-half">
+            <div class="form-field-full">
               <mat-checkbox formControlName="application_fee_paid">Application Fee Paid</mat-checkbox>
             </div>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('application_fee_paid')?.value">
+          </div>
+          <div class="form-row" *ngIf="admissionForm.get('application_fee_paid')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Application Fee Amount</mat-label>
               <input matInput type="number" formControlName="application_fee_amount" step="0.01">
               <mat-icon matPrefix>attach_money</mat-icon>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('application_fee_paid')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Payment Date</mat-label>
-              <input matInput type="date" formControlName="application_fee_payment_date">
+              <input matInput [matDatepicker]="appFeePaymentPicker" formControlName="application_fee_payment_date">
+              <mat-datepicker-toggle matSuffix [for]="appFeePaymentPicker"></mat-datepicker-toggle>
+              <mat-datepicker #appFeePaymentPicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
           
           <!-- Registration Fee Section -->
           <div class="form-row">
-            <div class="form-field-half">
+            <div class="form-field-full">
               <mat-checkbox formControlName="registration_fee_paid">Registration Fee Paid</mat-checkbox>
             </div>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('registration_fee_paid')?.value">
+          </div>
+          <div class="form-row" *ngIf="admissionForm.get('registration_fee_paid')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Registration Fee Amount</mat-label>
               <input matInput type="number" formControlName="registration_fee_amount" step="0.01">
               <mat-icon matPrefix>attach_money</mat-icon>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('registration_fee_paid')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Payment Date</mat-label>
-              <input matInput type="date" formControlName="registration_fee_payment_date">
+              <input matInput [matDatepicker]="regFeePaymentPicker" formControlName="registration_fee_payment_date">
+              <mat-datepicker-toggle matSuffix [for]="regFeePaymentPicker"></mat-datepicker-toggle>
+              <mat-datepicker #regFeePaymentPicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
 
           <!-- Entrance Test Section -->
           <div class="form-row">
-            <div class="form-field-half">
+            <div class="form-field-full">
               <mat-checkbox formControlName="entrance_test_required">Entrance Test Required</mat-checkbox>
             </div>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('entrance_test_required')?.value">
+          </div>
+          <div class="form-row" *ngIf="admissionForm.get('entrance_test_required')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Test Date</mat-label>
-              <input matInput type="date" formControlName="entrance_test_date">
+              <input matInput [matDatepicker]="entranceTestDatePicker" formControlName="entrance_test_date">
+              <mat-datepicker-toggle matSuffix [for]="entranceTestDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #entranceTestDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('entrance_test_required')?.value && admissionForm.get('entrance_test_date')?.value">
-              <mat-label>Test Score (0-999.99)</mat-label>
-              <input matInput type="number" formControlName="entrance_test_score" step="0.01" min="0" max="999.99">
-              <mat-icon matPrefix>score</mat-icon>
-              <mat-error *ngIf="admissionForm.get('entrance_test_score')?.hasError('max')">Score must be between 0 and 999.99</mat-error>
-              <mat-error *ngIf="admissionForm.get('entrance_test_score')?.hasError('min')">Score cannot be negative</mat-error>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('entrance_test_required')?.value && admissionForm.get('entrance_test_score')">
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('entrance_test_required')?.value">
               <mat-label>Test Result</mat-label>
               <mat-select formControlName="entrance_test_result">
                 <mat-option value="Pending">Pending</mat-option>
@@ -586,25 +600,31 @@
               <mat-icon matPrefix>check_circle</mat-icon>
             </mat-form-field>
           </div>
+          <div class="form-row" *ngIf="admissionForm.get('entrance_test_required')?.value && admissionForm.get('entrance_test_date')?.value">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Test Score (0-999.99)</mat-label>
+              <input matInput type="number" formControlName="entrance_test_score" step="0.01" min="0" max="999.99">
+              <mat-icon matPrefix>score</mat-icon>
+              <mat-error *ngIf="admissionForm.get('entrance_test_score')?.hasError('max')">Score must be between 0 and 999.99</mat-error>
+              <mat-error *ngIf="admissionForm.get('entrance_test_score')?.hasError('min')">Score cannot be negative</mat-error>
+            </mat-form-field>
+          </div>
 
           <!-- Interview Section -->
           <div class="form-row">
-            <div class="form-field-half">
+            <div class="form-field-full">
               <mat-checkbox formControlName="interview_required">Interview Required</mat-checkbox>
             </div>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('interview_required')?.value">
+          </div>
+          <div class="form-row" *ngIf="admissionForm.get('interview_required')?.value">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Interview Date</mat-label>
-              <input matInput type="date" formControlName="interview_date">
+              <input matInput [matDatepicker]="interviewDatePicker" formControlName="interview_date">
+              <mat-datepicker-toggle matSuffix [for]="interviewDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #interviewDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('interview_required')?.value && admissionForm.get('interview_date')?.value">
-              <mat-label>Interview Score (0-999.99)</mat-label>
-              <input matInput type="number" formControlName="interview_score" step="0.01" min="0" max="999.99">
-              <mat-icon matPrefix>score</mat-icon>
-              <mat-error *ngIf="admissionForm.get('interview_score')?.hasError('max')">Score must be between 0 and 999.99</mat-error>
-              <mat-error *ngIf="admissionForm.get('interview_score')?.hasError('min')">Score cannot be negative</mat-error>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('interview_required')?.value && admissionForm.get('interview_score')">
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="admissionForm.get('interview_required')?.value">
               <mat-label>Interview Result</mat-label>
               <mat-select formControlName="interview_result">
                 <mat-option value="Pending">Pending</mat-option>
@@ -612,6 +632,15 @@
                 <mat-option value="Fail">Fail</mat-option>
               </mat-select>
               <mat-icon matPrefix>check_circle</mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="form-row" *ngIf="admissionForm.get('interview_required')?.value && admissionForm.get('interview_date')?.value">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Interview Score (0-999.99)</mat-label>
+              <input matInput type="number" formControlName="interview_score" step="0.01" min="0" max="999.99">
+              <mat-icon matPrefix>score</mat-icon>
+              <mat-error *ngIf="admissionForm.get('interview_score')?.hasError('max')">Score must be between 0 and 999.99</mat-error>
+              <mat-error *ngIf="admissionForm.get('interview_score')?.hasError('min')">Score cannot be negative</mat-error>
             </mat-form-field>
           </div>
 

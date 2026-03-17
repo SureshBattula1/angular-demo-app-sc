@@ -54,13 +54,13 @@ export class AdmissionListComponent implements OnInit, OnDestroy, AfterViewInit 
     columns: [
       { key: 'application_number', header: 'Application No.', sortable: true, searchable: true, width: '160px' },
       { key: 'full_name', header: 'Applicant Name', sortable: true, searchable: true },
-      { key: 'applying_for_grade', header: 'Applying For', sortable: true, width: '120px' },
+      { key: 'applying_for_grade_display', header: 'Applying For', sortable: true, width: '120px' },
       { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
       { key: 'application_date', header: 'Application Date', type: 'date', sortable: true, width: '140px' },
       { key: 'phone', header: 'Phone', width: '130px' },
       { key: 'email', header: 'Email', searchable: true, width: '180px' },
       { key: 'application_status', header: 'Status', type: 'badge', width: '120px', align: 'center' },
-      { key: 'application_fee_paid', header: 'Fee Paid', type: 'badge', width: '100px', align: 'center' }
+      { key: 'application_fee_paid', header: 'Fee Paid', type: 'badge', width: '100px', align: 'center', pipe: 'yesNo' }
     ],
     actions: [
       { 
@@ -254,6 +254,12 @@ export class AdmissionListComponent implements OnInit, OnDestroy, AfterViewInit 
       per_page: filters['per_page'] || this.tableConfig.defaultPageSize || 25
     };
 
+    // Always scope by currently selected academic year if available
+    const year = this.academicYearContext.selectedYear;
+    if (year?.name) {
+      params.academic_year = year.name;
+    }
+
     // Remove undefined values
     Object.keys(params).forEach(key => {
       if (params[key] === undefined || params[key] === null || params[key] === '') {
@@ -265,9 +271,19 @@ export class AdmissionListComponent implements OnInit, OnDestroy, AfterViewInit 
       next: (response) => {
         this.loading = false;
         if (response.success && response.data) {
+          // Build a lookup map for grade value -> label (e.g. "1" -> "Grade 1")
+          const gradeMap = new Map<string, string>(
+            (this.grades || []).map(g => [g.value, g.label || g.value])
+          );
+
           this.applications = (response.data as any[]).map(app => ({
             ...app,
-            full_name: `${app.first_name || ''} ${app.last_name || ''}`.trim()
+            full_name: `${app.first_name || ''} ${app.last_name || ''}`.trim(),
+            // Normalize fee paid flags to booleans so they render as Yes/No
+            application_fee_paid: !!app.application_fee_paid,
+            registration_fee_paid: !!app.registration_fee_paid,
+            // Human-friendly grade/class name for display in the table
+            applying_for_grade_display: gradeMap.get(app.applying_for_grade) || app.applying_for_grade
           }));
           
           if (response.meta) {

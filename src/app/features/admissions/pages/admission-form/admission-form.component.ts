@@ -11,6 +11,7 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { Section } from '../../../../core/models/section.model';
 
 @Component({
@@ -33,6 +34,9 @@ export class AdmissionFormComponent implements OnInit {
   /** Section dropdown options – set when sections load so template updates reliably */
   sectionOptionsList: { value: string; label: string }[] = [];
   loadingSections = false;
+  /** Academic years for dropdown – loaded from API */
+  academicYears: AcademicYear[] = [];
+  loadingAcademicYears = false;
 
   // Form sections visibility
   showParentInfo = true;
@@ -75,13 +79,15 @@ export class AdmissionFormComponent implements OnInit {
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
     private cdr: ChangeDetectorRef,
-    private academicYearContext: AcademicYearContextService
+    private academicYearContext: AcademicYearContextService,
+    private academicYearService: AcademicYearService
   ) {}
   
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
     this.loadGrades();
+    this.loadAcademicYears();
     this.setupSectionLoading();
     this.academicYearContext.selectedYear$.pipe(take(1)).subscribe(y => {
       if (!this.isEditMode && y?.name) this.admissionForm.patchValue({ academic_year: y.name });
@@ -267,6 +273,24 @@ export class AdmissionFormComponent implements OnInit {
       error: (error) => {
         console.error('Error loading grades:', error);
         this.grades = [];
+      }
+    });
+  }
+
+  private loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+        }
+        this.loadingAcademicYears = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.academicYears = [];
+        this.loadingAcademicYears = false;
+        this.cdr.markForCheck();
       }
     });
   }

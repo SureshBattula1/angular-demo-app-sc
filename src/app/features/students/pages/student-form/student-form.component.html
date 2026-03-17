@@ -257,7 +257,10 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year *</mat-label>
-              <input matInput formControlName="academic_year">
+              <mat-select formControlName="academic_year">
+                <mat-option *ngIf="loadingAcademicYears" disabled>Loading academic years...</mat-option>
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.name">{{ ay.name }}</mat-option>
+              </mat-select>
               <mat-icon matPrefix>calendar_today</mat-icon>
               <mat-error *ngIf="studentForm.get('academic_year')?.invalid">{{ getErrorMessage('academic_year') }}</mat-error>
             </mat-form-field>

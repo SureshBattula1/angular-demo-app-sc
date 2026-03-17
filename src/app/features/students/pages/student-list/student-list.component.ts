@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
-import { skip } from 'rxjs/operators';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -60,6 +59,7 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
       { key: 'gender', header: 'Gender', sortable: true, searchable: true },
       // { key: 'email', header: 'Email', searchable: true },
       { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
+      { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
       { key: 'grade_label', header: 'Class (Grade)', sortable: true, width: '120px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
       { key: 'roll_number', header: 'Roll No.', width: '100px' },
@@ -214,8 +214,8 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   
   ngOnInit(): void {
     this.loadFilterData();
-    this.loadStudents();
-    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => this.loadStudents());
+    // Reload when toolbar academic year changes (including initial value from context)
+    this.academicYearSub = this.academicYearContext.selectedYearId$.subscribe(() => this.loadStudents());
   }
 
   ngOnDestroy(): void {
@@ -305,8 +305,14 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   
   loadStudents(): void {
     this.loading = true;
-    
-    this.studentCrudService.getStudents(this.currentFilters).subscribe({
+
+    const params: Record<string, unknown> = { ...this.currentFilters };
+    const year = this.academicYearContext.selectedYear;
+    if (year?.name) {
+      params['academic_year'] = year.name;
+    }
+
+    this.studentCrudService.getStudents(params).subscribe({
       next: (response) => {
         if (response.success) {
           this.students = (response.data || []).map(student => ({
