@@ -47,6 +47,11 @@ export class AcademicYearService {
     return this.apiService.get<AcademicYear>(`${this.ENDPOINT}/${id}`);
   }
 
+  /** Get the current (is_current = true) academic year. */
+  getCurrent(): Observable<ApiResponse<AcademicYear>> {
+    return this.apiService.get<AcademicYear>(`${this.ENDPOINT}/current`);
+  }
+
   create(data: AcademicYearFormData): Observable<ApiResponse<AcademicYear>> {
     return this.apiService.post<AcademicYear>(this.ENDPOINT, data);
   }

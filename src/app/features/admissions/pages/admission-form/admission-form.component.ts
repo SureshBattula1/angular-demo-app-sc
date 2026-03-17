@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { combineLatest } from 'rxjs';
-import { startWith } from 'rxjs/operators';
+import { startWith, take } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AdmissionService, AdmissionApplication } from '../../services/admission.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { Section } from '../../../../core/models/section.model';
 
 @Component({
@@ -73,14 +74,18 @@ export class AdmissionFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private academicYearContext: AcademicYearContextService
   ) {}
-
+  
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
     this.loadGrades();
     this.setupSectionLoading();
+    this.academicYearContext.selectedYear$.pipe(take(1)).subscribe(y => {
+      if (!this.isEditMode && y?.name) this.admissionForm.patchValue({ academic_year: y.name });
+    });
     setTimeout(() => {
       this.ensureGradeControlEnabled();
       this.ensureSectionControlEnabled();

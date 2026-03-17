@@ -35,7 +35,8 @@ export class AcademicYearListComponent implements OnInit {
   academicYears: AcademicYear[] = [];
   currentFilters: Record<string, unknown> = {
     page: 1,
-    per_page: 10
+    per_page: 10,
+    include_past: 1
   };
 
   tableConfig: TableConfig = {

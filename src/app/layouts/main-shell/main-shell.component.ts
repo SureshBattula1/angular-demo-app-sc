@@ -10,7 +10,9 @@ import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { PermissionService } from '../../core/services/permission.service';
 import { UserPreferenceService } from '../../core/services/user-preference.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { AcademicYearContextService } from '../../core/services/academic-year-context.service';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
+import { AcademicYear } from '../../features/settings/services/academic-year.service';
 import { THEMES, THEME_OPTIONS, DEFAULT_THEME, BREAKPOINTS, ThemeColors } from '../../shared/config/theme.config';
 import { ImpersonationService } from '../../company-portal/services/impersonation.service';
 import { CompanyAuthService } from '../../company-portal/services/company-auth.service';
@@ -40,6 +42,10 @@ export class MainShellComponent implements OnInit, OnDestroy {
   isMobile = false;
   currentRoute = '';  // Track current route for active state
   isImpersonating = false; // Track impersonation state
+  academicYears: AcademicYear[] = [];
+  selectedAcademicYearId: number | null = null;
+  selectedAcademicYearName: string = '';
+  isPastAcademicYear = false;
   
   // Subscriptions for cleanup
   private routerSubscription?: Subscription;
@@ -83,7 +89,8 @@ export class MainShellComponent implements OnInit, OnDestroy {
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
     private impersonationService: ImpersonationService,
-    private companyAuthService: CompanyAuthService
+    private companyAuthService: CompanyAuthService,
+    private academicYearContext: AcademicYearContextService
   ) {
     this.isHandset$ = this.breakpointObserver.observe(Breakpoints.Handset)
       .pipe(map(result => result.matches));
@@ -131,8 +138,34 @@ export class MainShellComponent implements OnInit, OnDestroy {
     
     // Check if impersonating
     this.checkImpersonationStatus();
+
+    // Academic year context: load current and list for switcher
+    if (!this.isStudentRole()) {
+      this.academicYearContext.loadCurrent();
+      this.academicYearContext.selectedYear$.subscribe(y => {
+        this.selectedAcademicYearId = y?.id ?? null;
+        this.selectedAcademicYearName = y?.name ?? '';
+        this.isPastAcademicYear = !!(y?.end_date && new Date(y.end_date) < new Date());
+        this.cdr.detectChanges();
+      });
+      this.academicYearContext.getActiveYears().subscribe(res => {
+        if (res.success && res.data) {
+          this.academicYears = res.data;
+          this.cdr.detectChanges();
+        }
+      });
+    }
   }
-  
+
+  onAcademicYearChange(yearId: number): void {
+    const year = this.academicYears.find(y => y.id === yearId);
+    if (year) {
+      this.academicYearContext.setSelected(year);
+      this.selectedAcademicYearId = yearId;
+      this.errorHandler.showSuccess(`Academic year set to ${year.name}`);
+    }
+  }
+
   /**
    * Check if currently in impersonation mode
    */

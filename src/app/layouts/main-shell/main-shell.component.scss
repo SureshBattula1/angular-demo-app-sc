@@ -10,6 +10,33 @@ $impersonation-banner-height: 48px;
   overflow: hidden;
 }
 
+.past-year-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 152, 0, 0.95);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.past-year-banner mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.app-container:has(.past-year-banner) .app-header {
+  top: 40px;
+}
+
 .app-header {
   position: fixed;
   top: 0;
@@ -44,6 +71,20 @@ $impersonation-banner-height: 48px;
   @include responsive.mobile-only {
     font-size: 18px;
     margin-left: 4px; /* Even less on mobile */
+  }
+}
+
+/* Academic Year Selector */
+.academic-year-selector {
+  margin-right: 16px;
+  width: 160px;
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper { background-color: rgba(255, 255, 255, 0.1); }
+    .mat-mdc-form-field-subscript-wrapper { display: none; }
+    .mat-mdc-form-field-infix { min-height: 40px; padding: 8px 0; }
+    .mdc-notched-outline__leading, .mdc-notched-outline__notch, .mdc-notched-outline__trailing { border-color: rgba(255, 255, 255, 0.3) !important; }
+    .mat-mdc-select-value, .mat-mdc-form-field-label, .mdc-floating-label { color: white !important; }
+    .mat-mdc-select-arrow { color: white !important; }
   }
 }
 

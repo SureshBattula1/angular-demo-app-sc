@@ -1,7 +1,8 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -10,6 +11,7 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { Student } from '../../../../core/models/student.model';
 import { Section } from '../../../../core/models/section.model';
@@ -38,7 +40,7 @@ import { Section } from '../../../../core/models/section.model';
   `,
   styles: [`:host { display: block; }`]
 })
-export class StudentListComponent implements OnInit, AfterViewInit {
+export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
   
   loading = false;
@@ -48,6 +50,7 @@ export class StudentListComponent implements OnInit, AfterViewInit {
   allSections: Section[] = []; // Store all sections for filtering
   currentGrade: string | null = null; // Track current grade selection
   currentBranch: string | null = null; // Track current branch selection
+  private academicYearSub?: Subscription;
   
   tableConfig: TableConfig = {
     columns: [
@@ -205,13 +208,18 @@ export class StudentListComponent implements OnInit, AfterViewInit {
     private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private academicYearContext: AcademicYearContextService
   ) {}
   
   ngOnInit(): void {
-    // ✅ OPTIMIZED: Load all filter data in parallel instead of sequentially
     this.loadFilterData();
     this.loadStudents();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => this.loadStudents());
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
   
   /**

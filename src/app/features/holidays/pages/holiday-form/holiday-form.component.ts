@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HolidayService } from '../../services/holiday.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { Holiday, HolidayFormData } from '../../../../core/models/holiday.model';
 
@@ -62,7 +63,8 @@ export class HolidayFormComponent implements OnInit {
     private apiService: ApiService,
     private router: Router,
     private route: ActivatedRoute,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private academicYearContext: AcademicYearContextService
   ) {}
 
   ngOnInit(): void {
@@ -244,10 +246,11 @@ export class HolidayFormComponent implements OnInit {
    * Get current academic year
    */
   getCurrentAcademicYear(): string {
+    const ctx = this.academicYearContext?.selectedYear;
+    if (ctx?.name) return ctx.name;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
-    
     return month < 4 ? `${year - 1}-${year}` : `${year}-${year + 1}`;
   }
 

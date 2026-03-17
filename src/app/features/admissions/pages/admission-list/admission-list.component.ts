@@ -1,6 +1,8 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -8,6 +10,7 @@ import { AdmissionService, AdmissionApplication } from '../../services/admission
 import { GradeService } from '../../../grades/services/grade.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -35,13 +38,14 @@ import { MatDialog } from '@angular/material/dialog';
   `,
   styles: [`:host { display: block; }`]
 })
-export class AdmissionListComponent implements OnInit, AfterViewInit {
+export class AdmissionListComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
   
   loading = false;
   applications: AdmissionApplication[] = [];
   selectedApplications: AdmissionApplication[] = [];
   currentFilters: Record<string, unknown> = {};
+  private academicYearSub?: Subscription;
   
   branches: any[] = [];
   grades: any[] = [];
@@ -182,12 +186,18 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
     private router: Router,
     private errorHandler: ErrorHandlerService,
     private exportService: ExportService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private academicYearContext: AcademicYearContextService
   ) {}
 
   ngOnInit(): void {
     this.loadBranches();
     this.loadGrades();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => this.loadApplications(this.currentFilters));
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
 
   ngAfterViewInit(): void {

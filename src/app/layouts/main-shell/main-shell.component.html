@@ -11,6 +11,11 @@
 </div>
 
 <div class="app-container" [class.with-impersonation-banner]="isImpersonating">
+  <!-- Past academic year notice -->
+  <div *ngIf="isPastAcademicYear && !isStudentRole()" class="past-year-banner">
+    <mat-icon>info</mat-icon>
+    <span>You are viewing a past academic year ({{ selectedAcademicYearName }}). Some actions may be restricted.</span>
+  </div>
   <!-- Header Toolbar -->
   <mat-toolbar class="app-header" color="primary">
     <!-- Toggle Button - Hide for students -->
@@ -24,6 +29,15 @@
     
     <span class="app-title">School Management System</span>
     <span class="spacer"></span>
+
+    <!-- Academic Year Selector -->
+    <mat-form-field appearance="outline" class="academic-year-selector" *ngIf="!isStudentRole()">
+      <mat-label>Academic Year</mat-label>
+      <mat-select [value]="selectedAcademicYearId" (selectionChange)="onAcademicYearChange($event.value)">
+        <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>
+      </mat-select>
+      <mat-icon matPrefix>calendar_today</mat-icon>
+    </mat-form-field>
     
     <!-- Header Actions -->
     <!-- Theme Selector -->

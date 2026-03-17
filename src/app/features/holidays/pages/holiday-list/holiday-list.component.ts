@@ -1,6 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,6 +17,7 @@ import { HolidayService } from '../../services/holiday.service';
 import { Holiday, CalendarDay } from '../../../../core/models/holiday.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
@@ -35,7 +38,7 @@ import { ExportService } from '../../../../shared/services/export.service';
   templateUrl: './holiday-list.component.html',
   styleUrls: ['./holiday-list.component.scss']
 })
-export class HolidayListComponent implements OnInit {
+export class HolidayListComponent implements OnInit, OnDestroy {
   @ViewChild(DataTableComponent) dataTable!: DataTableComponent;
   
   // View state
@@ -46,6 +49,7 @@ export class HolidayListComponent implements OnInit {
   upcomingHolidays: Holiday[] = [];
   loading = false;
   loadingUpcoming = false;
+  private academicYearSub?: Subscription;
   
   // Calendar state
   currentYear: number = new Date().getFullYear();
@@ -110,13 +114,23 @@ export class HolidayListComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private academicYearContext: AcademicYearContextService
   ) {}
 
   ngOnInit(): void {
     this.loadHolidays();
     this.loadCalendarData();
     this.loadUpcomingHolidays();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => {
+      this.loadHolidays();
+      this.loadCalendarData();
+      this.loadUpcomingHolidays();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
 
   /**

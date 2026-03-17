@@ -1,7 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
@@ -11,6 +13,7 @@ import { FeeTypeService } from '../../services/fee-type.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.model';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -33,7 +36,7 @@ import { IndianCurrencyPipe } from '../../../../shared/pipes/indian-currency.pip
   templateUrl: './fee-list.component.html',
   styleUrls: ['./fee-list.component.scss']
 })
-export class FeeListComponent implements OnInit {
+export class FeeListComponent implements OnInit, OnDestroy {
   @ViewChild('structuresTable') structuresTable!: DataTableComponent;
   @ViewChild('paymentsTable') paymentsTable!: DataTableComponent;
   @ViewChild('feeTypesTable') feeTypesTable!: DataTableComponent;
@@ -43,6 +46,7 @@ export class FeeListComponent implements OnInit {
   
   // Track which tabs have been loaded for lazy loading
   private loadedTabs = new Set<string>();
+  private academicYearSub?: Subscription;
   
   // Separate data arrays for each tab
   todayPaymentsDashboard: any = null;
@@ -327,7 +331,8 @@ export class FeeListComponent implements OnInit {
     private gradeService: GradeService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private academicYearContext: AcademicYearContextService
   ) {}
   
   ngOnInit(): void {
@@ -335,6 +340,7 @@ export class FeeListComponent implements OnInit {
     this.loadGrades();
     this.loadSections();
     this.loadFeeTypesForFilter();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => this.loadActiveTabData());
     
     // Check query parameters to restore active tab
     this.route.queryParams.subscribe(params => {
@@ -366,6 +372,10 @@ export class FeeListComponent implements OnInit {
         this.loadTodayPayments();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
   
   // Check if a tab has been loaded (for lazy loading)
