@@ -373,6 +373,9 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
     // Already converted
     if (application.student_id) return false;
     
+    // Class (grade) required
+    if (!application.applying_for_grade?.trim()) return false;
+    
     // Status check
     if (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved') {
       return false;
@@ -391,6 +394,8 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
       let message = 'Cannot convert this application to student.';
       if (application.student_id) {
         message = 'This application has already been converted to a student.';
+      } else if (!application.applying_for_grade?.trim()) {
+        message = 'Application must have Class (Applying for Grade) set before converting to student.';
       } else if (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved') {
         message = 'Application must be approved/admitted before converting to student.';
       } else if (!application.registration_fee_paid) {
@@ -406,7 +411,9 @@ export class AdmissionListComponent implements OnInit, AfterViewInit {
         next: (response) => {
           this.loading = false;
           if (response.success) {
-            this.errorHandler.showSuccess('Application converted to student successfully!');
+            const d = response.data || {};
+            const cls = (d.grade || d.section) ? ` Class ${d.grade || ''}${d.section ? '-' + d.section : ''}` : '';
+            this.errorHandler.showSuccess(`Application converted to student successfully! User created with Student role.${cls}`);
             // Reload applications
             this.loadApplications(this.currentFilters);
             // Optionally navigate to student view

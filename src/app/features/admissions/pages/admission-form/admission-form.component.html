@@ -63,9 +63,25 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Section (Optional)</mat-label>
-              <input matInput formControlName="applying_for_section" placeholder="A, B, C...">
+              <mat-label>Section *</mat-label>
+              <mat-select formControlName="applying_for_section">
+                <mat-option *ngIf="loadingSections" disabled>
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <mat-spinner diameter="20"></mat-spinner>
+                    Loading sections for this grade...
+                  </span>
+                </mat-option>
+                <mat-option *ngFor="let opt of sectionOptionsList" [value]="opt.value">{{ opt.label }}</mat-option>
+              </mat-select>
               <mat-icon matPrefix>class</mat-icon>
+              <mat-icon matSuffix *ngIf="loadingSections" class="section-loading-spinner">
+                <mat-spinner diameter="24"></mat-spinner>
+              </mat-icon>
+              <mat-hint *ngIf="!admissionForm.get('branch_id')?.value">Select branch first</mat-hint>
+              <mat-hint *ngIf="admissionForm.get('branch_id')?.value && !admissionForm.get('applying_for_grade')?.value">Select grade to load sections</mat-hint>
+              <mat-hint *ngIf="sectionOptionsList.length > 0 && !loadingSections">{{ sectionOptionsList.length }} section(s) from Sections</mat-hint>
+              <mat-hint *ngIf="admissionForm.get('branch_id')?.value && admissionForm.get('applying_for_grade')?.value && sectionOptionsList.length === 0 && !loadingSections" class="no-sections-hint">No sections found for this grade. Please select a different grade or add sections in Grades &amp; Sections.</mat-hint>
+              <mat-error *ngIf="admissionForm.get('applying_for_section')?.invalid">{{ getErrorMessage('applying_for_section') }}</mat-error>
             </mat-form-field>
           </div>
         </div>

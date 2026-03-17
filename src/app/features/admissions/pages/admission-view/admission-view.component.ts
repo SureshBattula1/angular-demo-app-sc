@@ -215,7 +215,9 @@ export class AdmissionViewComponent implements OnInit {
           this.isLoading = false;
           
           if (response && response.success) {
-            this.errorHandler.showSuccess('Application converted to student successfully!');
+            const data = response.data || {};
+            const gradeSection = (data.grade || data.section) ? ` (Class ${data.grade || ''}${data.section ? '-' + data.section : ''})` : '';
+            this.errorHandler.showSuccess(`Application converted to student successfully! User account created with Student role.${gradeSection}`);
             // Reload application to get updated data
             this.loadApplication();
             // Navigate to student view
@@ -260,6 +262,9 @@ export class AdmissionViewComponent implements OnInit {
     
     // Already converted
     if (this.application.student_id) return false;
+    
+    // Class (grade) is required for conversion
+    if (!this.application.applying_for_grade?.trim()) return false;
     
     // Status check
     if (this.application.application_status !== 'Admitted' && this.application.admission_decision !== 'Approved') {

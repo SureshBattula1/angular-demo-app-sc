@@ -1,12 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { combineLatest } from 'rxjs';
+import { startWith } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AdmissionService, AdmissionApplication } from '../../services/admission.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { Section } from '../../../../core/models/section.model';
 
 @Component({
   selector: 'app-admission-form',
@@ -24,7 +28,11 @@ export class AdmissionFormComponent implements OnInit {
   
   branches: any[] = [];
   grades: any[] = [];
-  
+  sections: Section[] = [];
+  /** Section dropdown options – set when sections load so template updates reliably */
+  sectionOptionsList: { value: string; label: string }[] = [];
+  loadingSections = false;
+
   // Form sections visibility
   showParentInfo = true;
   showGuardianInfo = false;
@@ -61,15 +69,22 @@ export class AdmissionFormComponent implements OnInit {
     private admissionService: AdmissionService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private sectionService: SectionService,
     private router: Router,
     private route: ActivatedRoute,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
     this.loadGrades();
+    this.setupSectionLoading();
+    setTimeout(() => {
+      this.ensureGradeControlEnabled();
+      this.ensureSectionControlEnabled();
+    }, 0);
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -86,7 +101,7 @@ export class AdmissionFormComponent implements OnInit {
       branch_id: [null, Validators.required],
       academic_year: ['', Validators.required], // Manual entry - no default value
       applying_for_grade: ['', Validators.required],
-      applying_for_section: [null],
+      applying_for_section: ['', Validators.required],
       
       // Student Personal Information
       first_name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -209,6 +224,9 @@ export class AdmissionFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentApplication = response.data;
           this.admissionForm.patchValue(response.data);
+          this.loadSectionsForBranchAndGrade();
+          this.ensureGradeControlEnabled();
+          this.ensureSectionControlEnabled();
           this.isLoading = false;
         }
       },
@@ -246,6 +264,124 @@ export class AdmissionFormComponent implements OnInit {
         this.grades = [];
       }
     });
+  }
+
+  /**
+   * Keep grade control enabled so user can always change grade (e.g. when no sections found for selected grade).
+   */
+  private ensureGradeControlEnabled(): void {
+    const gradeControl = this.admissionForm.get('applying_for_grade');
+    if (gradeControl && gradeControl.disabled) {
+      gradeControl.enable({ emitEvent: false });
+    }
+  }
+
+  /**
+   * Keep section control enabled so the dropdown is always clickable.
+   */
+  private ensureSectionControlEnabled(): void {
+    const sectionControl = this.admissionForm.get('applying_for_section');
+    if (sectionControl && sectionControl.disabled) {
+      sectionControl.enable({ emitEvent: false });
+    }
+  }
+
+  /**
+   * Load sections when branch and grade are selected. Reacts to both so section dropdown works when grade is selected.
+   */
+  private setupSectionLoading(): void {
+    const branchControl = this.admissionForm.get('branch_id');
+    const gradeControl = this.admissionForm.get('applying_for_grade');
+    if (!branchControl || !gradeControl) return;
+
+    combineLatest([
+      branchControl.valueChanges.pipe(startWith(branchControl.value)),
+      gradeControl.valueChanges.pipe(startWith(gradeControl.value))
+    ]).subscribe(([_branch, _grade]) => {
+      this.admissionForm.patchValue({ applying_for_section: '' }, { emitEvent: false });
+      this.loadingSections = true;
+      this.loadSectionsForBranchAndGrade();
+      this.ensureGradeControlEnabled();
+      this.ensureSectionControlEnabled();
+      this.cdr.markForCheck();
+    });
+  }
+
+  private loadSectionsForBranchAndGrade(): void {
+    const branchId = this.admissionForm.get('branch_id')?.value;
+    const grade = this.admissionForm.get('applying_for_grade')?.value;
+    console.log('[Section] loadSectionsForBranchAndGrade called', { branchId, grade });
+    if (grade == null || grade === '' || branchId == null || branchId === '') {
+      console.log('[Section] Skipping load – branch or grade missing');
+      this.sections = [];
+      this.sectionOptionsList = [];
+      this.loadingSections = false;
+      this.ensureGradeControlEnabled();
+      this.ensureSectionControlEnabled();
+      this.cdr.markForCheck();
+      return;
+    }
+    console.log('[Section] Loading sections for grade_level=' + grade + ', branch_id=' + branchId);
+    const requestedBranchId = branchId;
+    const requestedGrade = String(grade);
+    this.loadingSections = true;
+    this.ensureGradeControlEnabled();
+    this.ensureSectionControlEnabled();
+    this.sectionService.getSections({
+      grade_level: requestedGrade,
+      branch_id: requestedBranchId,
+      per_page: 100
+    }).subscribe({
+      next: (response) => {
+        const currentBranchId = this.admissionForm.get('branch_id')?.value;
+        const currentGrade = this.admissionForm.get('applying_for_grade')?.value;
+        if (currentBranchId !== requestedBranchId || String(currentGrade) !== requestedGrade) {
+          console.log('[Section] Ignoring stale response (branch/grade changed)', { requested: { requestedBranchId, requestedGrade }, current: { currentBranchId, currentGrade } });
+          return;
+        }
+        const list = Array.isArray(response.data)
+          ? response.data
+          : (response as any).data?.data;
+        if (response.success && Array.isArray(list)) {
+          const filtered = list.filter((s: Section) => s.is_active !== false);
+          this.sections = [...filtered];
+          this.sectionOptionsList = this.sections.map(s => ({
+            value: s.name ?? s.code ?? String(s.id),
+            label: s.name ?? s.code ?? String(s.id)
+          }));
+          const copyForConsole = this.sectionOptionsList.map(o => ({ value: o.value, label: o.label }));
+          console.log('[Section] Loaded', this.sections.length, 'sections. Options:', JSON.parse(JSON.stringify(copyForConsole)));
+        } else {
+          this.sections = [];
+          this.sectionOptionsList = [];
+          console.log('[Section] No sections in response', { success: response.success, hasData: !!response.data, listIsArray: Array.isArray(list) });
+        }
+        this.loadingSections = false;
+        this.ensureGradeControlEnabled();
+        this.ensureSectionControlEnabled();
+        setTimeout(() => this.cdr.detectChanges(), 0);
+      },
+      error: (err) => {
+        const currentBranchId = this.admissionForm.get('branch_id')?.value;
+        const currentGrade = this.admissionForm.get('applying_for_grade')?.value;
+        if (currentBranchId !== requestedBranchId || String(currentGrade) !== requestedGrade) {
+          console.log('[Section] Ignoring stale error (branch/grade changed)');
+          return;
+        }
+        console.log('[Section] Load error', err);
+        this.sections = [];
+        this.sectionOptionsList = [];
+        this.loadingSections = false;
+        this.ensureGradeControlEnabled();
+        this.ensureSectionControlEnabled();
+        setTimeout(() => this.cdr.detectChanges(), 0);
+      }
+    });
+  }
+
+  /** Section options for dropdown – use sectionOptionsList so template updates when data loads */
+  get sectionOptions(): { value: string; label: string }[] {
+    return this.sectionOptionsList;
   }
 
   onSubmit(): void {
@@ -305,7 +441,8 @@ export class AdmissionFormComponent implements OnInit {
   getErrorMessage(controlName: string): string {
     const control = this.admissionForm.get(controlName);
     if (control?.hasError('required')) {
-      return `${controlName.replace('_', ' ')} is required`;
+      if (controlName === 'applying_for_section') return 'Section is required';
+      return `${controlName.replace(/_/g, ' ')} is required`;
     }
     if (control?.hasError('email')) {
       return 'Invalid email format';

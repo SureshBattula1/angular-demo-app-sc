@@ -85,6 +85,18 @@
           <mat-icon matListItemIcon>people</mat-icon>
           <span matListItemTitle [class.hidden]="isSidebarCollapsed">Users</span>
         </a>
+
+        <!-- Academic Year -->
+        <a mat-list-item 
+           routerLink="/settings/academic-years" 
+           routerLinkActive="active"
+           (click)="onMenuItemClick()"
+           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Academic Year' : null"
+           [matTooltipPosition]="'right'"
+           [matTooltipDisabled]="isMobileOrTablet()">
+          <mat-icon matListItemIcon>calendar_today</mat-icon>
+          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Academic Year</span>
+        </a>
       </mat-nav-list>
     </mat-sidenav>
 

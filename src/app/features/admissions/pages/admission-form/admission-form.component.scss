@@ -147,3 +147,16 @@ mat-checkbox {
   }
 }
 
+.no-sections-hint {
+  color: var(--warn-color, #f57c00);
+  font-weight: 500;
+}
+
+.section-loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  mat-spinner {
+    display: inline-block;
+  }
+}
+

@@ -43,7 +43,8 @@
             mat-raised-button 
             color="primary" 
             (click)="onConvertToStudent()"
-            [disabled]="isLoading"
+            [disabled]="isLoading || !canConvertToStudent()"
+            [matTooltip]="!canConvertToStudent() && application && !application.student_id ? 'Set status to Admitted/Approved, pay registration fee, and set Class (Grade)' : ''"
             *ngIf="application && !application.student_id">
             <mat-icon>person_add</mat-icon>
             Convert to Student
@@ -63,7 +64,7 @@
   </mat-card>
 
     <!-- Convert to Student Info Banner -->
-    <mat-card *ngIf="application && !application.student_id && (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved' || !application.registration_fee_paid)" 
+    <mat-card *ngIf="application && !application.student_id && (application.application_status !== 'Admitted' && application.admission_decision !== 'Approved' || !application.registration_fee_paid || !application.applying_for_grade)" 
               class="info-banner" 
               style="margin-bottom: 16px; background: #fff3cd; border-left: 4px solid #ffc107;">
       <mat-card-content style="padding: 12px;">
@@ -77,6 +78,9 @@
               </li>
               <li *ngIf="!application.registration_fee_paid">
                 Registration fee must be paid
+              </li>
+              <li *ngIf="!application.applying_for_grade">
+                Class (Applying for Grade) must be set
               </li>
             </ul>
             <p style="margin: 8px 0 0 0; font-size: 12px;">

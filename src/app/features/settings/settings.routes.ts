@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/guards/auth.guard';
 import { permissionGuard } from '../../core/guards/permission.guard';
+import { AcademicYearListComponent } from './pages/academic-years/academic-year-list/academic-year-list.component';
+import { AcademicYearFormComponent } from './pages/academic-years/academic-year-form/academic-year-form.component';
+import { AcademicYearViewComponent } from './pages/academic-years/academic-year-view/academic-year-view.component';
 
 export const SETTINGS_ROUTES: Routes = [
   {
@@ -75,6 +78,27 @@ export const SETTINGS_ROUTES: Routes = [
         loadComponent: () => import('./pages/users/user-permissions/user-permissions.component').then(m => m.UserPermissionsComponent),
         canActivate: [permissionGuard],
         data: { permissions: 'users.manage_roles' }
+      },
+      // Academic Years routes
+      {
+        path: 'academic-years',
+        component: AcademicYearListComponent,
+        canActivate: [authGuard]
+      },
+      {
+        path: 'academic-years/create',
+        component: AcademicYearFormComponent,
+        canActivate: [authGuard]
+      },
+      {
+        path: 'academic-years/edit/:id',
+        component: AcademicYearFormComponent,
+        canActivate: [authGuard]
+      },
+      {
+        path: 'academic-years/view/:id',
+        component: AcademicYearViewComponent,
+        canActivate: [authGuard]
       }
     ]
   }

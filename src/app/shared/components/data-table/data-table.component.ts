@@ -604,6 +604,10 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         return value ? new Date(value).toLocaleDateString() : '-';
       case 'currency':
         return (value !== null && value !== undefined) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value) : '-';
+      case 'yesNo':
+        return value === true ? 'Yes' : (value === false ? 'No' : '-');
+      case 'activeInactive':
+        return value === true ? 'Active' : (value === false ? 'Inactive' : '-');
       default:
         return value;
     }
