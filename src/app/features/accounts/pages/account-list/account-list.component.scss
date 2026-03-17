@@ -126,11 +126,98 @@
   }
 }
 
+// Filters Row: Branch + Financial Year (like fee management)
+.filters-container {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--gray-50, #f5f5f5);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+
+  .branch-filter {
+    min-width: 200px;
+
+    mat-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .date-range-selector {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
+
+    .period-toggle {
+      box-shadow: var(--shadow-sm);
+      flex: 1;
+
+      ::ng-deep .mat-button-toggle-checked {
+        background-color: var(--primary-color) !important;
+        color: var(--primary-contrast) !important;
+
+        .mat-button-toggle-label-content {
+          color: var(--primary-contrast) !important;
+        }
+
+        mat-icon {
+          color: var(--primary-contrast) !important;
+        }
+      }
+
+      ::ng-deep .mat-button-toggle {
+        border-color: var(--border-color);
+      }
+    }
+  }
+}
+
+.custom-range-row {
+  display: flex;
+  gap: 16px;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--gray-50, #f5f5f5);
+  border-radius: var(--radius-md);
+
+  .date-field {
+    flex: 1;
+    min-width: 180px;
+  }
+}
+
 // Component Animation
 .dashboard-container,
 app-data-table {
   display: block;
   animation: fadeIn 0.3s ease-in-out;
+}
+
+.dashboard-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  gap: var(--spacing-md);
+
+  p {
+    color: var(--text-secondary, #666);
+    font-size: 16px;
+    margin: 0;
+  }
 }
 
 .dashboard-stats {

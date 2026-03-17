@@ -1,7 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -16,7 +21,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-account-list',
   standalone: true,
-  imports: [CommonModule, MaterialModule, DataTableComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MaterialModule, DataTableComponent, MatButtonToggleModule, MatDatepickerModule, MatNativeDateModule],
   templateUrl: './account-list.component.html',
   styleUrls: ['./account-list.component.scss'],
   // Performance: Use OnPush change detection
@@ -54,7 +59,16 @@ export class AccountListComponent implements OnInit, OnDestroy {
   categoryFilters: Record<string, unknown> = { page: 1, per_page: 25 };
   
   branches: any[] = [];
-  
+
+  // Dashboard filters
+  dashboardBranch: number | string = '';
+  dashboardPeriod = new FormControl('today');
+  dashboardCustomFrom = new FormControl<Date | null>(null);
+  dashboardCustomTo = new FormControl<Date | null>(null);
+
+  // Dashboard loading (separate from global loading for tab-specific loader)
+  dashboardLoading = false;
+
   // Dashboard stats
   dashboardStats = {
     total_income: 0,
@@ -275,7 +289,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
-  
+
   ngOnInit(): void {
     this.loadBranches();
     this.loadCategoriesForDropdown(); // Load all active categories for dropdown
@@ -396,15 +410,76 @@ export class AccountListComponent implements OnInit, OnDestroy {
       });
   }
   
+  onDashboardFilterChange(): void {
+    this.loadingInProgress.delete('dashboard');
+    this.loadDashboardStats();
+  }
+
+  onDashboardCustomRangeChange(): void {
+    if (this.dashboardCustomFrom.value && this.dashboardCustomTo.value) {
+      this.onDashboardFilterChange();
+    }
+  }
+
+  private getDashboardDateRange(): { from_date?: string; to_date?: string } {
+    const period = this.dashboardPeriod.value || 'month';
+    if (period === 'custom') {
+      if (this.dashboardCustomFrom.value && this.dashboardCustomTo.value) {
+        return {
+          from_date: this.formatDashboardDate(this.dashboardCustomFrom.value),
+          to_date: this.formatDashboardDate(this.dashboardCustomTo.value)
+        };
+      }
+      return {};
+    }
+    const now = new Date();
+    let from: Date;
+    let to: Date;
+    if (period === 'today') {
+      from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      to = new Date(from);
+    } else if (period === 'week') {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      from = new Date(now.getFullYear(), now.getMonth(), diff);
+      to = new Date(now);
+    } else {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now);
+    }
+    return {
+      from_date: this.formatDashboardDate(from),
+      to_date: this.formatDashboardDate(to)
+    };
+  }
+
+  private formatDashboardDate(date: Date | null): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = ('0' + (d.getMonth() + 1)).slice(-2);
+    const day = ('0' + d.getDate()).slice(-2);
+    return `${y}-${m}-${day}`;
+  }
+
   loadDashboardStats(): void {
     // Prevent duplicate loads
     if (this.loadingInProgress.has('dashboard')) return;
     this.loadingInProgress.add('dashboard');
-    
+
     this.loading = true;
+    this.dashboardLoading = true;
     this.cdr.markForCheck();
-    
-    this.accountService.getDashboard()
+
+    const params: Record<string, unknown> = { financial_year: this.getCurrentFinancialYear() };
+    if (this.dashboardBranch !== '' && this.dashboardBranch != null) {
+      params['branch_id'] = this.dashboardBranch;
+    }
+    const dateRange = this.getDashboardDateRange();
+    if (dateRange.from_date) params['from_date'] = dateRange.from_date;
+    if (dateRange.to_date) params['to_date'] = dateRange.to_date;
+
+    this.accountService.getDashboard(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -419,12 +494,14 @@ export class AccountListComponent implements OnInit, OnDestroy {
             };
           }
           this.loading = false;
+          this.dashboardLoading = false;
           this.loadingInProgress.delete('dashboard');
           this.cdr.markForCheck();
         },
         error: (error) => {
           this.errorHandler.handleError(error);
           this.loading = false;
+          this.dashboardLoading = false;
           this.loadingInProgress.delete('dashboard');
           this.cdr.markForCheck();
         }
@@ -775,6 +852,16 @@ export class AccountListComponent implements OnInit, OnDestroy {
 
   trackByCategoryId(index: number, item: AccountCategory): number {
     return item.id;
+  }
+
+  private getCurrentFinancialYear(): string {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    if (month < 4) {
+      return `${year - 1}-${year}`;
+    }
+    return `${year}-${year + 1}`;
   }
 }
 

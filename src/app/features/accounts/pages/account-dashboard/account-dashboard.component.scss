@@ -6,6 +6,35 @@
   margin: 0 auto;
 }
 
+// Filters Row: Branch + Financial Year (like fee management)
+.filters-container {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--gray-50, #f5f5f5);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+
+  .branch-filter,
+  .financial-year-filter {
+    min-width: 200px;
+
+    mat-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -431,6 +460,15 @@
 @media (max-width: $breakpoint-md) {
   .account-dashboard-container {
     padding: var(--spacing-md);
+  }
+
+  .filters-container {
+    flex-direction: column;
+
+    .branch-filter,
+    .financial-year-filter {
+      min-width: 100%;
+    }
   }
   
   .dashboard-header {

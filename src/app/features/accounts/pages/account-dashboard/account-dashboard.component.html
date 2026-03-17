@@ -8,6 +8,32 @@
   <!-- Dashboard Content -->
   <div *ngIf="!loading && dashboard">
     
+    <!-- Filters Row: Branch + Financial Year -->
+    <div class="filters-container">
+      <mat-form-field appearance="outline" class="branch-filter">
+        <mat-label>
+          <mat-icon>business</mat-icon>
+          Branch
+        </mat-label>
+        <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onFilterChange()">
+          <mat-option value="">All Branches</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="financial-year-filter">
+        <mat-label>
+          <mat-icon>event</mat-icon>
+          Financial Year
+        </mat-label>
+        <mat-select [(ngModel)]="selectedFinancialYear" (selectionChange)="onFilterChange()">
+          <mat-option *ngFor="let fy of financialYears" [value]="fy">{{ fy }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
     <!-- Header Section -->
     <div class="dashboard-header">
       <div class="header-content">

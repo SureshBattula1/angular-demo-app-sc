@@ -45,7 +45,67 @@
 
   <!-- Dashboard Tab -->
   <div *ngIf="activeTab === 'dashboard' && isTabLoaded('dashboard')" class="dashboard-container">
-    <mat-card class="dashboard-stats">
+    <!-- Filters Row: Branch + Financial Year -->
+    <div class="filters-container">
+      <mat-form-field appearance="outline" class="branch-filter">
+        <mat-label>
+          <mat-icon>business</mat-icon>
+          Branch
+        </mat-label>
+        <mat-select [(ngModel)]="dashboardBranch" (selectionChange)="onDashboardFilterChange()">
+          <mat-option value="">All Branches</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Date Range Selector -->
+      <div class="date-range-selector">
+        <mat-button-toggle-group [formControl]="dashboardPeriod" (change)="onDashboardFilterChange()" class="period-toggle">
+          <mat-button-toggle value="today">
+            <mat-icon>today</mat-icon>
+            <span class="toggle-label">Today</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="week">
+            <mat-icon>view_week</mat-icon>
+            <span class="toggle-label">Week</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="month">
+            <mat-icon>calendar_month</mat-icon>
+            <span class="toggle-label">Month</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="custom">
+            <mat-icon>date_range</mat-icon>
+            <span class="toggle-label">Custom</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <!-- Custom Date Range (shown only when custom selected) -->
+    <div class="custom-range-row" *ngIf="dashboardPeriod.value === 'custom'">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>From Date</mat-label>
+        <input matInput [matDatepicker]="dashboardFromPicker" [formControl]="dashboardCustomFrom" (dateChange)="onDashboardCustomRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="dashboardFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dashboardFromPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>To Date</mat-label>
+        <input matInput [matDatepicker]="dashboardToPicker" [formControl]="dashboardCustomTo" (dateChange)="onDashboardCustomRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="dashboardToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dashboardToPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Loading State (when filter changes) -->
+    <div *ngIf="dashboardLoading" class="dashboard-loading-state">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <mat-card class="dashboard-stats" *ngIf="!dashboardLoading">
       <h2>Financial Overview</h2>
       <div class="stats-grid">
         <mat-card class="stat-card income-stat" (click)="switchTab('income')">
