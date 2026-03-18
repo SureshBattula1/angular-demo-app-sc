@@ -29,6 +29,7 @@ import { Subject } from '../../../../core/models/subject.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
+      (searchFieldChanged)="onSearchFieldChanged($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
@@ -41,6 +42,7 @@ export class SubjectListComponent implements OnInit {
   subjects: Subject[] = [];
   selectedSubjects: Subject[] = [];
   currentFilters: Record<string, unknown> = {};
+  private selectedBranchId: string | number | null = null;
   
   customActions = [
     {
@@ -56,11 +58,18 @@ export class SubjectListComponent implements OnInit {
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
       { key: 'name', header: 'Subject Name', sortable: true, searchable: true },
-      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
+      { key: 'branch.name', header: 'Branch', sortable: true },
       { key: 'type', header: 'Type', sortable: true, type: 'badge', width: '110px', align: 'center' },
       { key: 'grade_label', header: 'Grade', sortable: true, width: '120px', align: 'center' },
       { key: 'credits', header: 'Credits', type: 'number', align: 'center', width: '100px' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'status_label',
+        header: 'Status',
+        type: 'badge',
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
+      }
     ],
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewSubject(row), permission: 'subjects.view' },
@@ -146,7 +155,7 @@ export class SubjectListComponent implements OnInit {
   
   ngOnInit(): void {
     this.loadBranches();
-    this.loadGrades();
+    this.setGradeOptions([]);
     this.loadSubjects();
   }
   
@@ -171,25 +180,33 @@ export class SubjectListComponent implements OnInit {
     });
   }
   
-  /**
-   * Load grades dynamically for advanced search filter
-   */
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  private setGradeOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
+    if (gradeField) gradeField.options = options;
+  }
+
+  private loadGradesForBranch(branchId: string | number): void {
+    this.setGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
+    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
-          if (gradeField) {
-            gradeField.options = response.data.map(grade => ({
-              value: grade.value,
-              label: grade.label
-            }));
-          }
-        }
+        const options = (response.success && response.data)
+          ? response.data.filter((g: any) => g.is_active).map((g: any) => ({ value: g.value, label: g.label }))
+          : [];
+        this.setGradeOptions(options);
       },
-      error: (error) => {
-      }
+      error: () => this.setGradeOptions([])
     });
+  }
+
+  onSearchFieldChanged(event: { field: string; value: any }): void {
+    if (event.field === 'branch_id') {
+      this.selectedBranchId = event.value || null;
+      // Clear grade when branch changes (avoid stale grade filter)
+      this.setGradeOptions([]);
+      if (this.selectedBranchId) {
+        this.loadGradesForBranch(this.selectedBranchId);
+      }
+    }
   }
   
   loadSubjects(): void {
@@ -198,7 +215,10 @@ export class SubjectListComponent implements OnInit {
     this.subjectService.getSubjects(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.subjects = response.data || [];
+          this.subjects = (response.data || []).map((s: any) => ({
+            ...s,
+            status_label: s?.is_active ? 'Active' : 'Deactive'
+          }));
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           }

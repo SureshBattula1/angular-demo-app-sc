@@ -51,7 +51,7 @@ export class AssignedSubjectsListComponent implements OnInit {
       { 
         key: 'section.name', 
         header: 'Section', 
-        sortable: false, 
+        sortable: true,
         width: '120px' 
       },
       { 
@@ -63,13 +63,13 @@ export class AssignedSubjectsListComponent implements OnInit {
       { 
         key: 'subject.code', 
         header: 'Subject Code', 
-        sortable: false, 
+        sortable: true, 
         width: '130px' 
       },
       { 
         key: 'subject.name', 
         header: 'Subject Name', 
-        sortable: false 
+        sortable: true 
       },
       { 
         key: 'subject.type', 
@@ -81,13 +81,13 @@ export class AssignedSubjectsListComponent implements OnInit {
       { 
         key: 'teacher.first_name', 
         header: 'Teacher', 
-        sortable: false, 
+        sortable: true, 
         width: '180px' 
       },
       { 
         key: 'branch.name', 
         header: 'Branch', 
-        sortable: false, 
+        sortable: true,
         width: '150px' 
       },
       { 
@@ -100,6 +100,7 @@ export class AssignedSubjectsListComponent implements OnInit {
         key: 'is_active', 
         header: 'Active', 
         type: 'badge', 
+        sortable: true,
         width: '90px', 
         align: 'center' 
       }
@@ -186,6 +187,8 @@ export class AssignedSubjectsListComponent implements OnInit {
   ngOnInit(): void {
     this.loadBranches();
     this.setSectionOptions([]);
+    // Default: branch-wise sorting
+    this.currentFilters = { ...this.currentFilters, sort_by: 'branch_id', sort_direction: 'asc' };
     this.loadAssignments();
   }
   
@@ -270,9 +273,22 @@ export class AssignedSubjectsListComponent implements OnInit {
   }
   
   onSortChange(event: SortEvent): void {
+    const columnMapping: Record<string, string> = {
+      'branch.name': 'branch_id',
+      'academic_year': 'academic_year',
+      'is_active': 'is_active',
+      // Note: these sort by IDs on the backend (fast, but not alphabetical by name)
+      'section.name': 'section_id',
+      'subject.code': 'subject_id',
+      'subject.name': 'subject_id',
+      'teacher.first_name': 'teacher_id',
+    };
+
+    const sortColumn = columnMapping[event.field] || event.field;
+
     this.currentFilters = {
       ...this.currentFilters,
-      sort_by: event.field,
+      sort_by: sortColumn,
       sort_direction: event.direction
     };
     this.loadAssignments();

@@ -11,6 +11,7 @@ export interface Subject {
   type: 'Core' | 'Elective' | 'Language' | 'Lab' | 'Activity';
   branch_id: number;
   is_active: boolean;
+  status_label?: string;
   department?: {
     id: number;
     name: string;

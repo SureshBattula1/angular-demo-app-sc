@@ -39,6 +39,8 @@ export class SubjectFormComponent implements OnInit {
   loadingTeachers = false;
   loadingGrades = false;
   
+  private selectedBranchId: number | null = null;
+
   subjectTypes = [
     { value: 'Core', label: 'Core', icon: 'star' },
     { value: 'Elective', label: 'Elective', icon: 'check_box' },
@@ -62,9 +64,8 @@ export class SubjectFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadDepartments();
-    this.loadGrades();
     this.loadTeachers();
+    this.setupBranchDependentDropdowns();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -102,7 +103,31 @@ export class SubjectFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           this.currentSubject = response.data;
-          this.subjectForm.patchValue(response.data);
+          // Patch without triggering branch change handlers; hydrate dropdowns first.
+          this.subjectForm.patchValue(response.data, { emitEvent: false });
+
+          const branchId = Number((response.data as any).branch_id || 0) || null;
+          this.selectedBranchId = branchId;
+          if (branchId) {
+            this.loadDepartmentsForBranch(branchId, () => {
+              this.subjectForm.patchValue({ department_id: (response.data as any).department_id ?? null }, { emitEvent: false });
+            });
+            this.loadGradesForBranch(branchId, () => {
+              this.subjectForm.patchValue({ grade_level: (response.data as any).grade_level ?? '' }, { emitEvent: false });
+            });
+            this.loadTeachersForBranch(branchId, () => {
+              const teacherId =
+                (response.data as any).teacher_id ??
+                (response.data as any).teacher?.id ??
+                null;
+              this.subjectForm.patchValue({ teacher_id: teacherId }, { emitEvent: false });
+            });
+          } else {
+            this.departments = [];
+            this.grades = [];
+            this.teachers = [];
+          }
+
           this.isLoading = false;
         }
       },
@@ -130,53 +155,80 @@ export class SubjectFormComponent implements OnInit {
     });
   }
 
-  private loadDepartments(): void {
-    this.loadingDepartments = true;
-    
-    this.departmentService.getDepartments({ is_active: true }).subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
-          this.departments = response.data;
-        }
+  private setupBranchDependentDropdowns(): void {
+    this.subjectForm.get('branch_id')?.valueChanges.subscribe((branchId: number | null) => {
+      this.selectedBranchId = branchId ? Number(branchId) : null;
+
+      // Clear dependent fields + options
+      this.departments = [];
+      this.grades = [];
+      this.teachers = [];
+      this.subjectForm.patchValue({ department_id: null, grade_level: '', teacher_id: null }, { emitEvent: false });
+
+      if (this.selectedBranchId) {
+        this.loadDepartmentsForBranch(this.selectedBranchId);
+        this.loadGradesForBranch(this.selectedBranchId);
+        this.loadTeachersForBranch(this.selectedBranchId);
+      } else {
         this.loadingDepartments = false;
-      },
-      error: (error: any) => {
-        this.errorHandler.showError('Failed to load departments');
-        this.loadingDepartments = false;
+        this.loadingGrades = false;
+        this.loadingTeachers = false;
       }
     });
   }
 
-  private loadGrades(): void {
-    this.loadingGrades = true;
-    
-    this.gradeService.getGrades().subscribe({
+  private loadDepartmentsForBranch(branchId: number, done?: () => void): void {
+    this.loadingDepartments = true;
+    this.departmentService.getDepartments({ is_active: true, branch_id: branchId }).subscribe({
       next: (response: any) => {
-        if (response.success && response.data) {
-          this.grades = response.data.filter((grade: Grade) => grade.is_active);
-        }
-        this.loadingGrades = false;
+        this.departments = (response.success && response.data) ? response.data : [];
+        this.loadingDepartments = false;
+        done?.();
       },
-      error: (error: any) => {
-        this.errorHandler.showError('Failed to load grades');
+      error: () => {
+        this.departments = [];
+        this.loadingDepartments = false;
+        done?.();
+      }
+    });
+  }
+
+  private loadGradesForBranch(branchId: number, done?: () => void): void {
+    this.loadingGrades = true;
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+      next: (response: any) => {
+        this.grades = (response.success && response.data)
+          ? response.data.filter((g: Grade) => g.is_active)
+          : [];
         this.loadingGrades = false;
+        done?.();
+      },
+      error: () => {
+        this.grades = [];
+        this.loadingGrades = false;
+        done?.();
       }
     });
   }
 
   private loadTeachers(): void {
+    // Teachers are branch-scoped; load after branch selection.
+    this.teachers = [];
+    this.loadingTeachers = false;
+  }
+
+  private loadTeachersForBranch(branchId: number, done?: () => void): void {
     this.loadingTeachers = true;
-    
-    this.teacherService.getTeachers({ is_active: true }).subscribe({
+    this.teacherService.getTeachers({ is_active: true, branch_id: branchId, per_page: 1000 }).subscribe({
       next: (response: any) => {
-        if (response.success && response.data) {
-          this.teachers = response.data;
-        }
+        this.teachers = (response.success && response.data) ? response.data : [];
         this.loadingTeachers = false;
+        done?.();
       },
-      error: (error: any) => {
-        this.errorHandler.showError('Failed to load teachers');
+      error: () => {
+        this.teachers = [];
         this.loadingTeachers = false;
+        done?.();
       }
     });
   }

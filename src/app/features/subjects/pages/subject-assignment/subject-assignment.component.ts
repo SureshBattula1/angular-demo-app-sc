@@ -13,6 +13,7 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 import { Subject } from '../../../../core/models/subject.model';
 import { Section } from '../../../../core/models/section.model';
 import { Grade } from '../../../../core/models/grade.model';
+import { AcademicYear, AcademicYearService } from '../../../settings/services/academic-year.service';
 
 interface SubjectAssignment {
   subject: Subject;
@@ -31,20 +32,25 @@ export class SubjectAssignmentComponent implements OnInit {
   loading = false;
   submitting = false;
   subjectsLoaded = false;
+  loadingBranches = false;
+  loadingGrades = false;
+  loadingSections = false;
+  loadingAcademicYears = false;
   
   // Data
   branches: any[] = [];
   grades: Grade[] = [];
   sections: Section[] = [];
-  allSections: Section[] = [];
   availableSubjects: Subject[] = [];
   teachers: any[] = [];
   subjectAssignments: SubjectAssignment[] = [];
+  academicYears: AcademicYear[] = [];
   
   // Selections
   selectedBranch: number | null = null;
   selectedGrade: string | null = null;
   selectedSection: Section | null = null;
+  selectedAcademicYearId: number | null = null;
   academicYear: string = this.getCurrentAcademicYear();
   
   constructor(
@@ -54,6 +60,7 @@ export class SubjectAssignmentComponent implements OnInit {
     private branchService: BranchService,
     private gradeService: GradeService,
     private teacherService: TeacherService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute
@@ -61,87 +68,102 @@ export class SubjectAssignmentComponent implements OnInit {
   
   ngOnInit(): void {
     this.loadBranches();
-    this.loadGrades();
-    this.loadAllSections();
+    this.loadAcademicYears();
   }
   
   loadBranches(): void {
+    this.loadingBranches = true;
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success) {
           this.branches = response.data;
         }
+        this.loadingBranches = false;
       },
       error: (error: any) => {
         this.errorHandler.showError(error);
+        this.loadingBranches = false;
       }
     });
   }
   
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.grades = response.data;
+        this.loadingAcademicYears = false;
+        this.academicYears = (response.success && response.data) ? response.data : [];
+        const current = this.academicYears.find(y => y.is_current) || this.academicYears.find(y => y.is_active);
+        if (current) {
+          this.selectedAcademicYearId = current.id;
+          this.academicYear = current.name;
         }
       },
-      error: (error) => {
-        console.error('Error loading grades:', error);
+      error: () => {
+        this.loadingAcademicYears = false;
+        this.academicYears = [];
       }
     });
   }
-  
-  loadAllSections(): void {
-    this.sectionService.getSections({ per_page: 1000, is_active: true }).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.allSections = response.data;
-        }
-      },
-      error: (error) => {
-        console.error('Error loading sections:', error);
-      }
-    });
+
+  onAcademicYearChange(): void {
+    const selected = this.academicYears.find(y => y.id === this.selectedAcademicYearId);
+    if (selected) this.academicYear = selected.name;
   }
-  
-  onBranchOrGradeChange(): void {
-    let filteredSections = this.allSections;
-    
-    if (this.selectedGrade && this.selectedBranch) {
-      // Filter by both grade and branch with type-safe comparisons
-      filteredSections = filteredSections.filter(
-        section => {
-          const matchesGrade = String(section.grade_level) === String(this.selectedGrade);
-          const matchesBranch = Number(section.branch_id) === Number(this.selectedBranch);
-          return matchesGrade && matchesBranch && section.is_active;
-        }
-      );
-    } else if (this.selectedGrade) {
-      filteredSections = filteredSections.filter(
-        section => String(section.grade_level) === String(this.selectedGrade) && section.is_active
-      );
-    } else if (this.selectedBranch) {
-      filteredSections = filteredSections.filter(
-        section => Number(section.branch_id) === Number(this.selectedBranch) && section.is_active
-      );
-    } else {
-      filteredSections = filteredSections.filter(section => section.is_active);
-    }
-    
-    this.sections = filteredSections;
+
+  onBranchChange(): void {
+    this.subjectsLoaded = false;
+    this.availableSubjects = [];
+    this.subjectAssignments = [];
+
+    this.selectedGrade = null;
     this.selectedSection = null;
+    this.grades = [];
+    this.sections = [];
+
+    if (!this.selectedBranch) return;
+
+    this.loadingGrades = true;
+    this.gradeService.getGrades({ branch_id: this.selectedBranch }).subscribe({
+      next: (response: any) => {
+        this.grades = (response.success && response.data)
+          ? response.data.filter((g: Grade) => g.is_active)
+          : [];
+        this.loadingGrades = false;
+      },
+      error: () => {
+        this.grades = [];
+        this.loadingGrades = false;
+      }
+    });
   }
-  
-  onSectionChange(): void {
-    if (this.selectedSection) {
-      this.selectedBranch = this.selectedSection.branch_id;
-      this.selectedGrade = this.selectedSection.grade_level || '';
-    }
+
+  onGradeChange(): void {
+    this.subjectsLoaded = false;
+    this.availableSubjects = [];
+    this.subjectAssignments = [];
+
+    this.selectedSection = null;
+    this.sections = [];
+
+    if (!this.selectedBranch || !this.selectedGrade) return;
+
+    this.loadingSections = true;
+    this.sectionService.getSections({ branch_id: this.selectedBranch, grade_level: this.selectedGrade, per_page: 1000, is_active: true }).subscribe({
+      next: (response: any) => {
+        this.sections = (response.success && response.data) ? response.data : [];
+        this.loadingSections = false;
+      },
+      error: () => {
+        this.sections = [];
+        this.loadingSections = false;
+      }
+    });
   }
   
   loadSubjects(): void {
-    if (!this.selectedBranch || !this.selectedGrade || !this.selectedSection) {
-      this.errorHandler.showWarning('Please select Branch, Grade, and Section');
+    if (!this.selectedBranch || !this.selectedGrade) {
+      this.errorHandler.showWarning('Please select Branch and Grade');
       return;
     }
     

@@ -23,7 +23,11 @@
         <!-- Branch -->
         <mat-form-field appearance="outline">
           <mat-label>Branch *</mat-label>
-          <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onBranchOrGradeChange()">
+          <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onBranchChange()" [disabled]="loadingBranches">
+            <mat-option *ngIf="loadingBranches" disabled>
+              <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              Loading branches...
+            </mat-option>
             <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
           </mat-select>
           <mat-icon matPrefix>business</mat-icon>
@@ -32,10 +36,16 @@
         <!-- Grade -->
         <mat-form-field appearance="outline">
           <mat-label>Grade *</mat-label>
-          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onBranchOrGradeChange()">
+          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onGradeChange()" [disabled]="!selectedBranch">
+            <mat-option *ngIf="!selectedBranch" disabled>Select branch first</mat-option>
+            <mat-option *ngIf="loadingGrades" disabled>
+              <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              Loading grades...
+            </mat-option>
             <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
           </mat-select>
           <mat-icon matPrefix>grade</mat-icon>
+          <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
         </mat-form-field>
 
         <!-- Section -->
@@ -43,20 +53,29 @@
           <mat-label>Section *</mat-label>
           <mat-select 
             [(ngModel)]="selectedSection" 
-            (selectionChange)="onSectionChange()"
-            [disabled]="!selectedGrade || sections.length === 0">
+            [disabled]="!selectedBranch || !selectedGrade || sections.length === 0">
+            <mat-option *ngIf="!selectedBranch" disabled>Select branch first</mat-option>
+            <mat-option *ngIf="selectedBranch && !selectedGrade" disabled>Select grade first</mat-option>
+            <mat-option *ngIf="loadingSections" disabled>
+              <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              Loading sections...
+            </mat-option>
             <mat-option *ngFor="let section of sections" [value]="section">
               {{ section.name }} {{ section.code ? '(' + section.code + ')' : '' }}
             </mat-option>
           </mat-select>
           <mat-icon matPrefix>class</mat-icon>
           <mat-hint *ngIf="sections.length === 0 && selectedGrade">No sections available</mat-hint>
+          <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
         </mat-form-field>
 
         <!-- Academic Year -->
         <mat-form-field appearance="outline">
           <mat-label>Academic Year</mat-label>
-          <input matInput [(ngModel)]="academicYear" readonly>
+          <mat-select [(ngModel)]="selectedAcademicYearId" (selectionChange)="onAcademicYearChange()">
+            <mat-option *ngIf="loadingAcademicYears" disabled>Loading academic years...</mat-option>
+            <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>
+          </mat-select>
           <mat-icon matPrefix>event</mat-icon>
         </mat-form-field>
 
@@ -65,7 +84,7 @@
           mat-raised-button 
           color="primary" 
           (click)="loadSubjects()" 
-          [disabled]="loading || !selectedBranch || !selectedGrade || !selectedSection"
+          [disabled]="loading || !selectedBranch || !selectedGrade"
           class="load-button">
           <mat-icon>search</mat-icon>
           Load Subjects
@@ -157,7 +176,7 @@
                 <mat-label>Select Teacher</mat-label>
                 <mat-select [(ngModel)]="assignment.teacher_id">
                   <mat-option [value]="null">Not Assigned</mat-option>
-                  <mat-option *ngFor="let teacher of teachers" [value]="teacher.id || teacher.user_id">
+                  <mat-option *ngFor="let teacher of teachers" [value]="teacher.user_id || teacher.user?.id">
                     {{ teacher.user?.first_name || teacher.first_name }} {{ teacher.user?.last_name || teacher.last_name }}
                     <span *ngIf="teacher.employee_id"> ({{ teacher.employee_id }})</span>
                   </mat-option>
