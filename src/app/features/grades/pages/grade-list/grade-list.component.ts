@@ -49,16 +49,25 @@ export class GradeListComponent implements OnInit {
   // Current request state
   currentFilters: Record<string, unknown> = {};
 
+  private branchIdToName: Record<string, string> = {};
+
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
+      // {
+      //   key: 'order',
+      //   header: 'Order',
+      //   sortable: true,
+      //   type: 'number',
+      //   align: 'center',
+      //   width: '80px'
+      // },
       {
-        key: 'order',
-        header: 'Order',
-        sortable: true,
-        type: 'number',
-        align: 'center',
-        width: '80px'
+        key: 'branch_name',
+        header: 'Branch',
+        sortable: false,
+        width: '180px',
+        searchable: false
       },
       {
         key: 'value',
@@ -67,6 +76,7 @@ export class GradeListComponent implements OnInit {
         width: '100px',
         searchable: true
       },
+    
       {
         key: 'label',
         header: 'Name',
@@ -96,11 +106,12 @@ export class GradeListComponent implements OnInit {
         align: 'center'
       },
       {
-        key: 'is_active',
+        key: 'status_label',
         header: 'Status',
         type: 'badge',
         width: '100px',
-        align: 'center'
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
       }
     ],
     actions: [
@@ -220,6 +231,11 @@ export class GradeListComponent implements OnInit {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          this.branchIdToName = response.data.reduce((acc, b) => {
+            acc[String(b.id)] = b.name;
+            return acc;
+          }, {} as Record<string, string>);
+
           const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
           if (branchField) {
             branchField.options = response.data.map(branch => ({
@@ -243,7 +259,16 @@ export class GradeListComponent implements OnInit {
     this.gradeService.getGrades(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.grades = response.data || [];
+          const branchId = this.currentFilters['branch_id']?.toString?.() ?? (this.currentFilters['branch_id'] as any);
+
+          // Ensure branch name is present for display (prefer API, fallback to lookup when filtered).
+          const branchNameFallback = branchId ? (this.branchIdToName[String(branchId)] ?? '') : '';
+
+          this.grades = (response.data || []).map(g => ({
+            ...g,
+            ...(g.branch_name ? {} : { branch_name: branchNameFallback }),
+            status_label: g.is_active ? 'Active' : 'Deactive'
+          }) as any);
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           } else if (response.count) {
@@ -315,14 +340,18 @@ export class GradeListComponent implements OnInit {
    * View grade details
    */
   viewGrade(grade: Grade): void {
-    this.router.navigate(['/grades/view', grade.value]);
+    this.router.navigate(['/grades/view', grade.value], {
+      queryParams: { branch_id: (grade as any).branch_id ?? null }
+    });
   }
 
   /**
    * Edit grade
    */
   editGrade(grade: Grade): void {
-    this.router.navigate(['/grades/edit', grade.value]);
+    this.router.navigate(['/grades/edit', grade.value], {
+      queryParams: { branch_id: (grade as any).branch_id ?? null }
+    });
   }
 
   /**

@@ -121,8 +121,8 @@ export class StudentFormComponent implements OnInit {
 
     // Default academic year from global context (create mode only)
     this.academicYearContext.selectedYear$.pipe(take(1)).subscribe(y => {
-      if (!this.isEditMode && y?.name) {
-        this.studentForm.patchValue({ academic_year: y.name });
+      if (!this.isEditMode && y?.id != null) {
+        this.studentForm.patchValue({ academic_year_id: y.id });
       }
     });
 
@@ -185,7 +185,7 @@ export class StudentFormComponent implements OnInit {
       // Academic
       grade: ['', Validators.required],
       section: [null],
-      academic_year: ['', Validators.required],
+      academic_year_id: [null, Validators.required],
       stream: [null],
       
       // Personal
@@ -604,7 +604,7 @@ export class StudentFormComponent implements OnInit {
       mother_name: 'Mother Name',
       emergency_contact_name: 'Emergency Contact Name',
       emergency_contact_phone: 'Emergency Contact Phone',
-      academic_year: 'Academic Year'
+      academic_year_id: 'Academic Year'
     };
     return labels[fieldName] || fieldName;
   }

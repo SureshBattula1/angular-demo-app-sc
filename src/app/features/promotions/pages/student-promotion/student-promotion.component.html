@@ -39,13 +39,13 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year *</mat-label>
-              <mat-select formControlName="academic_year">
-                <mat-option *ngFor="let year of academicYears" [value]="year">
-                  {{ year }}
+              <mat-select formControlName="to_academic_year_id">
+                <mat-option *ngFor="let year of academicYears" [value]="year.id">
+                  {{ year.name }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>calendar_today</mat-icon>
-              <mat-error *ngIf="promotionForm.get('academic_year')?.invalid && promotionForm.get('academic_year')?.touched">
+              <mat-error *ngIf="promotionForm.get('to_academic_year_id')?.invalid && promotionForm.get('to_academic_year_id')?.touched">
                 Academic year is required
               </mat-error>
             </mat-form-field>
@@ -159,7 +159,7 @@
                 </div>
                 <div class="preview-item">
                   <span class="preview-label">Academic Year:</span>
-                  <span class="preview-value">{{ promotionForm.get('academic_year')?.value }}</span>
+                  <span class="preview-value">{{ getAcademicYearName(promotionForm.get('to_academic_year_id')?.value) || '—' }}</span>
                 </div>
                 <div class="preview-item" *ngIf="previewData.total_fees_carry_forward">
                   <span class="preview-label">Total Fees to Carry Forward:</span>

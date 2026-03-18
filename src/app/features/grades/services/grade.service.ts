@@ -35,8 +35,8 @@ export class GradeService {
   /**
    * Get single grade by value
    */
-  getGrade(gradeValue: string): Observable<ApiResponse<Grade>> {
-    return this.apiService.get<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`);
+  getGrade(gradeValue: string, params?: Record<string, unknown>): Observable<ApiResponse<Grade>> {
+    return this.apiService.get<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`, params);
   }
 
   /**
@@ -49,15 +49,15 @@ export class GradeService {
   /**
    * Update existing grade
    */
-  updateGrade(gradeValue: string, data: GradeFormData): Observable<ApiResponse<Grade>> {
-    return this.apiService.put<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`, data);
+  updateGrade(gradeValue: string, data: GradeFormData, params?: Record<string, unknown>): Observable<ApiResponse<Grade>> {
+    return this.apiService.put<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`, data, params);
   }
 
   /**
    * Delete grade
    */
-  deleteGrade(gradeValue: string): Observable<ApiResponse> {
-    return this.apiService.delete(`${this.GRADE_ENDPOINT}/${gradeValue}`);
+  deleteGrade(gradeValue: string, params?: Record<string, unknown>): Observable<ApiResponse> {
+    return this.apiService.delete(`${this.GRADE_ENDPOINT}/${gradeValue}`, params);
   }
 
   /**

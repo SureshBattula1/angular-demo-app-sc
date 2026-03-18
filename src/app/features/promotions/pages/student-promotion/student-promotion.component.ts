@@ -10,6 +10,8 @@ import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Student } from '../../../../core/models/student.model';
 import { Grade } from '../../../../core/models/grade.model';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-student-promotion',
@@ -30,9 +32,8 @@ export class StudentPromotionComponent implements OnInit {
   fromGradeStudents: Student[] = [];
   selectedStudents: Student[] = [];
   
-  // Academic years
-  academicYears: string[] = [];
-  currentAcademicYear = '';
+  // Academic years (Option A: use ids everywhere)
+  academicYears: AcademicYear[] = [];
   
   // Filters
   filterBranchId: number | null = null;
@@ -48,17 +49,19 @@ export class StudentPromotionComponent implements OnInit {
     private studentCrudService: StudentCrudService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private academicYearService: AcademicYearService,
+    private academicYearContext: AcademicYearContextService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
   ) {
-    this.generateAcademicYears();
   }
 
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
     this.loadGrades();
+    this.loadAcademicYears();
     
     // Get student IDs from query params if coming from list page
     this.route.queryParams.subscribe(params => {
@@ -82,24 +85,26 @@ export class StudentPromotionComponent implements OnInit {
     });
   }
 
-  /**
-   * Generate academic years (current year and next 5 years)
-   */
-  generateAcademicYears(): void {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    
-    // If current month is >= June, current academic year starts this year
-    // Otherwise, current academic year started last year
-    const startYear = currentMonth >= 5 ? currentYear : currentYear - 1;
-    this.currentAcademicYear = `${startYear}-${startYear + 1}`;
-    
-    // Generate academic years from current to 5 years ahead
-    this.academicYears = [];
-    for (let i = 0; i <= 5; i++) {
-      const year = startYear + i;
-      this.academicYears.push(`${year}-${year + 1}`);
-    }
+  loadAcademicYears(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.academicYears = res.data;
+          // Default: select the "next" year after current context if it exists; otherwise leave empty.
+          const from = this.academicYearContext.selectedYear;
+          if (from?.id != null) {
+            const idx = this.academicYears.findIndex(y => y.id === from.id);
+            const next = idx >= 0 ? this.academicYears[idx + 1] : null;
+            if (next?.id != null) {
+              this.promotionForm.patchValue({ to_academic_year_id: next.id }, { emitEvent: false });
+            }
+          }
+        } else {
+          this.academicYears = [];
+        }
+      },
+      error: () => (this.academicYears = [])
+    });
   }
 
   /**
@@ -110,7 +115,7 @@ export class StudentPromotionComponent implements OnInit {
       branch_id: [null, Validators.required],
       from_grade: [null, Validators.required],
       to_grade: [null, Validators.required],
-      academic_year: [this.currentAcademicYear, Validators.required],
+      to_academic_year_id: [null, Validators.required],
       student_ids: [[], Validators.required],
       check_eligibility: [false]
     });
@@ -286,7 +291,7 @@ export class StudentPromotionComponent implements OnInit {
       student_ids: formValue.student_ids,
       from_grade: formValue.from_grade,
       to_grade: formValue.to_grade,
-      academic_year: formValue.academic_year
+      academic_year: this.getAcademicYearName(formValue.to_academic_year_id)
     };
 
     // Call preview API if available, otherwise show basic preview
@@ -319,7 +324,7 @@ export class StudentPromotionComponent implements OnInit {
       total_students: this.selectedStudents.length,
       from_grade: formValue.from_grade,
       to_grade: formValue.to_grade,
-      academic_year: formValue.academic_year,
+      academic_year: this.getAcademicYearName(formValue.to_academic_year_id),
       students: this.selectedStudents.map(s => ({
         id: s.id,
         name: this.getFullName(s),
@@ -356,13 +361,14 @@ export class StudentPromotionComponent implements OnInit {
       student_ids: formValue.student_ids,
       from_grade: formValue.from_grade,
       to_grade: formValue.to_grade,
-      academic_year: formValue.academic_year,
+      to_academic_year_id: formValue.to_academic_year_id,
       check_eligibility: formValue.check_eligibility || false
     };
 
     // Confirm before promoting
     const studentCount = this.selectedStudents.length;
-    const confirmMessage = `Are you sure you want to promote ${studentCount} student(s) from ${formValue.from_grade} to ${formValue.to_grade} for academic year ${formValue.academic_year}?\n\nThis action will:\n- Update student grades\n- Carry forward pending fees (if applicable)\n- Update academic year\n- Create promotion history`;
+    const yearName = this.getAcademicYearName(formValue.to_academic_year_id) || 'selected year';
+    const confirmMessage = `Are you sure you want to promote ${studentCount} student(s) from ${formValue.from_grade} to ${formValue.to_grade} for academic year ${yearName}?\n\nThis action will:\n- Update student grades\n- Carry forward pending fees (if applicable)\n- Create promotion history`;
 
     if (!confirm(confirmMessage)) {
       return;
@@ -398,5 +404,10 @@ export class StudentPromotionComponent implements OnInit {
    */
   onCancel(): void {
     this.router.navigate(['/students']);
+  }
+
+  getAcademicYearName(id: number | null | undefined): string {
+    if (id == null) return '';
+    return this.academicYears.find(y => y.id === id)?.name ?? '';
   }
 }

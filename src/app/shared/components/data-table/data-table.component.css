@@ -443,6 +443,15 @@
   font-weight: 500;
 }
 
+/* Badge color variants (apply on td via column.cellClass) */
+.badge-danger .badge {
+  background-color: var(--danger-color);
+}
+
+.badge-success .badge {
+  background-color: var(--success-color);
+}
+
 .avatar {
   width: 40px;
   height: 40px;

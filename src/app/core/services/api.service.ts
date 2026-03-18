@@ -66,8 +66,10 @@ export class ApiService {
   /**
    * PUT request
    */
-  put<T>(endpoint: string, body: unknown): Observable<ApiResponse<T>> {
+  put<T>(endpoint: string, body: unknown, params?: Record<string, unknown>): Observable<ApiResponse<T>> {
+    const httpParams = this.buildParams(params);
     return this.http.put<ApiResponse<T>>(this.buildUrl(endpoint), body, {
+      params: httpParams,
       withCredentials: true
     });
   }
@@ -75,8 +77,10 @@ export class ApiService {
   /**
    * DELETE request
    */
-  delete<T>(endpoint: string): Observable<ApiResponse<T>> {
+  delete<T>(endpoint: string, params?: Record<string, unknown>): Observable<ApiResponse<T>> {
+    const httpParams = this.buildParams(params);
     return this.http.delete<ApiResponse<T>>(this.buildUrl(endpoint), {
+      params: httpParams,
       withCredentials: true
     });
   }

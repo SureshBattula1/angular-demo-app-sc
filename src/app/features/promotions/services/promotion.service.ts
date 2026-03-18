@@ -17,7 +17,7 @@ export class PromotionService {
     student_ids: number[];
     from_grade: string;
     to_grade: string;
-    academic_year: string;
+    to_academic_year_id: number;
   }): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/promote`, data);
   }
@@ -29,7 +29,7 @@ export class PromotionService {
     student_ids: number[];
     from_grade: string;
     to_grade: string;
-    academic_year: string;
+    to_academic_year_id: number;
     check_eligibility?: boolean;
   }): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/promote-with-fee-handling`, data);

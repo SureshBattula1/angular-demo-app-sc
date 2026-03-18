@@ -11,6 +11,10 @@ export interface Student {
   grade_label?: string;
   section: string | null;
   academic_year: string;
+  academic_year_id?: number | null;
+  current_grade?: string;
+  current_section?: string | null;
+  current_academic_year_id?: number | null;
   stream: string | null;
   elective_subjects?: string;
   
@@ -230,7 +234,7 @@ export interface StudentFormData {
   // Academic
   grade: string;
   section?: string | null;
-  academic_year: string;
+  academic_year_id: number;
   stream?: string | null;
   
   // Personal

@@ -59,9 +59,9 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
       { key: 'gender', header: 'Gender', sortable: true, searchable: true },
       // { key: 'email', header: 'Email', searchable: true },
       { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
-      { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
-      { key: 'grade_label', header: 'Class (Grade)', sortable: true, width: '120px' },
-      { key: 'section', header: 'Section', sortable: true, width: '100px' },
+      { key: 'current_academic_year', header: 'Academic Year', sortable: true, width: '130px' },
+      { key: 'current_grade', header: 'Class (Grade)', sortable: true, width: '120px' },
+      { key: 'current_section', header: 'Section', sortable: true, width: '100px' },
       { key: 'roll_number', header: 'Roll No.', width: '100px' },
       { key: 'phone', header: 'Phone', width: '130px' },
       { key: 'student_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
@@ -307,10 +307,6 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loading = true;
 
     const params: Record<string, unknown> = { ...this.currentFilters };
-    const year = this.academicYearContext.selectedYear;
-    if (year?.name) {
-      params['academic_year'] = year.name;
-    }
 
     this.studentCrudService.getStudents(params).subscribe({
       next: (response) => {
@@ -365,8 +361,8 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
       'admission_number': 'students.admission_number',
       'roll_number': 'students.roll_number',
       'gender': 'students.gender',
-      'grade_label': 'students.grade',
-      'section': 'students.section',
+      'current_grade': 'students.grade',
+      'current_section': 'students.section',
       'student_status': 'students.student_status',
       'branch.name': 'branches.name'
     };

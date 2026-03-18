@@ -20,6 +20,7 @@ export class GradeFormComponent implements OnInit {
   isLoading = false;
   gradeValue?: string;
   currentGrade?: Grade;
+  branchId?: number;
   
   // Predefined grade options
   gradeValueOptions = [
@@ -72,6 +73,11 @@ export class GradeFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadExistingGrades();
+
+    this.route.queryParamMap.subscribe(qp => {
+      const raw = qp.get('branch_id');
+      this.branchId = raw ? Number(raw) : undefined;
+    });
     
     // Check if edit mode
     this.route.params.subscribe(params => {
@@ -118,32 +124,30 @@ export class GradeFormComponent implements OnInit {
 
   private loadGrade(gradeValue: string): void {
     this.isLoading = true;
-    
-    this.gradeService.getGrades().subscribe({
+
+    this.gradeService.getGrade(gradeValue, this.branchId ? { branch_id: this.branchId } : undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          const grade = response.data.find(g => g.value === gradeValue);
-          if (grade) {
-            this.currentGrade = grade;
-            
-            // In edit mode, enable value field for display (but make it readonly)
-            this.gradeForm.get('value')?.enable();
-            
-            this.gradeForm.patchValue({
-              gradeSelector: '', // Not used in edit mode
-              value: grade.value,
-              label: grade.label,
-              description: grade.description,
-              order: grade.order,
-              category: grade.category,
-              is_active: grade.is_active ?? true
-            });
-            
-            // Make value readonly (not disabled) in edit mode so it appears in the form
-            this.gradeForm.get('value')?.disable();
-          }
-          this.isLoading = false;
+          const grade = response.data;
+          this.currentGrade = grade;
+
+          // In edit mode, enable value field for display (but make it readonly)
+          this.gradeForm.get('value')?.enable();
+
+          this.gradeForm.patchValue({
+            gradeSelector: '', // Not used in edit mode
+            value: grade.value,
+            label: grade.label,
+            description: grade.description,
+            order: grade.order,
+            category: grade.category,
+            is_active: grade.is_active ?? true
+          });
+
+          // Make value readonly (not disabled) in edit mode so it appears in the form
+          this.gradeForm.get('value')?.disable();
         }
+        this.isLoading = false;
       },
       error: (error) => {
         this.errorHandler.showError(error);
@@ -167,7 +171,7 @@ export class GradeFormComponent implements OnInit {
     delete formData.gradeSelector;
 
     const request = this.isEditMode && this.gradeValue
-      ? this.gradeService.updateGrade(this.gradeValue, formData)
+      ? this.gradeService.updateGrade(this.gradeValue, formData, this.branchId ? { branch_id: this.branchId } : undefined)
       : this.gradeService.createGrade(formData);
 
     request.subscribe({
