@@ -30,7 +30,7 @@ export interface Branch {
   principal_email?: string;
   
   // Dates
-  established_date?: string;
+  established_date?: string | Date;
   opening_date?: string;
   closing_date?: string;
   

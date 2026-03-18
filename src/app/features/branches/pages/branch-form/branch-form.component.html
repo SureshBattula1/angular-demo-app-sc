@@ -231,7 +231,9 @@
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Established Date</mat-label>
-              <input matInput type="date" formControlName="established_date">
+              <input matInput [matDatepicker]="establishedDatePicker" formControlName="established_date" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="establishedDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #establishedDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>

@@ -107,11 +107,12 @@ export class BranchListComponent implements OnInit {
         width: '100px'
       },
       { 
-        key: 'is_active', 
-        header: 'Active', 
+        key: 'status_label', 
+        header: 'Status', 
         type: 'badge',
         width: '90px',
-        align: 'center'
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
       }
     ],
     actions: [
@@ -296,13 +297,19 @@ export class BranchListComponent implements OnInit {
   loadBranches(): void {
     this.loading = true;
     
+    // Ensure inactive branches are included (this page should show all branches).
+    // Remove any persisted/auto-applied is_active filter from table state.
+    const filters = { ...this.currentFilters } as Record<string, unknown>;
+    delete filters['is_active'];
+
     // 🔥 Use getAllBranches() for branch management (admins need to see all)
-    this.branchService.getAllBranches(this.currentFilters).subscribe({
+    this.branchService.getAllBranches(filters).subscribe({
       next: (response) => {
         if (response.success) {
           this.branches = response.data.map(branch => ({
             ...branch,
-            logo: this.getLogoUrl(branch.logo)
+            logo: this.getLogoUrl(branch.logo),
+            status_label: branch?.is_active ? 'Active' : 'Deactive'
           }));
           // Update total count from meta for server-side pagination
           if (response.meta) {

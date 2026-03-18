@@ -46,11 +46,18 @@ export class DepartmentListComponent implements OnInit {
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'name', header: 'Name', sortable: true, searchable: true },
       { key: 'head', header: 'Head', sortable: true, searchable: true },
-      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
+      { key: 'branch.name', header: 'Branch', sortable: true },
       { key: 'established_date', header: 'Established', sortable: true, type: 'date', width: '130px' },
       { key: 'students_count', header: 'Students', type: 'number', align: 'center', width: '100px' },
       { key: 'teachers_count', header: 'Teachers', type: 'number', align: 'center', width: '100px' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'status_label',
+        header: 'Status',
+        type: 'badge',
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'De-Active') ? 'badge-danger' : 'badge-success'
+      }
     ],
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewDepartment(row), permission: 'departments.view' },
@@ -150,7 +157,10 @@ export class DepartmentListComponent implements OnInit {
     this.departmentService.getDepartments(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.departments = response.data || [];
+          this.departments = (response.data || []).map((d: any) => ({
+            ...d,
+            status_label: d?.is_active ? 'Active' : 'De-Active'
+          }));
           if (response.meta) {
             // Update config by creating a new reference to trigger Angular change detection
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };

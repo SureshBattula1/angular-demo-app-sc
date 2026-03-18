@@ -66,7 +66,7 @@ export class DepartmentFormComponent implements OnInit {
       head: ['', [Validators.required, Validators.maxLength(255)]],
       head_id: [null],
       branch_id: [null, Validators.required],
-      established_date: ['', Validators.required],
+      established_date: [null, Validators.required],
       students_count: [0],
       teachers_count: [0],
       description: [''],
@@ -82,10 +82,11 @@ export class DepartmentFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentDepartment = response.data;
           const data = { ...response.data };
-          // Convert established_date to YYYY-MM-DD for HTML date input (required format)
+          // Convert established_date to Date for mat-datepicker
           if (data.established_date) {
             const str = String(data.established_date).trim();
-            data.established_date = str.includes('T') ? str.split('T')[0] : str;
+            const dateOnly = str.includes('T') ? str.split('T')[0] : str;
+            data.established_date = new Date(dateOnly);
           }
           this.departmentForm.patchValue(data);
           this.isLoading = false;
@@ -123,7 +124,15 @@ export class DepartmentFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.departmentForm.value;
+    const formData = { ...this.departmentForm.value };
+
+    // Normalize Date to YYYY-MM-DD for backend
+    if (formData.established_date instanceof Date && !isNaN(formData.established_date.getTime())) {
+      const yyyy = formData.established_date.getFullYear();
+      const mm = String(formData.established_date.getMonth() + 1).padStart(2, '0');
+      const dd = String(formData.established_date.getDate()).padStart(2, '0');
+      formData.established_date = `${yyyy}-${mm}-${dd}`;
+    }
 
     const request = this.isEditMode && this.departmentId
       ? this.departmentService.updateDepartment(this.departmentId, formData)
