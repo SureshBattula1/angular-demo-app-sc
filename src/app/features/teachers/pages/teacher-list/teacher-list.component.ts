@@ -70,7 +70,14 @@ export class TeacherListComponent implements OnInit {
       { key: 'joining_date', header: 'Joining Date', sortable: true, width: '130px' },
       { key: 'basic_salary', header: 'Salary', sortable: true, width: '120px' },
       { key: 'teacher_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
-      { key: 'user.is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'account_status_label',
+        header: 'Account',
+        type: 'badge',
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => (row?.user?.is_active === false || row?.account_status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
+      }
     ],
     actions: [
       { 
@@ -280,7 +287,8 @@ export class TeacherListComponent implements OnInit {
         if (response.success) {
           this.teachers = (response.data || []).map((teacher: any) => ({
             ...teacher,
-            full_name: this.getFullName(teacher)
+            full_name: this.getFullName(teacher),
+            account_status_label: teacher?.user?.is_active ? 'Active' : 'Deactive'
           }));
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };

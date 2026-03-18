@@ -234,6 +234,12 @@
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Department</mat-label>
               <mat-select formControlName="department_id">
+                <mat-option *ngIf="!teacherForm.get('branch_id')?.value" disabled>
+                  Select Branch first
+                </mat-option>
+                <mat-option *ngIf="teacherForm.get('branch_id')?.value && departments.length === 0" disabled>
+                  No departments found for selected branch
+                </mat-option>
                 <mat-option *ngFor="let department of departments" [value]="department.id">
                   {{ department.name }}
                 </mat-option>
@@ -243,7 +249,9 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Joining Date</mat-label>
-              <input matInput type="date" formControlName="joining_date">
+              <input matInput [matDatepicker]="joiningDatePicker" formControlName="joining_date" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="joiningDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #joiningDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
@@ -318,13 +326,17 @@
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Probation End Date</mat-label>
-              <input matInput type="date" formControlName="probation_end_date">
+              <input matInput [matDatepicker]="probationEndDatePicker" formControlName="probation_end_date" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="probationEndDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #probationEndDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Confirmation Date</mat-label>
-              <input matInput type="date" formControlName="confirmation_date">
+              <input matInput [matDatepicker]="confirmationDatePicker" formControlName="confirmation_date" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="confirmationDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #confirmationDatePicker></mat-datepicker>
               <mat-icon matPrefix>verified</mat-icon>
             </mat-form-field>
           </div>
@@ -351,7 +363,9 @@
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Date of Birth *</mat-label>
-              <input matInput type="date" formControlName="date_of_birth">
+              <input matInput [matDatepicker]="dobPicker" formControlName="date_of_birth" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+              <mat-datepicker #dobPicker></mat-datepicker>
               <mat-icon matPrefix>cake</mat-icon>
               <mat-error>{{ getErrorMessage('date_of_birth') }}</mat-error>
             </mat-form-field>
@@ -487,7 +501,9 @@
 
               <mat-form-field appearance="outline" class="form-field-half">
                 <mat-label>Spouse Date of Birth</mat-label>
-                <input matInput type="date" formControlName="spouse_date_of_birth">
+                <input matInput [matDatepicker]="spouseDobPicker" formControlName="spouse_date_of_birth" placeholder="Select date">
+                <mat-datepicker-toggle matSuffix [for]="spouseDobPicker"></mat-datepicker-toggle>
+                <mat-datepicker #spouseDobPicker></mat-datepicker>
                 <mat-icon matPrefix>cake</mat-icon>
               </mat-form-field>
             </div>
@@ -654,7 +670,9 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Passport Expiry</mat-label>
-              <input matInput type="date" formControlName="passport_expiry">
+              <input matInput [matDatepicker]="passportExpiryPicker" formControlName="passport_expiry" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="passportExpiryPicker"></mat-datepicker-toggle>
+              <mat-datepicker #passportExpiryPicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
@@ -668,7 +686,9 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Driving License Expiry</mat-label>
-              <input matInput type="date" formControlName="driving_license_expiry">
+              <input matInput [matDatepicker]="dlExpiryPicker" formControlName="driving_license_expiry" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="dlExpiryPicker"></mat-datepicker-toggle>
+              <mat-datepicker #dlExpiryPicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
@@ -1019,7 +1039,9 @@
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Last Medical Checkup</mat-label>
-              <input matInput type="date" formControlName="last_medical_checkup">
+              <input matInput [matDatepicker]="lastMedicalPicker" formControlName="last_medical_checkup" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="lastMedicalPicker"></mat-datepicker-toggle>
+              <mat-datepicker #lastMedicalPicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>

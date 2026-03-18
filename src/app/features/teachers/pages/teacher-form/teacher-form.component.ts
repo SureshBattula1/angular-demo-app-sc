@@ -160,7 +160,8 @@ export class TeacherFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadDepartments();
+    this.departments = [];
+    this.teacherForm.get('department_id')?.disable({ emitEvent: false });
     
     // Listen to category_type changes to update designation options
     this.teacherForm.get('category_type')?.valueChanges.subscribe(() => {
@@ -171,6 +172,13 @@ export class TeacherFormComponent implements OnInit {
     this.teacherForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
       if (branchId) {
         this.loadReportingManagers(branchId);
+        this.loadDepartments(branchId);
+        this.teacherForm.get('department_id')?.enable({ emitEvent: false });
+      }
+      if (!branchId) {
+        this.departments = [];
+        this.teacherForm.get('department_id')?.setValue(null, { emitEvent: false });
+        this.teacherForm.get('department_id')?.disable({ emitEvent: false });
       }
     });
     
@@ -184,6 +192,24 @@ export class TeacherFormComponent implements OnInit {
         this.loadTeacher(this.teacherId);
       }
     });
+  }
+
+  private parseToDate(value: any): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    const str = String(value).trim();
+    const dateOnly = str.includes('T') ? str.split('T')[0] : str;
+    const d = new Date(dateOnly);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  private formatDate(value: any): string | null {
+    const d = this.parseToDate(value);
+    if (!d) return null;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   private initForm(): void {
@@ -385,14 +411,13 @@ export class TeacherFormComponent implements OnInit {
             delete formData[field];
           });
 
-          // Convert date fields to YYYY-MM-DD for HTML date inputs (required format)
+          // Convert date fields to Date for mat-datepicker
           const dateFields = ['date_of_birth', 'joining_date', 'leaving_date', 'probation_end_date',
             'confirmation_date', 'spouse_date_of_birth', 'passport_expiry', 'driving_license_expiry',
             'last_medical_checkup'];
           dateFields.forEach(field => {
             if (formData[field]) {
-              const str = String(formData[field]).trim();
-              formData[field] = str.includes('T') ? str.split('T')[0] : str;
+              formData[field] = this.parseToDate(formData[field]);
             }
           });
           
@@ -406,6 +431,8 @@ export class TeacherFormComponent implements OnInit {
           // Load reporting managers for the current branch
           if (teacher.branch_id) {
             this.loadReportingManagers(teacher.branch_id);
+            this.loadDepartments(teacher.branch_id);
+            this.teacherForm.get('department_id')?.enable({ emitEvent: false });
           }
           
           // Load profile picture preview if exists
@@ -444,11 +471,17 @@ export class TeacherFormComponent implements OnInit {
     });
   }
 
-  private loadDepartments(): void {
-    this.departmentService.getDepartments({ is_active: true }).subscribe({
+  private loadDepartments(branchId: number): void {
+    this.departmentService.getDepartments({ branch_id: branchId, is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.departments = response.data;
+          this.departments = response.data || [];
+
+          // If a department is already selected (edit mode), ensure it exists in this branch; otherwise clear it.
+          const selectedDepartmentId = this.teacherForm.get('department_id')?.value;
+          if (selectedDepartmentId && !this.departments.some(d => d.id === selectedDepartmentId)) {
+            this.teacherForm.get('department_id')?.setValue(null, { emitEvent: false });
+          }
         }
       },
       error: (error: any) => {
@@ -502,6 +535,19 @@ export class TeacherFormComponent implements OnInit {
     
     // Use getRawValue() to include disabled fields (like current_address when checkbox is checked)
     const formData = { ...this.teacherForm.getRawValue() };
+
+    // Normalize date fields to YYYY-MM-DD for backend
+    const dateFields = ['date_of_birth', 'joining_date', 'leaving_date', 'probation_end_date',
+      'confirmation_date', 'spouse_date_of_birth', 'passport_expiry', 'driving_license_expiry',
+      'last_medical_checkup'];
+    dateFields.forEach(field => {
+      if (formData[field]) {
+        const formatted = this.formatDate(formData[field]);
+        if (formatted) {
+          formData[field] = formatted;
+        }
+      }
+    });
     
     // If "Same as Permanent Address" is checked, copy permanent address to current address fields
     if (this.sameAsPermanentAddress) {
