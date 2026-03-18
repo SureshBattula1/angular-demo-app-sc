@@ -52,7 +52,14 @@ export class SectionListComponent implements OnInit {
       { key: 'capacity', header: 'Capacity', type: 'number', align: 'center', width: '100px' },
       { key: 'current_strength', header: 'Students', type: 'number', align: 'center', width: '100px' },
       { key: 'room_number', header: 'Room', sortable: true, width: '100px' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'status_label',
+        header: 'Status',
+        type: 'badge',
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
+      }
     ],
     actions: [
       {
@@ -222,7 +229,10 @@ export class SectionListComponent implements OnInit {
     this.sectionService.getSections(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.sections = response.data || [];
+          this.sections = (response.data || []).map((s: any) => ({
+            ...s,
+            status_label: s?.is_active ? 'Active' : 'Deactive'
+          }));
           if (response.meta) {
             this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
           }

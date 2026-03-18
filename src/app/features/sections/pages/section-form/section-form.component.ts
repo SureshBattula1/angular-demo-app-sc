@@ -41,7 +41,20 @@ export class SectionFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadGrades();
+    this.grades = [];
+    this.sectionForm.get('grade_level')?.disable({ emitEvent: false });
+
+    // Load grades based on selected branch
+    this.sectionForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
+      if (branchId) {
+        this.loadGradesForBranch(Number(branchId));
+        this.sectionForm.get('grade_level')?.enable({ emitEvent: false });
+      } else {
+        this.grades = [];
+        this.sectionForm.get('grade_level')?.setValue(null, { emitEvent: false });
+        this.sectionForm.get('grade_level')?.disable({ emitEvent: false });
+      }
+    });
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -73,6 +86,11 @@ export class SectionFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentSection = response.data;
           this.sectionForm.patchValue(response.data);
+          // Ensure grades are loaded for this section's branch (edit mode)
+          if (response.data.branch_id) {
+            this.loadGradesForBranch(Number(response.data.branch_id));
+            this.sectionForm.get('grade_level')?.enable({ emitEvent: false });
+          }
           this.isLoading = false;
         }
       },
@@ -99,10 +117,10 @@ export class SectionFormComponent implements OnInit {
   /**
    * Load grades from API
    */
-  private loadGrades(): void {
+  private loadGradesForBranch(branchId: number): void {
     this.loadingGrades = true;
     
-    this.gradeService.getGrades().subscribe({
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           // Filter only active grades and format for dropdown
