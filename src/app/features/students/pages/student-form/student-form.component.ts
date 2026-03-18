@@ -116,7 +116,6 @@ export class StudentFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadGrades();
     this.loadAcademicYears();
 
     // Default academic year from global context (create mode only)
@@ -126,8 +125,8 @@ export class StudentFormComponent implements OnInit {
       }
     });
 
-    // Setup dynamic section loading based on grade and branch
-    this.setupDynamicSectionLoading();
+    // Setup dynamic grade/section loading based on branch + grade
+    this.setupDynamicGradeAndSectionLoading();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -139,30 +138,34 @@ export class StudentFormComponent implements OnInit {
   }
 
   /**
-   * Setup listeners to reload sections when grade or branch changes
+   * Setup listeners to reload grades/sections when branch/grade changes
    */
-  private setupDynamicSectionLoading(): void {
-    // Listen to grade changes
-    this.studentForm.get('grade')?.valueChanges.subscribe(grade => {
-      if (grade) {
-        const branchId = this.studentForm.get('branch_id')?.value;
-        this.loadSectionsByGradeAndBranch(grade, branchId);
-        // Clear section selection when grade changes
-        this.studentForm.patchValue({ section: null }, { emitEvent: false });
+  private setupDynamicGradeAndSectionLoading(): void {
+    // Branch -> load grades, clear grade+section
+    this.studentForm.get('branch_id')?.valueChanges.subscribe((branchId: number | null) => {
+      this.grades = [];
+      this.sections = [];
+      this.studentForm.patchValue({ grade: '', section: null }, { emitEvent: false });
+
+      if (branchId) {
+        this.loadGradesForBranch(branchId);
       } else {
-        this.sections = [];
+        this.loadingGrades = false;
+        this.loadingSections = false;
       }
     });
 
-    // Listen to branch changes
-    this.studentForm.get('branch_id')?.valueChanges.subscribe(branchId => {
-      if (branchId) {
-        const grade = this.studentForm.get('grade')?.value;
-        if (grade) {
-          this.loadSectionsByGradeAndBranch(grade, branchId);
-          // Clear section selection when branch changes
-          this.studentForm.patchValue({ section: null }, { emitEvent: false });
-        }
+    // Grade -> load sections for current branch
+    this.studentForm.get('grade')?.valueChanges.subscribe((grade: string) => {
+      const branchId = this.studentForm.get('branch_id')?.value as number | null;
+
+      this.sections = [];
+      this.studentForm.patchValue({ section: null }, { emitEvent: false });
+
+      if (branchId && grade) {
+        this.loadSectionsByGradeAndBranch(grade, branchId);
+      } else {
+        this.loadingSections = false;
       }
     });
   }
@@ -179,7 +182,7 @@ export class StudentFormComponent implements OnInit {
       // Admission
       branch_id: [null, Validators.required],
       admission_number: ['', Validators.required],
-      admission_date: ['', Validators.required],
+      admission_date: [null, Validators.required],
       roll_number: [''],
       
       // Academic
@@ -189,7 +192,7 @@ export class StudentFormComponent implements OnInit {
       stream: [null],
       
       // Personal
-      date_of_birth: ['', Validators.required],
+      date_of_birth: [null, Validators.required],
       gender: ['', Validators.required],
       blood_group: [null],
       religion: [''],
@@ -254,7 +257,7 @@ export class StudentFormComponent implements OnInit {
       pen_number: [''], // Permanent Education Number
       birth_certificate_number: [''],
       passport_number: [''],
-      passport_expiry: [''],
+      passport_expiry: [null],
       student_id_card_number: [''],
       voter_id: [''],
       ration_card_number: [''],
@@ -386,11 +389,36 @@ export class StudentFormComponent implements OnInit {
         if (response.success && response.data) {
           this.currentStudent = response.data;
           const student = response.data;
-          this.studentForm.patchValue(student);
+          // Patch without triggering dropdown cascades; we'll hydrate them below.
+          // Also convert API date strings -> Date objects for datepickers.
+          this.studentForm.patchValue(
+            {
+              ...student,
+              admission_date: this.parseToDate((student as any).admission_date),
+              date_of_birth: this.parseToDate((student as any).date_of_birth),
+              passport_expiry: this.parseToDate((student as any).passport_expiry),
+            },
+            { emitEvent: false }
+          );
           
           // Load profile picture preview if exists - convert path to full URL
           if (student.profile_picture) {
             this.profilePicturePreview = this.getFullImageUrl(student.profile_picture);
+          }
+
+          // Hydrate branch-scoped grade/section dropdowns for edit mode
+          const branchId = (student as any).branch_id as number | null | undefined;
+          const grade = (student as any).grade as string | null | undefined;
+          const section = (student as any).section as string | null | undefined;
+          if (branchId) {
+            this.loadGradesForBranch(branchId, () => {
+              this.studentForm.patchValue({ grade: grade || '' }, { emitEvent: false });
+              if (grade) {
+                this.loadSectionsByGradeAndBranch(grade, branchId, () => {
+                  this.studentForm.patchValue({ section: section ?? null }, { emitEvent: false });
+                });
+              }
+            });
           }
           
           // Remove password requirement for edit
@@ -424,22 +452,25 @@ export class StudentFormComponent implements OnInit {
   }
 
   /**
-   * Load grades from API dynamically
+   * Load grades for a specific branch (branch-scoped master data)
    */
-  private loadGrades(): void {
+  private loadGradesForBranch(branchId: number, done?: () => void): void {
     this.loadingGrades = true;
     
-    this.gradeService.getGrades().subscribe({
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           // Filter only active grades
           this.grades = response.data.filter(grade => grade.is_active);
         }
         this.loadingGrades = false;
+        done?.();
       },
       error: (error) => {
         this.errorHandler.showError('Failed to load grades');
+        this.grades = [];
         this.loadingGrades = false;
+        done?.();
       }
     });
   }
@@ -447,7 +478,7 @@ export class StudentFormComponent implements OnInit {
   /**
    * Load sections filtered by grade and branch
    */
-  private loadSectionsByGradeAndBranch(grade: string, branchId?: number): void {
+  private loadSectionsByGradeAndBranch(grade: string, branchId?: number, done?: () => void): void {
     this.loadingSections = true;
     
     const params: any = { grade_level: grade };
@@ -461,10 +492,12 @@ export class StudentFormComponent implements OnInit {
           this.sections = response.data.filter((section: Section) => section.is_active);
         }
         this.loadingSections = false;
+        done?.();
       },
       error: (error) => {
         this.sections = [];
         this.loadingSections = false;
+        done?.();
       }
     });
   }
@@ -477,7 +510,12 @@ export class StudentFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = { ...this.studentForm.value };
+    const formData: any = { ...this.studentForm.value };
+
+    // Datepickers: Date -> YYYY-MM-DD (API expects strings)
+    formData.admission_date = this.formatDate(formData.admission_date);
+    formData.date_of_birth = this.formatDate(formData.date_of_birth);
+    formData.passport_expiry = this.formatDate(formData.passport_expiry);
     
     // Remove password if empty in edit mode
     if (this.isEditMode && !formData.password) {
@@ -607,6 +645,36 @@ export class StudentFormComponent implements OnInit {
       academic_year_id: 'Academic Year'
     };
     return labels[fieldName] || fieldName;
+  }
+
+  private parseToDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'string') {
+      // Expecting YYYY-MM-DD from API; construct in local timezone without time shift.
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]) - 1;
+        const d = Number(m[3]);
+        const dt = new Date(y, mo, d);
+        return isNaN(dt.getTime()) ? null : dt;
+      }
+      const dt = new Date(value);
+      return isNaN(dt.getTime()) ? null : dt;
+    }
+    return null;
+  }
+
+  private formatDate(value: unknown): string | null {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (!(value instanceof Date)) return null;
+
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, '0');
+    const d = String(value.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   /**

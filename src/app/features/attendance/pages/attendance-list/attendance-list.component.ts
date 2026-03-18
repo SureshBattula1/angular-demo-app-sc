@@ -66,8 +66,7 @@ export class AttendanceListComponent implements OnInit {
   grades: any[] = [];
   allSections: Section[] = [];
   sections: any[] = [];
-  currentGrade: string | null = null; // Track current grade selection
-  currentBranch: string | null = null; // Track current branch selection
+  private selectedBranchIdForStudentSearch: string | number | null = null;
   selectedBranch: string | number | null = null;
 
   // Date range filters for dashboard
@@ -264,8 +263,6 @@ export class AttendanceListComponent implements OnInit {
 
     // Load filter options
     this.loadBranches();
-    this.loadGrades();
-    this.loadSections();
     this.loadDepartments();
 
     // Only load data for the active tab (lazy loading)
@@ -693,75 +690,61 @@ export class AttendanceListComponent implements OnInit {
   }
 
   /**
-   * Load all sections for filtering
+   * Set student grade options (advanced search)
    */
-  loadSections(): void {
-    this.sectionService.getSections({ per_page: 1000, is_active: true }).subscribe({
+  private setStudentGradeOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
+    if (studentGradeField) studentGradeField.options = options;
+  }
+
+  /**
+   * Set student section options (advanced search)
+   */
+  private setStudentSectionOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const studentSectionField = this.studentSearchConfig.fields.find(f => f.key === 'section');
+    if (studentSectionField) studentSectionField.options = options;
+  }
+
+  /**
+   * Load grades for selected branch (cascade: branch -> grade)
+   */
+  private loadGradesForBranch(branchId: string | number): void {
+    this.setStudentGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
+    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.allSections = response.data;
-          this.updateSectionOptions(null, null);
+          const gradeOptions = response.data
+            .filter((g: any) => g.is_active)
+            .map((g: any) => ({ value: g.value, label: g.label }));
+          this.setStudentGradeOptions(gradeOptions);
+          return;
         }
+        this.setStudentGradeOptions([]);
       },
       error: (error) => {
+        this.setStudentGradeOptions([]);
       }
     });
   }
 
   /**
-   * Update section options based on selected grade and branch
+   * Load sections for selected branch + grade (cascade: grade -> section)
    */
-  updateSectionOptions(selectedGrade: string | null, selectedBranch: string | null = null): void {
-    let filteredSections = this.allSections;
-
-    // Filter by grade if selected
-    if (selectedGrade) {
-      filteredSections = filteredSections.filter(
-        section => String(section.grade_level) === String(selectedGrade)
-      );
-    }
-
-    // Filter by branch if selected
-    if (selectedBranch) {
-      filteredSections = filteredSections.filter(
-        section => Number(section.branch_id) === Number(selectedBranch)
-      );
-    }
-
-    // Only show active sections
-    filteredSections = filteredSections.filter(section => section.is_active);
-
-    const sectionOptions = filteredSections.map(section => ({
-      value: section.name,
-      label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
-    }));
-
-    const studentSectionField = this.studentSearchConfig.fields.find(f => f.key === 'section');
-    if (studentSectionField) {
-      studentSectionField.options = sectionOptions;
-    }
-  }
-
-  /**
-   * Load grades dynamically for advanced search filter
-   */
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  private loadSectionsForBranchAndGrade(branchId: string | number, grade: string): void {
+    this.setStudentSectionOptions([{ value: '', label: 'Loading sections...', disabled: true }]);
+    this.sectionService.getSections({ branch_id: Number(branchId), grade_level: grade, per_page: 1000, is_active: true }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.grades = response.data;
-          const gradeOptions = response.data.map(grade => ({
-            value: grade.value,
-            label: grade.label
-          }));
-
-          const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
-          if (studentGradeField) {
-            studentGradeField.options = gradeOptions;
-          }
+          const sectionOptions = response.data
+            .filter((s: any) => s.is_active)
+            .map((s: any) => ({ value: s.name, label: `${s.name}${s.code ? ' (' + s.code + ')' : ''}` }));
+          this.setStudentSectionOptions(sectionOptions);
+          return;
         }
+        this.setStudentSectionOptions([]);
       },
-      error: (error) => {
+      error: () => {
+        this.setStudentSectionOptions([]);
       }
     });
   }
@@ -903,13 +886,24 @@ export class AttendanceListComponent implements OnInit {
   }
 
   onSearchFieldChanged(event: { field: string, value: any }): void {
-    // Update sections when grade or branch field changes
+    // Student advanced search cascade
+    if (event.field === 'branch_id') {
+      this.selectedBranchIdForStudentSearch = event.value || null;
+      this.setStudentSectionOptions([]);
+      if (this.selectedBranchIdForStudentSearch) {
+        this.loadGradesForBranch(this.selectedBranchIdForStudentSearch);
+      } else {
+        this.setStudentGradeOptions([]);
+        this.setStudentSectionOptions([]);
+      }
+    }
+
     if (event.field === 'grade') {
-      this.currentGrade = event.value;
-      this.updateSectionOptions(this.currentGrade, this.currentBranch);
-    } else if (event.field === 'branch_id') {
-      this.currentBranch = event.value;
-      this.updateSectionOptions(this.currentGrade, this.currentBranch);
+      const grade = event.value;
+      this.setStudentSectionOptions([]);
+      if (this.selectedBranchIdForStudentSearch && grade) {
+        this.loadSectionsForBranchAndGrade(this.selectedBranchIdForStudentSearch, String(grade));
+      }
     }
   }
 
@@ -977,7 +971,9 @@ export class AttendanceListComponent implements OnInit {
   }
 
   onSearchReset(): void {
-    this.updateSectionOptions(null);
+    this.selectedBranchIdForStudentSearch = null;
+    this.setStudentGradeOptions([]);
+    this.setStudentSectionOptions([]);
 
     if (this.activeTab === 'student') {
       this.loadStudentAttendance();

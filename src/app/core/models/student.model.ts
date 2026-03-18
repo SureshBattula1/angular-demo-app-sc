@@ -3,7 +3,7 @@ export interface Student {
   user_id: number;
   branch_id: number;
   admission_number: string;
-  admission_date: string;
+  admission_date: string | Date;
   roll_number: string | null;
   
   // Academic Details
@@ -13,6 +13,7 @@ export interface Student {
   academic_year: string;
   academic_year_id?: number | null;
   current_grade?: string;
+  current_grade_label?: string;
   current_section?: string | null;
   current_academic_year_id?: number | null;
   stream: string | null;
@@ -23,7 +24,7 @@ export interface Student {
   last_name: string;
   email: string;
   phone: string | null;
-  date_of_birth: string;
+  date_of_birth: string | Date;
   gender: 'Male' | 'Female' | 'Other';
   blood_group: string | null;
   nationality?: string;
@@ -50,7 +51,7 @@ export interface Student {
   pen_number?: string | null;
   birth_certificate_number?: string | null;
   passport_number?: string | null;
-  passport_expiry?: string | null;
+  passport_expiry?: string | Date | null;
   student_id_card_number?: string | null;
   voter_id?: string | null;
   ration_card_number?: string | null;
@@ -209,6 +210,8 @@ export interface Student {
     is_active: boolean;
     [key: string]: any;
   };
+  account_is_active?: boolean;
+  account_status_label?: string;
   
   is_active: boolean;
   
@@ -228,7 +231,7 @@ export interface StudentFormData {
   // Admission
   branch_id: number;
   admission_number: string;
-  admission_date: string;
+  admission_date: string | Date;
   roll_number?: string | null;
   
   // Academic
@@ -238,7 +241,7 @@ export interface StudentFormData {
   stream?: string | null;
   
   // Personal
-  date_of_birth: string;
+  date_of_birth: string | Date;
   gender: string;
   blood_group?: string | null;
   religion?: string | null;

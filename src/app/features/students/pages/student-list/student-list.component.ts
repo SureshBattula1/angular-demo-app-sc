@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -46,10 +46,11 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   students: Student[] = [];
   selectedStudents: Student[] = [];
   currentFilters: Record<string, unknown> = {};
-  allSections: Section[] = []; // Store all sections for filtering
-  currentGrade: string | null = null; // Track current grade selection
-  currentBranch: string | null = null; // Track current branch selection
   private academicYearSub?: Subscription;
+  loadingBranches = false;
+  loadingGrades = false;
+  loadingSections = false;
+  private selectedBranchId: string | number | null = null;
   
   tableConfig: TableConfig = {
     columns: [
@@ -60,12 +61,19 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
       // { key: 'email', header: 'Email', searchable: true },
       { key: 'branch.name', header: 'Branch', sortable: true, width: '130px' },
       { key: 'current_academic_year', header: 'Academic Year', sortable: true, width: '130px' },
-      { key: 'current_grade', header: 'Class (Grade)', sortable: true, width: '120px' },
+      { key: 'current_grade_label', header: 'Class (Grade)', sortable: true, width: '140px' },
       { key: 'current_section', header: 'Section', sortable: true, width: '100px' },
       { key: 'roll_number', header: 'Roll No.', width: '100px' },
       { key: 'phone', header: 'Phone', width: '130px' },
       { key: 'student_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'account_status_label',
+        header: 'Account',
+        type: 'badge',
+        width: '100px',
+        align: 'center',
+        cellClass: (row: any) => (row?.account_is_active ? 'badge-success' : 'badge-danger'),
+      }
     ],
     actions: [
       { 
@@ -213,7 +221,7 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
   
   ngOnInit(): void {
-    this.loadFilterData();
+    this.loadBranchesForFilters();
     // Reload when toolbar academic year changes (including initial value from context)
     this.academicYearSub = this.academicYearContext.selectedYearId$.subscribe(() => this.loadStudents());
   }
@@ -223,45 +231,27 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   
   /**
-   * ✅ OPTIMIZED: Load all filter data (branches, grades, sections) in parallel
-   * This reduces total load time from ~3-4 seconds to ~1 second
+   * Load branches first; grades/sections are loaded on-demand (cascade).
    */
-  loadFilterData(): void {
-    forkJoin({
-      branches: this.branchService.getBranches({ is_active: true }),
-      grades: this.gradeService.getGrades(),
-      sections: this.sectionService.getSections({ per_page: 1000, is_active: true })
-    }).subscribe({
-      next: (responses) => {
-        // Process branches
-        if (responses.branches.success && responses.branches.data) {
-          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
-          if (branchField) {
-            branchField.options = responses.branches.data.map(branch => ({
-              value: branch.id.toString(),
-              label: branch.name
-            }));
-          }
+  private loadBranchesForFilters(): void {
+    this.loadingBranches = true;
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        this.loadingBranches = false;
+        const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+        if (branchField) {
+          branchField.options = (response.success && response.data)
+            ? response.data.map(branch => ({ value: branch.id.toString(), label: branch.name }))
+            : [];
         }
-        
-        // Process grades
-        if (responses.grades.success && responses.grades.data) {
-          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade');
-          if (gradeField) {
-            gradeField.options = responses.grades.data.map(grade => ({
-              value: grade.value,
-              label: grade.label
-            }));
-          }
-        }
-        
-        // Process sections
-        if (responses.sections.success && responses.sections.data) {
-          this.allSections = responses.sections.data;
-        }
+        this.setGradeOptions([]);
+        this.setSectionOptions([]);
       },
       error: (error) => {
+        this.loadingBranches = false;
         this.errorHandler.showError(error);
+        this.setGradeOptions([]);
+        this.setSectionOptions([]);
       }
     });
   }
@@ -270,37 +260,53 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
     // No additional setup needed
   }
   
-  /**
-   * Update section options based on selected grade and branch
-   */
-  updateSectionOptions(selectedGrade: string | null, selectedBranch: string | null = null): void {
+  private setGradeOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade');
+    if (gradeField) gradeField.options = options;
+  }
+
+  private setSectionOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
     const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section');
-    if (!sectionField) return;
-    
-    let filteredSections = this.allSections;
-    
-    // Filter by grade if selected
-    if (selectedGrade) {
-      filteredSections = filteredSections.filter(
-        section => String(section.grade_level) === String(selectedGrade)
-      );
-    }
-    
-    // Filter by branch if selected
-    if (selectedBranch) {
-      filteredSections = filteredSections.filter(
-        section => Number(section.branch_id) === Number(selectedBranch)
-      );
-    }
-    
-    // Only show active sections
-    filteredSections = filteredSections.filter(section => section.is_active);
-    
-    // Update section options
-    sectionField.options = filteredSections.map(section => ({
-      value: section.name,
-      label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
-    }));
+    if (sectionField) sectionField.options = options;
+  }
+
+  private loadGradesForBranch(branchId: string | number): void {
+    this.loadingGrades = true;
+    this.setGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
+    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
+      next: (response) => {
+        this.loadingGrades = false;
+        const options = (response.success && response.data)
+          ? response.data.filter(g => g.is_active).map(g => ({ value: g.value, label: g.label }))
+          : [];
+        this.setGradeOptions(options);
+      },
+      error: () => {
+        this.loadingGrades = false;
+        this.setGradeOptions([]);
+      }
+    });
+  }
+
+  private loadSectionsForBranchAndGrade(branchId: string | number, grade: string): void {
+    this.loadingSections = true;
+    this.setSectionOptions([{ value: '', label: 'Loading sections...', disabled: true }]);
+    this.sectionService.getSections({ branch_id: Number(branchId), grade_level: grade, per_page: 1000, is_active: true }).subscribe({
+      next: (response) => {
+        this.loadingSections = false;
+        const options = (response.success && response.data)
+          ? response.data.filter((s: any) => s.is_active).map((s: any) => ({
+              value: s.name,
+              label: `${s.name}${s.code ? ' (' + s.code + ')' : ''}`
+            }))
+          : [];
+        this.setSectionOptions(options);
+      },
+      error: () => {
+        this.loadingSections = false;
+        this.setSectionOptions([]);
+      }
+    });
   }
   
   loadStudents(): void {
@@ -329,13 +335,30 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
-    // Update sections when grade or branch field changes
+    if (event.field === 'branch_id') {
+      const branchId = event.value;
+      this.selectedBranchId = branchId || null;
+      // Clear dependent filters in current filters so API doesn't receive stale values
+      delete this.currentFilters['grade'];
+      delete this.currentFilters['section'];
+      this.setSectionOptions([]);
+      if (branchId) {
+        this.loadGradesForBranch(branchId);
+      } else {
+        this.setGradeOptions([]);
+        this.setSectionOptions([]);
+      }
+    }
+
     if (event.field === 'grade') {
-      this.currentGrade = event.value;
-      this.updateSectionOptions(this.currentGrade, this.currentBranch);
-    } else if (event.field === 'branch_id') {
-      this.currentBranch = event.value;
-      this.updateSectionOptions(this.currentGrade, this.currentBranch);
+      const grade = event.value;
+      const branchId = this.selectedBranchId;
+      delete this.currentFilters['section'];
+      if (branchId && grade) {
+        this.loadSectionsForBranchAndGrade(branchId, String(grade));
+      } else {
+        this.setSectionOptions([]);
+      }
     }
   }
   
@@ -361,7 +384,7 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
       'admission_number': 'students.admission_number',
       'roll_number': 'students.roll_number',
       'gender': 'students.gender',
-      'current_grade': 'students.grade',
+      'current_grade_label': 'students.grade',
       'current_section': 'students.section',
       'student_status': 'students.student_status',
       'branch.name': 'branches.name'

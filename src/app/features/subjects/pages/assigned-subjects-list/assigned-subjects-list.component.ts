@@ -31,6 +31,7 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
+      (searchFieldChanged)="onSearchFieldChanged($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
@@ -43,6 +44,7 @@ export class AssignedSubjectsListComponent implements OnInit {
   assignments: SectionSubjectAssignment[] = [];
   selectedAssignments: SectionSubjectAssignment[] = [];
   currentFilters: Record<string, unknown> = {};
+  private selectedBranchId: string | number | null = null;
   
   tableConfig: TableConfig = {
     columns: [
@@ -183,7 +185,7 @@ export class AssignedSubjectsListComponent implements OnInit {
   
   ngOnInit(): void {
     this.loadBranches();
-    this.loadSections();
+    this.setSectionOptions([]);
     this.loadAssignments();
   }
   
@@ -206,23 +208,36 @@ export class AssignedSubjectsListComponent implements OnInit {
     });
   }
   
-  loadSections(): void {
-    this.sectionService.getSections({ is_active: true }).subscribe({
+  private setSectionOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section_id');
+    if (sectionField) sectionField.options = options;
+  }
+
+  private loadSectionsForBranch(branchId: string | number): void {
+    this.setSectionOptions([{ value: '', label: 'Loading sections...', disabled: true }]);
+    this.sectionService.getSections({ branch_id: Number(branchId), is_active: true, per_page: 1000 }).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          const sectionField = this.advancedSearchConfig.fields.find(f => f.key === 'section_id');
-          if (sectionField) {
-            sectionField.options = response.data.map(section => ({
+        const options = (response.success && response.data)
+          ? response.data.map((section: any) => ({
               value: section.id,
               label: `${section.name} - ${section.grade_label || 'Grade ' + section.grade_level}`
-            }));
-          }
-        }
+            }))
+          : [];
+        this.setSectionOptions(options);
       },
-      error: (error) => {
-        console.error('Error loading sections:', error);
-      }
+      error: () => this.setSectionOptions([])
     });
+  }
+
+  onSearchFieldChanged(event: { field: string; value: any }): void {
+    if (event.field === 'branch_id') {
+      this.selectedBranchId = event.value || null;
+      // Clear dependent field options
+      this.setSectionOptions([]);
+      if (this.selectedBranchId) {
+        this.loadSectionsForBranch(this.selectedBranchId);
+      }
+    }
   }
   
   loadAssignments(): void {

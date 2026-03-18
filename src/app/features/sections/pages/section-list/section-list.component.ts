@@ -30,6 +30,7 @@ import { Section } from '../../../../core/models/section.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
+      (searchFieldChanged)="onSearchFieldChanged($event)"
       (advancedSearchChanged)="onAdvancedSearchChange($event)">
     </app-data-table>
   `,
@@ -42,6 +43,7 @@ export class SectionListComponent implements OnInit {
   sections: Section[] = [];
   selectedSections: Section[] = [];
   currentFilters: Record<string, unknown> = {};
+  private selectedBranchId: string | number | null = null;
 
   tableConfig: TableConfig = {
     columns: [
@@ -158,8 +160,8 @@ export class SectionListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBranches();
-    this.loadGrades();
     this.loadSections();
+    this.setGradeOptions([]);
   }
 
   /**
@@ -183,44 +185,34 @@ export class SectionListComponent implements OnInit {
     });
   }
 
-  /**
-   * Load grades dynamically for advanced search filter
-   */
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  private setGradeOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
+    if (gradeField) gradeField.options = options;
+  }
+
+  private loadGradesForBranch(branchId: string | number): void {
+    this.setGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
+    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          // Find the grade_level field and update its options
-          const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
-          if (gradeField) {
-            gradeField.options = response.data.map(grade => ({
-              value: grade.value,
-              label: grade.label
-            }));
-          }
-        }
+        const options = (response.success && response.data)
+          ? response.data.filter((g: any) => g.is_active).map((g: any) => ({ value: g.value, label: g.label }))
+          : [];
+        this.setGradeOptions(options);
       },
-      error: (error) => {
-        // Use fallback static grades if dynamic loading fails
-        const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
-        if (gradeField) {
-          gradeField.options = [
-            { value: '1', label: 'Grade 1' },
-            { value: '2', label: 'Grade 2' },
-            { value: '3', label: 'Grade 3' },
-            { value: '4', label: 'Grade 4' },
-            { value: '5', label: 'Grade 5' },
-            { value: '6', label: 'Grade 6' },
-            { value: '7', label: 'Grade 7' },
-            { value: '8', label: 'Grade 8' },
-            { value: '9', label: 'Grade 9' },
-            { value: '10', label: 'Grade 10' },
-            { value: '11', label: 'Grade 11' },
-            { value: '12', label: 'Grade 12' }
-          ];
-        }
-      }
+      error: () => this.setGradeOptions([])
     });
+  }
+
+  onSearchFieldChanged(event: { field: string; value: any }): void {
+    if (event.field === 'branch_id') {
+      this.selectedBranchId = event.value || null;
+      // Clear grade when branch changes
+      if (this.selectedBranchId) {
+        this.loadGradesForBranch(this.selectedBranchId);
+      } else {
+        this.setGradeOptions([]);
+      }
+    }
   }
 
   loadSections(): void {
