@@ -42,6 +42,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('searchInput') searchInput?: any;
+  @ViewChild(AdvancedSearchSidebarComponent) advancedSearchSidebar?: AdvancedSearchSidebarComponent;
   
   dataSource: MatTableDataSource<any>;
   selection = new SelectionModel<any>(true, []);
@@ -395,12 +396,14 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     // Reset filter predicate
     this.dataSource.filterPredicate = this.createFilter();
     
-    // For server-side tables, emit reset event
+    // Reset advanced search sidebar form if it exists
+    if (this.advancedSearchSidebar) {
+      this.advancedSearchSidebar.resetForm();
+    }
+    
+    // For server-side tables, emit reset event so parent clears its filters and reloads data
     if (this.config.serverSide) {
-      this.advancedSearchChanged.emit({
-        query: '',
-        filters: {}
-      });
+      this.searchResetEvent.emit();
     }
   }
   

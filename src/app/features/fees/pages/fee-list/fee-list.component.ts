@@ -14,6 +14,7 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
+import { AcademicYearService } from '../../../settings/services/academic-year.service';
 import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.model';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -133,21 +134,23 @@ export class FeeListComponent implements OnInit, OnDestroy {
         label: 'Grade',
         type: 'select',
         icon: 'school',
-        options: []
+        options: [],
+        dependsOn: 'branch_id'
       },
       {
         key: 'fee_type',
         label: 'Fee Type',
         type: 'select',
         icon: 'category',
-        options: [] // Will be populated dynamically from API
+        options: [],
+        dependsOn: 'branch_id'
       },
       {
-        key: 'academic_year',
+        key: 'academic_year_id',
         label: 'Academic Year',
-        type: 'text',
+        type: 'select',
         icon: 'event',
-        placeholder: '2024-2025'
+        options: []
       },
       {
         key: 'is_active',
@@ -263,8 +266,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
     actions: [
       { icon: 'visibility', label: 'View', action: (row) => this.viewFeeType(row) },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editFeeType(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteFeeType(row) },
-      { icon: 'toggle_on', label: 'Toggle Status', color: 'accent', action: (row) => this.toggleFeeTypeStatus(row) }
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteFeeType(row) }
     ],
     selectable: true,
     pagination: true,
@@ -329,6 +331,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
     private feeTypeService: FeeTypeService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute,
@@ -340,6 +343,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
     this.loadGrades();
     this.loadSections();
     this.loadFeeTypesForFilter();
+    this.loadAcademicYearsForFilter();
     this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => this.loadActiveTabData());
     
     // Check query parameters to restore active tab
@@ -428,7 +432,8 @@ export class FeeListComponent implements OnInit, OnDestroy {
             return {
               ...structure,
               grade_label: gradeObj ? gradeObj.label : `Grade ${structure.grade}`,
-              amount_formatted: `₹${structure.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`
+              amount_formatted: `₹${structure.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`,
+              is_active_display: this.toBoolean(structure.is_active) ? 'Active' : 'Deactive'
             };
           });
           
@@ -570,7 +575,16 @@ export class FeeListComponent implements OnInit, OnDestroy {
     this.feeTypeService.getFeeTypes(this.feeTypeFilters).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.feeTypes = response.data || [];
+          const raw = response.data || [];
+          this.feeTypes = raw.map((item: any) => ({
+            ...item,
+            is_mandatory: this.toBoolean(item.is_mandatory),
+            is_refundable: this.toBoolean(item.is_refundable),
+            is_active: this.toBoolean(item.is_active),
+            is_mandatory_display: this.toBoolean(item.is_mandatory) ? 'Yes' : 'No',
+            is_refundable_display: this.toBoolean(item.is_refundable) ? 'Yes' : 'No',
+            is_active_display: this.toBoolean(item.is_active) ? 'Active' : 'Deactive'
+          }));
           
           if (response.meta) {
             this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: response.meta.total };
@@ -599,12 +613,20 @@ export class FeeListComponent implements OnInit, OnDestroy {
   getStructureColumns(): TableColumn[] {
     return [
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      { key: 'branch.name', header: 'Branch', sortable: true },
       { key: 'grade_label', header: 'Grade', sortable: true, searchable: true, width: '120px' },
       { key: 'fee_type', header: 'Fee Type', sortable: true, searchable: true, width: '150px' },
       { key: 'amount_formatted', header: 'Amount', sortable: true, width: '120px', align: 'right' },
       { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
       { key: 'due_date', header: 'Due Date', type: 'date', sortable: true, width: '120px' },
-      { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        width: '100px',
+        align: 'center',
+        cellClass: (row: any) => row?.is_active_display === 'Deactive' ? 'badge-danger' : 'badge-success'
+      }
     ];
   }
   
@@ -624,11 +646,18 @@ export class FeeListComponent implements OnInit, OnDestroy {
     return [
       // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'name', header: 'Fee Type Name', sortable: true, searchable: true },
-      { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
-      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
-      { key: 'is_mandatory', header: 'Mandatory', type: 'badge', width: '110px', align: 'center' },
-      { key: 'is_refundable', header: 'Refundable', type: 'badge', width: '110px', align: 'center' },
-      { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
+      { key: 'code', header: 'Code', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true },
+      { key: 'is_mandatory_display', header: 'Mandatory', type: 'badge', width: '110px', align: 'center' },
+      { key: 'is_refundable_display', header: 'Refundable', type: 'badge', width: '110px', align: 'center' },
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        width: '100px',
+        align: 'center',
+        cellClass: (row: any) => row?.is_active_display === 'Deactive' ? 'badge-danger' : 'badge-success'
+      }
     ];
   }
 
@@ -684,26 +713,19 @@ export class FeeListComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && response.data) {
           this.grades = response.data;
-          const gradeOptions = response.data.map(grade => ({
+          const gradeOptions = response.data.map((grade: any) => ({
             value: grade.value,
             label: grade.label
           }));
-          
-          // Update structure search config
-          const structureGradeField = this.structuresSearchConfig.fields.find(f => f.key === 'grade');
-          if (structureGradeField) {
-            structureGradeField.options = gradeOptions;
-          }
-          
-          // Update today's payments search config
+          // Structure grade is loaded per-branch via onStructuresSearchFieldChanged
+          // Update today's payments search config only
           const todayGradeField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'grade');
           if (todayGradeField) {
             todayGradeField.options = gradeOptions;
           }
         }
       },
-      error: (error) => {
-      }
+      error: () => {}
     });
   }
 
@@ -735,10 +757,14 @@ export class FeeListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Load fee types for advanced search filter
+   * Load fee types for advanced search filter (optionally by branch)
    */
-  loadFeeTypesForFilter(): void {
-    this.feeTypeService.getFeeTypes({ is_active: true }).subscribe({
+  loadFeeTypesForFilter(branchId?: number | string | null): void {
+    const params: Record<string, unknown> = { is_active: true };
+    if (branchId) {
+      params['branch_id'] = branchId;
+    }
+    this.feeTypeService.getFeeTypes(params).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           const feeTypeOptions = response.data.map((feeType: any) => ({
@@ -756,6 +782,55 @@ export class FeeListComponent implements OnInit, OnDestroy {
       error: (error) => {
       }
     });
+  }
+
+  /**
+   * Load academic years for advanced search filter (Fee Structures)
+   */
+  loadAcademicYearsForFilter(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          const academicYearOptions = response.data.map((ay: any) => ({
+            value: ay.id.toString(),
+            label: ay.name
+          }));
+          
+          const structureAcademicYearField = this.structuresSearchConfig.fields.find(f => f.key === 'academic_year_id');
+          if (structureAcademicYearField) {
+            structureAcademicYearField.options = academicYearOptions;
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  /**
+   * When branch changes in structures advanced search, load grades and fee types for that branch
+   */
+  onStructuresSearchFieldChanged(event: { field: string; value: any }): void {
+    if (event.field === 'branch_id' && event.value) {
+      const branchId = Number(event.value);
+      // Load grades for selected branch
+      this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+        next: (response: any) => {
+          if (response.success && response.data) {
+            const gradeOptions = response.data.map((g: any) => ({
+              value: g.value,
+              label: g.label
+            }));
+            const structureGradeField = this.structuresSearchConfig.fields.find(f => f.key === 'grade');
+            if (structureGradeField) {
+              structureGradeField.options = gradeOptions;
+            }
+          }
+        },
+        error: () => {}
+      });
+      // Load fee types for selected branch
+      this.loadFeeTypesForFilter(branchId);
+    }
   }
   
   // Structure tab actions
@@ -944,7 +1019,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
       this.loadTodayPayments();
     } else if (this.activeTab === 'structures') {
       this.structureFilters = {};
-      this.loadFeeStructures();
+      this.loadFeeStructures({ page: 1 });
     } else if (this.activeTab === 'payments') {
       this.paymentFilters = {};
       this.loadFeePayments();
@@ -1037,9 +1112,6 @@ export class FeeListComponent implements OnInit, OnDestroy {
       case 'Delete':
         this.deleteFeeType(feeType);
         break;
-      case 'Toggle Status':
-        this.toggleFeeTypeStatus(feeType);
-        break;
       case 'add':
         this.addFeeType();
         break;
@@ -1083,19 +1155,14 @@ export class FeeListComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleFeeTypeStatus(feeType: FeeType): void {
-    this.feeTypeService.toggleStatus(feeType.id!).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.errorHandler.showSuccess(`Fee type ${feeType.is_active ? 'deactivated' : 'activated'} successfully`);
-          this.loadFeeTypes();
-        } else {
-          this.errorHandler.showError(response.message || 'Failed to toggle status');
-        }
-      },
-      error: (error) => {
-        this.errorHandler.showError(error);
-      }
-    });
+  /** Normalize API boolean-like values: true/1/'1'/'true' => true */
+  private toBoolean(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'active';
+    }
+    return false;
   }
 }

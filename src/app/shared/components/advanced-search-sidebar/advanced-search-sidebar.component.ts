@@ -184,13 +184,19 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
   }
   
   onReset(): void {
+    this.resetForm();
+    this.searchReset.emit();
+  }
+
+  /** Reset form to defaults (for external use, e.g. Clear All Filters button). Does not emit. */
+  resetForm(): void {
+    if (!this.searchForm) return;
     this.searchForm.reset();
-    this.config.fields.forEach(field => {
-      if (field.defaultValue) {
+    this.config?.fields?.forEach(field => {
+      if (field.defaultValue !== undefined && field.defaultValue !== null) {
         this.searchForm.get(field.key)?.setValue(field.defaultValue);
       }
     });
-    this.searchReset.emit();
   }
   
   onSaveSearch(): void {

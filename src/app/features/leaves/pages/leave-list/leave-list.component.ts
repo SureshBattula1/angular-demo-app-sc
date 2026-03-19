@@ -1,6 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
@@ -10,6 +12,7 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { AcademicYearService } from '../../../settings/services/academic-year.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentLeave, TeacherLeave } from '../../../../core/models/leave.model';
 import { Section } from '../../../../core/models/section.model';
@@ -232,7 +235,7 @@ import { Section } from '../../../../core/models/section.model';
     }
   `]
 })
-export class LeaveListComponent implements OnInit {
+export class LeaveListComponent implements OnInit, OnDestroy {
   @ViewChild('studentDataTable') studentDataTable!: DataTableComponent;
   @ViewChild('teacherDataTable') teacherDataTable!: DataTableComponent;
   
@@ -255,6 +258,7 @@ export class LeaveListComponent implements OnInit {
   academicYears: { id: number; name: string }[] = [];
   currentGrade: string | null = null; // Track current grade selection
   currentBranch: string | null = null; // Track current branch selection
+  private academicYearSub?: Subscription;
   
   // Separate table configurations
   studentTableConfig: TableConfig = {
@@ -438,7 +442,8 @@ export class LeaveListComponent implements OnInit {
     private branchService: BranchService,
     private gradeService: GradeService,
     private sectionService: SectionService,
-    private academicYearService: AcademicYearService
+    private academicYearService: AcademicYearService,
+    private academicYearContext: AcademicYearContextService
   ) {}
   
   ngOnInit(): void {
@@ -458,6 +463,16 @@ export class LeaveListComponent implements OnInit {
     this.loadAcademicYears();
     this.loadStudentLeaves();
     this.loadTeacherLeaves();
+    
+    // Reload leaves when toolbar academic year changes
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => {
+      this.loadStudentLeaves(this.currentFilters);
+      this.loadTeacherLeaves(this.currentFilters);
+    });
+  }
+  
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
 
   switchTab(tab: 'student' | 'teacher'): void {
@@ -466,7 +481,14 @@ export class LeaveListComponent implements OnInit {
 
   loadStudentLeaves(filters: Record<string, any> = {}): void {
     this.loading = true;
-    const params = { ...filters, type: 'student' as const };
+    const params: Record<string, any> = { ...filters, type: 'student' };
+    // Apply toolbar academic year when not overridden by advanced search
+    if (params['academic_year_id'] === undefined || params['academic_year_id'] === null || params['academic_year_id'] === '') {
+      const selectedYearId = this.academicYearContext.selectedYearId;
+      if (selectedYearId != null) {
+        params['academic_year_id'] = selectedYearId;
+      }
+    }
     
     this.leaveService.getLeaves(params).subscribe({
       next: (response: any) => {
@@ -498,7 +520,14 @@ export class LeaveListComponent implements OnInit {
 
   loadTeacherLeaves(filters: Record<string, any> = {}): void {
     this.loading = true;
-    const params = { ...filters, type: 'teacher' as const };
+    const params: Record<string, any> = { ...filters, type: 'teacher' };
+    // Apply toolbar academic year when not overridden by advanced search
+    if (params['academic_year_id'] === undefined || params['academic_year_id'] === null || params['academic_year_id'] === '') {
+      const selectedYearId = this.academicYearContext.selectedYearId;
+      if (selectedYearId != null) {
+        params['academic_year_id'] = selectedYearId;
+      }
+    }
     
     this.leaveService.getLeaves(params).subscribe({
       next: (response: any) => {

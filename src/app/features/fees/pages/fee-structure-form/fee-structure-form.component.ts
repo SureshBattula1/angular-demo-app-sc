@@ -7,6 +7,7 @@ import { FeeService } from '../../services/fee.service';
 import { FeeTypeService } from '../../services/fee-type.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FeeStructure } from '../../../../core/models/fee.model';
 
@@ -27,6 +28,7 @@ export class FeeStructureFormComponent implements OnInit {
   
   branches: any[] = [];
   grades: any[] = [];
+  academicYears: AcademicYear[] = [];
   feeTypes: any[] = [];
   recurrencePeriods = [
     { value: 'Monthly', label: 'Monthly' },
@@ -42,14 +44,15 @@ export class FeeStructureFormComponent implements OnInit {
     private feeTypeService: FeeTypeService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadGrades();
-    this.loadFeeTypes(); // Loads fee types for user's school; branch filter applied when branch selected
+    this.loadAcademicYears();
+    this.loadFeeTypes();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -70,8 +73,8 @@ export class FeeStructureFormComponent implements OnInit {
       grade: ['', Validators.required],
       fee_type: ['', Validators.required],
       amount: [0, [Validators.required, Validators.min(0)]],
-      academic_year: [this.getCurrentAcademicYear(), Validators.required],
-      due_date: [''],
+      academic_year_id: [null, Validators.required],
+      due_date: [null as Date | string | null],
       description: [''],
       is_recurring: [false],
       recurrence_period: [null],
@@ -90,9 +93,14 @@ export class FeeStructureFormComponent implements OnInit {
       recurrenceControl?.updateValueAndValidity();
     });
 
-    // Reload fee types when branch changes - show only fee types for the selected branch
+    // When branch changes: reload fee types and grades for that branch; clear grade selection
     this.feeForm.get('branch_id')?.valueChanges.subscribe(branchId => {
       this.loadFeeTypes(branchId);
+      this.grades = [];
+      this.feeForm.get('grade')?.setValue('');
+      if (branchId) {
+        this.loadGrades(branchId);
+      }
     });
   }
   
@@ -108,14 +116,37 @@ export class FeeStructureFormComponent implements OnInit {
     });
   }
   
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  loadGrades(branchId: number): void {
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.grades = response.data;
+        } else {
+          this.grades = [];
         }
       },
-      error: (error) => {
+      error: () => {
+        this.grades = [];
+      }
+    });
+  }
+
+  loadAcademicYears(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+          // Set default to current academic year if not in edit mode
+          if (!this.isEditMode && !this.feeForm.get('academic_year_id')?.value) {
+            const current = this.academicYears.find(y => y.is_current) || this.academicYears.find(y => y.is_active);
+            if (current) {
+              this.feeForm.get('academic_year_id')?.setValue(current.id);
+            }
+          }
+        }
+      },
+      error: () => {
+        this.academicYears = [];
       }
     });
   }
@@ -149,16 +180,50 @@ export class FeeStructureFormComponent implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           const structure = response.data;
-          const formData = { ...structure };
-          if (structure.due_date) {
-            const d = structure.due_date;
-            formData.due_date = typeof d === 'string'
-              ? d.includes('T') ? d.split('T')[0] : d
-              : d instanceof Date ? d.toISOString().split('T')[0] : d;
+          // Load grades first, then patch - ensures grade dropdown matches (value vs label)
+          const patchForm = (grades: any[]) => {
+            const formData: Record<string, unknown> = {
+              branch_id: structure.branch_id,
+              fee_type: structure.fee_type,
+              amount: structure.amount,
+              academic_year_id: structure.academic_year_id ?? null,
+              description: structure.description ?? '',
+              is_recurring: structure.is_recurring ?? false,
+              recurrence_period: structure.recurrence_period ?? null,
+              is_active: structure.is_active !== false
+            };
+            // Resolve grade: use value that matches dropdown (structure may have "1" or "Grade 1")
+            const resolvedGrade = this.resolveGradeForForm(structure.grade, grades);
+            formData['grade'] = resolvedGrade;
+            if (structure.due_date) {
+              formData['due_date'] = this.parseToDate(structure.due_date);
+            } else {
+              formData['due_date'] = null;
+            }
+            this.feeForm.patchValue(formData);
+          };
+          if (structure.branch_id) {
+            this.gradeService.getGrades({ branch_id: structure.branch_id }).subscribe({
+              next: (gradeRes: any) => {
+                const grades = gradeRes.success && gradeRes.data ? gradeRes.data : [];
+                this.grades = grades;
+                patchForm(grades);
+                this.isLoading = false;
+              },
+              error: () => {
+                this.grades = [];
+                patchForm([]);
+                this.isLoading = false;
+              }
+            });
+          } else {
+            this.grades = [];
+            patchForm([]);
+            this.isLoading = false;
           }
-          this.feeForm.patchValue(formData);
+        } else {
+          this.isLoading = false;
         }
-        this.isLoading = false;
       },
       error: (error) => {
         this.errorHandler.showError(error);
@@ -178,7 +243,11 @@ export class FeeStructureFormComponent implements OnInit {
     }
     
     this.submitting = true;
-    const formData = this.feeForm.value;
+    const formData = { ...this.feeForm.value };
+    // Convert due_date to YYYY-MM-DD string for API if it's a Date
+    if (formData.due_date instanceof Date) {
+      formData.due_date = formData.due_date.toISOString().split('T')[0];
+    }
     
     const request = this.isEditMode && this.feeStructureId
       ? this.feeService.updateFeeStructure(this.feeStructureId, formData)
@@ -215,17 +284,6 @@ export class FeeStructureFormComponent implements OnInit {
     });
   }
   
-  private getCurrentAcademicYear(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    
-    if (month >= 3) {
-      return `${year}-${year + 1}`;
-    } else {
-      return `${year - 1}-${year}`;
-    }
-  }
   
   getErrorMessage(fieldName: string): string {
     const control = this.feeForm.get(fieldName);
@@ -241,13 +299,38 @@ export class FeeStructureFormComponent implements OnInit {
     return '';
   }
   
+  private parseToDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    const str = String(value);
+    if (!str) return null;
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  /**
+   * Resolve grade for form: structure may store "1" or "Grade 1".
+   * Return the grade.value that matches dropdown options so mat-select displays correctly.
+   */
+  private resolveGradeForForm(structureGrade: string | null | undefined, grades: any[]): string {
+    if (!structureGrade || !grades?.length) return structureGrade ?? '';
+    const val = String(structureGrade).trim();
+    const found = grades.find((g: any) => {
+      const gVal = String(g.value ?? '').trim();
+      const gLabel = String(g.label ?? '').trim();
+      return gVal === val || gLabel === val ||
+        gVal === structureGrade || gLabel === structureGrade;
+    });
+    return found ? String(found.value) : val;
+  }
+
   private getFieldLabel(fieldName: string): string {
     const labels: Record<string, string> = {
       branch_id: 'Branch',
       grade: 'Grade',
       fee_type: 'Fee Type',
       amount: 'Amount',
-      academic_year: 'Academic Year',
+      academic_year_id: 'Academic Year',
       due_date: 'Due Date',
       recurrence_period: 'Recurrence Period'
     };
