@@ -30,25 +30,31 @@
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Grade *</mat-label>
-              <mat-select formControlName="grade">
+              <mat-select formControlName="grade" [disabled]="!filterForm.get('branch_id')?.value || loadingGrades">
+                <mat-option *ngIf="!filterForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                <mat-option *ngIf="loadingGrades" disabled>Loading grades...</mat-option>
                 <mat-option *ngFor="let grade of grades" [value]="grade.value">
                   {{ grade.label }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>school</mat-icon>
+              <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
               <mat-error *ngIf="filterForm.get('grade')?.invalid">Grade is required</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Section</mat-label>
-              <mat-select formControlName="section">
+              <mat-select formControlName="section" [disabled]="!filterForm.get('branch_id')?.value || !filterForm.get('grade')?.value || loadingSections">
                 <mat-option [value]="null">All Sections</mat-option>
+                <mat-option *ngIf="!filterForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                <mat-option *ngIf="filterForm.get('branch_id')?.value && !filterForm.get('grade')?.value" disabled>Select grade first</mat-option>
                 <mat-option *ngIf="loadingSections" disabled>Loading sections...</mat-option>
                 <mat-option *ngFor="let section of sections" [value]="section.name">
                   {{ section.name }}
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>class</mat-icon>
+              <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
               <mat-hint>Optional: Filter by specific section</mat-hint>
             </mat-form-field>
           </div>
@@ -64,16 +70,18 @@
           
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Select Student *</mat-label>
-            <mat-select formControlName="student_id" [disabled]="filteredStudents.length === 0">
-              <mat-option *ngIf="filteredStudents.length === 0" disabled>
-                {{ filterForm.invalid ? 'Please select Branch and Grade first' : 'No students found' }}
+            <mat-select formControlName="student_id" [disabled]="filteredStudents.length === 0 || isLoading">
+              <mat-option *ngIf="isLoading" disabled>Loading students...</mat-option>
+              <mat-option *ngIf="!isLoading && filteredStudents.length === 0" disabled>
+                {{ filterForm.invalid ? 'Please select Branch and Grade first' : 'No students found for this branch, grade and section' }}
               </mat-option>
               <mat-option *ngFor="let student of filteredStudents" [value]="student.user_id || student.id">
                 {{ getStudentName(student) }} ({{ student.admission_number }})
               </mat-option>
             </mat-select>
             <mat-icon matPrefix>person</mat-icon>
-            <mat-hint *ngIf="filteredStudents.length > 0">{{ filteredStudents.length }} student(s) found</mat-hint>
+            <mat-spinner *ngIf="isLoading" matSuffix diameter="18"></mat-spinner>
+            <mat-hint *ngIf="filteredStudents.length > 0 && !isLoading">{{ filteredStudents.length }} student(s) found</mat-hint>
             <mat-error *ngIf="paymentForm.get('student_id')?.invalid">{{ getErrorMessage('student_id') }}</mat-error>
           </mat-form-field>
 
@@ -138,7 +146,9 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Payment Date *</mat-label>
-              <input matInput type="date" formControlName="payment_date">
+              <input matInput [matDatepicker]="paymentDatePicker" formControlName="payment_date" placeholder="Choose payment date">
+              <mat-datepicker-toggle matSuffix [for]="paymentDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #paymentDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
               <mat-error *ngIf="paymentForm.get('payment_date')?.invalid">{{ getErrorMessage('payment_date') }}</mat-error>
             </mat-form-field>

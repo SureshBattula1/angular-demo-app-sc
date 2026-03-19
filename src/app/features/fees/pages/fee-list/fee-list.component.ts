@@ -426,12 +426,14 @@ export class FeeListComponent implements OnInit, OnDestroy {
     this.feeService.getFeeStructures(this.structureFilters).subscribe({
       next: (response: any) => {
         if (response.success) {
-          // Transform data to add grade_label and amount_formatted
+          // Transform data: use API grade_label (branch-specific) when present, else fallback
           this.feeStructures = (response.data || []).map((structure: any) => {
-            const gradeObj = this.grades.find((g: any) => g.value === structure.grade);
+            const gradeLabel = structure.grade_label != null && structure.grade_label !== ''
+              ? structure.grade_label
+              : (this.grades.find((g: any) => g.value === structure.grade)?.label ?? `Grade ${structure.grade}`);
             return {
               ...structure,
-              grade_label: gradeObj ? gradeObj.label : `Grade ${structure.grade}`,
+              grade_label: gradeLabel,
               amount_formatted: `₹${structure.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`,
               is_active_display: this.toBoolean(structure.is_active) ? 'Active' : 'Deactive'
             };
@@ -519,26 +521,22 @@ export class FeeListComponent implements OnInit, OnDestroy {
     this.feeService.getFeePayments(this.paymentFilters).subscribe({
       next: (response: any) => {
         if (response.success) {
-          // Transform data to add student_name, fee_type_name, and amount_formatted
+            // Transform data to add student_name, fee_type_name, amount_formatted, branch_name
           this.feePayments = (response.data || []).map((payment: any) => {
-            // Get student name from relationship
             const studentName = payment.student 
               ? `${payment.student.first_name || ''} ${payment.student.last_name || ''}`.trim()
               : 'N/A';
-            
-            // Get fee type from fee_structure relationship
             const feeTypeName = payment.fee_structure?.fee_type || 'N/A';
-            
-            // Format amount
+            const branchName = payment.branch_name ?? payment.fee_structure?.branch?.name ?? null;
             const amountFormatted = `₹${payment.amount_paid?.toLocaleString('en-IN', { 
               minimumFractionDigits: 2, 
               maximumFractionDigits: 2 
             }) || '0.00'}`;
-            
             return {
               ...payment,
               student_name: studentName,
               fee_type_name: feeTypeName,
+              branch_name: branchName,
               amount_formatted: amountFormatted
             };
           });
@@ -632,6 +630,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
   
   getPaymentColumns(): TableColumn[] {
     return [
+      { key: 'branch_name', header: 'Branch', sortable: true, width: '140px' },
       { key: 'receipt_number', header: 'Receipt No.', sortable: true, searchable: true, width: '140px' },
       { key: 'payment_date', header: 'Payment Date', type: 'date', sortable: true, width: '130px' },
       { key: 'student_name', header: 'Student', sortable: true, searchable: true, width: '200px' },

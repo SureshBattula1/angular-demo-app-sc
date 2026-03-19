@@ -44,6 +44,10 @@ export interface FeePayment {
   fee_structure?: FeeStructure;
   student?: any;
   creator?: any;
+  /** Grade display name from API (e.g. "International Grade 10") */
+  student_grade_label?: string;
+  /** Section name from API (e.g. "A") */
+  student_section?: string;
   past_transactions?: Array<{
     id: string | number;
     receipt_number?: string;

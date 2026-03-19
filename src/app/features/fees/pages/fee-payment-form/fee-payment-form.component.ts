@@ -32,6 +32,7 @@ export class FeePaymentFormComponent implements OnInit {
   branches: any[] = [];
   grades: any[] = [];
   sections: any[] = [];
+  loadingGrades = false;
   loadingSections = false;
   
   paymentMethods = [
@@ -65,7 +66,6 @@ export class FeePaymentFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadGrades();
     
     // Get return tab from query params
     this.route.queryParams.subscribe(params => {
@@ -95,13 +95,18 @@ export class FeePaymentFormComponent implements OnInit {
       remarks: ['']
     });
     
-    // Watch for branch or grade changes to load sections
-    this.filterForm.get('branch_id')?.valueChanges.subscribe(() => {
-      this.loadSections();
+    // Watch branch changes to load branch-specific grades
+    this.filterForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
+      this.filterForm.get('grade')?.setValue(null, { emitEvent: false });
+      this.filterForm.get('section')?.setValue(null, { emitEvent: false });
+      this.grades = [];
+      this.sections = [];
+      this.loadGrades(branchId);
       this.resetStudentSelection();
     });
     
     this.filterForm.get('grade')?.valueChanges.subscribe(() => {
+      this.filterForm.get('section')?.setValue(null, { emitEvent: false });
       this.loadSections();
       this.resetStudentSelection();
     });
@@ -160,14 +165,24 @@ export class FeePaymentFormComponent implements OnInit {
     });
   }
   
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  loadGrades(branchId?: number | string | null): void {
+    if (!branchId) {
+      this.grades = [];
+      return;
+    }
+    this.loadingGrades = true;
+    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.grades = response.data;
+        } else {
+          this.grades = [];
         }
+        this.loadingGrades = false;
       },
       error: (error) => {
+        this.loadingGrades = false;
+        this.grades = [];
         this.errorHandler.showError(error);
       }
     });
@@ -241,6 +256,7 @@ export class FeePaymentFormComponent implements OnInit {
   loadStudents(): void {
     const branchId = this.filterForm.get('branch_id')?.value;
     const grade = this.filterForm.get('grade')?.value;
+    const section = this.filterForm.get('section')?.value;
     
     if (!branchId || !grade) {
       this.students = [];
@@ -251,15 +267,22 @@ export class FeePaymentFormComponent implements OnInit {
     this.isLoading = true;
     const filters: any = {
       branch_id: branchId,
-      grade: grade,  // Fixed: backend expects 'grade', not 'grade_level'
-      student_status: 'Active'
+      grade: grade,
+      student_status: 'Active',
+      per_page: 500
     };
+    if (section) {
+      filters.section = section;
+    }
     
     this.studentService.getStudents(filters).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
-          this.students = response.data;
+          this.students = Array.isArray(response.data) ? response.data : [];
           this.filterStudents();
+        } else {
+          this.students = [];
+          this.filteredStudents = [];
         }
         this.isLoading = false;
       },
@@ -276,16 +299,15 @@ export class FeePaymentFormComponent implements OnInit {
     const section = this.filterForm.get('section')?.value;
     
     if (!section) {
-      // No section selected, show all students from the selected branch and grade
-      this.filteredStudents = this.students;
+      this.filteredStudents = [...this.students];
     } else {
-      // Filter by section
-      this.filteredStudents = this.students.filter((student: any) => 
-        student.section === section || student.section_name === section
-      );
+      // API may return section as current_section, section, or section_name
+      this.filteredStudents = this.students.filter((student: any) => {
+        const s = (student.current_section ?? student.section ?? student.section_name ?? '').toString().trim();
+        return s === section;
+      });
     }
     
-    // Reset student selection when filters change
     this.paymentForm.get('student_id')?.setValue(null);
   }
   
@@ -522,6 +544,9 @@ export class FeePaymentFormComponent implements OnInit {
     
     this.isLoading = true;
     const formData = this.paymentForm.value;
+    if (formData.payment_date instanceof Date) {
+      formData.payment_date = formData.payment_date.toISOString().split('T')[0];
+    }
     
     this.feeService.recordPayment(formData).subscribe({
       next: (response) => {
@@ -552,8 +577,8 @@ export class FeePaymentFormComponent implements OnInit {
     });
   }
   
-  private getTodayDate(): string {
-    return new Date().toISOString().split('T')[0];
+  private getTodayDate(): Date {
+    return new Date();
   }
   
   getStudentName(student: any): string {
