@@ -87,5 +87,20 @@ export class ExamScheduleViewComponent implements OnInit {
     this.router.navigate(['/exams'], { queryParams: { tab: this.returnTab } });
   }
 
+  /** Class name for display (e.g. "Grade 5") */
+  getClassDisplay(): string {
+    const grade = this.schedule?.grade || this.schedule?.grade_level;
+    return grade ? `Grade ${grade}` : 'Not specified';
+  }
+
+  /** Section name for display */
+  getSectionDisplay(): string {
+    const section = this.schedule?.section;
+    if (section === null || section === undefined || String(section).trim() === '') {
+      return 'All Sections';
+    }
+    return String(section).trim();
+  }
+
 }
 

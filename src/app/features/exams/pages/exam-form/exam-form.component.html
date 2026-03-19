@@ -94,18 +94,31 @@
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-full">
-              <mat-label>Academic Year</mat-label>
-              <input 
-                matInput 
-                formControlName="academic_year" 
-                placeholder="e.g., 2024-2025"
-                [readonly]="!isEditMode && !!examId">
-              <mat-icon matPrefix>calendar_today</mat-icon>
-              <mat-error *ngIf="examForm.get('academic_year')?.hasError('required')">
-                Academic year is required
-              </mat-error>
-            </mat-form-field>
+            <ng-container *ngIf="!isEditMode && examId">
+              <mat-form-field appearance="outline" class="form-field-full">
+                <mat-label>Academic Year</mat-label>
+                <input matInput [value]="examForm.get('academic_year')?.value" [readonly]="true">
+                <mat-icon matPrefix>calendar_today</mat-icon>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="isEditMode || !examId">
+              <mat-form-field appearance="outline" class="form-field-full">
+                <mat-label>Academic Year</mat-label>
+                <mat-select formControlName="academic_year">
+                  <mat-option *ngIf="loadingAcademicYears" disabled>Loading...</mat-option>
+                  <mat-option *ngFor="let year of academicYears" [value]="year.name">
+                    {{ year.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>calendar_today</mat-icon>
+                <mat-hint *ngIf="examForm.get('academic_year')?.disabled">
+                  Locked by exam term selection
+                </mat-hint>
+                <mat-error *ngIf="examForm.get('academic_year')?.hasError('required')">
+                  Academic year is required
+                </mat-error>
+              </mat-form-field>
+            </ng-container>
           </div>
         </div>
 

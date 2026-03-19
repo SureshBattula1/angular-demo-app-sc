@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { ExamTermService, ExamTerm } from '../../services/exam-term.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
 @Component({
@@ -20,12 +21,15 @@ export class ExamTermFormComponent implements OnInit {
   saving = false;
   termId: number | undefined = undefined;
   branches: any[] = [];
+  academicYears: AcademicYear[] = [];
+  loadingAcademicYears = false;
   returnTab?: string;
 
   constructor(
     private fb: FormBuilder,
     private examTermService: ExamTermService,
     private branchService: BranchService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute
@@ -34,6 +38,7 @@ export class ExamTermFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadAcademicYears();
     
     // Check if this is a view mode (read-only) from the URL
     const currentUrl = this.router.url;
@@ -75,6 +80,24 @@ export class ExamTermFormComponent implements OnInit {
         }
       },
       error: (error) => this.errorHandler.showError(error)
+    });
+  }
+
+  loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        this.academicYears = (response.success && response.data) ? response.data : [];
+        const current = this.academicYears.find(y => y.is_current) || this.academicYears.find(y => y.is_active);
+        if (current && !this.termId) {
+          this.termForm.patchValue({ academic_year: current.name }, { emitEvent: false });
+        }
+        this.loadingAcademicYears = false;
+      },
+      error: () => {
+        this.academicYears = [];
+        this.loadingAcademicYears = false;
+      }
     });
   }
 

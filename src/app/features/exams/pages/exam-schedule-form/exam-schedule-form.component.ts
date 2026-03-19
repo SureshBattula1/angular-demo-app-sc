@@ -65,6 +65,7 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
                       {{ branch.name }}
                     </mat-option>
                   </mat-select>
+                  <mat-hint *ngIf="scheduleForm.get('branch_id')?.disabled">Set by selected exam</mat-hint>
                   <mat-error *ngIf="scheduleForm.get('branch_id')?.hasError('required')">Branch is required</mat-error>
                 </mat-form-field>
               </div>
@@ -294,10 +295,12 @@ export class ExamScheduleFormComponent implements OnInit {
       this.loadSections();
     });
 
-    // Watch for exam_id changes and auto-populate branch
+    // Watch for exam_id changes: when exam selected → branch disabled + load grades/subjects by branch; when cleared → re-enable and reload all
     this.scheduleForm.get('exam_id')?.valueChanges.subscribe((examId) => {
-      if (examId && !this.isEditMode) {
+      if (examId) {
         this.loadExamDetails(examId);
+      } else {
+        if (!this.isEditMode) this.clearExamDependentData();
       }
     });
   }
@@ -361,17 +364,85 @@ export class ExamScheduleFormComponent implements OnInit {
     });
   }
 
-  loadExamDetails(examId: number): void {
-    const selectedExam = this.exams.find(exam => exam.id === examId);
-    if (selectedExam && selectedExam.branch_id) {
-      // Set branch_id and disable it
-      this.scheduleForm.patchValue({ 
-        branch_id: selectedExam.branch_id 
-      });
-      
-      // Disable branch field
-      this.scheduleForm.get('branch_id')?.disable();
+  loadExamDetails(examId: number | string, examFromApi?: any): void {
+    const id = typeof examId === 'string' ? +examId : examId;
+    let selectedExam = examFromApi || this.exams.find((exam: any) => exam.id === id || exam.id === examId);
+    if (selectedExam?.branch_id) {
+      this.applyExamSelection(selectedExam);
+      return;
     }
+    // Exam not in list yet (e.g. opened with ?exam_id=) – fetch it
+    if (!examId) return;
+    this.examService.getExam(String(examId)).subscribe({
+      next: (res) => {
+        if (res.success && res.data?.branch_id) this.applyExamSelection(res.data);
+      },
+      error: () => {}
+    });
+  }
+
+  private applyExamSelection(selectedExam: any): void {
+    const branchId = selectedExam.branch_id;
+
+    // Set branch_id and disable branch field
+    this.scheduleForm.patchValue({ branch_id: branchId }, { emitEvent: false });
+    this.scheduleForm.get('branch_id')?.disable({ emitEvent: false });
+
+    // Load grades for this branch only (Class/Grade dropdown)
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+      next: (response: any) => {
+        this.grades = response.data || [];
+      },
+      error: () => { this.grades = []; }
+    });
+
+    // Load subjects for this branch only
+    this.subjectService.getSubjects({ branch_id: branchId }).subscribe({
+      next: (response) => {
+        if (response.success) this.subjects = response.data || [];
+        else this.subjects = [];
+      },
+      error: () => { this.subjects = []; }
+    });
+
+    // Load teachers for this branch only (Invigilator dropdown)
+    this.teacherService.getTeachers({ branch_id: branchId }).subscribe({
+      next: (response: any) => {
+        this.teachers = response.success && response.data ? response.data : [];
+      },
+      error: () => { this.teachers = []; }
+    });
+  }
+
+  getBranchName(branchId: number): string {
+    const b = this.branches.find((x: any) => x.id === branchId);
+    return b ? b.name : '';
+  }
+
+  /** When exam is cleared, re-enable branch and reload all grades/subjects */
+  clearExamDependentData(): void {
+    this.scheduleForm.get('branch_id')?.enable({ emitEvent: false });
+    this.scheduleForm.patchValue(
+      { branch_id: '', grade_level: '', subject_id: '' },
+      { emitEvent: false }
+    );
+    this.gradeService.getGrades().subscribe({
+      next: (response: any) => { this.grades = response.data || []; },
+      error: () => { this.grades = []; }
+    });
+    this.subjectService.getSubjects().subscribe({
+      next: (response) => {
+        if (response.success) this.subjects = response.data || [];
+        else this.subjects = [];
+      },
+      error: () => { this.subjects = []; }
+    });
+    this.teacherService.getTeachers({}).subscribe({
+      next: (response: any) => {
+        this.teachers = response.success && response.data ? response.data : [];
+      },
+      error: () => { this.teachers = []; }
+    });
   }
 
   loadSections(): void {
@@ -424,13 +495,13 @@ export class ExamScheduleFormComponent implements OnInit {
           // Get branch_id from exam if available
           const branchId = schedule.exam?.branch_id || '';
           
-          // Map database fields to form fields
+          // Map database fields to form fields (grade_level = grade, section null = All Sections)
           const formData = {
             exam_id: schedule.exam_id,
             subject_id: schedule.subject_id,
             branch_id: branchId,
-            grade_level: schedule.grade, // Map grade to grade_level
-            section: schedule.section || '',
+            grade_level: schedule.grade ?? schedule.grade_level ?? '',
+            section: (schedule.section !== null && schedule.section !== undefined && String(schedule.section).trim() !== '') ? String(schedule.section).trim() : null,
             exam_date: schedule.exam_date,
             start_time: schedule.start_time,
             end_time: schedule.end_time,
@@ -446,6 +517,9 @@ export class ExamScheduleFormComponent implements OnInit {
           
           // Patch form values without emitting events
           this.scheduleForm.patchValue(formData, { emitEvent: false });
+
+          // Disable branch and load grades/subjects for this exam's branch
+          this.loadExamDetails(schedule.exam_id, schedule.exam);
           
           // Load sections after setting grade and branch
           if (schedule.grade && branchId) {
@@ -471,11 +545,16 @@ export class ExamScheduleFormComponent implements OnInit {
     this.saving = true;
     
     // Get form value and include disabled fields
-    const formData = { ...this.scheduleForm.value };
+    const formData = { ...this.scheduleForm.getRawValue() } as any;
     
-    // If branch_id is disabled, get its raw value
+    // If branch_id is disabled, get its value from the control
     if (this.scheduleForm.get('branch_id')?.disabled) {
       formData.branch_id = this.scheduleForm.get('branch_id')?.value;
+    }
+    // API expects grade and section; form uses grade_level
+    formData.grade = formData.grade_level ?? formData.grade;
+    if (formData.section === '' || formData.section === undefined) {
+      formData.section = null;
     }
 
     const request = this.isEditMode

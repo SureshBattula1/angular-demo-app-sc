@@ -6,6 +6,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { ExamService, Exam } from '../../services/exam.service';
 import { ExamTermService, ExamTerm } from '../../services/exam-term.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
 @Component({
@@ -22,6 +23,8 @@ export class ExamFormComponent implements OnInit {
   examId?: string;
   branches: any[] = [];
   examTerms: ExamTerm[] = [];
+  academicYears: AcademicYear[] = [];
+  loadingAcademicYears = false;
   returnTab?: string;
 
   constructor(
@@ -29,6 +32,7 @@ export class ExamFormComponent implements OnInit {
     private examService: ExamService,
     private examTermService: ExamTermService,
     private branchService: BranchService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute
@@ -37,6 +41,7 @@ export class ExamFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadAcademicYears();
     this.loadExamTerms();
     
     // Watch for exam term changes and auto-populate branch and academic year
@@ -68,7 +73,7 @@ export class ExamFormComponent implements OnInit {
       // Only auto-populate when creating a new exam (not when editing)
       if (!this.examId) {
         if (termId) {
-          // Exam term selected - auto-populate and disable branch
+          // Exam term selected - auto-populate and disable branch & academic year
           const selectedTerm = this.examTerms.find(term => term.id === termId);
           if (selectedTerm) {
             this.examForm.patchValue({
@@ -76,18 +81,18 @@ export class ExamFormComponent implements OnInit {
               academic_year: selectedTerm.academic_year
             }, { emitEvent: false });
             
-            // Disable branch field since it's auto-populated from exam term
             this.examForm.get('branch_id')?.disable({ emitEvent: false });
+            this.examForm.get('academic_year')?.disable({ emitEvent: false });
           }
         } else {
-          // No exam term selected (None) - reset and enable branch
+          // No exam term selected (None) - reset and enable branch & academic year
           this.examForm.patchValue({
             branch_id: '',
             academic_year: ''
           }, { emitEvent: false });
           
-          // Enable branch field so user can select manually
           this.examForm.get('branch_id')?.enable({ emitEvent: false });
+          this.examForm.get('academic_year')?.enable({ emitEvent: false });
         }
       }
     });
@@ -115,6 +120,24 @@ export class ExamFormComponent implements OnInit {
     });
   }
 
+  loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        this.academicYears = (response.success && response.data) ? response.data : [];
+        const current = this.academicYears.find(y => y.is_current) || this.academicYears.find(y => y.is_active);
+        if (current && !this.examId) {
+          this.examForm.patchValue({ academic_year: current.name }, { emitEvent: false });
+        }
+        this.loadingAcademicYears = false;
+      },
+      error: () => {
+        this.academicYears = [];
+        this.loadingAcademicYears = false;
+      }
+    });
+  }
+
   loadExamTerms(): void {
     this.examTermService.getExamTerms().subscribe({
       next: (response) => {
@@ -132,7 +155,12 @@ export class ExamFormComponent implements OnInit {
     this.examService.getExam(this.examId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.examForm.patchValue(response.data);
+          const data = response.data;
+          this.examForm.patchValue(data);
+          // When editing, disable academic year if exam is linked to a term
+          if (data.exam_term_id) {
+            this.examForm.get('academic_year')?.disable({ emitEvent: false });
+          }
         }
       },
       error: (error) => this.errorHandler.showError(error)

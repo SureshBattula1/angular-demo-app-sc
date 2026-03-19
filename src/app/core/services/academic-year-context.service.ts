@@ -103,8 +103,8 @@ export class AcademicYearContextService {
     }
   }
 
-  /** Load list of active academic years for the switcher. */
+  /** Load list of academic years for the toolbar switcher (all years including past). */
   getActiveYears(): Observable<{ success: boolean; data?: AcademicYear[] }> {
-    return this.academicYearService.getList({ active: 1, per_page: 100 }) as Observable<{ success: boolean; data?: AcademicYear[] }>;
+    return this.academicYearService.getList({ active: 1, include_past: 1, per_page: 100 }) as Observable<{ success: boolean; data?: AcademicYear[] }>;
   }
 }

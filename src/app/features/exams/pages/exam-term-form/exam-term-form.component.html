@@ -82,18 +82,28 @@
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Academic Year</mat-label>
-              <input 
-                matInput 
-                formControlName="academic_year" 
-                placeholder="e.g., 2024-2025" 
-                [readonly]="!isEditMode && !!termId">
-              <mat-icon matPrefix>school</mat-icon>
-              <mat-error *ngIf="termForm.get('academic_year')?.hasError('required')">
-                Academic year is required
-              </mat-error>
-            </mat-form-field>
+            <ng-container *ngIf="!isEditMode && termId">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Academic Year</mat-label>
+                <input matInput [value]="termForm.get('academic_year')?.value" [readonly]="true">
+                <mat-icon matPrefix>school</mat-icon>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="isEditMode || !termId">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Academic Year</mat-label>
+                <mat-select formControlName="academic_year">
+                  <mat-option *ngIf="loadingAcademicYears" disabled>Loading...</mat-option>
+                  <mat-option *ngFor="let year of academicYears" [value]="year.name">
+                    {{ year.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>school</mat-icon>
+                <mat-error *ngIf="termForm.get('academic_year')?.hasError('required')">
+                  Academic year is required
+                </mat-error>
+              </mat-form-field>
+            </ng-container>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Weightage (%)</mat-label>
