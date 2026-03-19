@@ -3,6 +3,8 @@ export interface Leave {
   student_id?: string;
   teacher_id?: string;
   branch_id?: string;
+  academic_year_id?: number | string;
+  academic_year_name?: string;
   from_date: string;
   to_date: string;
   total_days: number;
@@ -12,6 +14,7 @@ export interface Leave {
   remarks?: string;
   attachment?: string;
   approved_by?: string;
+  approved_by_name?: string;
   approved_at?: string;
   substitute_teacher_id?: string;
   created_by?: string;
@@ -25,6 +28,7 @@ export interface Leave {
   last_name?: string;
   full_name?: string; // Computed field: first_name + last_name
   email?: string;
+  mobile_number?: string;
   admission_number?: string;
   employee_id?: string;
   grade?: string;

@@ -79,6 +79,13 @@
             </div>
             <div class="detail-value">{{ leave.email || 'N/A' }}</div>
           </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>phone</mat-icon>
+              <span>Mobile Number</span>
+            </div>
+            <div class="detail-value">{{ leave.mobile_number || 'N/A' }}</div>
+          </div>
           <div class="detail-item" *ngIf="leave.admission_number">
             <div class="detail-label">
               <mat-icon>tag</mat-icon>
@@ -158,6 +165,13 @@
           </div>
           <div class="detail-item">
             <div class="detail-label">
+              <mat-icon>calendar_month</mat-icon>
+              <span>Academic Name</span>
+            </div>
+            <div class="detail-value">{{ leave.academic_year_name || 'N/A' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
               <mat-icon>info</mat-icon>
               <span>Status</span>
             </div>
@@ -184,7 +198,7 @@
               <mat-icon>person</mat-icon>
               <span>Approved By</span>
             </div>
-            <div class="detail-value">{{ leave.approved_by }}</div>
+            <div class="detail-value">{{ leave.approved_by_name || leave.approved_by }}</div>
           </div>
           <div class="detail-item" *ngIf="leave.approved_at">
             <div class="detail-label">

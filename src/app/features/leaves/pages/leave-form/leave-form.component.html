@@ -112,17 +112,31 @@
         <!-- Leave Details -->
         <div class="form-section">
           <h3>Leave Details</h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Academic Year</mat-label>
+              <mat-select [(ngModel)]="selectedAcademicYearId" name="academicYearId" required>
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>
+              </mat-select>
+              <mat-error>Academic year is required</mat-error>
+            </mat-form-field>
+          </div>
           
           <div class="form-row">
             <mat-form-field appearance="outline">
               <mat-label>From Date</mat-label>
-              <input matInput type="date" [(ngModel)]="fromDate" name="fromDate" required>
+              <input matInput [matDatepicker]="fromDatePicker" [(ngModel)]="fromDate" name="fromDate" required>
+              <mat-datepicker-toggle matSuffix [for]="fromDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #fromDatePicker></mat-datepicker>
               <mat-error>From date is required</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>To Date</mat-label>
-              <input matInput type="date" [(ngModel)]="toDate" name="toDate" required>
+              <input matInput [matDatepicker]="toDatePicker" [(ngModel)]="toDate" name="toDate" required>
+              <mat-datepicker-toggle matSuffix [for]="toDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #toDatePicker></mat-datepicker>
               <mat-error>To date is required</mat-error>
             </mat-form-field>
 

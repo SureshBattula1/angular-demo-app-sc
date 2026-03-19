@@ -9,6 +9,7 @@ import { LeaveService } from '../../services/leave.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
+import { AcademicYearService } from '../../../settings/services/academic-year.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentLeave, TeacherLeave } from '../../../../core/models/leave.model';
 import { Section } from '../../../../core/models/section.model';
@@ -251,6 +252,7 @@ export class LeaveListComponent implements OnInit {
   currentFilters: Record<string, unknown> = {};
   branches: any[] = [];
   allSections: Section[] = [];
+  academicYears: { id: number; name: string }[] = [];
   currentGrade: string | null = null; // Track current grade selection
   currentBranch: string | null = null; // Track current branch selection
   
@@ -310,6 +312,13 @@ export class LeaveListComponent implements OnInit {
         type: 'select',
         icon: 'business',
         options: [],
+      },
+      {
+        key: 'academic_year_id',
+        label: 'Academic Year',
+        type: 'select',
+        icon: 'calendar_month',
+        options: []
       },
       {
         key: 'from_date',
@@ -428,7 +437,8 @@ export class LeaveListComponent implements OnInit {
     private route: ActivatedRoute,
     private branchService: BranchService,
     private gradeService: GradeService,
-    private sectionService: SectionService
+    private sectionService: SectionService,
+    private academicYearService: AcademicYearService
   ) {}
   
   ngOnInit(): void {
@@ -445,6 +455,7 @@ export class LeaveListComponent implements OnInit {
     this.loadBranches();
     this.loadGrades();
     this.loadSections();
+    this.loadAcademicYears();
     this.loadStudentLeaves();
     this.loadTeacherLeaves();
   }
@@ -534,6 +545,7 @@ export class LeaveListComponent implements OnInit {
       { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
       { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
+      { key: 'academic_year_name', header: 'Academic Year', sortable: false, width: '160px' },
       { key: 'from_date', header: 'From Date', sortable: true, width: '120px' },
       { key: 'to_date', header: 'To Date', sortable: true, width: '120px' },
       { key: 'total_days', header: 'Days', sortable: true, width: '80px', align: 'center' },
@@ -607,11 +619,10 @@ export class LeaveListComponent implements OnInit {
     this.gradeService.getGrades().subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          const gradeOptions = response.data.map(grade => ({
+          const gradeOptions = response.data.map((grade: any) => ({
             value: grade.value,
             label: grade.label
           }));
-          
           const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
           if (studentGradeField) {
             studentGradeField.options = gradeOptions;
@@ -622,6 +633,64 @@ export class LeaveListComponent implements OnInit {
         console.error('Error loading grades:', error);
       }
     });
+  }
+
+  /** Load grades for the selected branch and set advanced search grade options */
+  loadGradesForBranch(branchId: string | number): void {
+    const id = branchId === null || branchId === undefined ? undefined : Number(branchId);
+    this.gradeService.getGrades(id != null ? { branch_id: id } : undefined).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const gradeOptions = (response.data as any[]).map((grade: any) => ({
+            value: grade.value,
+            label: grade.label
+          }));
+          const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
+          if (studentGradeField) {
+            studentGradeField.options = gradeOptions;
+          }
+        }
+      },
+      error: () => {
+        const studentGradeField = this.studentSearchConfig.fields.find(f => f.key === 'grade');
+        if (studentGradeField) studentGradeField.options = [];
+      }
+    });
+  }
+
+  /** Load sections for the selected branch + grade and set advanced search section options */
+  loadSectionsForBranchAndGrade(branchId: string | number | null, grade: string): void {
+    if (!branchId || !grade) {
+      this.setSectionOptionsForAdvancedSearch([]);
+      return;
+    }
+    this.sectionService.getSections({
+      branch_id: Number(branchId),
+      grade_level: grade,
+      per_page: 1000,
+      is_active: true
+    }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const sectionOptions = (response.data as any[]).map((section: any) => ({
+            value: section.name,
+            label: `${section.name} ${section.code ? '(' + section.code + ')' : ''}`
+          }));
+          this.setSectionOptionsForAdvancedSearch(sectionOptions);
+        } else {
+          this.setSectionOptionsForAdvancedSearch([]);
+        }
+      },
+      error: () => this.setSectionOptionsForAdvancedSearch([])
+    });
+  }
+
+  /** Set section dropdown options in student advanced search config */
+  setSectionOptionsForAdvancedSearch(options: { value: string; label: string }[]): void {
+    const studentSectionField = this.studentSearchConfig.fields.find(f => f.key === 'section');
+    if (studentSectionField) {
+      studentSectionField.options = options;
+    }
   }
   
   loadBranches(): void {
@@ -648,6 +717,29 @@ export class LeaveListComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('Error loading branches:', error);
+      }
+    });
+  }
+
+  loadAcademicYears(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        this.academicYears = (response.success && response.data)
+          ? response.data.map((y: any) => ({ id: y.id, name: y.name }))
+          : [];
+
+        const options = this.academicYears.map((y) => ({
+          value: String(y.id),
+          label: y.name
+        }));
+
+        const studentAcademicField = this.studentSearchConfig.fields.find(f => f.key === 'academic_year_id');
+        if (studentAcademicField) {
+          studentAcademicField.options = options;
+        }
+      },
+      error: () => {
+        this.academicYears = [];
       }
     });
   }
@@ -719,13 +811,27 @@ export class LeaveListComponent implements OnInit {
   }
   
   onSearchFieldChanged(event: { field: string, value: any }): void {
-    // Update sections when grade or branch field changes
-    if (event.field === 'grade') {
-      this.currentGrade = event.value;
-      this.updateSectionOptions(this.currentGrade, this.currentBranch);
-    } else if (event.field === 'branch_id') {
+    // Branch selected: load grades for that branch and clear section options
+    if (event.field === 'branch_id') {
       this.currentBranch = event.value;
-      this.updateSectionOptions(this.currentGrade, this.currentBranch);
+      this.currentGrade = null;
+      if (event.value) {
+        this.loadGradesForBranch(event.value);
+      } else {
+        this.loadGrades(); // no branch: show all grades
+      }
+      this.setSectionOptionsForAdvancedSearch([]);
+    }
+    // Grade selected: load sections for that branch + grade
+    else if (event.field === 'grade') {
+      this.currentGrade = event.value;
+      if (this.currentBranch && event.value) {
+        this.loadSectionsForBranchAndGrade(this.currentBranch, event.value);
+      } else if (event.value) {
+        this.updateSectionOptions(event.value, this.currentBranch);
+      } else {
+        this.setSectionOptionsForAdvancedSearch([]);
+      }
     }
   }
   

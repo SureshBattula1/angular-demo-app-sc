@@ -15,6 +15,7 @@ import { Leave, LeaveType, LeaveStatus } from '../../../../core/models/leave.mod
 import { Grade } from '../../../../core/models/grade.model';
 import { Section } from '../../../../core/models/section.model';
 import { Class } from '../../../../core/models/class.model';
+import { AcademicYear, AcademicYearService } from '../../../settings/services/academic-year.service';
 
 @Component({
   selector: 'app-leave-form',
@@ -39,18 +40,20 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
   classes: Class[] = [];
   students: any[] = [];
   teachers: any[] = [];
+  academicYears: AcademicYear[] = [];
 
   // Form data
   selectedBranch: number | null = null;
   selectedGrade: string | null = null;
   selectedSection: string | null = null;
   selectedUser: string | null = null; // student_id or teacher_id
-  fromDate: string = '';
-  toDate: string = '';
+  fromDate: Date | null = null;
+  toDate: Date | null = null;
   selectedLeaveType: LeaveType = 'Casual Leave';
   reason: string = '';
   remarks: string = '';
   substituteTeacherId: string | null = null;
+  selectedAcademicYearId: number | null = null;
 
   studentLeaveTypes: LeaveType[] = [
     'Sick Leave',
@@ -78,6 +81,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
     private branchService: BranchService,
     private gradeService: GradeService,
     private sectionService: SectionService,
+    private academicYearService: AcademicYearService,
     private apiService: ApiService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
@@ -121,6 +125,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
     this.loadBranches();
     this.loadGrades();
     this.loadAllSections();
+    this.loadAcademicYears();
 
     // Load teachers if leave type is teacher
     if (this.leaveType === 'teacher') {
@@ -161,8 +166,9 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
           // Always set leaveType to ensure toggle button reflects the correct value
           this.leaveType = newLeaveType;
           this.selectedBranch = leave.branch_id ? +leave.branch_id : null;
-          this.fromDate = leave.from_date;
-          this.toDate = leave.to_date;
+          this.selectedAcademicYearId = leave.academic_year_id ? Number(leave.academic_year_id) : null;
+          this.fromDate = leave.from_date ? new Date(leave.from_date) : null;
+          this.toDate = leave.to_date ? new Date(leave.to_date) : null;
           this.selectedLeaveType = leave.leave_type;
           this.reason = leave.reason;
           this.remarks = leave.remarks || '';
@@ -548,8 +554,8 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
   getTotalDays(): number {
     if (!this.fromDate || !this.toDate) return 0;
 
-    const from = new Date(this.fromDate);
-    const to = new Date(this.toDate);
+    const from = this.fromDate instanceof Date ? this.fromDate : new Date(this.fromDate);
+    const to = this.toDate instanceof Date ? this.toDate : new Date(this.toDate);
     const diffTime = Math.abs(to.getTime() - from.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays + 1;
@@ -562,7 +568,9 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (!this.fromDate || !this.toDate) {
+    const fromDateStr = this.formatDateForApi(this.fromDate);
+    const toDateStr = this.formatDateForApi(this.toDate);
+    if (!fromDateStr || !toDateStr) {
       this.errorHandler.showError('Please select both from and to dates');
       return;
     }
@@ -579,8 +587,9 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
 
     const leaveData: any = {
       type: this.leaveType,
-      from_date: this.fromDate,
-      to_date: this.toDate,
+      academic_year_id: this.selectedAcademicYearId,
+      from_date: fromDateStr,
+      to_date: toDateStr,
       leave_type: this.selectedLeaveType,
       reason: this.reason,
       remarks: this.remarks || null
@@ -640,11 +649,33 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
     return new Date().toISOString().split('T')[0];
   }
 
+  /** Format Date for API (YYYY-MM-DD). Returns empty string if null. */
+  formatDateForApi(d: Date | null): string {
+    if (!d) return '';
+    const date = d instanceof Date ? d : new Date(d);
+    return date.toISOString().split('T')[0];
+  }
+
   getCurrentAcademicYear(): string {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
     return month >= 3 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+  }
+
+  loadAcademicYears(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        this.academicYears = (response.success && response.data) ? response.data : [];
+        if (!this.selectedAcademicYearId) {
+          const current = this.academicYears.find(y => y.is_current) || this.academicYears.find(y => y.is_active);
+          if (current) this.selectedAcademicYearId = current.id;
+        }
+      },
+      error: () => {
+        this.academicYears = [];
+      }
+    });
   }
 
   getStudentName(student: any): string {
