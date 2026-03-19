@@ -538,19 +538,21 @@ export class AttendanceListComponent implements OnInit {
 
   // Load branch-wise teacher attendance
   loadTeacherAttendanceByBranch(): void {
-    if (!this.selectedBranchForTeachers) {
-      this.teacherAttendanceByBranch = null;
-      return;
-    }
-
     this.loading = true;
 
+    const branchId = this.selectedBranchForTeachers;
+
     const filters: Record<string, any> = {
-      branch_id: this.selectedBranchForTeachers,
       period: this.selectedPeriod.value || 'today',
       type: 'teacher',
       return_teachers: true // Request teacher list instead of breakdowns
     };
+
+    // When user selects "All Branches", value becomes "" (falsy). In that case
+    // we omit branch_id so backend returns teachers across all accessible branches.
+    if (branchId !== null && branchId !== undefined && branchId !== '') {
+      filters['branch_id'] = branchId;
+    }
 
     // Add custom date range if selected
     if (this.selectedPeriod.value === 'custom') {
@@ -671,6 +673,7 @@ export class AttendanceListComponent implements OnInit {
       { key: 'date', header: 'Date', sortable: true, searchable: true, width: '120px' },
       { key: 'full_name', header: 'Full Name', sortable: true, searchable: true },
       { key: 'admission_number', header: 'Admission No.', searchable: true, width: '140px' },
+      { key: 'branch_name', header: 'Branch', sortable: true, searchable: true, width: '160px' },
       { key: 'grade_label', header: 'Grade', sortable: true, width: '120px' },
       { key: 'section', header: 'Section', sortable: true, width: '100px' },
       { key: 'status', header: 'Status', type: 'badge', width: '120px', align: 'center' },

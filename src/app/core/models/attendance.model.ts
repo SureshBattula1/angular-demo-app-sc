@@ -81,6 +81,7 @@ export interface BulkAttendanceRequest {
   type: 'student' | 'teacher';
   date: string;
   branch_id: number;
+  academic_year_id?: number;
   academic_year?: string;
   attendance: BulkAttendanceItem[];
 }

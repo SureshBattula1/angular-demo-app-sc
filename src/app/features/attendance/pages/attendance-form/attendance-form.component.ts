@@ -26,6 +26,10 @@ export class AttendanceFormComponent implements OnInit {
   submitting = false;
   studentsLoaded = false;
   teachersLoaded = false;
+
+  loadingBranches = false;
+  loadingGrades = false;
+  loadingSections = false;
   
   attendanceType: 'student' | 'teacher' = 'student';
   isTypeDisabled = false; // Disable type toggle when coming from specific tab
@@ -34,7 +38,6 @@ export class AttendanceFormComponent implements OnInit {
   branches: any[] = [];
   grades: Grade[] = [];
   sections: Section[] = [];
-  allSections: Section[] = []; // Store all sections for filtering
   students: AttendanceStudent[] = [];
   teachers: any[] = [];
   
@@ -85,139 +88,94 @@ export class AttendanceFormComponent implements OnInit {
     });
     
     this.loadBranches();
-    this.loadGrades();
-    this.loadAllSections();
   }
   
   loadBranches(): void {
+    this.loadingBranches = true;
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success) {
           this.branches = response.data;
 
         }
+        this.loadingBranches = false;
       },
       error: (error: any) => {
         console.error('Error loading branches:', error);
         this.errorHandler.showError(error);
+        this.loadingBranches = false;
       }
     });
   }
   
   /**
-   * Load grades dynamically
+   * Load grades for a branch (branch-wise)
    */
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.grades = response.data;
-
-        }
+  private loadGradesForBranch(branchId: number): void {
+    this.loadingGrades = true;
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+      next: (response: any) => {
+        this.grades = (response.success && response.data)
+          ? response.data.filter((g: Grade) => g.is_active)
+          : [];
+        this.loadingGrades = false;
       },
-      error: (error) => {
-        console.error('Error loading grades:', error);
+      error: () => {
+        this.grades = [];
+        this.loadingGrades = false;
       }
     });
   }
   
   /**
-   * Load all sections for filtering
-   * Load with high per_page limit to get all sections, or filter by branch/grade on backend
+   * Cascade: Branch -> Grades, Grade -> Sections
    */
-  loadAllSections(): void {
-    // Load all sections with a high per_page limit and filter active sections
-    this.sectionService.getSections({ 
-      per_page: 1000, // High limit to get all sections
-      is_active: true  // Only load active sections
+  onBranchChange(): void {
+    // Reset dependent selections + data
+    this.grades = [];
+    this.sections = [];
+    this.selectedGrade = null;
+    this.selectedSection = null;
+
+    // Reset loaded lists
+    this.studentsLoaded = false;
+    this.teachersLoaded = false;
+    this.students = [];
+    this.teachers = [];
+
+    if (this.selectedBranch) {
+      this.loadGradesForBranch(this.selectedBranch);
+    }
+  }
+
+  onGradeChange(): void {
+    this.sections = [];
+    this.selectedSection = null;
+
+    // Reset loaded lists
+    this.studentsLoaded = false;
+    this.teachersLoaded = false;
+    this.students = [];
+    this.teachers = [];
+
+    if (!this.selectedBranch || !this.selectedGrade) return;
+
+    this.loadingSections = true;
+    this.sectionService.getSections({
+      branch_id: this.selectedBranch,
+      grade_level: this.selectedGrade,
+      is_active: true,
+      per_page: 1000
     }).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.allSections = response.data;
-          // Trigger filtering if branch/grade already selected
-          if (this.selectedBranch || this.selectedGrade) {
-            this.onGradeOrBranchChange();
-          }
-        }
+      next: (response: any) => {
+        this.sections = (response.success && response.data) ? response.data : [];
+        this.loadingSections = false;
       },
-      error: (error) => {
-        console.error('Error loading sections:', error);
+      error: () => {
+        this.sections = [];
+        this.loadingSections = false;
       }
     });
-  }
-  
-  /**
-   * Update sections when grade or branch changes
-   */
-  onGradeOrBranchChange(): void {
-    // If both grade and branch are selected, load sections from backend with filters
-    if (this.selectedGrade && this.selectedBranch) {
-      // Load sections filtered by grade and branch from backend for better performance
-      this.sectionService.getSections({
-        grade_level: this.selectedGrade,
-        branch_id: this.selectedBranch,
-        is_active: true,
-        per_page: 1000
-      }).subscribe({
-        next: (response) => {
-          if (response.success && response.data) {
-            this.sections = response.data;
-            // Reset section selection if current selection is not in filtered list
-            if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
-              this.selectedSection = null;
-            }
-          } else {
-            this.sections = [];
-            this.selectedSection = null;
-          }
-        },
-        error: (error) => {
-          console.error('Error loading filtered sections:', error);
-          // Fallback to client-side filtering
-          this.filterSectionsClientSide();
-        }
-      });
-    } else {
-      // Use client-side filtering when only one filter is selected
-      this.filterSectionsClientSide();
-    }
-  }
-
-  /**
-   * Client-side filtering fallback
-   */
-  private filterSectionsClientSide(): void {
-    if (this.selectedGrade && this.selectedBranch) {
-      // Filter sections by selected grade and branch
-      this.sections = this.allSections.filter(
-        section => {
-          // Ensure section is active
-          if (!section.is_active) return false;
-          // Type-safe comparison: convert both to strings for grade_level
-          const matchesGrade = String(section.grade_level) === String(this.selectedGrade);
-          // Type-safe comparison: convert both to numbers for branch_id
-          const matchesBranch = Number(section.branch_id) === Number(this.selectedBranch);
-          return matchesGrade && matchesBranch;
-        }
-      );
-    } else if (this.selectedGrade) {
-      // Filter by grade only
-      this.sections = this.allSections.filter(
-        section => section.is_active && String(section.grade_level) === String(this.selectedGrade)
-      );
-    } else if (this.selectedBranch) {
-      // Filter by branch only
-      this.sections = this.allSections.filter(
-        section => section.is_active && Number(section.branch_id) === Number(this.selectedBranch)
-      );
-    } else {
-      this.sections = [];
-    }
-    
-    // Reset section selection if current selection is not in filtered list
-    if (this.selectedSection && !this.sections.find(s => s.name === this.selectedSection)) {
-      this.selectedSection = null;
-    }
   }
   
   loadStudents(): void {
@@ -243,10 +201,11 @@ export class AttendanceFormComponent implements OnInit {
           
           this.students = response.data.map((student: any) => {
             const userId = student.user_id || student.id;
-            
-            if (!userId) {
-            }
-            
+
+            // Prefer academic-year-aware fields if present
+            const grade = student.current_grade ?? student.grade ?? this.selectedGrade ?? '';
+            const section = student.current_section ?? student.section ?? this.selectedSection ?? '';
+
             return {
               id: userId,
               first_name: student.first_name || '',
@@ -254,8 +213,8 @@ export class AttendanceFormComponent implements OnInit {
               admission_number: student.admission_number || '',
               roll_number: student.roll_number || '',
               phone: student.phone || '',
-              grade: student.grade || '',
-              section: student.section || '',
+              grade: grade,
+              section: section,
               status: 'Present', // Default to Present
               remarks: ''
             };

@@ -267,6 +267,7 @@ export class SubjectAssignmentComponent implements OnInit {
         teacher_id: assignment.teacher_id || undefined
       })),
       branch_id: this.selectedBranch!,
+      academic_year_id: this.selectedAcademicYearId!,
       academic_year: this.academicYear
     };
     

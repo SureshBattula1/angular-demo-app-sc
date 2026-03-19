@@ -8,6 +8,7 @@ export interface SectionSubjectAssignment {
   subject_id: number;
   teacher_id: number | null;
   branch_id: number;
+  academic_year_id?: number | null;
   academic_year: string;
   is_active: boolean;
   section?: any;
@@ -24,12 +25,14 @@ export interface BulkAssignmentRequest {
     teacher_id?: number;
   }[];
   branch_id: number;
+  academic_year_id: number;
   academic_year: string;
 }
 
 export interface CopySubjectsRequest {
   from_section_id: number;
   to_section_ids: number[];
+  academic_year_id: number;
   academic_year: string;
   copy_teachers: boolean;
 }
@@ -57,8 +60,10 @@ export class SectionSubjectService {
   /**
    * Get subjects assigned to a section
    */
-  getSectionSubjects(sectionId: number, academicYear?: string): Observable<SectionSubjectsResponse> {
-    const params = academicYear ? { academic_year: academicYear } : {};
+  getSectionSubjects(sectionId: number, academicYearId?: number | null, academicYear?: string): Observable<SectionSubjectsResponse> {
+    const params: Record<string, unknown> = {};
+    if (academicYearId) params['academic_year_id'] = academicYearId;
+    if (academicYear) params['academic_year'] = academicYear;
     return this.apiService.get<any>(`/sections/${sectionId}/subjects`, params);
   }
 

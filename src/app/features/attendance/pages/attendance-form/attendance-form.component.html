@@ -53,7 +53,11 @@
         <!-- Branch -->
         <mat-form-field appearance="outline">
           <mat-label>Branch *</mat-label>
-          <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onGradeOrBranchChange()">
+          <mat-select [(ngModel)]="selectedBranch" (selectionChange)="onBranchChange()" [disabled]="loadingBranches">
+            <mat-option *ngIf="loadingBranches" disabled>
+              <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              Loading branches...
+            </mat-option>
             <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
           </mat-select>
           <mat-icon matPrefix>business</mat-icon>
@@ -62,22 +66,35 @@
         <!-- Grade (Student Only) -->
         <mat-form-field appearance="outline" *ngIf="attendanceType === 'student'">
           <mat-label>Grade *</mat-label>
-          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onGradeOrBranchChange()">
+          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onGradeChange()" [disabled]="!selectedBranch">
+            <mat-option *ngIf="!selectedBranch" disabled>Select branch first</mat-option>
+            <mat-option *ngIf="loadingGrades" disabled>
+              <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              Loading grades...
+            </mat-option>
             <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
           </mat-select>
           <mat-icon matPrefix>grade</mat-icon>
+          <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
         </mat-form-field>
 
         <!-- Section (Student Only) -->
         <mat-form-field appearance="outline" *ngIf="attendanceType === 'student'">
           <mat-label>Section *</mat-label>
-          <mat-select [(ngModel)]="selectedSection" [disabled]="!selectedGrade || sections.length === 0">
+          <mat-select [(ngModel)]="selectedSection" [disabled]="!selectedBranch || !selectedGrade || sections.length === 0">
+            <mat-option *ngIf="!selectedBranch" disabled>Select branch first</mat-option>
+            <mat-option *ngIf="selectedBranch && !selectedGrade" disabled>Select grade first</mat-option>
+            <mat-option *ngIf="loadingSections" disabled>
+              <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+              Loading sections...
+            </mat-option>
             <mat-option *ngFor="let section of sections" [value]="section.name">
               {{ section.name }} {{ section.code ? '(' + section.code + ')' : '' }}
             </mat-option>
           </mat-select>
           <mat-icon matPrefix>class</mat-icon>
           <mat-hint *ngIf="sections.length === 0 && selectedGrade">No sections available</mat-hint>
+          <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
         </mat-form-field>
 
         <!-- Date -->
