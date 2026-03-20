@@ -102,6 +102,11 @@ export class FeeStructureFormComponent implements OnInit {
         this.loadGrades(branchId);
       }
     });
+
+    // When fee type changes, auto-select academic year from the fee type and lock it.
+    this.feeForm.get('fee_type')?.valueChanges.subscribe((feeTypeName: string) => {
+      this.syncAcademicYearFromFeeType(feeTypeName);
+    });
   }
   
   loadBranches(): void {
@@ -162,8 +167,13 @@ export class FeeStructureFormComponent implements OnInit {
           this.feeTypes = response.data.map((ft: any) => ({
             value: ft.name,
             label: ft.name,
-            code: ft.code
+            code: ft.code,
+            academic_year_id: ft.academic_year_id ?? ft.academicYear?.id ?? null
           }));
+
+          // If fee_type is already selected (e.g. edit mode / patchValue),
+          // sync academic year now that we have the fee type payload.
+          this.syncAcademicYearFromFeeType(this.feeForm.get('fee_type')?.value);
         }
       },
       error: (error: any) => {
@@ -243,7 +253,8 @@ export class FeeStructureFormComponent implements OnInit {
     }
     
     this.submitting = true;
-    const formData = { ...this.feeForm.value };
+    // Use getRawValue() so disabled controls (academic_year_id) are still sent.
+    const formData = { ...this.feeForm.getRawValue() };
     // Convert due_date to YYYY-MM-DD string for API if it's a Date
     if (formData.due_date instanceof Date) {
       formData.due_date = formData.due_date.toISOString().split('T')[0];
@@ -335,5 +346,26 @@ export class FeeStructureFormComponent implements OnInit {
       recurrence_period: 'Recurrence Period'
     };
     return labels[fieldName] || fieldName;
+  }
+
+  /**
+   * Set/lock academic_year_id based on selected fee type.
+   * Requirement: when fee type is selected, academic year must be auto-selected and disabled.
+   */
+  private syncAcademicYearFromFeeType(feeTypeName: string | null | undefined): void {
+    const ayCtrl = this.feeForm.get('academic_year_id');
+    if (!ayCtrl) return;
+
+    const selected = this.feeTypes?.find((t: any) => t?.value === feeTypeName);
+    const academicYearId = selected?.academic_year_id ?? null;
+
+    if (academicYearId != null) {
+      // Keep academic_year_id synchronized with fee type, and disable for consistency.
+      ayCtrl.setValue(academicYearId);
+      ayCtrl.disable({ emitEvent: false });
+    } else {
+      // If fee type has no academic year, allow user selection.
+      ayCtrl.enable({ emitEvent: false });
+    }
   }
 }

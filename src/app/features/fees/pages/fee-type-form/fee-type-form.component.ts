@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { FeeTypeService } from '../../services/fee-type.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FeeType } from '../../../../core/models/fee.model';
 
@@ -24,11 +25,14 @@ export class FeeTypeFormComponent implements OnInit {
   returnTab = 'types';
   
   branches: any[] = [];
+  academicYears: AcademicYear[] = [];
+  private currentAcademicYearId: number | null = null;
   
   constructor(
     private fb: FormBuilder,
     private feeTypeService: FeeTypeService,
     private branchService: BranchService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
     private route: ActivatedRoute
@@ -37,6 +41,7 @@ export class FeeTypeFormComponent implements OnInit {
   ngOnInit(): void {
     this.initializeForm();
     this.loadBranches();
+    this.loadAcademicYears();
     
     // Check if edit mode
     this.route.params.subscribe(params => {
@@ -59,6 +64,7 @@ export class FeeTypeFormComponent implements OnInit {
       code: ['', [Validators.required, Validators.maxLength(50)]],
       description: [''],
       branch_id: ['', Validators.required],
+      academic_year_id: [null, Validators.required],
       is_mandatory: [true],
       is_refundable: [false],
       is_active: [true]
@@ -76,6 +82,27 @@ export class FeeTypeFormComponent implements OnInit {
       }
     });
   }
+
+  loadAcademicYears(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+
+          const current = this.academicYears.find(y => y.is_current)
+            || this.academicYears.find(y => y.is_active);
+          this.currentAcademicYearId = current?.id ?? null;
+
+          // Default academic year when the control is still empty.
+          const ctrl = this.feeTypeForm.get('academic_year_id');
+          if (ctrl && this.currentAcademicYearId != null && (ctrl.value == null || ctrl.value === '')) {
+            ctrl.setValue(this.currentAcademicYearId);
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
   
   loadFeeType(): void {
     if (!this.feeTypeId) return;
@@ -85,6 +112,12 @@ export class FeeTypeFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.feeTypeForm.patchValue(response.data);
+
+          // Backward compatibility: if this fee type is from before academic_year_id existed
+          // and the API returns no value, fall back to current academic year.
+          if (!response.data?.academic_year_id && this.currentAcademicYearId != null) {
+            this.feeTypeForm.get('academic_year_id')?.setValue(this.currentAcademicYearId);
+          }
         }
         this.loading = false;
       },

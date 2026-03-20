@@ -85,11 +85,14 @@ export class FeeStructureViewComponent implements OnInit {
               queryParams: { tab: this.returnTab }
             });
           } else {
-            this.errorHandler.showError(response.message || 'Failed to delete fee structure');
+            const msg = response.message || 'Failed to delete fee structure';
+            this.errorHandler.showError(`${msg}. Please contact the support team for assistance.`);
           }
         },
         error: (error) => {
-          this.errorHandler.showError(error);
+          const backendMsg = (error && (error as any).error?.message) || (error && (error as any).message) || '';
+          const msg = backendMsg || 'Failed to delete fee structure';
+          this.errorHandler.showError(`${msg}. Please contact the support team for assistance.`);
         }
       });
     }

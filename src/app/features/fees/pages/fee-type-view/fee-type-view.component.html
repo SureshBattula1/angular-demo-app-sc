@@ -73,6 +73,13 @@
           <span class="detail-label">Branch:</span>
           <span class="detail-value">{{ feeType.branch?.name || 'N/A' }}</span>
         </div>
+
+        <div class="detail-row" *ngIf="feeType.academicYear || feeType.academic_year || feeType.academic_year_id">
+          <span class="detail-label">Academic Year:</span>
+          <span class="detail-value">
+            {{ feeType.academicYear?.name || feeType.academic_year?.name || feeType.academic_year_id || 'N/A' }}
+          </span>
+        </div>
         <div class="detail-row" *ngIf="feeType.description">
           <span class="detail-label">Description:</span>
           <span class="detail-value">{{ feeType.description }}</span>

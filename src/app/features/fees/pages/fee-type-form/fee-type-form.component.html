@@ -24,7 +24,7 @@
           </h3>
           
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-full">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Fee Type Name *</mat-label>
               <mat-icon matPrefix>label</mat-icon>
               <input matInput 
@@ -39,9 +39,7 @@
                 Name cannot exceed 255 characters
               </mat-error>
             </mat-form-field>
-          </div>
 
-          <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Fee Code *</mat-label>
               <mat-icon matPrefix>tag</mat-icon>
@@ -58,7 +56,9 @@
                 Code cannot exceed 50 characters
               </mat-error>
             </mat-form-field>
+          </div>
 
+          <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
               <mat-icon matPrefix>business</mat-icon>
@@ -70,6 +70,20 @@
               <mat-hint>Select the branch for this fee type</mat-hint>
               <mat-error *ngIf="feeTypeForm.get('branch_id')?.hasError('required')">
                 Branch is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year *</mat-label>
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-select formControlName="academic_year_id" placeholder="Select academic year">
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">
+                  {{ ay.name }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Select the academic year for this fee type</mat-hint>
+              <mat-error *ngIf="feeTypeForm.get('academic_year_id')?.hasError('required')">
+                Academic year is required
               </mat-error>
             </mat-form-field>
           </div>

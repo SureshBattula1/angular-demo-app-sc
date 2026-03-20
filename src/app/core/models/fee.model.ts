@@ -73,6 +73,7 @@ export interface FeeFilters {
   grade?: string;
   fee_type?: string;
   academic_year?: string;
+  academic_year_id?: number;
   student_id?: string;
   payment_status?: string;
   payment_method?: string;
@@ -97,6 +98,9 @@ export interface FeeType {
   code: string;
   description?: string;
   branch_id: string | number;
+  academic_year_id?: number | string;
+  academicYear?: { name?: string } | null;
+  academic_year?: { name?: string } | null;
   is_mandatory: boolean;
   is_refundable: boolean;
   is_active: boolean;
@@ -112,6 +116,7 @@ export interface FeeTypeFormData {
   code: string;
   description?: string;
   branch_id: string | number;
+  academic_year_id: number | string;
   is_mandatory?: boolean;
   is_refundable?: boolean;
   is_active?: boolean;

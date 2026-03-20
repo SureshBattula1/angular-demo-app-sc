@@ -266,7 +266,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
     actions: [
       { icon: 'visibility', label: 'View', action: (row) => this.viewFeeType(row) },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editFeeType(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteFeeType(row) }
+      // { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteFeeType(row) } // We can enable this only when ever the user want to delete the fee stracture , we have to do that part in the manuavaly 
     ],
     selectable: true,
     pagination: true,
@@ -471,6 +471,12 @@ export class FeeListComponent implements OnInit, OnDestroy {
     const dateFilters: Record<string, any> = {
       period: this.selectedPeriod.value || 'today'
     };
+
+    // Apply academic year from top toolbar to keep dashboard (paid + pending) consistent
+    const selectedAcademicYear = this.academicYearContext.selectedYear;
+    if (selectedAcademicYear?.name) {
+      dateFilters['academic_year'] = selectedAcademicYear.name;
+    }
     
     // Add custom date range if selected
     if (this.selectedPeriod.value === 'custom') {
@@ -517,8 +523,13 @@ export class FeeListComponent implements OnInit, OnDestroy {
   loadFeePayments(filters: Record<string, any> = {}): void {
     this.loading = true;
     this.paymentFilters = { ...this.paymentFilters, ...filters };
-    
-    this.feeService.getFeePayments(this.paymentFilters).subscribe({
+    // Apply academic year from toolbar (context) so list is filtered by selected year
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.paymentFilters, academic_year_id: academicYearId }
+      : this.paymentFilters;
+
+    this.feeService.getFeePayments(requestFilters).subscribe({
       next: (response: any) => {
         if (response.success) {
             // Transform data to add student_name, fee_type_name, amount_formatted, branch_name
@@ -570,7 +581,13 @@ export class FeeListComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.feeTypeFilters = { ...this.feeTypeFilters, ...filters };
     
-    this.feeTypeService.getFeeTypes(this.feeTypeFilters).subscribe({
+    // Apply academic year from top toolbar so the list is scoped by selection
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.feeTypeFilters, academic_year_id: academicYearId }
+      : this.feeTypeFilters;
+
+    this.feeTypeService.getFeeTypes(requestFilters).subscribe({
       next: (response: any) => {
         if (response.success) {
           const raw = response.data || [];
@@ -582,6 +599,9 @@ export class FeeListComponent implements OnInit, OnDestroy {
             is_mandatory_display: this.toBoolean(item.is_mandatory) ? 'Yes' : 'No',
             is_refundable_display: this.toBoolean(item.is_refundable) ? 'Yes' : 'No',
             is_active_display: this.toBoolean(item.is_active) ? 'Active' : 'Deactive'
+            ,
+            // Flatten relationship for the table column
+            academic_year_name: item?.academicYear?.name ?? item?.academic_year?.name ?? null
           }));
           
           if (response.meta) {
@@ -647,6 +667,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
       { key: 'name', header: 'Fee Type Name', sortable: true, searchable: true },
       { key: 'code', header: 'Code', sortable: true, searchable: true },
       { key: 'branch.name', header: 'Branch', sortable: true },
+      { key: 'academic_year_name', header: 'Academic Year', sortable: false, width: '160px' },
       { key: 'is_mandatory_display', header: 'Mandatory', type: 'badge', width: '110px', align: 'center' },
       { key: 'is_refundable_display', header: 'Refundable', type: 'badge', width: '110px', align: 'center' },
       {
