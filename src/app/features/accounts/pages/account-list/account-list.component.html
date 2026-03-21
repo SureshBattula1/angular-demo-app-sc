@@ -162,7 +162,8 @@
     (searchChanged)="onIncomeBasicSearch($event)"
     (paginationChanged)="onIncomePaginationChange($event)"
     (sortChanged)="onIncomeSortChange($event)"
-    (advancedSearchChanged)="onIncomeSearch($event)">
+    (advancedSearchChanged)="onIncomeSearch($event)"
+    (searchResetEvent)="onIncomeSearchReset()">
   </app-data-table>
 
   <!-- Expenses Tab - Lazy Loaded -->
@@ -181,7 +182,8 @@
     (searchChanged)="onExpenseBasicSearch($event)"
     (paginationChanged)="onExpensePaginationChange($event)"
     (sortChanged)="onExpenseSortChange($event)"
-    (advancedSearchChanged)="onExpenseSearch($event)">
+    (advancedSearchChanged)="onExpenseSearch($event)"
+    (searchResetEvent)="onExpenseSearchReset()">
   </app-data-table>
 
   <!-- Categories Tab - Lazy Loaded -->
@@ -200,7 +202,8 @@
     (searchChanged)="onCategoryBasicSearch($event)"
     (paginationChanged)="onCategoryPaginationChange($event)"
     (sortChanged)="onCategorySortChange($event)"
-    (advancedSearchChanged)="onCategorySearch($event)">
+    (advancedSearchChanged)="onCategorySearch($event)"
+    (searchResetEvent)="onCategorySearchReset()">
   </app-data-table>
 </div>
 

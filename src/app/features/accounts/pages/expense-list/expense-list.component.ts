@@ -27,7 +27,8 @@ import { Transaction } from '../../../../core/models/account.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -198,6 +199,15 @@ export class ExpenseListComponent implements OnInit {
       ...event.filters,
       search: event.query,
       page: 1
+    };
+    this.loadTransactions();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {
+      type: 'Expense',
+      page: 1,
+      per_page: this.tableConfig.defaultPageSize ?? 25
     };
     this.loadTransactions();
   }

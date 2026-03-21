@@ -35,7 +35,7 @@
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field-half">
                   <mat-label>Branch</mat-label>
-                  <mat-select formControlName="branch_id" (selectionChange)="onBranchChange()">
+                  <mat-select formControlName="branch_id">
                     <mat-option *ngFor="let branch of branches" [value]="branch.id">
                       {{ branch.name }} ({{ branch.code }})
                     </mat-option>
@@ -46,12 +46,18 @@
 
                 <mat-form-field appearance="outline" class="form-field-half">
                   <mat-label>Grade</mat-label>
-                  <mat-select formControlName="grade">
+                  <mat-select formControlName="grade" [disabled]="!contextForm.get('branch_id')?.value">
+                    <mat-option *ngIf="!contextForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                    <mat-option *ngIf="loadingGrades" disabled>
+                      <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                      Loading grades...
+                    </mat-option>
                     <mat-option *ngFor="let grade of grades" [value]="grade.value">
                       {{ grade.label }}
                     </mat-option>
                   </mat-select>
                   <mat-icon matPrefix>grade</mat-icon>
+                  <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
                   <mat-error>Grade is required</mat-error>
                 </mat-form-field>
               </div>
@@ -59,20 +65,31 @@
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field-half">
                   <mat-label>Section</mat-label>
-                  <mat-select formControlName="section">
+                  <mat-select formControlName="section" [disabled]="!contextForm.get('branch_id')?.value || !contextForm.get('grade')?.value">
+                    <mat-option *ngIf="!contextForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                    <mat-option *ngIf="contextForm.get('branch_id')?.value && !contextForm.get('grade')?.value" disabled>Select grade first</mat-option>
+                    <mat-option *ngIf="loadingSections" disabled>
+                      <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                      Loading sections...
+                    </mat-option>
                     <mat-option value="">All Sections</mat-option>
                     <mat-option *ngFor="let section of sections" [value]="section.name">
                       Section {{ section.name }}
                     </mat-option>
                   </mat-select>
                   <mat-icon matPrefix>class</mat-icon>
+                  <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="form-field-half">
                   <mat-label>Academic Year</mat-label>
-                  <mat-select formControlName="academic_year">
-                    <mat-option *ngFor="let year of academicYears" [value]="year">
-                      {{ year }}
+                  <mat-select formControlName="academic_year" [disabled]="loadingAcademicYears">
+                    <mat-option *ngIf="loadingAcademicYears" disabled>
+                      <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                      Loading...
+                    </mat-option>
+                    <mat-option *ngFor="let ay of academicYears" [value]="ay.name">
+                      {{ ay.name }}
                     </mat-option>
                   </mat-select>
                   <mat-icon matPrefix>event</mat-icon>

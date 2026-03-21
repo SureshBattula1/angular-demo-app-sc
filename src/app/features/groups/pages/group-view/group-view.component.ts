@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { GroupService } from '../../services/group.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { StudentGroup } from '../../../../core/models/class-section.model';
+import { StudentGroup, GroupMember } from '../../../../core/models/class-section.model';
 
 @Component({
   selector: 'app-group-view',
@@ -17,6 +17,7 @@ export class GroupViewComponent implements OnInit {
   group?: StudentGroup;
   isLoading = true;
   groupId!: number;
+  removingMemberId: number | null = null;
 
   constructor(
     private groupService: GroupService,
@@ -80,6 +81,28 @@ export class GroupViewComponent implements OnInit {
     this.router.navigate(['/groups', this.groupId, 'members']);
   }
 
+  removeMember(member: GroupMember): void {
+    const studentId = member.student_id ?? member.student?.id;
+    if (studentId == null) return;
+    const studentName = `${member.student?.first_name ?? ''} ${member.student?.last_name ?? ''}`.trim() || 'this member';
+    if (!confirm(`Remove ${studentName} from this group?`)) return;
+
+    this.removingMemberId = studentId;
+    this.groupService.removeMember(this.groupId, studentId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.errorHandler.showSuccess('Member removed from group');
+          this.loadGroup();
+        }
+        this.removingMemberId = null;
+      },
+      error: (error) => {
+        this.errorHandler.showError(error);
+        this.removingMemberId = null;
+      }
+    });
+  }
+
   getTypeIcon(type?: string): string {
     const icons: Record<string, string> = {
       'Academic': 'school',
@@ -88,6 +111,16 @@ export class GroupViewComponent implements OnInit {
       'Club': 'groups'
     };
     return type ? icons[type] || 'groups' : 'groups';
+  }
+
+  getMemberGradeSection(member: GroupMember): string {
+    const m = member as any;
+    const gradeDisplay = m?.grade_label ?? (m?.grade ? 'Grade ' + m.grade : null) ?? m?.student?.grade_label ?? (m?.student?.grade ? 'Grade ' + m.student.grade : null);
+    const sectionDisplay = m?.section ? 'Section ' + m.section : (m?.student?.section ? 'Section ' + m.student.section : null);
+    if (gradeDisplay && sectionDisplay) return gradeDisplay + ' - ' + sectionDisplay;
+    if (gradeDisplay) return gradeDisplay;
+    if (sectionDisplay) return sectionDisplay;
+    return '—';
   }
 
   getTypeColor(type?: string): string {

@@ -24,6 +24,7 @@ export interface StudentGroup {
   code: string;
   type: 'Academic' | 'Sports' | 'Cultural' | 'Club';
   academic_year: string;
+  academic_year_id?: number | null;
   description?: string;
   is_active: boolean;
   member_count?: number;
@@ -44,13 +45,22 @@ export interface GroupMember {
   joined_date: string;
   role: 'Member' | 'Leader';
   is_active: boolean;
+  grade?: string;
+  section?: string;
+  grade_label?: string;
   student?: {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
-    grade: string;
-    section: string;
+    grade?: string;
+    section?: string;
+    grade_label?: string;
+  };
+  student_record?: {
+    grade?: string;
+    section?: string;
+    grade_label?: string;
   };
 }
 
@@ -59,7 +69,8 @@ export interface GroupFormData {
   name: string;
   code: string;
   type: string;
-  academic_year: string;
+  academic_year?: string;
+  academic_year_id?: number;
   description?: string;
   is_active?: boolean;
 }

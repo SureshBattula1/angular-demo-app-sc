@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { GroupService } from '../../services/group.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentGroup } from '../../../../core/models/class-section.model';
 import { Branch } from '../../../../core/models/branch.model';
@@ -31,11 +32,13 @@ export class GroupFormComponent implements OnInit {
   ];
   
   branches: any[] = [];
+  academicYears: AcademicYear[] = [];
 
   constructor(
     private fb: FormBuilder,
     private groupService: GroupService,
     private branchService: BranchService,
+    private academicYearService: AcademicYearService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -44,6 +47,7 @@ export class GroupFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadAcademicYears();
     
     this.route.params.subscribe(params => {
       if (params['id']) {
@@ -60,20 +64,39 @@ export class GroupFormComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
       type: ['Academic', Validators.required],
-      academic_year: ['2024-2025', [Validators.required, Validators.maxLength(20)]],
+      academic_year_id: [null, [Validators.required]],
       description: [''],
       is_active: [true]
     });
   }
 
+  private loadAcademicYears(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+          const current = this.academicYears.find(ay => ay.is_current) ?? this.academicYears[0];
+          if (current && !this.groupForm?.get('academic_year_id')?.value) {
+            this.groupForm?.patchValue({ academic_year_id: current.id }, { emitEvent: false });
+          }
+        }
+      }
+    });
+  }
+
   private loadGroup(id: number): void {
     this.isLoading = true;
-    
+
     this.groupService.getGroup(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.currentGroup = response.data;
-          this.groupForm.patchValue(response.data);
+          const data = { ...response.data };
+          if (data.academic_year_id == null && data.academic_year && this.academicYears.length > 0) {
+            const ay = this.academicYears.find(a => a.name === data.academic_year);
+            if (ay) data.academic_year_id = ay.id;
+          }
+          this.groupForm.patchValue(data);
           this.isLoading = false;
         }
       },
@@ -159,7 +182,7 @@ export class GroupFormComponent implements OnInit {
       name: 'Group Name',
       code: 'Group Code',
       type: 'Group Type',
-      academic_year: 'Academic Year'
+      academic_year_id: 'Academic Year'
     };
     return labels[fieldName] || fieldName;
   }

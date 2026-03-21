@@ -72,7 +72,8 @@ export class ManageMembersComponent implements OnInit {
     this.studentCrudService.getStudents({
       branch_id: this.group.branch_id,
       per_page: 500,
-      is_active: true
+      is_active: true,
+      for_group_membership: 1
     }).subscribe({
       next: (response: any) => {
         const data = response.data || [];
@@ -100,11 +101,22 @@ export class ManageMembersComponent implements OnInit {
   }
 
   getMemberMeta(member: GroupMember): string {
-    if (member.student && (member.student as any).grade) {
-      const s = member.student as any;
-      return `Grade: ${s.grade || ''} ${s.section || ''} | Joined: ${member.joined_date ? new Date(member.joined_date).toLocaleDateString() : ''}`;
+    const m = member as any;
+    const gradeDisplay = m?.grade_label || (m?.grade ? 'Grade ' + m.grade : null) || m?.student?.grade_label || (m?.student?.grade ? 'Grade ' + m.student.grade : null);
+    const sectionDisplay = m?.section ? 'Section ' + m.section : (m?.student?.section ? 'Section ' + m.student.section : null);
+    let gradeSection = '';
+    if (gradeDisplay && sectionDisplay) {
+      gradeSection = gradeDisplay + ' - ' + sectionDisplay;
+    } else if (gradeDisplay) {
+      gradeSection = gradeDisplay;
+    } else if (sectionDisplay) {
+      gradeSection = sectionDisplay;
     }
-    return member.joined_date ? `Joined: ${new Date(member.joined_date).toLocaleDateString()}` : '';
+    const joined = member.joined_date ? new Date(member.joined_date).toLocaleDateString() : '';
+    if (gradeSection && joined) return `${gradeSection} | Joined: ${joined}`;
+    if (gradeSection) return gradeSection;
+    if (joined) return `Joined: ${joined}`;
+    return '';
   }
 
   addMember(): void {

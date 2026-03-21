@@ -1008,14 +1008,12 @@ export class FeeListComponent implements OnInit, OnDestroy {
   }
   
   onPaymentsSearch(event: SearchEvent): void {
-    
-    const filters: Record<string, any> = {
-      ...event.filters,
-      search: event.query,
+    this.paymentFilters = {
+      ...(event.filters || {}),
+      search: event.query || undefined,
       page: 1
     };
-    
-    this.loadFeePayments(filters);
+    this.loadFeePayments();
   }
   
   onFeeTypesSearch(event: SearchEvent): void {

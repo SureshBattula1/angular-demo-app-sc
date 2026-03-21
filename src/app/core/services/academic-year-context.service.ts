@@ -15,6 +15,21 @@ export class AcademicYearContextService {
     this.initFromStorage();
   }
 
+  /** Set a minimal placeholder from stored ID so interceptor gets value immediately before async load. */
+  private setPlaceholderFromStorage(): void {
+    const id = this.getStoredId();
+    if (id != null) {
+      this.currentYear$.next({
+        id,
+        name: '',
+        start_date: '',
+        end_date: '',
+        is_current: false,
+        is_active: true
+      } as AcademicYear);
+    }
+  }
+
   /** Currently selected academic year (model). */
   get selectedYear$(): Observable<AcademicYear | null> {
     return this.currentYear$.asObservable().pipe(distinctUntilChanged());
@@ -71,17 +86,22 @@ export class AcademicYearContextService {
 
   /**
    * Initialize from localStorage (id only). Call loadCurrent() to hydrate full model.
+   * Sets placeholder synchronously so interceptor gets selectedYearId before async load.
    */
   private initFromStorage(): void {
     const id = this.getStoredId();
     if (id != null) {
+      this.setPlaceholderFromStorage();
       this.academicYearService.getById(id).subscribe({
         next: (r) => {
           if (r.success && r.data) {
             this.currentYear$.next(r.data);
           }
         },
-        error: () => localStorage.removeItem(STORAGE_KEY)
+        error: () => {
+          localStorage.removeItem(STORAGE_KEY);
+          this.currentYear$.next(null);
+        }
       });
     }
   }
@@ -101,6 +121,21 @@ export class AcademicYearContextService {
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
+  }
+
+  /**
+   * Load a specific academic year by ID and set as selected (e.g. from backend preferences).
+   */
+  loadYearById(id: number): void {
+    this.setSelected({ id, name: '', start_date: '', end_date: '', is_current: false, is_active: true } as AcademicYear);
+    this.academicYearService.getById(id).subscribe({
+      next: (r) => {
+        if (r.success && r.data) {
+          this.setSelected(r.data);
+        }
+      },
+      error: () => this.currentYear$.next(null)
+    });
   }
 
   /** Load list of academic years for the toolbar switcher (all years including past). */

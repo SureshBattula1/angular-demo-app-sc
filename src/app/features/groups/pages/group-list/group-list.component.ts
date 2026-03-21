@@ -1,6 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -8,6 +10,7 @@ import { GroupService } from '../../services/group.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentGroup } from '../../../../core/models/class-section.model';
 import { BranchService, Branch } from '../../../../core/services/branch.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-group-list',
@@ -27,7 +30,8 @@ import { BranchService, Branch } from '../../../../core/services/branch.service'
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`
@@ -36,10 +40,11 @@ import { BranchService, Branch } from '../../../../core/services/branch.service'
     }
   `]
 })
-export class GroupListComponent implements OnInit {
+export class GroupListComponent implements OnInit, OnDestroy {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
   
   loading = false;
+  private academicYearSub?: Subscription;
   groups: StudentGroup[] = [];
   selectedGroups: StudentGroup[] = [];
   currentFilters: Record<string, unknown> = {};
@@ -49,12 +54,10 @@ export class GroupListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       { 
-        key: 'code', 
-        header: 'Code', 
-        sortable: true, 
-        searchable: true,
-        width: '120px'
-      },
+        key: 'branch.name', 
+        header: 'Branch', 
+        sortable: false        
+      },     
       { 
         key: 'name', 
         header: 'Group Name', 
@@ -62,10 +65,11 @@ export class GroupListComponent implements OnInit {
         searchable: true
       },
       { 
-        key: 'branch.name', 
-        header: 'Branch', 
-        sortable: false,
-        width: '180px'
+        key: 'code', 
+        header: 'Code', 
+        sortable: true, 
+        searchable: true,
+        width: '120px'
       },
       { 
         key: 'type', 
@@ -90,9 +94,11 @@ export class GroupListComponent implements OnInit {
       },
       { 
         key: 'is_active', 
-        header: 'Active', 
+        header: 'Status', 
         type: 'badge',
-        width: '90px',
+        pipe: 'activeInactive',
+        cellClass: (row: StudentGroup) => row.is_active ? 'badge-success' : 'badge-danger',
+        width: '100px',
         align: 'center'
       }
     ],
@@ -141,6 +147,15 @@ export class GroupListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: [],
+        placeholder: 'Select branch'
+        // group: 'Basic Information'
+      },
+      {
         key: 'code',
         label: 'Group Code',
         type: 'text',
@@ -156,15 +171,7 @@ export class GroupListComponent implements OnInit {
         icon: 'groups',
         // group: 'Basic Information'
       },
-      {
-        key: 'branch_id',
-        label: 'Branch',
-        type: 'select',
-        icon: 'business',
-        options: [],
-        placeholder: 'Select branch'
-        // group: 'Basic Information'
-      },
+     
       {
         key: 'type',
         label: 'Group Type',
@@ -178,14 +185,14 @@ export class GroupListComponent implements OnInit {
         ],
         // group: 'Type'
       },
-      {
-        key: 'academic_year',
-        label: 'Academic Year',
-        type: 'text',
-        placeholder: 'e.g., 2024-2025',
-        icon: 'event',
-        // group: 'Academic'
-      },
+      // {
+      //   key: 'academic_year',
+      //   label: 'Academic Year',
+      //   type: 'text',
+      //   placeholder: 'e.g., 2024-2025',
+      //   icon: 'event',
+      //   // group: 'Academic'
+      // },
       {
         key: 'is_active',
         label: 'Active Only',
@@ -200,12 +207,21 @@ export class GroupListComponent implements OnInit {
     private groupService: GroupService,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private branchService: BranchService
+    private branchService: BranchService,
+    private academicYearContext: AcademicYearContextService
   ) {}
   
   ngOnInit(): void {
     this.loadBranches();
     this.loadGroups();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => {
+      this.currentFilters = { ...this.currentFilters, page: 1 };
+      this.loadGroups();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
   
   loadBranches(): void {
@@ -232,8 +248,13 @@ export class GroupListComponent implements OnInit {
   
   loadGroups(): void {
     this.loading = true;
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const params = {
+      ...this.currentFilters,
+      ...(academicYearId != null ? { academic_year_id: academicYearId } : {})
+    };
     
-    this.groupService.getGroups(this.currentFilters).subscribe({
+    this.groupService.getGroups(params).subscribe({
       next: (response) => {
         if (response.success) {
           this.groups = response.data || [];
@@ -290,10 +311,16 @@ export class GroupListComponent implements OnInit {
   
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
+      ...this.currentFilters,
       ...event.filters,
-      search: event.query,
+      search: event.query || undefined,
       page: 1
     };
+    this.loadGroups();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = { page: 1, per_page: this.tableConfig.defaultPageSize ?? 25 };
     this.loadGroups();
   }
   

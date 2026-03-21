@@ -19,6 +19,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ImportService } from '../../services/import.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { ImportContext, ImportRecord, ValidationResult } from '../../../../core/models/import.model';
+import { GradeService } from '../../../grades/services/grade.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 
 @Component({
   selector: 'app-student-import',
@@ -54,7 +56,11 @@ export class StudentImportComponent implements OnInit {
   branches: any[] = [];
   grades: any[] = [];
   sections: any[] = [];
-  academicYears: string[] = [];
+  academicYears: AcademicYear[] = [];
+
+  loadingGrades = false;
+  loadingSections = false;
+  loadingAcademicYears = false;
 
   selectedFile: File | null = null;
   currentBatchId: string | null = null;
@@ -81,15 +87,16 @@ export class StudentImportComponent implements OnInit {
     private router: Router,
     private importService: ImportService,
     private apiService: ApiService,
+    private gradeService: GradeService,
+    private academicYearService: AcademicYearService,
     private snackBar: MatSnackBar
   ) {
     this.initializeForms();
-    this.generateAcademicYears();
   }
 
   ngOnInit(): void {
     this.loadBranches();
-    this.loadGrades();
+    this.loadAcademicYears();
     this.setupDynamicSectionLoading();
   }
 
@@ -107,28 +114,28 @@ export class StudentImportComponent implements OnInit {
   }
 
   /**
-   * Setup listeners to reload sections when grade or branch changes
+   * Setup listeners: branch -> grades, branch+grade -> sections
    */
   setupDynamicSectionLoading(): void {
-    // Listen to branch changes
+    // Listen to branch changes: load grades for branch, clear grade/section
     this.contextForm.get('branch_id')?.valueChanges.subscribe(branchId => {
       if (branchId) {
-        const grade = this.contextForm.get('grade')?.value;
-        this.loadSections(branchId, grade);
-        // Clear section selection when branch changes
-        this.contextForm.patchValue({ section: '' }, { emitEvent: false });
+        this.loadGradesForBranch(branchId);
+        this.contextForm.patchValue({ grade: '', section: '' }, { emitEvent: false });
+        this.grades = [];
+        this.sections = [];
       } else {
+        this.grades = [];
         this.sections = [];
       }
     });
 
-    // Listen to grade changes
+    // Listen to grade changes: load sections for branch+grade
     this.contextForm.get('grade')?.valueChanges.subscribe(grade => {
       if (grade) {
         const branchId = this.contextForm.get('branch_id')?.value;
         if (branchId) {
           this.loadSections(branchId, grade);
-          // Clear section selection when grade changes
           this.contextForm.patchValue({ section: '' }, { emitEvent: false });
         }
       } else {
@@ -137,12 +144,24 @@ export class StudentImportComponent implements OnInit {
     });
   }
 
-  generateAcademicYears(): void {
-    const currentYear = new Date().getFullYear();
-    for (let i = -1; i <= 1; i++) {
-      const year = currentYear + i;
-      this.academicYears.push(`${year}-${year + 1}`);
-    }
+  loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response) => {
+        this.loadingAcademicYears = false;
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+          const current = this.academicYears.find(y => y.is_current) ?? this.academicYears.find(y => y.is_active);
+          if (current && !this.contextForm.get('academic_year')?.value) {
+            this.contextForm.patchValue({ academic_year: current.name }, { emitEvent: false });
+          }
+        }
+      },
+      error: () => {
+        this.loadingAcademicYears = false;
+        this.academicYears = [];
+      }
+    });
   }
 
   loadBranches(): void {
@@ -162,41 +181,39 @@ export class StudentImportComponent implements OnInit {
     });
   }
 
-  loadGrades(): void {
-    this.apiService.get('/grades').subscribe({
-      next: (response: any) => {
-        this.grades = response.data || response;
+  loadGradesForBranch(branchId: number): void {
+    this.loadingGrades = true;
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+      next: (response) => {
+        this.loadingGrades = false;
+        if (response.success && response.data) {
+          this.grades = response.data.filter((g: any) => g.is_active);
+        } else {
+          this.grades = [];
+        }
       },
-      error: (err) => {
+      error: () => {
+        this.loadingGrades = false;
+        this.grades = [];
         this.showError('Failed to load grades');
       }
     });
   }
 
-  onBranchChange(): void {
-    const branchId = this.contextForm.get('branch_id')?.value;
-    if (branchId) {
-      const grade = this.contextForm.get('grade')?.value;
-      this.loadSections(branchId, grade);
-    }
-  }
-
   /**
-   * Load sections filtered by branch and optionally by grade
+   * Load sections filtered by branch and grade
    */
-  loadSections(branchId: number, grade?: string): void {
-    let url = `/sections?branch_id=${branchId}`;
-    
-    // 🔥 Also filter by grade if selected
-    if (grade) {
-      url += `&grade_level=${grade}`;
-    }
-    
+  loadSections(branchId: number, grade: string): void {
+    this.loadingSections = true;
+    const url = `/sections?branch_id=${branchId}&grade_level=${grade}`;
     this.apiService.get(url).subscribe({
       next: (response: any) => {
+        this.loadingSections = false;
         this.sections = response.data?.data || response.data || response;
       },
-      error: (err) => {
+      error: () => {
+        this.loadingSections = false;
+        this.sections = [];
         this.showError('Failed to load sections');
       }
     });

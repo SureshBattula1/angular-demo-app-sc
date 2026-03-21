@@ -139,9 +139,8 @@ export class MainShellComponent implements OnInit, OnDestroy {
     // Check if impersonating
     this.checkImpersonationStatus();
 
-    // Academic year context: load current and list for switcher
+    // Academic year context: subscribe to selected year and load list for switcher
     if (!this.isStudentRole()) {
-      this.academicYearContext.loadCurrent();
       this.academicYearContext.selectedYear$.subscribe(y => {
         this.selectedAcademicYearId = y?.id ?? null;
         this.selectedAcademicYearName = y?.name ?? '';
@@ -162,9 +161,16 @@ export class MainShellComponent implements OnInit, OnDestroy {
     if (year) {
       this.academicYearContext.setSelected(year);
       this.selectedAcademicYearId = yearId;
-      this.errorHandler.showSuccess(`Academic year set to ${year.name}. Reloading...`);
-      // Reload application so all data reflects the new academic year
-      window.location.reload();
+      this.selectedAcademicYearName = year.name;
+      this.isPastAcademicYear = !!(year.end_date && new Date(year.end_date) < new Date());
+      this.cdr.detectChanges();
+      this.errorHandler.showSuccess(`Academic year set to ${year.name}`);
+      const existingAdditional = (this.userPreferenceService.preferences()?.additional_settings as Record<string, unknown>) || {};
+      this.userPreferenceService.updatePreferences({
+        additional_settings: { ...existingAdditional, academic_year_id: yearId }
+      }).subscribe({
+        error: () => { /* preference save failed; year still updated in context */ }
+      });
     }
   }
 
@@ -277,14 +283,24 @@ export class MainShellComponent implements OnInit, OnDestroy {
           // Apply the theme from backend preferences
           this.selectedTheme = response.data.theme;
           this.applyTheme(response.data.theme);
+          // Load academic year: prefer backend preference, else localStorage/API current
+          if (!this.isStudentRole()) {
+            const ayId = (response.data.additional_settings as any)?.academic_year_id;
+            const id = Number(ayId);
+            if (!isNaN(id) && id > 0) {
+              this.academicYearContext.loadYearById(id);
+            } else {
+              this.academicYearContext.loadCurrent();
+            }
+          }
         } else {
-          // Fallback to localStorage if backend fails
           this.loadThemeFromLocalStorage();
+          if (!this.isStudentRole()) this.academicYearContext.loadCurrent();
         }
       },
       error: () => {
-        // Fallback to localStorage on error
         this.loadThemeFromLocalStorage();
+        if (!this.isStudentRole()) this.academicYearContext.loadCurrent();
       }
     });
   }

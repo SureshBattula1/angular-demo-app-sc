@@ -858,6 +858,21 @@ export class AccountListComponent implements OnInit, OnDestroy {
     this.categoryFilters = { ...event.filters, page: 1 };
     this.loadCategories();
   }
+
+  onIncomeSearchReset(): void {
+    this.incomeFilters = { type: 'Income', page: 1, per_page: 25, sort_by: 'created_at', sort_order: 'desc' };
+    this.loadIncomeTransactions();
+  }
+
+  onExpenseSearchReset(): void {
+    this.expenseFilters = { type: 'Expense', page: 1, per_page: 25, sort_by: 'created_at', sort_order: 'desc' };
+    this.loadExpenseTransactions();
+  }
+
+  onCategorySearchReset(): void {
+    this.categoryFilters = { page: 1, per_page: 25 };
+    this.loadCategories();
+  }
   
   onExport(format: string): void {
     // Implement export logic when needed

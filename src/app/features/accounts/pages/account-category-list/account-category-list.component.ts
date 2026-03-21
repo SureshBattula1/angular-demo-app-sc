@@ -28,7 +28,8 @@ import { MatDialog } from '@angular/material/dialog';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -220,6 +221,11 @@ export class AccountCategoryListComponent implements OnInit {
   
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = { ...event.filters };
+    this.loadCategories();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadCategories();
   }
 }

@@ -380,12 +380,18 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     // Clear search query
     this.searchQuery = '';
     
-    // Clear current search criteria
+    // Clear current search criteria and filters
     this.currentSearchCriteria = {};
+    this.currentFilters = {};
     
     // Clear data source filter
     this.dataSource.filter = '';
     this.dataSource.filterPredicate = this.createFilter();
+    
+    // Reset paginator to first page (server-side)
+    if (this.paginator && this.config.serverSide) {
+      this.paginator.firstPage();
+    }
     
     // Emit reset event to parent component to reload data
     this.searchResetEvent.emit();
@@ -415,10 +421,13 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
       this.advancedSearchSidebar.resetForm();
     }
     
-    // For server-side tables, emit reset event so parent clears its filters and reloads data
-    if (this.config.serverSide) {
-      this.searchResetEvent.emit();
+    // Reset paginator to first page (server-side)
+    if (this.paginator && this.config.serverSide) {
+      this.paginator.firstPage();
     }
+    
+    // Emit reset event so parent clears its filters and reloads data (both server-side and API-backed client tables)
+    this.searchResetEvent.emit();
   }
   
   /**
