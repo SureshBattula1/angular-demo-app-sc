@@ -1,368 +1,178 @@
-@use '../../../../../styles/assets/variables' as *;
+// Uses global view-pages.css for consistent styling with fee-type-view
+// Component-specific enhancements below
 
-.category-view-container {
-  padding: var(--spacing-lg);
-  // max-width: 1200px;
-  margin: 0 auto;
+.view-avatar {
+  &.avatar-income {
+    background: rgba(76, 175, 80, 0.3);
+  }
+
+  &.avatar-expense {
+    background: rgba(244, 67, 54, 0.3);
+  }
 }
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
+.stat-icon {
+  &.stat-income {
+    background: linear-gradient(135deg, var(--success-color), var(--success-dark));
+  }
+
+  &.stat-expense {
+    background: linear-gradient(135deg, var(--danger-color), var(--error-dark));
+  }
+}
+
+.stat-value {
+  &.amount-income {
+    color: var(--success-color);
+  }
+
+  &.amount-expense {
+    color: var(--danger-color);
+  }
+}
+
+.code-badge {
+  font-family: 'Courier New', monospace;
+  background: var(--primary-light, #e3f2fd);
+  color: var(--primary-dark, #1565c0);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-block;
+}
+
+.status-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: var(--spacing-md);
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
 
-  p {
-    color: var(--text-secondary);
-    font-size: 16px;
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.status-active {
+    background: var(--success-light, #e8f5e9);
+    color: var(--success-dark, #2e7d32);
+
+    mat-icon {
+      color: var(--success-dark, #2e7d32);
+    }
+  }
+
+  &.status-inactive {
+    background: var(--danger-light, #ffebee);
+    color: var(--danger-dark, #c62828);
+
+    mat-icon {
+      color: var(--danger-dark, #c62828);
+    }
+  }
+
+  &.status-income {
+    background: var(--success-light, #e8f5e9);
+    color: var(--success-dark, #2e7d32);
+
+    mat-icon {
+      color: var(--success-dark, #2e7d32);
+    }
+  }
+
+  &.status-expense {
+    background: var(--danger-light, #ffebee);
+    color: var(--danger-dark, #c62828);
+
+    mat-icon {
+      color: var(--danger-dark, #c62828);
+    }
   }
 }
 
-.category-details {
+.transaction-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-}
+  gap: var(--spacing-sm);
 
-// Header Card
-.header-card {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  color: var(--white);
-  box-shadow: var(--shadow-lg);
+  .transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+    transition: background var(--transition-normal);
 
-  mat-card-header {
-    padding: var(--spacing-lg);
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
+    &:hover {
+      background: var(--gray-100);
     }
 
-    .title-section {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-
-      .icon-wrapper {
-        width: 80px;
-        height: 80px;
-        border-radius: var(--radius-full);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.2);
-
-        &.income {
-          background: rgba(76, 175, 80, 0.3);
-        }
-
-        &.expense {
-          background: rgba(244, 67, 54, 0.3);
-        }
-
-        mat-icon {
-          font-size: 48px;
-          width: 48px;
-          height: 48px;
-          color: var(--white);
-        }
-      }
-
-      .title-text {
-        h1 {
-          font-size: 32px;
-          font-weight: 600;
-          margin: 0;
-          color: var(--white);
-        }
-
-        .code {
-          font-size: 16px;
-          color: rgba(255, 255, 255, 0.9);
-          margin: var(--spacing-xs) 0 0 0;
-        }
-      }
-    }
-
-    .status-badge {
-      mat-chip {
-        font-weight: 600;
+    .transaction-info {
+      .transaction-desc {
         font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin: 0 0 var(--spacing-xs) 0;
+      }
 
-        &.active {
-          background: rgba(76, 175, 80, 0.9);
-          color: var(--white);
-        }
+      .transaction-date {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+    }
 
-        &.inactive {
-          background: rgba(158, 158, 158, 0.8);
-          color: var(--white);
-        }
+    .transaction-amount {
+      font-size: 18px;
+      font-weight: 700;
+
+      &.income {
+        color: var(--success-color);
+      }
+
+      &.expense {
+        color: var(--danger-color);
       }
     }
   }
+}
 
-  .header-actions {
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: rgba(255, 255, 255, 0.1);
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: center;
+// Mobile optimizations
+@media (max-width: 960px) {
+  .view-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .view-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm, 8px);
+
+    .action-buttons {
+      width: 100%;
+      justify-content: stretch;
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .view-action-bar .action-buttons {
+    flex-direction: column;
 
     button {
-      color: var(--white);
-    }
-
-    .spacer {
-      flex: 1;
+      width: 100%;
     }
   }
 }
-
-// Stats Row
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
-
-  .stat-card {
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-    border-radius: var(--radius-md);
-
-    .stat-content {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-
-      .stat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        color: var(--primary-color);
-      }
-
-      .stat-text {
-        h3 {
-          font-size: 32px;
-          font-weight: 700;
-          margin: 0;
-          color: var(--text-primary);
-        }
-
-        p {
-          font-size: 14px;
-          color: var(--text-secondary);
-          margin: var(--spacing-xs) 0 0 0;
-        }
-      }
-    }
-  }
-}
-
-// Information Card
-.info-card {
-  box-shadow: var(--shadow-md);
-  border-radius: var(--radius-md);
-
-  mat-card-header {
-    padding: var(--spacing-lg);
-
-    mat-card-title {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text-primary);
-
-      mat-icon {
-        color: var(--primary-color);
-      }
-    }
-  }
-
-  mat-card-content {
-    padding: var(--spacing-lg);
-  }
-
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
-
-    .info-item {
-      &.full-width {
-        grid-column: 1 / -1;
-      }
-
-      .info-label {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        margin-bottom: var(--spacing-xs);
-
-        mat-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
-        }
-      }
-
-      .info-value {
-        font-size: 16px;
-        color: var(--text-primary);
-        padding-left: 26px;
-
-        .income-chip {
-          background: rgba(76, 175, 80, 0.1);
-          color: var(--success-color);
-        }
-
-        .expense-chip {
-          background: rgba(244, 67, 54, 0.1);
-          color: var(--danger-color);
-        }
-
-        .global-chip {
-          background: rgba(33, 150, 243, 0.1);
-          color: var(--info-color);
-          margin-left: var(--spacing-xs);
-        }
-
-        mat-chip mat-icon {
-          font-size: 16px;
-          width: 16px;
-          height: 16px;
-          margin-right: var(--spacing-xs);
-        }
-      }
-    }
-  }
-}
-
-// Transactions Card
-.transactions-card {
-  box-shadow: var(--shadow-md);
-  border-radius: var(--radius-md);
-
-  mat-card-header {
-    padding: var(--spacing-lg);
-
-    mat-card-title {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text-primary);
-
-      mat-icon {
-        color: var(--primary-color);
-      }
-    }
-  }
-
-  mat-card-content {
-    padding: var(--spacing-lg);
-  }
-
-  .transaction-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-
-    .transaction-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--spacing-md);
-      border-radius: var(--radius-sm);
-      background: var(--gray-50);
-      transition: background var(--transition-normal);
-
-      &:hover {
-        background: var(--gray-100);
-      }
-
-      .transaction-info {
-        .transaction-desc {
-          font-size: 14px;
-          font-weight: 500;
-          color: var(--text-primary);
-          margin: 0 0 var(--spacing-xs) 0;
-        }
-
-        .transaction-date {
-          font-size: 12px;
-          color: var(--text-secondary);
-          margin: 0;
-        }
-      }
-
-      .transaction-amount {
-        font-size: 18px;
-        font-weight: 700;
-
-        &.income {
-          color: var(--success-color);
-        }
-
-        &.expense {
-          color: var(--danger-color);
-        }
-      }
-    }
-  }
-}
-
-// Responsive
-@media (max-width: 768px) {
-  .category-view-container {
-    padding: var(--spacing-md);
-  }
-
-  .header-card {
-    mat-card-header {
-      .header-content {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        align-items: flex-start;
-      }
-
-      .title-section {
-        .icon-wrapper {
-          width: 60px;
-          height: 60px;
-
-          mat-icon {
-            font-size: 36px;
-            width: 36px;
-            height: 36px;
-          }
-        }
-
-        .title-text h1 {
-          font-size: 24px;
-        }
-      }
-    }
-
-    .header-actions {
-      flex-wrap: wrap;
-    }
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-

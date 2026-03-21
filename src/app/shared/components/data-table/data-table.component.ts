@@ -9,7 +9,8 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PermissionService } from '../../../core/services/permission.service';
 
 @Component({
@@ -62,6 +63,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   
   // Search & Filter
   searchQuery = '';
+  private searchSubject = new Subject<string>();
   showAdvancedSearch = false;
   savedSearches: any[] = [];
   currentSearchCriteria: SearchCriteria = {};
@@ -97,6 +99,22 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     if (saved) {
       this.savedSearches = JSON.parse(saved);
     }
+
+    // Debounce server-side search to reduce API calls (400ms after last keystroke)
+    this.subscriptions.add(
+      this.searchSubject.pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      ).subscribe(query => {
+        if (this.config.serverSide) {
+          this.searchChanged.emit(query);
+          this.advancedSearchChanged.emit({
+            query,
+            filters: this.currentFilters
+          });
+        }
+      })
+    );
   }
   
   ngOnDestroy(): void {
@@ -302,12 +320,8 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     this.searchQuery = filterValue.replace(/^\s+/, '').replace(/\s+/g, ' ');
     
     if (this.config.serverSide) {
-      // For server-side, emit search event
-      this.searchChanged.emit(this.searchQuery);
-      this.advancedSearchChanged.emit({
-        query: this.searchQuery,
-        filters: this.currentFilters
-      });
+      // Debounced emit (handled by searchSubject subscription)
+      this.searchSubject.next(this.searchQuery);
     } else {
       // For client-side, apply filter directly
       this.dataSource.filter = this.searchQuery.toLowerCase();

@@ -12,11 +12,12 @@ import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../.
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AccountService } from '../../services/account.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AccountCategory, Transaction } from '../../../../core/models/account.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, skip } from 'rxjs/operators';
 
 @Component({
   selector: 'app-account-list',
@@ -53,9 +54,9 @@ export class AccountListComponent implements OnInit, OnDestroy {
   expenseCount = 0;
   categoryCount = 0;
   
-  // Current filters for each tab with pagination
-  incomeFilters: Record<string, unknown> = { type: 'Income', page: 1, per_page: 25 };
-  expenseFilters: Record<string, unknown> = { type: 'Expense', page: 1, per_page: 25 };
+  // Current filters for each tab with pagination (default sort: created_at desc - newest first)
+  incomeFilters: Record<string, unknown> = { type: 'Income', page: 1, per_page: 25, sort_by: 'created_at', sort_order: 'desc' };
+  expenseFilters: Record<string, unknown> = { type: 'Expense', page: 1, per_page: 25, sort_by: 'created_at', sort_order: 'desc' };
   categoryFilters: Record<string, unknown> = { page: 1, per_page: 25 };
   
   branches: any[] = [];
@@ -82,6 +83,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
   // Table configurations
   incomeTableConfig: TableConfig = {
     columns: [
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'transaction_number', header: 'Transaction #', sortable: true, searchable: true, width: '140px' },
       { key: 'transaction_date', header: 'Date', type: 'date', sortable: true, width: '120px' },
       { key: 'category.name', header: 'Category', sortable: true, searchable: true },
@@ -113,6 +115,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
   
   expensesTableConfig: TableConfig = {
     columns: [
+      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
       { key: 'transaction_number', header: 'Transaction #', sortable: true, searchable: true, width: '140px' },
       { key: 'transaction_date', header: 'Date', type: 'date', sortable: true, width: '120px' },
       { key: 'category.name', header: 'Category', sortable: true, searchable: true },
@@ -144,32 +147,32 @@ export class AccountListComponent implements OnInit, OnDestroy {
   
   categoriesTableConfig: TableConfig = {
     columns: [
+      { key: 'branch.name', header: 'Branch', sortable: true },
       { key: 'name', header: 'Category Name', sortable: true, searchable: true },
-      { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
-      { key: 'branch.name', header: 'Branch', sortable: true, width: '150px' },
-      { key: 'type', header: 'Type', type: 'badge', sortable: true, width: '110px', align: 'center' },
+      { key: 'code', header: 'Code', sortable: true, searchable: true },      
+      { key: 'academic_year_name', header: 'Academic Year', sortable: true, searchable: false, width: '160px' },
+      {
+        key: 'type',
+        header: 'Type',
+        type: 'badge',
+        sortable: true,
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => row?.type === 'Expense' ? 'badge-danger' : 'badge-success'
+      },
       { key: 'sub_type', header: 'Sub Type', sortable: true, width: '140px' },
-      { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        width: '100px',
+        align: 'center',
+        cellClass: (row: any) => this.toBoolean(row.is_active) ? 'badge-success' : 'badge-danger'
+      }
     ],
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewCategory(row), permission: 'accounts.view' },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editCategory(row), permission: 'accounts.edit' },
-      { 
-        icon: 'toggle_on', 
-        label: 'Toggle Status', 
-        color: 'accent', 
-        action: (row) => this.toggleCategoryStatus(row), 
-        permission: 'accounts.edit',
-        show: (row) => row.is_active
-      },
-      { 
-        icon: 'toggle_off', 
-        label: 'Toggle Status', 
-        color: 'warn', 
-        action: (row) => this.toggleCategoryStatus(row), 
-        permission: 'accounts.edit',
-        show: (row) => !row.is_active
-      },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteCategory(row), permission: 'accounts.delete' }
     ],
     selectable: true,
@@ -283,6 +286,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
   constructor(
     private accountService: AccountService,
     private branchService: BranchService,
+    private academicYearContext: AcademicYearContextService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
@@ -294,7 +298,16 @@ export class AccountListComponent implements OnInit, OnDestroy {
     this.loadBranches();
     this.loadCategoriesForDropdown(); // Load all active categories for dropdown
     this.loadDashboardStats();
-    
+
+    // Reload data when toolbar academic year changes
+    this.academicYearContext.selectedYearId$
+      .pipe(skip(1), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadCategories();
+        if (this.loadedTabs.has('income')) this.loadIncomeTransactions();
+        if (this.loadedTabs.has('expenses')) this.loadExpenseTransactions();
+      });
+
     // Check for tab query parameter
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['tab']) {
@@ -490,7 +503,7 @@ export class AccountListComponent implements OnInit, OnDestroy {
               net_balance: response.data.summary?.net_balance || 0,
               income_count: this.incomeCount,
               expense_count: this.expenseCount,
-              category_count: this.categoryCount
+              category_count: (response.data.summary as { category_count?: number })?.category_count ?? this.categoryCount
             };
           }
           this.loading = false;
@@ -515,8 +528,13 @@ export class AccountListComponent implements OnInit, OnDestroy {
     
     this.loading = true;
     this.cdr.markForCheck();
+
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.incomeFilters, academic_year_id: academicYearId }
+      : this.incomeFilters;
     
-    this.accountService.getTransactions(this.incomeFilters)
+    this.accountService.getTransactions(requestFilters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -551,8 +569,13 @@ export class AccountListComponent implements OnInit, OnDestroy {
     
     this.loading = true;
     this.cdr.markForCheck();
+
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.expenseFilters, academic_year_id: academicYearId }
+      : this.expenseFilters;
     
-    this.accountService.getTransactions(this.expenseFilters)
+    this.accountService.getTransactions(requestFilters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -587,13 +610,22 @@ export class AccountListComponent implements OnInit, OnDestroy {
     
     this.loading = true;
     this.cdr.markForCheck();
+
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.categoryFilters, academic_year_id: academicYearId }
+      : this.categoryFilters;
     
-    this.accountService.getCategories(this.categoryFilters)
+    this.accountService.getCategories(requestFilters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           if (response.success && response.data) {
-            this.categories = response.data;
+            this.categories = (response.data as AccountCategory[]).map((item: any) => ({
+              ...item,
+              academic_year_name: item?.academicYear?.name ?? item?.academic_year?.name ?? null,
+              is_active_display: this.toBoolean(item.is_active) ? 'Active' : 'Deactive'
+            }));
             this.categoryCount = response.count || response.data.length;
             this.categoriesTableConfig = { ...this.categoriesTableConfig, totalCount: this.categoryCount };
           }
@@ -742,20 +774,6 @@ export class AccountListComponent implements OnInit, OnDestroy {
     });
   }
   
-  toggleCategoryStatus(category: AccountCategory): void {
-    this.accountService.toggleCategoryStatus(category.id).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.snackBar.open('Category status updated successfully', 'Close', { duration: 3000 });
-          this.loadCategories();
-        }
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-      }
-    });
-  }
-  
   // Event handlers
   onAction(event: { action: string }): void {
     if (event.action === 'add') {
@@ -862,6 +880,16 @@ export class AccountListComponent implements OnInit, OnDestroy {
       return `${year - 1}-${year}`;
     }
     return `${year}-${year + 1}`;
+  }
+
+  private toBoolean(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') {
+      const normalized = String(value).trim().toLowerCase();
+      return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'active';
+    }
+    return false;
   }
 }
 

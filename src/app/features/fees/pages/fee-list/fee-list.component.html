@@ -19,7 +19,6 @@
         (click)="switchTab('structures')">
         <mat-icon>account_balance</mat-icon>
         <span>Fee Structures</span>
-        <span class="tab-badge" *ngIf="structureCount > 0">{{ structureCount }}</span>
       </button>
 
       <button 
@@ -29,7 +28,6 @@
         (click)="switchTab('payments')">
         <mat-icon>receipt_long</mat-icon>
         <span>Fee Payments</span>
-        <span class="tab-badge" *ngIf="paymentCount > 0">{{ paymentCount }}</span>
       </button>
 
       <button 
@@ -39,7 +37,6 @@
         (click)="switchTab('types')">
         <mat-icon>category</mat-icon>
         <span>Fee Types</span>
-        <span class="tab-badge" *ngIf="feeTypeCount > 0">{{ feeTypeCount }}</span>
       </button>
     </mat-toolbar>
   </mat-card>

@@ -47,6 +47,7 @@ export class AccountCategoryListComponent implements OnInit {
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
       { key: 'type', header: 'Type', type: 'badge', sortable: true, width: '110px', align: 'center' },
       { key: 'sub_type', header: 'Sub Type', sortable: true, width: '150px' },
+      { key: 'academic_year.name', header: 'Academic Year', sortable: true, searchable: false, width: '160px' },
       { key: 'description', header: 'Description' },
       { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
     ],

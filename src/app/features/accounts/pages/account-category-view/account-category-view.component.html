@@ -1,184 +1,212 @@
-<div class="category-view-container">
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner diameter="60"></mat-spinner>
-    <p>Loading category details...</p>
+<div class="view-container" *ngIf="!isLoading && category">
+  
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()" *ngIf="hasEditPermission">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="accent" (click)="onToggleStatus()" *ngIf="hasEditPermission">
+        <mat-icon>{{ category.is_active ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+        {{ category.is_active ? 'Deactivate' : 'Activate' }}
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()" *ngIf="hasDeletePermission">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
   </div>
 
-  <div *ngIf="!isLoading && category" class="category-details">
-    <!-- Header Card -->
-    <mat-card class="header-card">
-      <mat-card-header>
-        <div class="header-content">
-          <div class="title-section">
-            <div class="icon-wrapper" [class.income]="category.type === 'Income'" [class.expense]="category.type === 'Expense'">
-              <mat-icon>{{ category.type === 'Income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
-            </div>
-            <div class="title-text">
-              <h1>{{ category.name }}</h1>
-              <p class="code">{{ category.code }}</p>
-            </div>
-          </div>
-          <div class="status-badge">
-            <mat-chip [class.active]="category.is_active" [class.inactive]="!category.is_active">
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar" [ngClass]="category.type === 'Expense' ? 'avatar-expense' : 'avatar-income'">
+          <mat-icon class="avatar-icon">{{ category.type === 'Income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ category.name }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>tag</mat-icon>
+              {{ category.code }}
+            </span>
+            <span>
+              <mat-icon>{{ category.branch_id ? 'business' : 'public' }}</mat-icon>
+              {{ category.branch?.name || (category.branch_id ? 'Branch #' + category.branch_id : 'Global (All Branches)') }}
+            </span>
+            <span class="status-badge" [ngClass]="category.is_active ? 'status-active' : 'status-inactive'">
+              <mat-icon>circle</mat-icon>
               {{ category.is_active ? 'Active' : 'Inactive' }}
-            </mat-chip>
+            </span>
           </div>
         </div>
-      </mat-card-header>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
-      <mat-card-actions class="header-actions">
-        <button mat-button (click)="onBack()">
-          <mat-icon>arrow_back</mat-icon>
-          Back to List
-        </button>
-        <span class="spacer"></span>
-        <button mat-button (click)="onToggleStatus()" *ngIf="hasEditPermission" color="accent">
-          <mat-icon>{{ category.is_active ? 'toggle_off' : 'toggle_on' }}</mat-icon>
-          {{ category.is_active ? 'Deactivate' : 'Activate' }}
-        </button>
-        <button mat-raised-button color="primary" (click)="onEdit()" *ngIf="hasEditPermission">
-          <mat-icon>edit</mat-icon>
-          Edit
-        </button>
-        <button mat-raised-button color="warn" (click)="onDelete()" *ngIf="hasDeletePermission">
-          <mat-icon>delete</mat-icon>
-          Delete
-        </button>
-      </mat-card-actions>
+  <!-- Stats Row -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" [ngClass]="category.type === 'Expense' ? 'stat-expense' : 'stat-income'">
+          <mat-icon>receipt</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ transactionCount }}</div>
+          <div class="stat-label">Transactions</div>
+        </div>
+      </mat-card-content>
     </mat-card>
-
-    <!-- Stats Cards -->
-    <div class="stats-row">
-      <mat-card class="stat-card">
-        <div class="stat-content">
-          <mat-icon class="stat-icon">receipt</mat-icon>
-          <div class="stat-text">
-            <h3>{{ transactionCount }}</h3>
-            <p>Transactions</p>
-          </div>
+    <mat-card class="stat-card" *ngIf="budgetCount > 0">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>account_balance_wallet</mat-icon>
         </div>
-      </mat-card>
-
-      <mat-card class="stat-card">
-        <div class="stat-content">
-          <mat-icon class="stat-icon">account_balance_wallet</mat-icon>
-          <div class="stat-text">
-            <h3>{{ budgetCount }}</h3>
-            <p>Budgets</p>
-          </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ budgetCount }}</div>
+          <div class="stat-label">Budgets</div>
         </div>
-      </mat-card>
-    </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card" *ngIf="category.transactions && category.transactions.length > 0">
+      <mat-card-content>
+        <div class="stat-icon" [ngClass]="category.type === 'Expense' ? 'stat-expense' : 'stat-income'">
+          <mat-icon>payments</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value" [class.amount-income]="recentTransactionsTotal >= 0" [class.amount-expense]="recentTransactionsTotal < 0">
+            ₹{{ recentTransactionsTotal | number:'1.2-2' }}
+          </div>
+          <div class="stat-label">Recent Transactions Total</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
 
-    <!-- Information Card -->
-    <mat-card class="info-card">
+  <!-- Details Grid -->
+  <div class="view-details-grid">
+    <!-- Basic Information -->
+    <mat-card class="detail-card">
       <mat-card-header>
         <mat-card-title>
           <mat-icon>info</mat-icon>
-          Category Information
+          Basic Information
         </mat-card-title>
       </mat-card-header>
-      <mat-divider></mat-divider>
       <mat-card-content>
-        <div class="info-grid">
-          <div class="info-item">
-            <div class="info-label">
-              <mat-icon>label</mat-icon>
-              Category Name
-            </div>
-            <div class="info-value">{{ category.name }}</div>
-          </div>
-
-          <div class="info-item">
-            <div class="info-label">
-              <mat-icon>tag</mat-icon>
-              Code
-            </div>
-            <div class="info-value">{{ category.code }}</div>
-          </div>
-
-          <div class="info-item">
-            <div class="info-label">
-              <mat-icon>business</mat-icon>
-              Branch
-            </div>
-            <div class="info-value">
-              {{ category.branch?.name || 'Global (All Branches)' }}
-              <mat-chip *ngIf="!category.branch_id" class="global-chip">Global</mat-chip>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <div class="info-label">
-              <mat-icon>category</mat-icon>
-              Type
-            </div>
-            <div class="info-value">
-              <mat-chip [class.income-chip]="category.type === 'Income'" [class.expense-chip]="category.type === 'Expense'">
-                <mat-icon>{{ category.type === 'Income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
-                {{ category.type }}
-              </mat-chip>
-            </div>
-          </div>
-
-          <div class="info-item" *ngIf="category.sub_type">
-            <div class="info-label">
-              <mat-icon>subdirectory_arrow_right</mat-icon>
-              Sub Type
-            </div>
-            <div class="info-value">{{ category.sub_type }}</div>
-          </div>
-
-          <div class="info-item full-width" *ngIf="category.description">
-            <div class="info-label">
-              <mat-icon>description</mat-icon>
-              Description
-            </div>
-            <div class="info-value">{{ category.description }}</div>
-          </div>
-
-          <div class="info-item">
-            <div class="info-label">
-              <mat-icon>calendar_today</mat-icon>
-              Created At
-            </div>
-            <div class="info-value">{{ category.created_at | date:'medium' }}</div>
-          </div>
-
-          <div class="info-item">
-            <div class="info-label">
-              <mat-icon>update</mat-icon>
-              Last Updated
-            </div>
-            <div class="info-value">{{ category.updated_at | date:'medium' }}</div>
-          </div>
+        <div class="detail-row">
+          <span class="detail-label">Category Name:</span>
+          <span class="detail-value">{{ category.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Code:</span>
+          <span class="detail-value code-badge">{{ category.code }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Branch:</span>
+          <span class="detail-value">{{ category.branch?.name || 'Global (All Branches)' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Academic Year:</span>
+          <span class="detail-value">{{ category.academicYear?.name || category.academic_year?.name || category.academic_year_id || 'N/A' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Type:</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="category.type === 'Income' ? 'status-income' : 'status-expense'">
+              <mat-icon>{{ category.type === 'Income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+              {{ category.type }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="category.sub_type">
+          <span class="detail-label">Sub Type:</span>
+          <span class="detail-value">{{ category.sub_type }}</span>
+        </div>
+        <div class="detail-row" *ngIf="category.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ category.description }}</span>
         </div>
       </mat-card-content>
     </mat-card>
 
-    <!-- Recent Transactions -->
-    <mat-card class="transactions-card" *ngIf="category.transactions && category.transactions.length > 0">
+    <!-- Category Settings -->
+    <mat-card class="detail-card">
       <mat-card-header>
         <mat-card-title>
-          <mat-icon>receipt_long</mat-icon>
-          Recent Transactions
+          <mat-icon>settings</mat-icon>
+          Category Settings
         </mat-card-title>
       </mat-card-header>
-      <mat-divider></mat-divider>
       <mat-card-content>
-        <div class="transaction-list">
-          <div class="transaction-item" *ngFor="let transaction of category.transactions">
-            <div class="transaction-info">
-              <p class="transaction-desc">{{ transaction.description }}</p>
-              <p class="transaction-date">{{ transaction.transaction_date | date:'shortDate' }}</p>
-            </div>
-            <div class="transaction-amount" [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
-              {{ transaction.type === 'Income' ? '+' : '-' }}₹{{ transaction.amount | number:'1.2-2' }}
-            </div>
-          </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="category.is_active ? 'status-active' : 'status-inactive'">
+              {{ category.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- System Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          System Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row" *ngIf="category.created_at">
+          <span class="detail-label">Created At:</span>
+          <span class="detail-value">{{ category.created_at | date:'medium' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="category.updated_at">
+          <span class="detail-label">Last Updated:</span>
+          <span class="detail-value">{{ category.updated_at | date:'medium' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Category ID:</span>
+          <span class="detail-value">#{{ category.id }}</span>
         </div>
       </mat-card-content>
     </mat-card>
   </div>
+
+  <!-- Recent Transactions -->
+  <mat-card class="detail-card view-full-width" *ngIf="category.transactions && category.transactions.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>receipt_long</mat-icon>
+        Recent Transactions
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="transaction-list">
+        <div class="transaction-item" *ngFor="let transaction of category.transactions">
+          <div class="transaction-info">
+            <p class="transaction-desc">{{ transaction.description || 'Transaction #' + transaction.transaction_number }}</p>
+            <p class="transaction-date">{{ transaction.transaction_date | date:'shortDate' }}</p>
+          </div>
+          <div class="transaction-amount" [class.income]="transaction.type === 'Income'" [class.expense]="transaction.type === 'Expense'">
+            {{ transaction.type === 'Income' ? '+' : '-' }}₹{{ transaction.amount | number:'1.2-2' }}
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
 </div>
 
+<!-- Loading State -->
+<div class="view-loading-container" *ngIf="isLoading">
+  <mat-spinner></mat-spinner>
+  <p>Loading category information...</p>
+</div>

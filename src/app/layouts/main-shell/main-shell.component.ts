@@ -162,7 +162,9 @@ export class MainShellComponent implements OnInit, OnDestroy {
     if (year) {
       this.academicYearContext.setSelected(year);
       this.selectedAcademicYearId = yearId;
-      this.errorHandler.showSuccess(`Academic year set to ${year.name}`);
+      this.errorHandler.showSuccess(`Academic year set to ${year.name}. Reloading...`);
+      // Reload application so all data reflects the new academic year
+      window.location.reload();
     }
   }
 

@@ -71,7 +71,20 @@
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-full">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year *</mat-label>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+              <mat-select formControlName="academic_year_id" [disabled]="loadingAcademicYears">
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">
+                  {{ ay.name }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="categoryForm.get('academic_year_id')?.invalid && categoryForm.get('academic_year_id')?.touched">
+                Academic year is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Sub Type</mat-label>
               <mat-select formControlName="sub_type">
                 <mat-option value="">None</mat-option>
@@ -83,6 +96,8 @@
               <mat-hint>Optional sub-category classification</mat-hint>
             </mat-form-field>
           </div>
+
+        
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-full">

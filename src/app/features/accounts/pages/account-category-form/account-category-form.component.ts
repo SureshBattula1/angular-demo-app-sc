@@ -8,6 +8,7 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AccountCategory } from '../../../../core/models/account.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 
 @Component({
   selector: 'app-account-category-form',
@@ -27,6 +28,9 @@ export class AccountCategoryFormComponent implements OnInit {
   
   branches: any[] = [];
   loadingBranches = false;
+
+  academicYears: AcademicYear[] = [];
+  loadingAcademicYears = false;
   
   categoryTypes = [
     { value: 'Income', label: 'Income', icon: 'arrow_downward', color: 'success' },
@@ -63,6 +67,7 @@ export class AccountCategoryFormComponent implements OnInit {
     private fb: FormBuilder,
     private accountService: AccountService,
     private branchService: BranchService,
+    private academicYearService: AcademicYearService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
@@ -72,6 +77,8 @@ export class AccountCategoryFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+
+    this.loadAcademicYears();
     
     this.route.params.subscribe(params => {
       if (params['id'] && params['id'] !== 'new') {
@@ -95,12 +102,38 @@ export class AccountCategoryFormComponent implements OnInit {
   private initForm(): void {
     this.categoryForm = this.fb.group({
       branch_id: [null],
+      academic_year_id: [null, Validators.required],
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
       type: ['Income', Validators.required],
       sub_type: [''],
       description: [''],
       is_active: [true]
+    });
+  }
+
+  private loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+
+          // Default academic year when creating or when existing category has none
+          if (!this.categoryForm.get('academic_year_id')?.value) {
+            const current = this.academicYears.find(y => y.is_current)
+              || this.academicYears.find(y => y.is_active);
+            if (current) {
+              this.categoryForm.get('academic_year_id')?.setValue(current.id);
+            }
+          }
+        }
+        this.loadingAcademicYears = false;
+      },
+      error: (error) => {
+        this.errorHandler.handleError(error);
+        this.loadingAcademicYears = false;
+      }
     });
   }
 
@@ -129,6 +162,7 @@ export class AccountCategoryFormComponent implements OnInit {
           this.currentCategory = response.data;
           this.categoryForm.patchValue({
             branch_id: response.data.branch_id,
+            academic_year_id: response.data.academic_year_id ?? response.data.academicYear?.id ?? null,
             name: response.data.name,
             code: response.data.code,
             type: response.data.type,

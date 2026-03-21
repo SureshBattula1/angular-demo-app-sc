@@ -136,5 +136,13 @@ export class AccountCategoryViewComponent implements OnInit {
   get budgetCount(): number {
     return this.category?.budgets?.length || 0;
   }
+
+  get recentTransactionsTotal(): number {
+    const txns = this.category?.transactions || [];
+    return txns.reduce((sum, t) => {
+      const amt = Number(t.amount) || 0;
+      return sum + (t.type === 'Income' ? amt : -amt);
+    }, 0);
+  }
 }
 

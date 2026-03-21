@@ -1,6 +1,7 @@
 export interface AccountCategory {
   id: number;
   branch_id?: number | null;
+  academic_year_id?: number | null;
   name: string;
   code: string;
   type: 'Income' | 'Expense';
@@ -16,12 +17,22 @@ export interface AccountCategory {
     name: string;
     code: string;
   };
+  academicYear?: {
+    id: number;
+    name: string;
+  };
+  /** Laravel API may return snake_case */
+  academic_year?: {
+    id: number;
+    name: string;
+  };
   transactions?: Transaction[];
   budgets?: Budget[];
 }
 
 export interface AccountCategoryFormData {
   branch_id?: number | null;
+  academic_year_id?: number | null;
   name: string;
   code: string;
   type: 'Income' | 'Expense';
@@ -117,6 +128,7 @@ export interface AccountDashboard {
     total_expense: number;
     net_balance: number;
     financial_year: string;
+    category_count?: number;
   };
   income_by_category: Array<{
     category: string;

@@ -18,7 +18,6 @@
         (click)="switchTab('income')">
         <mat-icon class="income-icon">arrow_downward</mat-icon>
         <span>Income</span>
-        <span class="tab-badge income-badge" *ngIf="incomeCount > 0">{{ incomeCount }}</span>
       </button>
 
       <button 
@@ -28,7 +27,6 @@
         (click)="switchTab('expenses')">
         <mat-icon class="expense-icon">arrow_upward</mat-icon>
         <span>Expenses</span>
-        <span class="tab-badge expense-badge" *ngIf="expenseCount > 0">{{ expenseCount }}</span>
       </button>
 
       <button 
@@ -38,7 +36,6 @@
         (click)="switchTab('categories')">
         <mat-icon>category</mat-icon>
         <span>Categories</span>
-        <span class="tab-badge" *ngIf="categoryCount > 0">{{ categoryCount }}</span>
       </button>
     </mat-toolbar>
   </mat-card>
@@ -141,7 +138,7 @@
           <mat-icon>category</mat-icon>
           <div class="stat-content">
             <h3>Categories</h3>
-            <p class="amount">{{ categoryCount }}</p>
+            <p class="amount">{{ dashboardStats.category_count }}</p>
             <span class="count">Active Categories</span>
           </div>
         </mat-card>

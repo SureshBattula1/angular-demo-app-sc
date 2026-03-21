@@ -6,7 +6,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { AccountService } from '../../services/account.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { Transaction, AccountCategory } from '../../../../core/models/account.model';
+import { Transaction, AccountCategory, TransactionFormData } from '../../../../core/models/account.model';
 
 @Component({
   selector: 'app-transaction-form',
@@ -78,13 +78,11 @@ export class TransactionFormComponent implements OnInit {
   }
 
   private initForm(): void {
-    const today = new Date().toISOString().split('T')[0];
-
     this.transactionForm = this.fb.group({
       branch_id: [null, Validators.required],
       type: ['Income', Validators.required],
       category_id: [null, Validators.required],
-      transaction_date: [today, Validators.required],
+      transaction_date: [new Date(), Validators.required],
       amount: [0, [Validators.required, Validators.min(0)]],
       party_name: [''],
       party_type: [''],
@@ -121,18 +119,18 @@ export class TransactionFormComponent implements OnInit {
     this.accountService.getTransaction(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.currentTransaction = response.data;
-          const data = { ...response.data };
-          // Normalize transaction_date to YYYY-MM-DD for <input type="date">
-          if (data.transaction_date) {
-            const d = data.transaction_date;
-            data.transaction_date = typeof d === 'string' && d.length >= 10
-              ? d.substring(0, 10)
-              : new Date(d).toISOString().split('T')[0];
-          }
-          this.transactionForm.patchValue(data, { emitEvent: false });
+          const d = response.data;
+          this.currentTransaction = d;
+          // Convert transaction_date to Date for mat-datepicker
+          this.transactionForm.patchValue(
+            {
+              ...d,
+              transaction_date: d.transaction_date ? new Date(d.transaction_date) : new Date()
+            },
+            { emitEvent: false }
+          );
           // Load categories for this transaction's branch so dropdown populates (including current category)
-          this.loadCategories(data.branch_id ?? undefined);
+          this.loadCategories(d.branch_id ?? undefined);
         }
         this.isLoading = false;
       },
@@ -202,7 +200,15 @@ export class TransactionFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.transactionForm.value;
+    const raw = this.transactionForm.value;
+    const transactionDateStr =
+      raw.transaction_date instanceof Date
+        ? raw.transaction_date.toISOString().split('T')[0]
+        : String(raw.transaction_date ?? '');
+    const formData: TransactionFormData = {
+      ...(raw as TransactionFormData),
+      transaction_date: transactionDateStr
+    };
 
     const request = this.isEditMode && this.transactionId
       ? this.accountService.updateTransaction(this.transactionId, formData)

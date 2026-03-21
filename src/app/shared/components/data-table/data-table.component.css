@@ -448,6 +448,11 @@
   background-color: var(--danger-color);
 }
 
+.badge-warning .badge {
+  background-color: var(--warning-color, #f57c00);
+  color: var(--white);
+}
+
 .badge-success .badge {
   background-color: var(--success-color);
 }
