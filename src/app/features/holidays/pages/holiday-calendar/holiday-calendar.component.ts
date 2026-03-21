@@ -60,14 +60,22 @@ export class HolidayCalendarComponent implements OnInit {
 
   // Table configuration
   tableConfig: TableConfig = {
+
     columns: [
-      { key: 'title', header: 'Holiday Name', sortable: true, searchable: true, width: '25%' },
-      { key: 'type', header: 'Type', type: 'badge', sortable: true, width: '12%' },
-      { key: 'start_date', header: 'Start Date', type: 'date', sortable: true, width: '12%' },
-      { key: 'end_date', header: 'End Date', type: 'date', sortable: true, width: '12%' },
-      { key: 'duration', header: 'Days', sortable: true, align: 'center', width: '8%' },
-      { key: 'branch', header: 'Branch', sortable: true, width: '15%' },
-      { key: 'is_active', header: 'Status', type: 'badge', sortable: true, width: '10%' }
+      { key: 'branch', header: 'Branch', sortable: true,  },
+      { key: 'title', header: 'Holiday Name', sortable: true, searchable: true },
+      { key: 'type', header: 'Type', type: 'badge', sortable: true },
+      { key: 'start_date', header: 'Start Date', type: 'date', sortable: true },
+      { key: 'end_date', header: 'End Date', type: 'date', sortable: true},
+      { key: 'duration', header: 'Days', sortable: true },
+     
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        sortable: true,
+        cellClass: (row: any) => this.toBoolean(row?.is_active) ? 'badge-success' : 'badge-danger'
+      }
     ],
     actions: [
       {
@@ -106,6 +114,11 @@ export class HolidayCalendarComponent implements OnInit {
     private exportService: ExportService
   ) {}
 
+  toBoolean(value: any): boolean {
+    if (value === true || value === 'true' || value === 1 || value === '1') return true;
+    return false;
+  }
+
   ngOnInit(): void {
     this.loadCalendarData();
     this.loadAllHolidays();
@@ -143,7 +156,10 @@ export class HolidayCalendarComponent implements OnInit {
     this.holidayService.getHolidays().subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.allHolidays = response.data;
+          this.allHolidays = (response.data as Holiday[]).map(h => ({
+            ...h,
+            is_active_display: this.toBoolean(h.is_active) ? 'Active' : 'Deactive'
+          }));
         }
         this.loadingList = false;
       },

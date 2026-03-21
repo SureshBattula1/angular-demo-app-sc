@@ -9,6 +9,8 @@ export interface Holiday {
   color?: string;
   is_recurring: boolean;
   academic_year?: string;
+  academic_year_id?: number | null;
+  branch_name?: string;
   is_active: boolean;
   created_by?: number;
   duration?: number;
@@ -36,7 +38,7 @@ export interface HolidayFormData {
   type: string;
   color?: string;
   is_recurring?: boolean;
-  academic_year?: string;
+  academic_year_id?: number | null;
   is_active?: boolean;
 }
 

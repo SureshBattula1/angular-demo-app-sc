@@ -16,6 +16,7 @@ import { HolidayService } from '../../services/holiday.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
+import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { Holiday, HolidayFormData } from '../../../../core/models/holiday.model';
 
@@ -47,6 +48,8 @@ export class HolidayFormComponent implements OnInit {
   submitting = false;
   branches: any[] = [];
   loadingBranches = false;
+  academicYears: AcademicYear[] = [];
+  loadingAcademicYears = false;
 
   holidayTypes = [
     { value: 'National', label: 'National Holiday', color: '#FF5733' },
@@ -61,6 +64,7 @@ export class HolidayFormComponent implements OnInit {
     private holidayService: HolidayService,
     private authService: AuthService,
     private apiService: ApiService,
+    private academicYearService: AcademicYearService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
@@ -70,6 +74,7 @@ export class HolidayFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
+    this.loadAcademicYears();
 
     // Check if edit mode
     this.route.params.subscribe(params => {
@@ -97,6 +102,7 @@ export class HolidayFormComponent implements OnInit {
   initForm(): void {
     const user = this.authService.currentUser();
     
+    const defaultYearId = this.academicYearContext?.selectedYearId ?? null;
     this.holidayForm = this.fb.group({
       branch_id: [null],
       title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -106,7 +112,7 @@ export class HolidayFormComponent implements OnInit {
       type: ['School', Validators.required],
       color: ['#3498DB'],
       is_recurring: [false],
-      academic_year: [this.getCurrentAcademicYear()],
+      academic_year_id: [defaultYearId],
       is_active: [true]
     });
 
@@ -121,6 +127,28 @@ export class HolidayFormComponent implements OnInit {
       const selected = this.holidayTypes.find(t => t.value === type);
       if (selected) {
         this.holidayForm.patchValue({ color: selected.color }, { emitEvent: false });
+      }
+    });
+  }
+
+  /**
+   * Load academic years for dropdown
+   */
+  loadAcademicYears(): void {
+    this.loadingAcademicYears = true;
+    this.academicYearService.getList({ is_active: true }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.academicYears = response.data;
+          if (!this.holidayForm?.get('academic_year_id')?.value && this.academicYears.length > 0) {
+            const current = this.academicYears.find(ay => ay.is_current) ?? this.academicYears[0];
+            this.holidayForm?.patchValue({ academic_year_id: current.id }, { emitEvent: false });
+          }
+        }
+        this.loadingAcademicYears = false;
+      },
+      error: () => {
+        this.loadingAcademicYears = false;
       }
     });
   }
@@ -163,7 +191,7 @@ export class HolidayFormComponent implements OnInit {
             type: holiday.type,
             color: holiday.color,
             is_recurring: holiday.is_recurring,
-            academic_year: holiday.academic_year,
+            academic_year_id: holiday.academic_year_id ?? null,
             is_active: holiday.is_active
           });
         }
@@ -225,7 +253,7 @@ export class HolidayFormComponent implements OnInit {
       type: formValue.type,
       color: formValue.color,
       is_recurring: formValue.is_recurring || false,
-      academic_year: formValue.academic_year,
+      academic_year_id: formValue.academic_year_id || null,
       is_active: formValue.is_active
     };
   }
@@ -240,18 +268,6 @@ export class HolidayFormComponent implements OnInit {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  /**
-   * Get current academic year
-   */
-  getCurrentAcademicYear(): string {
-    const ctx = this.academicYearContext?.selectedYear;
-    if (ctx?.name) return ctx.name;
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    return month < 4 ? `${year - 1}-${year}` : `${year}-${year + 1}`;
   }
 
   /**

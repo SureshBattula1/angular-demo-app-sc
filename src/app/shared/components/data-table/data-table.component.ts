@@ -578,6 +578,8 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     // Check if value is null, undefined, or empty string
     // Note: 0 and false are valid values and should not be replaced with "-"
     if (value === null || value === undefined || value === '') {
+      // For branch column, null means "All Branches"
+      if (column.key === 'branch') return 'All Branches';
       return '-';
     }
     
@@ -594,12 +596,16 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
       return `${value.length} items`;
     }
     
-    // Handle objects (but not dates) - show "-" if empty
+    // Handle objects (but not dates)
     if (typeof value === 'object' && !(value instanceof Date)) {
       if (Object.keys(value).length === 0) {
         return '-';
       }
-      // For non-empty objects, return as-is (might have custom template)
+      // Branch/relation objects with name: return name for display (avoids [object Object])
+      if (typeof (value as any).name === 'string') {
+        return (value as any).name;
+      }
+      // For other non-empty objects, return as-is (might have custom template)
       return value;
     }
     
