@@ -34,7 +34,8 @@ import { Section } from '../../../../core/models/section.model';
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
       (searchFieldChanged)="onSearchFieldChanged($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -407,6 +408,14 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
       search: event.query,
       page: 1
     };
+    this.loadStudents();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
+    this.selectedBranchId = null;
+    this.setGradeOptions([]);
+    this.setSectionOptions([]);
     this.loadStudents();
   }
   

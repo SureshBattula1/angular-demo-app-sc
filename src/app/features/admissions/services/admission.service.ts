@@ -7,7 +7,8 @@ export interface AdmissionApplication {
   branch_id: number;
   application_number?: string;
   application_date: string;
-  academic_year: string;
+  academic_year_id?: number;
+  academic_year?: string;
   applying_for_grade: string;
   applying_for_section?: string;
   first_name: string;
@@ -79,6 +80,7 @@ export interface AdmissionApplication {
   admission_confirmed_date?: string;
   student_id?: number;
   remarks?: string;
+  referred_by?: string;
   documents?: any[];
   branch_name?: string;
   branch_code?: string;
@@ -88,6 +90,18 @@ export interface AdmissionApplication {
   updated_at?: string;
 }
 
+export interface AdmissionDashboard {
+  total: number;
+  by_status: {
+    Applied: number;
+    Shortlisted: number;
+    Rejected: number;
+    Admitted: number;
+    Waitlisted: number;
+  };
+  fee_total: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -95,6 +109,13 @@ export class AdmissionService {
   private readonly ENDPOINT = '/admissions';
 
   constructor(private apiService: ApiService) {}
+
+  /**
+   * Get admission dashboard overview (total, status-wise counts, fee total)
+   */
+  getDashboard(params?: Record<string, unknown>): Observable<ApiResponse<AdmissionDashboard>> {
+    return this.apiService.get<AdmissionDashboard>(`${this.ENDPOINT}/dashboard`, params);
+  }
 
   /**
    * Get all admission applications with filters

@@ -30,7 +30,8 @@ import { Subject } from '../../../../core/models/subject.model';
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
       (searchFieldChanged)="onSearchFieldChanged($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -274,6 +275,13 @@ export class SubjectListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadSubjects();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
+    this.selectedBranchId = null;
+    this.setGradeOptions([]);
     this.loadSubjects();
   }
   

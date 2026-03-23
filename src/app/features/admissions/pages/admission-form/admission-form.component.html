@@ -46,28 +46,39 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year *</mat-label>
-              <mat-select formControlName="academic_year">
+              <mat-select formControlName="academic_year_id">
                 <mat-option *ngIf="loadingAcademicYears" disabled>Loading academic years...</mat-option>
-                <mat-option *ngFor="let ay of academicYears" [value]="ay.name">{{ ay.name }}</mat-option>
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>
               </mat-select>
               <mat-icon matPrefix>event</mat-icon>
-              <mat-error *ngIf="admissionForm.get('academic_year')?.invalid">{{ getErrorMessage('academic_year') }}</mat-error>
+              <mat-error *ngIf="admissionForm.get('academic_year_id')?.invalid">{{ getErrorMessage('academic_year_id') }}</mat-error>
             </mat-form-field>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Applying For Grade *</mat-label>
-              <mat-select formControlName="applying_for_grade">
+              <mat-select formControlName="applying_for_grade" [disabled]="!admissionForm.get('branch_id')?.value">
+                <mat-option *ngIf="!admissionForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                <mat-option *ngIf="loadingGrades" disabled>
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <mat-spinner diameter="20"></mat-spinner>
+                    Loading grades...
+                  </span>
+                </mat-option>
                 <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
               </mat-select>
               <mat-icon matPrefix>grade</mat-icon>
+              <mat-icon matSuffix *ngIf="loadingGrades" class="grade-loading-spinner">
+                <mat-spinner diameter="24"></mat-spinner>
+              </mat-icon>
+              <mat-hint *ngIf="!admissionForm.get('branch_id')?.value">Select branch first</mat-hint>
               <mat-error *ngIf="admissionForm.get('applying_for_grade')?.invalid">{{ getErrorMessage('applying_for_grade') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Section *</mat-label>
-              <mat-select formControlName="applying_for_section">
+              <mat-select formControlName="applying_for_section" [disabled]="!admissionForm.get('branch_id')?.value || !admissionForm.get('applying_for_grade')?.value">
                 <mat-option *ngIf="loadingSections" disabled>
                   <span style="display: flex; align-items: center; gap: 8px;">
                     <mat-spinner diameter="20"></mat-spinner>
@@ -644,6 +655,22 @@
             </mat-form-field>
           </div>
 
+        </div>
+
+        <!-- Referred By (optional) - Always visible for new and edit -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>person_add</mat-icon>
+            Additional Information
+          </h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Referred By</mat-label>
+              <input matInput formControlName="referred_by" placeholder="e.g. Parent name, Staff, Advertisement">
+              <mat-icon matPrefix>person_add</mat-icon>
+              <mat-hint>Optional - Who referred this applicant</mat-hint>
+            </mat-form-field>
+          </div>
         </div>
 
         <!-- Form Actions -->

@@ -32,7 +32,8 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
       (searchFieldChanged)="onSearchFieldChanged($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -300,6 +301,13 @@ export class AssignedSubjectsListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadAssignments();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = { sort_by: 'branch_id', sort_direction: 'asc' };
+    this.selectedBranchId = null;
+    this.setSectionOptions([]);
     this.loadAssignments();
   }
   

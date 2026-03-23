@@ -31,7 +31,8 @@ import { Section } from '../../../../core/models/section.model';
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
       (searchFieldChanged)="onSearchFieldChanged($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -281,6 +282,13 @@ export class SectionListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadSections();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
+    this.selectedBranchId = null;
+    this.setGradeOptions([]);
     this.loadSections();
   }
 

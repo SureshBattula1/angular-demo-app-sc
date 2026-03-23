@@ -30,7 +30,8 @@ import { Grade } from '../../../../core/models/grade.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`
@@ -317,6 +318,11 @@ export class GradeListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadGrades();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadGrades();
   }
 

@@ -30,7 +30,8 @@ import { environment } from '../../../../../environments/environment';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`
@@ -372,6 +373,11 @@ export class BranchListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadBranches();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadBranches();
   }
   

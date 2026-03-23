@@ -28,7 +28,8 @@ import { Department } from '../../../../core/models/department.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -219,6 +220,11 @@ export class DepartmentListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadDepartments();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadDepartments();
   }
   

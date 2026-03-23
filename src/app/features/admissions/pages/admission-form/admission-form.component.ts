@@ -34,6 +34,9 @@ export class AdmissionFormComponent implements OnInit {
   /** Section dropdown options – set when sections load so template updates reliably */
   sectionOptionsList: { value: string; label: string }[] = [];
   loadingSections = false;
+  loadingGrades = false;
+  /** Skip clearing grade/section when loading existing application */
+  private isLoadingApplication = false;
   /** Academic years for dropdown – loaded from API */
   academicYears: AcademicYear[] = [];
   loadingAcademicYears = false;
@@ -86,11 +89,11 @@ export class AdmissionFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadGrades();
     this.loadAcademicYears();
+    this.setupGradeLoading();
     this.setupSectionLoading();
     this.academicYearContext.selectedYear$.pipe(take(1)).subscribe(y => {
-      if (!this.isEditMode && y?.name) this.admissionForm.patchValue({ academic_year: y.name });
+      if (!this.isEditMode && y?.id) this.admissionForm.patchValue({ academic_year_id: y.id });
     });
     setTimeout(() => {
       this.ensureGradeControlEnabled();
@@ -110,7 +113,7 @@ export class AdmissionFormComponent implements OnInit {
     this.admissionForm = this.fb.group({
       // Branch & Academic
       branch_id: [null, Validators.required],
-      academic_year: ['', Validators.required], // Manual entry - no default value
+      academic_year_id: [null, Validators.required],
       applying_for_grade: ['', Validators.required],
       applying_for_section: ['', Validators.required],
       
@@ -210,6 +213,7 @@ export class AdmissionFormComponent implements OnInit {
       admission_confirmed_date: [''],
       
       remarks: [''],
+      referred_by: [null],
       same_as_permanent: [false]
     });
   }
@@ -229,21 +233,32 @@ export class AdmissionFormComponent implements OnInit {
 
   private loadApplication(id: number): void {
     this.isLoading = true;
-    
+    this.isLoadingApplication = true;
+
     this.admissionService.getApplication(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.currentApplication = response.data;
-          this.admissionForm.patchValue(response.data);
+          const data = { ...response.data };
+          // Ensure academic_year_id is set for edit (backend may return academic_year name)
+          if (data.academic_year_id == null && data.academic_year && this.academicYears.length) {
+            const ay = this.academicYears.find(a => a.name === data.academic_year);
+            if (ay) data.academic_year_id = ay.id;
+          }
+          this.admissionForm.patchValue(data);
+          // setupGradeLoading will load grades for branch; loadSectionsForBranchAndGrade loads sections
           this.loadSectionsForBranchAndGrade();
           this.ensureGradeControlEnabled();
           this.ensureSectionControlEnabled();
           this.isLoading = false;
+          this.isLoadingApplication = false;
+          this.cdr.markForCheck();
         }
       },
       error: (error) => {
         this.errorHandler.handleError(error);
         this.isLoading = false;
+        this.isLoadingApplication = false;
         this.router.navigate(['/admissions']);
       }
     });
@@ -263,16 +278,52 @@ export class AdmissionFormComponent implements OnInit {
     });
   }
 
-  private loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.grades = response.data.filter(grade => grade.is_active);
+  /**
+   * Load grades when branch changes. Branch must be selected.
+   */
+  private setupGradeLoading(): void {
+    const branchControl = this.admissionForm.get('branch_id');
+    if (!branchControl) return;
+
+    branchControl.valueChanges.pipe(startWith(branchControl.value)).subscribe(branchId => {
+      if (branchId) {
+        this.loadGradesForBranch(branchId);
+        if (!this.isLoadingApplication) {
+          this.admissionForm.patchValue({ applying_for_grade: '', applying_for_section: '' }, { emitEvent: false });
+          this.sections = [];
+          this.sectionOptionsList = [];
+          this.cdr.markForCheck();
         }
+      } else {
+        this.grades = [];
+        this.sections = [];
+        this.sectionOptionsList = [];
+        this.loadingGrades = false;
+        this.loadingSections = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadGradesForBranch(branchId: number): void {
+    this.loadingGrades = true;
+    this.cdr.markForCheck();
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+      next: (response) => {
+        this.loadingGrades = false;
+        if (response.success && response.data) {
+          this.grades = (response.data || []).filter((g: any) => g.is_active !== false);
+        } else {
+          this.grades = [];
+        }
+        this.ensureGradeControlEnabled();
+        this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading grades:', error);
+        this.loadingGrades = false;
         this.grades = [];
+        this.ensureGradeControlEnabled();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -283,6 +334,11 @@ export class AdmissionFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.academicYears = response.data;
+          // When editing, resolve academic_year_id from name if not set yet
+          if (this.currentApplication?.academic_year && !this.admissionForm.get('academic_year_id')?.value) {
+            const ay = this.academicYears.find(a => a.name === this.currentApplication!.academic_year);
+            if (ay) this.admissionForm.patchValue({ academic_year_id: ay.id }, { emitEvent: false });
+          }
         }
         this.loadingAcademicYears = false;
         this.cdr.markForCheck();
@@ -327,7 +383,9 @@ export class AdmissionFormComponent implements OnInit {
       branchControl.valueChanges.pipe(startWith(branchControl.value)),
       gradeControl.valueChanges.pipe(startWith(gradeControl.value))
     ]).subscribe(([_branch, _grade]) => {
-      this.admissionForm.patchValue({ applying_for_section: '' }, { emitEvent: false });
+      if (!this.isLoadingApplication) {
+        this.admissionForm.patchValue({ applying_for_section: '' }, { emitEvent: false });
+      }
       this.loadingSections = true;
       this.loadSectionsForBranchAndGrade();
       this.ensureGradeControlEnabled();
@@ -339,9 +397,7 @@ export class AdmissionFormComponent implements OnInit {
   private loadSectionsForBranchAndGrade(): void {
     const branchId = this.admissionForm.get('branch_id')?.value;
     const grade = this.admissionForm.get('applying_for_grade')?.value;
-    console.log('[Section] loadSectionsForBranchAndGrade called', { branchId, grade });
     if (grade == null || grade === '' || branchId == null || branchId === '') {
-      console.log('[Section] Skipping load – branch or grade missing');
       this.sections = [];
       this.sectionOptionsList = [];
       this.loadingSections = false;
@@ -350,12 +406,9 @@ export class AdmissionFormComponent implements OnInit {
       this.cdr.markForCheck();
       return;
     }
-    console.log('[Section] Loading sections for grade_level=' + grade + ', branch_id=' + branchId);
     const requestedBranchId = branchId;
     const requestedGrade = String(grade);
     this.loadingSections = true;
-    this.ensureGradeControlEnabled();
-    this.ensureSectionControlEnabled();
     this.sectionService.getSections({
       grade_level: requestedGrade,
       branch_id: requestedBranchId,
@@ -365,7 +418,6 @@ export class AdmissionFormComponent implements OnInit {
         const currentBranchId = this.admissionForm.get('branch_id')?.value;
         const currentGrade = this.admissionForm.get('applying_for_grade')?.value;
         if (currentBranchId !== requestedBranchId || String(currentGrade) !== requestedGrade) {
-          console.log('[Section] Ignoring stale response (branch/grade changed)', { requested: { requestedBranchId, requestedGrade }, current: { currentBranchId, currentGrade } });
           return;
         }
         const list = Array.isArray(response.data)
@@ -378,12 +430,9 @@ export class AdmissionFormComponent implements OnInit {
             value: s.name ?? s.code ?? String(s.id),
             label: s.name ?? s.code ?? String(s.id)
           }));
-          const copyForConsole = this.sectionOptionsList.map(o => ({ value: o.value, label: o.label }));
-          console.log('[Section] Loaded', this.sections.length, 'sections. Options:', JSON.parse(JSON.stringify(copyForConsole)));
         } else {
           this.sections = [];
           this.sectionOptionsList = [];
-          console.log('[Section] No sections in response', { success: response.success, hasData: !!response.data, listIsArray: Array.isArray(list) });
         }
         this.loadingSections = false;
         this.ensureGradeControlEnabled();
@@ -394,10 +443,8 @@ export class AdmissionFormComponent implements OnInit {
         const currentBranchId = this.admissionForm.get('branch_id')?.value;
         const currentGrade = this.admissionForm.get('applying_for_grade')?.value;
         if (currentBranchId !== requestedBranchId || String(currentGrade) !== requestedGrade) {
-          console.log('[Section] Ignoring stale error (branch/grade changed)');
           return;
         }
-        console.log('[Section] Load error', err);
         this.sections = [];
         this.sectionOptionsList = [];
         this.loadingSections = false;
@@ -471,6 +518,7 @@ export class AdmissionFormComponent implements OnInit {
     const control = this.admissionForm.get(controlName);
     if (control?.hasError('required')) {
       if (controlName === 'applying_for_section') return 'Section is required';
+      if (controlName === 'academic_year_id') return 'Academic year is required';
       return `${controlName.replace(/_/g, ' ')} is required`;
     }
     if (control?.hasError('email')) {

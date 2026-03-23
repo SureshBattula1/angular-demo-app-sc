@@ -31,7 +31,8 @@ import { Teacher } from '../../../../core/models/teacher.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -348,6 +349,11 @@ export class TeacherListComponent implements OnInit {
       search: event.query,
       page: 1
     };
+    this.loadTeachers();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadTeachers();
   }
 

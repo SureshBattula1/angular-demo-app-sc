@@ -55,21 +55,22 @@ export class MainShellComponent implements OnInit, OnDestroy {
   menuItems: MenuItem[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', permission: 'dashboard.view' },
     { icon: 'business', label: 'Branches', route: '/branches', permission: ['branches.view', 'branches.create'], permissionMode: 'any' },
-    { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
+   
     { icon: 'person', label: 'Teachers', route: '/teachers', permission: 'teachers.view' },
     { icon: 'business', label: 'Departments', route: '/departments', permission: 'departments.view' },
     { icon: 'grade', label: 'Classes (Grades)', route: '/grades', permission: 'grades.view', tooltip: 'Classes( Grades)' },
     { icon: 'view_module', label: 'Sections', route: '/sections', permission: 'sections.view' },
     { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'], permissionMode: 'any' },
-    { icon: 'trending_up', label: 'Promotions', route: '/promotions', permission: ['students.promote', 'students.edit'], permissionMode: 'any' },
-    { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
     { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['student_attendance.view', 'student_attendance.mark', 'teacher_attendance.view', 'teacher_attendance.mark'], permissionMode: 'any' },
-    { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
+    { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
+   { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
     { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'], permissionMode: 'any' },
     { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'], permissionMode: 'any' },
     { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'], permissionMode: 'any' },
     { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
     { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
+    { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
+    { icon: 'trending_up', label: 'Promotions', route: '/promotions', permission: ['students.promote', 'students.edit'], permissionMode: 'any' },
     { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'import.view' },
     { icon: 'settings', label: 'Settings', route: '/settings', permission: 'settings.view' }
   ];
