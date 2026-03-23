@@ -7,12 +7,15 @@
         Student Promotion
       </mat-card-title>
       <mat-card-subtitle>
-        Promote students to the next grade with fee handling
+        Promote students to the next grade or revert promotions
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-divider></mat-divider>
 
+    <!-- Tabs -->
+    <mat-tab-group [(selectedIndex)]="activeTabIndex" class="promo-tabs">
+      <mat-tab label="Promote">
     <mat-card-content>
       <form [formGroup]="promotionForm" (ngSubmit)="onSubmit()">
         
@@ -100,6 +103,48 @@
           </div>
 
           <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>From Section *</mat-label>
+              <mat-select formControlName="from_section"
+                [disabled]="!promotionForm.get('from_grade')?.value || loadingFromSections">
+                <mat-option *ngIf="loadingFromSections" disabled>
+                  <span class="option-loading">
+                    <mat-spinner diameter="18"></mat-spinner>
+                    Loading sections...
+                  </span>
+                </mat-option>
+                <mat-option *ngFor="let s of fromSections" [value]="s.value">
+                  {{ s.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>groups</mat-icon>
+              <mat-error *ngIf="promotionForm.get('from_section')?.invalid && promotionForm.get('from_section')?.touched">
+                From Section is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>To Section *</mat-label>
+              <mat-select formControlName="to_section"
+                [disabled]="!promotionForm.get('to_grade')?.value || loadingToSections">
+                <mat-option *ngIf="loadingToSections" disabled>
+                  <span class="option-loading">
+                    <mat-spinner diameter="18"></mat-spinner>
+                    Loading sections...
+                  </span>
+                </mat-option>
+                <mat-option *ngFor="let s of toSections" [value]="s.value">
+                  {{ s.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>groups</mat-icon>
+              <mat-error *ngIf="promotionForm.get('to_section')?.invalid && promotionForm.get('to_section')?.touched">
+                To Section is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
             <mat-checkbox formControlName="check_eligibility">
               Check promotion eligibility before promoting
             </mat-checkbox>
@@ -107,7 +152,7 @@
         </div>
 
         <!-- Student Selection -->
-        <div class="form-section section-card" *ngIf="promotionForm.get('branch_id')?.value && promotionForm.get('from_grade')?.value">
+        <div class="form-section section-card" *ngIf="promotionForm.get('branch_id')?.value && promotionForm.get('from_grade')?.value && promotionForm.get('from_section')?.value">
           <div class="section-header">
             <h3 class="section-title">
               <mat-icon>people</mat-icon>
@@ -232,5 +277,122 @@
         </div>
       </form>
     </mat-card-content>
+      </mat-tab>
+
+      <mat-tab label="Revert">
+    <mat-card-content>
+      <form [formGroup]="promotionForm" (ngSubmit)="onRevertSubmit()">
+        <div class="form-section section-card">
+          <h3 class="section-title">
+            <mat-icon>undo</mat-icon>
+            Revert Promotion
+          </h3>
+          <p class="revert-hint">Move students back to a previous grade. Select the promotion to undo.</p>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-select formControlName="branch_id" (selectionChange)="onRevertBranchChange()">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }} ({{ branch.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year (of promotion) *</mat-label>
+              <mat-select formControlName="revert_academic_year_id" (selectionChange)="loadRevertStudents()">
+                <mat-option *ngFor="let year of academicYears" [value]="year.id">
+                  {{ year.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>calendar_today</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>From Grade (current) *</mat-label>
+              <mat-select formControlName="revert_from_grade" (selectionChange)="onRevertFromGradeChange()">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>school</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>To Grade (revert to) *</mat-label>
+              <mat-select formControlName="revert_to_grade" (selectionChange)="loadRevertSections()">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>arrow_back</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>From Section (optional)</mat-label>
+              <mat-select formControlName="revert_from_section" (selectionChange)="loadRevertStudents()">
+                <mat-option [value]="null">All sections</mat-option>
+                <mat-option *ngFor="let s of revertFromSections" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>To Section (optional)</mat-label>
+              <mat-select formControlName="revert_to_section">
+                <mat-option [value]="null">Same / No specific section</mat-option>
+                <mat-option *ngFor="let s of revertToSections" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Revert Student Selection -->
+        <div class="form-section section-card" *ngIf="promotionForm.get('branch_id')?.value && promotionForm.get('revert_academic_year_id')?.value && promotionForm.get('revert_from_grade')?.value">
+          <div class="section-header">
+            <h3 class="section-title"><mat-icon>people</mat-icon> Select Students to Revert</h3>
+            <div class="selection-info">
+              <span class="selected-count">{{ revertSelectedStudents.length }} of {{ revertFromGradeStudents.length }} selected</span>
+              <button type="button" mat-stroked-button (click)="revertSelectAll()" [disabled]="revertFromGradeStudents.length === 0">
+                {{ revertSelectedStudents.length === revertFromGradeStudents.length ? 'Deselect All' : 'Select All' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="isLoadingRevert" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading students...</p>
+          </div>
+
+          <div *ngIf="!isLoadingRevert && revertFromGradeStudents.length > 0" class="students-list">
+            <div class="student-item" *ngFor="let student of revertFromGradeStudents" (click)="revertToggleStudent(student)">
+              <mat-checkbox [checked]="isRevertStudentSelected(student)" (click)="$event.stopPropagation()" (change)="revertToggleStudent(student)"></mat-checkbox>
+              <div class="student-info">
+                <span class="student-name">{{ getFullName(student) }}</span>
+                <span class="student-details">{{ student.admission_number }} <span *ngIf="student.section">• Section: {{ student.section }}</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!isLoadingRevert && revertFromGradeStudents.length === 0 && promotionForm.get('revert_from_grade')?.value" class="no-students">
+            <mat-icon>info</mat-icon>
+            <p>No students found in the selected grade/section for this academic year.</p>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isLoadingRevert">
+            <mat-icon>cancel</mat-icon> Cancel
+          </button>
+          <button type="submit" mat-raised-button color="warn" [disabled]="isLoadingRevert || revertSelectedStudents.length === 0">
+            <mat-icon>undo</mat-icon>
+            {{ isLoadingRevert ? 'Reverting...' : 'Revert Students' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+      </mat-tab>
+    </mat-tab-group>
   </mat-card>
 </div>

@@ -7,6 +7,7 @@ import { PromotionService } from '../../services/promotion.service';
 import { StudentCrudService } from '../../../students/services/student-crud.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { ApiService } from '../../../../core/services/api.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Student } from '../../../../core/models/student.model';
 import { Grade } from '../../../../core/models/grade.model';
@@ -30,8 +31,18 @@ export class StudentPromotionComponent implements OnInit {
   
   branches: any[] = [];
   grades: Grade[] = [];
+  fromSections: { value: string; label: string }[] = [];
+  toSections: { value: string; label: string }[] = [];
+  revertFromSections: { value: string; label: string }[] = [];
+  revertToSections: { value: string; label: string }[] = [];
+  loadingSections = false;
+  loadingFromSections = false;
+  loadingToSections = false;
   fromGradeStudents: Student[] = [];
   selectedStudents: Student[] = [];
+  revertFromGradeStudents: Student[] = [];
+  revertSelectedStudents: Student[] = [];
+  isLoadingRevert = false;
   
   // Academic years (Option A: use ids everywhere)
   academicYears: AcademicYear[] = [];
@@ -44,12 +55,16 @@ export class StudentPromotionComponent implements OnInit {
   promotionMode: 'basic' | 'with_fees' = 'with_fees';
   checkEligibility = false;
 
+  // Tab: promote (0) vs revert (1)
+  activeTabIndex = 0;
+
   constructor(
     private fb: FormBuilder,
     private promotionService: PromotionService,
     private studentCrudService: StudentCrudService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private apiService: ApiService,
     private academicYearService: AcademicYearService,
     public academicYearContext: AcademicYearContextService,
     private router: Router,
@@ -114,20 +129,32 @@ export class StudentPromotionComponent implements OnInit {
     this.promotionForm = this.fb.group({
       branch_id: [null, Validators.required],
       from_grade: [null, Validators.required],
+      from_section: [null, Validators.required],
       to_grade: [null, Validators.required],
+      to_section: [null, Validators.required],
       to_academic_year_id: [null, Validators.required],
       student_ids: [[], Validators.required],
-      check_eligibility: [false]
+      check_eligibility: [false],
+      // Revert form fields
+      revert_academic_year_id: [null],
+      revert_from_grade: [null],
+      revert_from_section: [null],
+      revert_to_grade: [null],
+      revert_to_section: [null],
+      revert_student_ids: [[]]
     });
 
-    // Load students when branch and from_grade change
+    // Load students when branch, from_grade, or from_section change
     this.promotionForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
-      // Reset grade and students when branch changes
       this.grades = [];
+      this.fromSections = [];
+      this.toSections = [];
       this.fromGradeStudents = [];
       this.selectedStudents = [];
+      this.loadingFromSections = false;
+      this.loadingToSections = false;
       this.promotionForm.patchValue(
-        { from_grade: null, to_grade: null, student_ids: [] },
+        { from_grade: null, to_grade: null, from_section: null, to_section: null, student_ids: [] },
         { emitEvent: false }
       );
       this.loadGrades(branchId ?? null);
@@ -135,12 +162,20 @@ export class StudentPromotionComponent implements OnInit {
 
     this.promotionForm.get('from_grade')?.valueChanges.subscribe(() => {
       this.selectedStudents = [];
+      this.promotionForm.patchValue({ from_section: null, student_ids: [] }, { emitEvent: false });
+      this.loadSections('from');
+      this.loadStudents();
+    });
+
+    this.promotionForm.get('from_section')?.valueChanges.subscribe(() => {
+      this.selectedStudents = [];
       this.promotionForm.patchValue({ student_ids: [] }, { emitEvent: false });
       this.loadStudents();
     });
 
-    // Prevent selecting same grade for from and to
     this.promotionForm.get('to_grade')?.valueChanges.subscribe(toGrade => {
+      this.promotionForm.patchValue({ to_section: null }, { emitEvent: false });
+      this.loadSections('to');
       const fromGrade = this.promotionForm.get('from_grade')?.value;
       if (fromGrade && toGrade === fromGrade) {
         this.errorHandler.showWarning('From Grade and To Grade cannot be the same');
@@ -191,6 +226,60 @@ export class StudentPromotionComponent implements OnInit {
   }
 
   /**
+   * Load sections for a grade (from or to)
+   */
+  loadSections(which: 'from' | 'to'): void {
+    const branchId = this.promotionForm.get('branch_id')?.value;
+    const grade = which === 'from'
+      ? this.promotionForm.get('from_grade')?.value
+      : this.promotionForm.get('to_grade')?.value;
+
+    if (!branchId || !grade) {
+      if (which === 'from') {
+        this.fromSections = [];
+        this.loadingFromSections = false;
+      } else {
+        this.toSections = [];
+        this.loadingToSections = false;
+      }
+      return;
+    }
+
+    if (which === 'from') {
+      this.loadingFromSections = true;
+      this.fromSections = [];
+    } else {
+      this.loadingToSections = true;
+      this.toSections = [];
+    }
+
+    this.apiService.get<{ value: string; label: string }[]>('/classes/sections', {
+      grade,
+      branch_id: branchId
+    }).subscribe({
+      next: (res) => {
+        const sections = (res.data && Array.isArray(res.data) ? res.data : []) as { value: string; label: string }[];
+        if (which === 'from') {
+          this.fromSections = sections;
+          this.loadingFromSections = false;
+        } else {
+          this.toSections = sections;
+          this.loadingToSections = false;
+        }
+      },
+      error: () => {
+        if (which === 'from') {
+          this.fromSections = [];
+          this.loadingFromSections = false;
+        } else {
+          this.toSections = [];
+          this.loadingToSections = false;
+        }
+      }
+    });
+  }
+
+  /**
    * Load students for selected branch and from grade
    */
   loadStudents(): void {
@@ -203,13 +292,24 @@ export class StudentPromotionComponent implements OnInit {
     }
 
     this.isLoading = true;
+    const fromSection = this.promotionForm.get('from_section')?.value;
+    if (!fromSection) {
+      this.fromGradeStudents = [];
+      return;
+    }
+
+    const fromYearId = this.academicYearContext.selectedYearId;
     const params: Record<string, unknown> = {
       branch_id: branchId,
       grade: fromGrade,
+      section: fromSection,
       is_active: true,
       student_status: 'Active',
-      per_page: 1000 // Load all students for the grade
+      per_page: 1000
     };
+    if (fromYearId != null) {
+      params['academic_year_id'] = fromYearId;
+    }
 
     this.studentCrudService.getStudents(params).subscribe({
       next: (response) => {
@@ -309,7 +409,9 @@ export class StudentPromotionComponent implements OnInit {
       from_grade: formValue.from_grade,
       to_grade: formValue.to_grade,
       to_academic_year_id: formValue.to_academic_year_id,
-      academic_year: this.getAcademicYearName(formValue.to_academic_year_id)
+      academic_year: this.getAcademicYearName(formValue.to_academic_year_id),
+      from_section: formValue.from_section,
+      to_section: formValue.to_section
     };
 
     // Call preview API if available, otherwise show basic preview
@@ -375,12 +477,20 @@ export class StudentPromotionComponent implements OnInit {
     }
 
     const formValue = this.promotionForm.value;
+    const fromYearId = this.academicYearContext.selectedYearId;
+    if (fromYearId == null) {
+      this.errorHandler.showWarning('Please select an academic year in the toolbar (Promoting from year)');
+      return;
+    }
     const promotionData = {
-      student_ids: formValue.student_ids,
-      from_grade: formValue.from_grade,
-      to_grade: formValue.to_grade,
-      to_academic_year_id: formValue.to_academic_year_id,
-      check_eligibility: formValue.check_eligibility || false
+      student_ids: formValue.student_ids as number[],
+      from_grade: formValue.from_grade as string,
+      to_grade: formValue.to_grade as string,
+      to_academic_year_id: formValue.to_academic_year_id as number,
+      from_academic_year_id: fromYearId,
+      check_eligibility: formValue.check_eligibility || false,
+      from_section: formValue.from_section as string,
+      to_section: formValue.to_section as string
     };
 
     // Confirm before promoting
@@ -427,5 +537,158 @@ export class StudentPromotionComponent implements OnInit {
   getAcademicYearName(id: number | null | undefined): string {
     if (id == null) return '';
     return this.academicYears.find(y => y.id === id)?.name ?? '';
+  }
+
+  // --- Revert tab ---
+  onRevertBranchChange(): void {
+    const branchId = this.promotionForm.get('branch_id')?.value;
+    this.revertFromGradeStudents = [];
+    this.revertSelectedStudents = [];
+    this.revertFromSections = [];
+    this.revertToSections = [];
+    this.promotionForm.patchValue({
+      revert_academic_year_id: null,
+      revert_from_grade: null,
+      revert_to_grade: null,
+      revert_from_section: null,
+      revert_to_section: null,
+      revert_student_ids: []
+    }, { emitEvent: false });
+    this.loadGrades(branchId ?? null);
+  }
+
+  onRevertFromGradeChange(): void {
+    this.promotionForm.patchValue({ revert_from_section: null, revert_student_ids: [] }, { emitEvent: false });
+    this.loadRevertSections();
+    this.loadRevertStudents();
+  }
+
+  loadRevertSections(): void {
+    const branchId = this.promotionForm.get('branch_id')?.value;
+    const fromGrade = this.promotionForm.get('revert_from_grade')?.value;
+    const toGrade = this.promotionForm.get('revert_to_grade')?.value;
+    if (!branchId || !fromGrade) {
+      this.revertFromSections = [];
+      this.revertToSections = [];
+      return;
+    }
+    this.loadingSections = true;
+    this.apiService.get<{ value: string; label: string }[]>('/classes/sections', { grade: fromGrade, branch_id: branchId }).subscribe({
+      next: (res) => {
+        this.revertFromSections = (res.data && Array.isArray(res.data) ? res.data : []) as { value: string; label: string }[];
+        this.loadingSections = false;
+      },
+      error: () => { this.revertFromSections = []; this.loadingSections = false; }
+    });
+    if (toGrade) {
+      this.apiService.get<{ value: string; label: string }[]>('/classes/sections', { grade: toGrade, branch_id: branchId }).subscribe({
+        next: (res) => {
+          this.revertToSections = (res.data && Array.isArray(res.data) ? res.data : []) as { value: string; label: string }[];
+        },
+        error: () => { this.revertToSections = []; }
+      });
+    } else {
+      this.revertToSections = [];
+    }
+  }
+
+  loadRevertStudents(): void {
+    const branchId = this.promotionForm.get('branch_id')?.value;
+    const fromGrade = this.promotionForm.get('revert_from_grade')?.value;
+    const academicYearId = this.promotionForm.get('revert_academic_year_id')?.value;
+    if (!branchId || !fromGrade || !academicYearId) {
+      this.revertFromGradeStudents = [];
+      return;
+    }
+    this.isLoadingRevert = true;
+    const params: Record<string, unknown> = {
+      branch_id: branchId,
+      grade: fromGrade,
+      is_active: true,
+      student_status: 'Active',
+      academic_year_id: academicYearId,
+      per_page: 1000
+    };
+    const section = this.promotionForm.get('revert_from_section')?.value;
+    if (section) params['section'] = section;
+
+    this.studentCrudService.getStudents(params).subscribe({
+      next: (res) => {
+        this.revertFromGradeStudents = (res.success && res.data ? res.data : []) as Student[];
+        this.isLoadingRevert = false;
+      },
+      error: () => {
+        this.revertFromGradeStudents = [];
+        this.isLoadingRevert = false;
+      }
+    });
+  }
+
+  revertToggleStudent(student: Student): void {
+    const idx = this.revertSelectedStudents.findIndex(s => s.id === student.id);
+    if (idx >= 0) {
+      this.revertSelectedStudents.splice(idx, 1);
+    } else {
+      this.revertSelectedStudents.push(student);
+    }
+    this.promotionForm.patchValue({ revert_student_ids: this.revertSelectedStudents.map(s => s.id) });
+  }
+
+  revertSelectAll(): void {
+    if (this.revertSelectedStudents.length === this.revertFromGradeStudents.length) {
+      this.revertSelectedStudents = [];
+    } else {
+      this.revertSelectedStudents = [...this.revertFromGradeStudents];
+    }
+    this.promotionForm.patchValue({ revert_student_ids: this.revertSelectedStudents.map(s => s.id) });
+  }
+
+  isRevertStudentSelected(student: Student): boolean {
+    return this.revertSelectedStudents.some(s => s.id === student.id);
+  }
+
+  onRevertSubmit(): void {
+    const branchId = this.promotionForm.get('branch_id')?.value;
+    const academicYearId = this.promotionForm.get('revert_academic_year_id')?.value;
+    const fromGrade = this.promotionForm.get('revert_from_grade')?.value;
+    const toGrade = this.promotionForm.get('revert_to_grade')?.value;
+    if (!branchId || !academicYearId || !fromGrade || !toGrade) {
+      this.errorHandler.showWarning('Please fill Branch, Academic Year, From Grade, and To Grade');
+      return;
+    }
+    if (this.revertSelectedStudents.length === 0) {
+      this.errorHandler.showWarning('Please select at least one student to revert');
+      return;
+    }
+    if (!confirm(`Revert ${this.revertSelectedStudents.length} student(s) from ${fromGrade} back to ${toGrade}?`)) {
+      return;
+    }
+
+    this.isLoadingRevert = true;
+    const fromSection = this.promotionForm.get('revert_from_section')?.value;
+    const toSection = this.promotionForm.get('revert_to_section')?.value;
+    const payload = {
+      student_ids: this.revertSelectedStudents.map(s => s.id),
+      academic_year_id: academicYearId as number,
+      from_grade: fromGrade as string,
+      to_grade: toGrade as string,
+      ...(fromSection && { from_section: fromSection }),
+      ...(toSection && { to_section: toSection })
+    };
+
+    this.promotionService.revertPromotion(payload).subscribe({
+      next: (res) => {
+        this.isLoadingRevert = false;
+        if (res.success) {
+          const count = (res.data as any)?.reverted_count ?? this.revertSelectedStudents.length;
+          this.errorHandler.showSuccess(`Successfully reverted ${count} student(s) to ${toGrade}`);
+          this.router.navigate(['/students']);
+        }
+      },
+      error: (err) => {
+        this.isLoadingRevert = false;
+        this.errorHandler.showError(err);
+      }
+    });
   }
 }

@@ -79,7 +79,8 @@
           <a mat-list-item 
              *hasPermission="item.permission; hasPermissionMode: item.permissionMode || 'all'"
              [routerLink]="item.route"
-             [class.active]="isRouteActive(item.route)"
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
              (click)="onMenuItemClick()"
              [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? (item.tooltip || item.label) : null"
              [matTooltipPosition]="'right'"

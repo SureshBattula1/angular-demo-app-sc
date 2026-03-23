@@ -124,7 +124,17 @@
   align-items: flex-start;
   gap: var(--spacing-md);
 
-  .student-select {
+  .grade-select {
+    width: 180px;
+    flex: 0 0 auto;
+  }
+
+  .section-select {
+    width: 140px;
+    flex: 0 0 auto;
+  }
+
+  .student-search {
     flex: 1;
     min-width: 220px;
   }
@@ -245,7 +255,9 @@
   .add-member-row {
     flex-direction: column;
 
-    .student-select,
+    .grade-select,
+    .section-select,
+    .student-search,
     .role-select {
       width: 100%;
     }

@@ -40,7 +40,7 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Section Name *</mat-label>
-              <input matInput formControlName="name" placeholder="e.g., A, B, C" [readonly]="isEditMode">
+              <input matInput formControlName="name" placeholder="e.g., A, B, C">
               <mat-icon matPrefix>class</mat-icon>
               <mat-error *ngIf="sectionForm.get('name')?.invalid && sectionForm.get('name')?.touched">
                 {{ getErrorMessage('name') }}
@@ -51,7 +51,7 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Section Code *</mat-label>
-              <input matInput formControlName="code" placeholder="e.g., SEC-A" [readonly]="isEditMode">
+              <input matInput formControlName="code" placeholder="e.g., SEC-A">
               <mat-icon matPrefix>qr_code</mat-icon>
               <mat-error *ngIf="sectionForm.get('code')?.invalid && sectionForm.get('code')?.touched">
                 {{ getErrorMessage('code') }}

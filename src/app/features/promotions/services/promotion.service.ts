@@ -18,6 +18,8 @@ export class PromotionService {
     from_grade: string;
     to_grade: string;
     to_academic_year_id: number;
+    from_section?: string;
+    to_section?: string;
   }): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/promote`, data);
   }
@@ -30,7 +32,10 @@ export class PromotionService {
     from_grade: string;
     to_grade: string;
     to_academic_year_id: number;
+    from_academic_year_id?: number;
     check_eligibility?: boolean;
+    from_section?: string;
+    to_section?: string;
   }): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/promote-with-fee-handling`, data);
   }
@@ -44,8 +49,24 @@ export class PromotionService {
     to_grade: string;
     to_academic_year_id: number;
     academic_year?: string;
+    from_section?: string;
+    to_section?: string;
   }): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/preview-promotion`, data);
+  }
+
+  /**
+   * Revert (unpromote) students back to a previous grade
+   */
+  revertPromotion(data: {
+    student_ids: number[];
+    academic_year_id: number;
+    from_grade: string;
+    to_grade: string;
+    from_section?: string;
+    to_section?: string;
+  }): Observable<ApiResponse> {
+    return this.apiService.post(`${this.ENDPOINT}/revert-promotion`, data);
   }
 
   /**

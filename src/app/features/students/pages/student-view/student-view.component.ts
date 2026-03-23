@@ -15,6 +15,7 @@ import { ExamScheduleService } from '../../../exams/services/exam-schedule.servi
 import { ApiService } from '../../../../core/services/api.service';
 import { FeeService } from '../../../fees/services/fee.service';
 import { LibraryService } from '../../../library/services/library.service';
+import { environment } from '../../../../../environments/environment';
 // Import child components
 import { StudentHeaderComponent } from './components/student-header/student-header.component';
 import { StudentInfoComponent } from './components/student-info/student-info.component';
@@ -179,17 +180,14 @@ export class StudentViewComponent implements OnInit {
           this.student = response.data;
           
           // Initialize profile picture
-          if (response.data.profile_picture) {
-            // The backend already returns a full URL, use it directly
-            this.profilePictureUrl = response.data.profile_picture;
-            this.showProfilePicture = true;
-          } else if (response.data.user?.avatar) {
-            // The backend already returns a full URL, use it directly
-            this.profilePictureUrl = response.data.user.avatar;
-            this.showProfilePicture = true;
-          } else {
-            this.showProfilePicture = false;
-          }
+          const imageCandidate =
+            response.data.profile_picture_url ||
+            response.data.profile_picture ||
+            response.data.user?.avatar_url ||
+            response.data.user?.avatar ||
+            '';
+          this.profilePictureUrl = this.getFullImageUrl(imageCandidate);
+          this.showProfilePicture = !!this.profilePictureUrl;
           
           this.isLoading = false;
           
@@ -203,6 +201,34 @@ export class StudentViewComponent implements OnInit {
         this.router.navigate(['/students']);
       }
     });
+  }
+
+  /**
+   * Convert backend image path to full URL.
+   * Supports full URLs, /storage/*, storage/* and raw relative upload paths.
+   */
+  private getFullImageUrl(imagePath: string): string {
+    if (!imagePath) {
+      return '';
+    }
+
+    const normalizedPath = imagePath.trim();
+    if (!normalizedPath) {
+      return '';
+    }
+
+    if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
+      return normalizedPath;
+    }
+
+    const baseUrl = environment.apiUrl.replace('/api', '').replace(/\/$/, '');
+    const cleanPath = normalizedPath.replace(/^\/+/, '');
+
+    if (cleanPath.startsWith('storage/')) {
+      return `${baseUrl}/${cleanPath}`;
+    }
+
+    return `${baseUrl}/storage/${cleanPath}`;
   }
 
   getGradeLabel(): string {

@@ -358,12 +358,24 @@ export class MainShellComponent implements OnInit, OnDestroy {
     // Save to localStorage (instant feedback)
     localStorage.setItem('selectedTheme', theme);
     
-    // Save to backend (persistent across devices)
-    this.themeService.applyTheme(theme);
-    
-    // Show success message with theme name from themeOptions
-    const themeName = this.themeOptions.find(t => t.value === theme)?.label || theme;
-    this.errorHandler.showSuccess(`Theme changed to ${themeName} successfully!`);
+    // Save to backend (user-wise persistent theme across refresh/devices)
+    this.userPreferenceService.updatePreferences({ theme }).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.theme) {
+          this.selectedTheme = response.data.theme;
+          localStorage.setItem('selectedTheme', response.data.theme);
+          this.applyTheme(response.data.theme);
+        }
+
+        const themeName = this.themeOptions.find(t => t.value === this.selectedTheme)?.label || this.selectedTheme;
+        this.errorHandler.showSuccess(`Theme changed to ${themeName} successfully!`);
+      },
+      error: () => {
+        // Keep local selection if backend update fails
+        const themeName = this.themeOptions.find(t => t.value === theme)?.label || theme;
+        this.errorHandler.showInfo(`Theme applied locally as ${themeName}. It could not be saved to your account.`);
+      }
+    });
   }
   
   applyTheme(themeName: string) {
@@ -389,17 +401,6 @@ export class MainShellComponent implements OnInit, OnDestroy {
       if (toolbar) {
         toolbar.style.backgroundColor = theme.primary;
       }
-      
-      // Force update active sidebar items
-      const activeItems = document.querySelectorAll('.mat-mdc-list-item.active');
-      activeItems.forEach((item: any) => {
-        item.style.backgroundColor = `${theme.primary}1A`; // 10% opacity
-        item.style.color = theme.primary;
-        const icon = item.querySelector('mat-icon');
-        if (icon) {
-          icon.style.color = theme.primary;
-        }
-      });
       
       // Update hover effect on sidebar items
       this.updateSidebarStyles(theme);

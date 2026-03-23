@@ -42,17 +42,60 @@
     </mat-card-header>
     <mat-card-content>
       <div class="add-member-row">
-        <mat-form-field appearance="outline" class="student-select">
-          <mat-label>Select Student</mat-label>
-          <mat-select [(ngModel)]="selectedStudentId" [disabled]="loadingStudents || adding">
-            <mat-option [value]="null">-- Choose student --</mat-option>
-            <mat-option *ngFor="let s of studentsToAdd" [value]="s.id">
-              {{ getStudentLabel(s) }}
+        <mat-form-field appearance="outline" class="grade-select">
+          <mat-label>Class (Grade)</mat-label>
+          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onGradeChange()" [disabled]="loadingStudents || loadingGrades || adding">
+            <mat-option [value]="null">-- All Classes --</mat-option>
+            <mat-option *ngFor="let g of availableGrades" [value]="g">
+              {{ getGradeDisplayLabelFromValue(g) }}
             </mat-option>
           </mat-select>
-          <mat-icon matPrefix>person</mat-icon>
-          <mat-hint *ngIf="studentsToAdd.length === 0 && !loadingStudents">All students in this branch are already in the group.</mat-hint>
+          <mat-icon matPrefix>school</mat-icon>
         </mat-form-field>
+
+        <mat-form-field appearance="outline" class="section-select">
+          <mat-label>Section</mat-label>
+          <mat-select [(ngModel)]="selectedSection" (selectionChange)="onSectionChange()" [disabled]="loadingStudents || loadingSections || adding || availableSections.length === 0">
+            <mat-option [value]="null">-- All Sections --</mat-option>
+            <mat-option *ngFor="let sec of availableSections" [value]="sec">
+              {{ getSectionLabelFromValue(sec) }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>class</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="student-search">
+          <mat-label>Search Student</mat-label>
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="studentSearchText"
+            (ngModelChange)="onStudentSearchTextChange($event)"
+            [matAutocomplete]="studentAuto"
+            [disabled]="loadingStudents || adding"
+            placeholder="Type name, admission number, or roll number" />
+          <mat-icon matPrefix>person_search</mat-icon>
+
+          <mat-autocomplete #studentAuto="matAutocomplete" (optionSelected)="onStudentAutocompleteSelected($event)">
+            <mat-option
+              *ngFor="let s of studentSearchResults"
+              [value]="getStudentLabel(s)"
+              >
+              <div class="autocomplete-option">
+                <div class="autocomplete-title">{{ getStudentLabel(s) }}</div>
+                <div class="autocomplete-subtitle">{{ getStudentGradeSectionDisplay(s) }}</div>
+              </div>
+            </mat-option>
+            <mat-option *ngIf="studentSearchResults.length === 0" [disabled]="true">
+              No students found for current filters
+            </mat-option>
+          </mat-autocomplete>
+
+          <mat-hint *ngIf="studentsToAdd.length === 0 && !loadingStudents">
+            All students in this branch are already in the group.
+          </mat-hint>
+        </mat-form-field>
+
         <mat-form-field appearance="outline" class="role-select">
           <mat-label>Role</mat-label>
           <mat-select [(ngModel)]="selectedRole" [disabled]="adding">
