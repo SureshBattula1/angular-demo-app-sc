@@ -24,6 +24,7 @@ export class StudentPromotionComponent implements OnInit {
   promotionForm!: FormGroup;
   isLoading = false;
   isPreviewing = false;
+  loadingGrades = false;
   previewData: any = null;
   showPreview = false;
   
@@ -50,7 +51,7 @@ export class StudentPromotionComponent implements OnInit {
     private branchService: BranchService,
     private gradeService: GradeService,
     private academicYearService: AcademicYearService,
-    private academicYearContext: AcademicYearContextService,
+    public academicYearContext: AcademicYearContextService,
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService
@@ -60,7 +61,6 @@ export class StudentPromotionComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadBranches();
-    this.loadGrades();
     this.loadAcademicYears();
     
     // Get student IDs from query params if coming from list page
@@ -121,8 +121,16 @@ export class StudentPromotionComponent implements OnInit {
     });
 
     // Load students when branch and from_grade change
-    this.promotionForm.get('branch_id')?.valueChanges.subscribe(() => {
-      this.loadStudents();
+    this.promotionForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
+      // Reset grade and students when branch changes
+      this.grades = [];
+      this.fromGradeStudents = [];
+      this.selectedStudents = [];
+      this.promotionForm.patchValue(
+        { from_grade: null, to_grade: null, student_ids: [] },
+        { emitEvent: false }
+      );
+      this.loadGrades(branchId ?? null);
     });
 
     this.promotionForm.get('from_grade')?.valueChanges.subscribe(() => {
@@ -160,15 +168,24 @@ export class StudentPromotionComponent implements OnInit {
   /**
    * Load grades
    */
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  loadGrades(branchId?: number | string | null): void {
+    if (!branchId) {
+      this.grades = [];
+      this.loadingGrades = false;
+      return;
+    }
+
+    this.loadingGrades = true;
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.grades = response.data;
+          this.grades = response.data.filter((g: any) => g.is_active !== false);
         }
+        this.loadingGrades = false;
       },
       error: (error) => {
         this.errorHandler.showError(error);
+        this.loadingGrades = false;
       }
     });
   }
@@ -291,6 +308,7 @@ export class StudentPromotionComponent implements OnInit {
       student_ids: formValue.student_ids,
       from_grade: formValue.from_grade,
       to_grade: formValue.to_grade,
+      to_academic_year_id: formValue.to_academic_year_id,
       academic_year: this.getAcademicYearName(formValue.to_academic_year_id)
     };
 

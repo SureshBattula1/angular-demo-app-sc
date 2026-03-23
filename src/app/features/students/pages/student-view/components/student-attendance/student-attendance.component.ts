@@ -1,10 +1,13 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { skip } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
 import { Student } from '../../../../../../core/models/student.model';
 import { AttendanceService } from '../../../../../attendance/services/attendance.service';
 import { ErrorHandlerService } from '../../../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-student-attendance',
@@ -15,6 +18,9 @@ import { ErrorHandlerService } from '../../../../../../core/services/error-handl
 })
 export class StudentAttendanceComponent implements OnInit, OnChanges {
   @Input() student?: Student;
+
+  private destroyRef = inject(DestroyRef);
+  private academicYearContext = inject(AcademicYearContextService);
   
   isLoading = false;
   attendanceStats = {
@@ -43,6 +49,13 @@ export class StudentAttendanceComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.loadAttendanceData();
+    this.academicYearContext.selectedYearId$
+      .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.student?.user_id) {
+          this.loadAttendanceData();
+        }
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

@@ -1,9 +1,12 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { skip } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
 import { Student } from '../../../../../../core/models/student.model';
 import { FeeService } from '../../../../../fees/services/fee.service';
 import { ErrorHandlerService } from '../../../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-student-fees',
@@ -12,8 +15,11 @@ import { ErrorHandlerService } from '../../../../../../core/services/error-handl
   templateUrl: './student-fees.component.html',
   styleUrls: ['./student-fees.component.scss']
 })
-export class StudentFeesComponent implements OnInit {
+export class StudentFeesComponent implements OnInit, OnChanges {
   @Input() student?: Student;
+
+  private destroyRef = inject(DestroyRef);
+  private academicYearContext = inject(AcademicYearContextService);
   
   feePayments: any[] = [];
   pendingFees: any[] = [];
@@ -28,6 +34,19 @@ export class StudentFeesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFeesData();
+    this.academicYearContext.selectedYearId$
+      .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.student?.user_id || this.student?.id) {
+          this.loadFeesData();
+        }
+      });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['student'] && this.student?.user_id) {
+      this.loadFeesData();
+    }
   }
 
   loadFeesData(): void {

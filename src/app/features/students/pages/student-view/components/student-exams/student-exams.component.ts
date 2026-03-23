@@ -1,4 +1,6 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { skip } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { jsPDF } from 'jspdf';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
@@ -7,6 +9,7 @@ import { ExamScheduleService } from '../../../../../exams/services/exam-schedule
 import { ApiService } from '../../../../../../core/services/api.service';
 import { ErrorHandlerService } from '../../../../../../core/services/error-handler.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AcademicYearContextService } from '../../../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-student-exams',
@@ -17,6 +20,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class StudentExamsComponent implements OnInit, OnChanges {
   @Input() student?: Student;
+
+  private destroyRef = inject(DestroyRef);
+  private academicYearContext = inject(AcademicYearContextService);
   
   upcomingExams: any[] = [];
   examResults: any[] = [];
@@ -39,6 +45,13 @@ export class StudentExamsComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.loadExamsData();
+    this.academicYearContext.selectedYearId$
+      .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.student?.user_id) {
+          this.loadExamsData();
+        }
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

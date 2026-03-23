@@ -17,11 +17,19 @@
       <form [formGroup]="promotionForm" (ngSubmit)="onSubmit()">
         
         <!-- Promotion Settings -->
-        <div class="form-section">
+        <div class="form-section section-card">
           <h3 class="section-title">
             <mat-icon>settings</mat-icon>
             Promotion Settings
           </h3>
+
+          <div class="form-row promoting-from-row" *ngIf="academicYearContext.selectedYear as fromYear">
+            <span class="promoting-from-label">
+              <mat-icon>calendar_month</mat-icon>
+              Promoting from:
+            </span>
+            <span class="promoting-from-value">{{ fromYear.name || 'Academic year from toolbar' }}</span>
+          </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
@@ -38,7 +46,7 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Academic Year *</mat-label>
+              <mat-label>To Academic Year *</mat-label>
               <mat-select formControlName="to_academic_year_id">
                 <mat-option *ngFor="let year of academicYears" [value]="year.id">
                   {{ year.name }}
@@ -46,7 +54,7 @@
               </mat-select>
               <mat-icon matPrefix>calendar_today</mat-icon>
               <mat-error *ngIf="promotionForm.get('to_academic_year_id')?.invalid && promotionForm.get('to_academic_year_id')?.touched">
-                Academic year is required
+                To academic year is required
               </mat-error>
             </mat-form-field>
           </div>
@@ -54,7 +62,13 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>From Grade *</mat-label>
-              <mat-select formControlName="from_grade">
+              <mat-select formControlName="from_grade" [disabled]="!promotionForm.get('branch_id')?.value || loadingGrades">
+                <mat-option *ngIf="loadingGrades" disabled>
+                  <span class="option-loading">
+                    <mat-spinner diameter="18"></mat-spinner>
+                    Loading grades...
+                  </span>
+                </mat-option>
                 <mat-option *ngFor="let grade of grades" [value]="grade.value">
                   {{ grade.label }}
                 </mat-option>
@@ -67,7 +81,13 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>To Grade *</mat-label>
-              <mat-select formControlName="to_grade">
+              <mat-select formControlName="to_grade" [disabled]="!promotionForm.get('branch_id')?.value || loadingGrades">
+                <mat-option *ngIf="loadingGrades" disabled>
+                  <span class="option-loading">
+                    <mat-spinner diameter="18"></mat-spinner>
+                    Loading grades...
+                  </span>
+                </mat-option>
                 <mat-option *ngFor="let grade of grades" [value]="grade.value">
                   {{ grade.label }}
                 </mat-option>
@@ -87,7 +107,7 @@
         </div>
 
         <!-- Student Selection -->
-        <div class="form-section" *ngIf="promotionForm.get('branch_id')?.value && promotionForm.get('from_grade')?.value">
+        <div class="form-section section-card" *ngIf="promotionForm.get('branch_id')?.value && promotionForm.get('from_grade')?.value">
           <div class="section-header">
             <h3 class="section-title">
               <mat-icon>people</mat-icon>
@@ -137,7 +157,7 @@
         </div>
 
         <!-- Preview Section -->
-        <div class="form-section" *ngIf="showPreview && previewData">
+        <div class="form-section section-card" *ngIf="showPreview && previewData">
           <h3 class="section-title">
             <mat-icon>preview</mat-icon>
             Promotion Preview

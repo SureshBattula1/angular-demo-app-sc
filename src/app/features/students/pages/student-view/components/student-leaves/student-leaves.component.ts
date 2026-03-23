@@ -1,10 +1,13 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { skip } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../../../shared/modules/material/material.module';
 import { Student } from '../../../../../../core/models/student.model';
 import { LeaveService } from '../../../../../leaves/services/leave.service';
 import { Leave, LeaveSummary } from '../../../../../../core/models/leave.model';
 import { ErrorHandlerService } from '../../../../../../core/services/error-handler.service';
+import { AcademicYearContextService } from '../../../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-student-leaves',
@@ -15,6 +18,9 @@ import { ErrorHandlerService } from '../../../../../../core/services/error-handl
 })
 export class StudentLeavesComponent implements OnInit, OnChanges {
   @Input() student?: Student;
+
+  private destroyRef = inject(DestroyRef);
+  private academicYearContext = inject(AcademicYearContextService);
   
   studentLeaves: Leave[] = [];
   leavesSummary?: LeaveSummary;
@@ -27,6 +33,13 @@ export class StudentLeavesComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.loadLeavesData();
+    this.academicYearContext.selectedYearId$
+      .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.student?.user_id) {
+          this.loadLeavesData();
+        }
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

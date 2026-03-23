@@ -42,7 +42,8 @@ export class PromotionService {
     student_ids: number[];
     from_grade: string;
     to_grade: string;
-    academic_year: string;
+    to_academic_year_id: number;
+    academic_year?: string;
   }): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/preview-promotion`, data);
   }
