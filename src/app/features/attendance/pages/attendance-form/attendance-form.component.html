@@ -17,7 +17,7 @@
     <mat-icon>edit</mat-icon>
     <div class="banner-content">
       <strong>Update Mode</strong>
-      <span>You are updating existing attendance marked for {{ selectedDate }}. Changes will be saved immediately.</span>
+      <span>You are updating existing attendance marked for {{ selectedDate | date:'mediumDate' }}. Changes will be saved immediately.</span>
     </div>
   </div>
 
@@ -100,7 +100,9 @@
         <!-- Date -->
         <mat-form-field appearance="outline">
           <mat-label>Date *</mat-label>
-          <input matInput type="date" [(ngModel)]="selectedDate">
+          <input matInput [matDatepicker]="attendanceDatePicker" [(ngModel)]="selectedDate">
+          <mat-datepicker-toggle matIconSuffix [for]="attendanceDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #attendanceDatePicker></mat-datepicker>
           <mat-icon matPrefix>event</mat-icon>
         </mat-form-field>
 

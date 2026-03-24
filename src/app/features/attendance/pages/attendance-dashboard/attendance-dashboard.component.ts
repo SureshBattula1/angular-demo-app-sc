@@ -53,7 +53,8 @@ export class AttendanceDashboardComponent implements OnInit {
   customFromDate = new FormControl();
   customToDate = new FormControl();
   
-  // Selected grade and section for student attendance breakdown
+  // Branch / grade / section cascade for "Grade & Section — Student Attendance"
+  selectedBranchForStudentClass: string | number | null = null;
   selectedGrade: string | null = null;
   selectedSection: string | null = null;
   studentAttendanceByClassSection: any = null;
@@ -70,8 +71,7 @@ export class AttendanceDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBranches();
-    this.loadGrades();
-    
+
     // Check query parameters to restore active tab
     this.route.queryParams.subscribe(params => {
       const targetTab = params['tab'];
@@ -88,6 +88,14 @@ export class AttendanceDashboardComponent implements OnInit {
     // Listen to period changes
     this.selectedPeriod.valueChanges.subscribe(() => {
       this.loadActiveTabData();
+      if (
+        this.activeTab === 'student' &&
+        this.selectedBranchForStudentClass &&
+        this.selectedGrade &&
+        this.selectedSection
+      ) {
+        this.loadStudentAttendanceByClassSection();
+      }
     });
   }
 
@@ -203,8 +211,11 @@ export class AttendanceDashboardComponent implements OnInit {
 
   // Load student attendance by class and section
   loadStudentAttendanceByClassSection(): void {
-    if (!this.selectedGrade || !this.selectedSection) {
-      this.errorHandler.showWarning('Please select both grade and section');
+    if (
+      !this.selectedBranchForStudentClass ||
+      !this.selectedGrade ||
+      !this.selectedSection
+    ) {
       return;
     }
 
@@ -214,7 +225,8 @@ export class AttendanceDashboardComponent implements OnInit {
       grade: this.selectedGrade,
       section: this.selectedSection,
       period: this.selectedPeriod.value || 'today',
-      type: 'student'
+      type: 'student',
+      branch_id: this.selectedBranchForStudentClass
     };
     
     // Add custom date range if selected
@@ -225,11 +237,6 @@ export class AttendanceDashboardComponent implements OnInit {
       if (this.customToDate.value) {
         filters['to_date'] = this.formatDate(this.customToDate.value);
       }
-    }
-    
-    // Add branch filter if selected
-    if (this.selectedBranch) {
-      filters['branch_id'] = this.selectedBranch;
     }
     
     this.attendanceService.getTodayAttendance(filters).subscribe({
@@ -254,7 +261,7 @@ export class AttendanceDashboardComponent implements OnInit {
     if (this.selectedBranch) {
       filters['branch_id'] = this.selectedBranch;
     }
-    
+
     if (this.activeTab === 'teacher') {
       this.loadTeacherAttendance(filters);
     } else {
@@ -269,7 +276,7 @@ export class AttendanceDashboardComponent implements OnInit {
   }
 
   onGradeChange(): void {
-    if (this.selectedGrade) {
+    if (this.selectedGrade && this.selectedBranchForStudentClass) {
       this.loadSections();
     } else {
       this.sections = [];
@@ -277,8 +284,20 @@ export class AttendanceDashboardComponent implements OnInit {
     }
   }
 
+  onBranchForStudentClassChange(): void {
+    this.selectedGrade = null;
+    this.selectedSection = null;
+    this.sections = [];
+    this.studentAttendanceByClassSection = null;
+    this.loadGradesForStudentClassSection();
+  }
+
   onSectionChange(): void {
-    if (this.selectedGrade && this.selectedSection) {
+    if (
+      this.selectedBranchForStudentClass &&
+      this.selectedGrade &&
+      this.selectedSection
+    ) {
       this.loadStudentAttendanceByClassSection();
     }
   }
@@ -290,25 +309,50 @@ export class AttendanceDashboardComponent implements OnInit {
         if (response.success && response.data) {
           this.branches = response.data;
         }
+        if (this.selectedBranchForStudentClass) {
+          this.loadGradesForStudentClassSection();
+        } else {
+          this.grades = [];
+        }
       },
-      error: (error: any) => {
-        // Silently handle error
+      error: () => {
+        this.grades = [];
       }
     });
   }
 
-  // Load grades
-  loadGrades(): void {
-    this.gradeService.getGrades().subscribe({
+  /** Grades for class/section card — only for the selected branch. */
+  private loadGradesForStudentClassSection(): void {
+    if (
+      this.selectedBranchForStudentClass === null ||
+      this.selectedBranchForStudentClass === undefined ||
+      this.selectedBranchForStudentClass === ''
+    ) {
+      this.grades = [];
+      return;
+    }
+    const params: Record<string, unknown> = {
+      is_active: true,
+      per_page: 100,
+      branch_id: this.selectedBranchForStudentClass
+    };
+    this.gradeService.getGrades(params).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.grades = response.data;
-        }
+        const raw = response.success && response.data ? response.data : [];
+        const list = Array.isArray(raw) ? raw : [];
+        this.grades = list.filter((g: { is_active?: boolean }) => g.is_active !== false);
       },
-      error: (error) => {
-        // Silently handle error
+      error: () => {
+        this.grades = [];
       }
     });
+  }
+
+  /** Rows for grade/section dashboard table (aggregated students API). */
+  getStudentClassRows(): any[] {
+    const d = this.studentAttendanceByClassSection;
+    if (!d) return [];
+    return d.students ?? d.data ?? [];
   }
 
   // Load sections based on selected grade and branch
@@ -324,8 +368,8 @@ export class AttendanceDashboardComponent implements OnInit {
       per_page: 1000
     };
 
-    if (this.selectedBranch) {
-      filters.branch_id = this.selectedBranch;
+    if (this.selectedBranchForStudentClass) {
+      filters.branch_id = this.selectedBranchForStudentClass;
     }
 
     this.sectionService.getSections(filters).subscribe({
@@ -353,7 +397,8 @@ export class AttendanceDashboardComponent implements OnInit {
   }
 
   // Get grade label
-  getGradeLabel(gradeValue: string): string {
+  getGradeLabel(gradeValue: string | null | undefined): string {
+    if (gradeValue == null || gradeValue === '') return '';
     const grade = this.grades.find(g => g.value === gradeValue);
     return grade ? grade.label : `Grade ${gradeValue}`;
   }

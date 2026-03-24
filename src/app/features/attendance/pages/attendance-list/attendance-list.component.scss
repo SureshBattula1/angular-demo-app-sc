@@ -708,6 +708,11 @@ app-data-table {
         background: rgba(var(--warning-rgb, 255, 152, 0), 0.1);
         color: var(--warning-color, #ff9800);
       }
+
+      &.sick-leave-badge {
+        background: rgba(156, 39, 176, 0.1);
+        color: #9c27b0;
+      }
       
       &.leave-badge {
         background: rgba(var(--info-rgb), 0.1);

@@ -44,7 +44,8 @@ export class AttendanceFormComponent implements OnInit {
   selectedBranch: number | null = null;
   selectedGrade: string | null = null;
   selectedSection: string | null = null;
-  selectedDate: string = this.getTodayDate();
+  /** Local calendar date for mat-datepicker; API uses {@link formatDateForApi}. */
+  selectedDate: Date | null = this.getTodayLocalDate();
   academicYear: string = this.getCurrentAcademicYear();
   
   // Validation tracking
@@ -518,7 +519,7 @@ export class AttendanceFormComponent implements OnInit {
     
     const bulkData: BulkAttendanceRequest = {
       type: this.attendanceType,
-      date: this.selectedDate,
+      date: this.formatDateForApi(this.selectedDate)!,
       branch_id: this.selectedBranch,
       academic_year: this.academicYear,
       attendance: this.attendanceType === 'student' 
@@ -611,9 +612,18 @@ export class AttendanceFormComponent implements OnInit {
     }
   }
   
-  private getTodayDate(): string {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+  private getTodayLocalDate(): Date {
+    const t = new Date();
+    return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  }
+
+  /** YYYY-MM-DD in local timezone for API requests. */
+  private formatDateForApi(d: Date | null): string | null {
+    if (!d) return null;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
   
   private getCurrentAcademicYear(): string {
@@ -641,7 +651,7 @@ export class AttendanceFormComponent implements OnInit {
     
     const params: any = {
       type: this.attendanceType,
-      date: this.selectedDate,
+      date: this.formatDateForApi(this.selectedDate),
       branch_id: this.selectedBranch
     };
     
@@ -665,7 +675,7 @@ export class AttendanceFormComponent implements OnInit {
           }
           
           this.errorHandler.showInfo(
-            `Found existing attendance for ${this.selectedDate}. You can update it now.`
+            `Found existing attendance for ${this.formatDateForApi(this.selectedDate)}. You can update it now.`
           );
         } else {
           this.isUpdateMode = false;

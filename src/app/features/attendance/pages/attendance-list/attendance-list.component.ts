@@ -74,7 +74,8 @@ export class AttendanceListComponent implements OnInit {
   customFromDate = new FormControl();
   customToDate = new FormControl();
 
-  // Selected grade and section for student attendance breakdown
+  // Selected branch / grade / section for "Grade & Section — Student Attendance" (cascade)
+  selectedBranchForStudentClass: string | number | null = null;
   selectedGrade: string | null = null;
   selectedSection: string | null = null;
   selectedStatus: string | null = null; // Status filter for student attendance
@@ -261,7 +262,7 @@ export class AttendanceListComponent implements OnInit {
       }
     });
 
-    // Load filter options
+    // Load filter options (grades load after branches resolve — see loadBranches)
     this.loadBranches();
     this.loadDepartments();
 
@@ -276,8 +277,12 @@ export class AttendanceListComponent implements OnInit {
         if (this.selectedBranchForTeachers) {
           this.loadTeacherAttendanceByBranch();
         }
-        // Reload student attendance by class/section if grade and section are selected
-        if (this.selectedGrade && this.selectedSection) {
+        // Reload student attendance by class/section if branch, grade and section are selected
+        if (
+          this.selectedBranchForStudentClass &&
+          this.selectedGrade &&
+          this.selectedSection
+        ) {
           this.loadStudentAttendanceByClassSection();
         }
       }
@@ -396,6 +401,41 @@ export class AttendanceListComponent implements OnInit {
     }
   }
 
+  /** Grades for "Grade & Section — Student Attendance" — only for the selected branch. */
+  private loadGradesForStudentClassSection(): void {
+    if (
+      this.selectedBranchForStudentClass === null ||
+      this.selectedBranchForStudentClass === undefined ||
+      this.selectedBranchForStudentClass === ''
+    ) {
+      this.grades = [];
+      return;
+    }
+    const params: Record<string, unknown> = {
+      is_active: true,
+      per_page: 100,
+      branch_id: this.selectedBranchForStudentClass
+    };
+    this.gradeService.getGrades(params).subscribe({
+      next: (response) => {
+        const raw = response.success && response.data ? response.data : [];
+        const list = Array.isArray(raw) ? raw : [];
+        this.grades = list.filter((g: { is_active?: boolean }) => g.is_active !== false);
+      },
+      error: () => {
+        this.grades = [];
+      }
+    });
+  }
+
+  onBranchForStudentClassChange(): void {
+    this.selectedGrade = null;
+    this.selectedSection = null;
+    this.sections = [];
+    this.studentAttendanceByClassSection = null;
+    this.loadGradesForStudentClassSection();
+  }
+
   onCustomRangeChange(): void {
     if (this.customFromDate.value && this.customToDate.value) {
       if (this.activeTab === 'dashboard') {
@@ -405,7 +445,11 @@ export class AttendanceListComponent implements OnInit {
           this.loadTeacherAttendanceByBranch();
         }
         // Reload student attendance by class/section if grade and section are selected
-        if (this.selectedGrade && this.selectedSection) {
+        if (
+          this.selectedBranchForStudentClass &&
+          this.selectedGrade &&
+          this.selectedSection
+        ) {
           this.loadStudentAttendanceByClassSection();
         }
       }
@@ -413,7 +457,7 @@ export class AttendanceListComponent implements OnInit {
   }
 
   onGradeChange(): void {
-    if (this.selectedGrade) {
+    if (this.selectedGrade && this.selectedBranchForStudentClass) {
       this.loadSectionsForDashboard();
     } else {
       this.sections = [];
@@ -422,19 +466,31 @@ export class AttendanceListComponent implements OnInit {
   }
 
   onSectionChange(): void {
-    if (this.selectedGrade && this.selectedSection) {
+    if (
+      this.selectedBranchForStudentClass &&
+      this.selectedGrade &&
+      this.selectedSection
+    ) {
       this.loadStudentAttendanceByClassSection();
     }
   }
 
   onStatusChange(): void {
-    if (this.selectedGrade && this.selectedSection) {
+    if (
+      this.selectedBranchForStudentClass &&
+      this.selectedGrade &&
+      this.selectedSection
+    ) {
       this.loadStudentAttendanceByClassSection();
     }
   }
 
   loadStudentAttendanceByClassSection(): void {
-    if (!this.selectedGrade || !this.selectedSection) {
+    if (
+      !this.selectedBranchForStudentClass ||
+      !this.selectedGrade ||
+      !this.selectedSection
+    ) {
       return;
     }
 
@@ -457,10 +513,7 @@ export class AttendanceListComponent implements OnInit {
       }
     }
 
-    // Add branch filter if selected
-    if (this.selectedBranch) {
-      filters['branch_id'] = this.selectedBranch;
-    }
+    filters['branch_id'] = this.selectedBranchForStudentClass;
 
     // Add status filter if selected (optional - only if a specific status is chosen)
     if (this.selectedStatus) {
@@ -496,8 +549,8 @@ export class AttendanceListComponent implements OnInit {
       per_page: 1000
     };
 
-    if (this.selectedBranch) {
-      filters.branch_id = this.selectedBranch;
+    if (this.selectedBranchForStudentClass) {
+      filters.branch_id = this.selectedBranchForStudentClass;
     }
 
     this.sectionService.getSections(filters).subscribe({
@@ -534,6 +587,13 @@ export class AttendanceListComponent implements OnInit {
   getBranchName(branchId: string | number): string {
     const branch = this.branches.find(b => b.id === branchId);
     return branch ? branch.name : `Branch ${branchId}`;
+  }
+
+  /** Rows for grade/section dashboard table (aggregated students API). */
+  getStudentClassRows(): any[] {
+    const d = this.studentAttendanceByClassSection;
+    if (!d) return [];
+    return d.students ?? d.data ?? [];
   }
 
   // Load branch-wise teacher attendance
@@ -771,6 +831,12 @@ export class AttendanceListComponent implements OnInit {
           const teacherBranchField = this.teacherSearchConfig.fields.find(f => f.key === 'branch_id');
           if (teacherBranchField) {
             teacherBranchField.options = branchOptions;
+          }
+
+          if (this.selectedBranchForStudentClass) {
+            this.loadGradesForStudentClassSection();
+          } else {
+            this.grades = [];
           }
         }
       },

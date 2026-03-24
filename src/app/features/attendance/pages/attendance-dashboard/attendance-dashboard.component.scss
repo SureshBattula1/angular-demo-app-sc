@@ -633,6 +633,64 @@
       padding: var(--spacing-md);
       text-align: left;
     }
+
+    .count-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 30px;
+      text-align: center;
+
+      &.present-badge {
+        background: rgba(var(--success-rgb), 0.1);
+        color: var(--success-color);
+      }
+
+      &.absent-badge {
+        background: rgba(var(--danger-rgb, 244, 67, 54), 0.1);
+        color: var(--danger-color, #f44336);
+      }
+
+      &.late-badge {
+        background: rgba(var(--warning-rgb, 255, 152, 0), 0.1);
+        color: var(--warning-color, #ff9800);
+      }
+
+      &.sick-leave-badge {
+        background: rgba(156, 39, 176, 0.1);
+        color: #9c27b0;
+      }
+
+      &.leave-badge {
+        background: rgba(var(--info-rgb), 0.1);
+        color: var(--info-color);
+      }
+    }
+
+    .percentage-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+
+      &.high-attendance {
+        background: rgba(var(--success-rgb), 0.1);
+        color: var(--success-color);
+      }
+
+      &.medium-attendance {
+        background: rgba(var(--warning-rgb, 255, 152, 0), 0.1);
+        color: var(--warning-color, #ff9800);
+      }
+
+      &.low-attendance {
+        background: rgba(var(--danger-rgb, 244, 67, 54), 0.1);
+        color: var(--danger-color, #f44336);
+      }
+    }
     
     .status-badge {
       padding: 4px 12px;

@@ -12,14 +12,12 @@
         (click)="switchTab('student')">
         <mat-icon>school</mat-icon>
         <span>Student Attendance</span>
-        <span class="tab-badge" *ngIf="studentCount > 0">{{ studentCount }}</span>
       </button>
 
       <button mat-button class="toolbar-menu-item" [class.active]="activeTab === 'teacher'"
         (click)="switchTab('teacher')">
         <mat-icon>person</mat-icon>
         <span>Teacher Attendance</span>
-        <span class="tab-badge" *ngIf="teacherCount > 0">{{ teacherCount }}</span>
       </button>
     </mat-toolbar>
   </mat-card>
@@ -139,11 +137,35 @@
           <mat-card class="summary-card count-card">
             <mat-card-content>
               <div class="summary-icon">
+                <mat-icon>local_hospital</mat-icon>
+              </div>
+              <div class="summary-details">
+                <h3 class="summary-label">Sick Leave</h3>
+                <p class="summary-value">{{ teacherAttendanceDashboard.summary?.sick_leave || 0 }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card count-card">
+            <mat-card-content>
+              <div class="summary-icon">
                 <mat-icon>event_busy</mat-icon>
               </div>
               <div class="summary-details">
-                <h3 class="summary-label">Total Leaves</h3>
-                <p class="summary-value">{{ teacherAttendanceDashboard.summary?.leaves || 0 }}</p>
+                <h3 class="summary-label">Leave</h3>
+                <p class="summary-value">{{ teacherAttendanceDashboard.summary?.leave || 0 }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card count-card">
+            <mat-card-content>
+              <div class="summary-icon">
+                <mat-icon>people</mat-icon>
+              </div>
+              <div class="summary-details">
+                <h3 class="summary-label">Total Attendance</h3>
+                <p class="summary-value">{{ teacherAttendanceDashboard.summary?.total_count || 0 }}</p>
               </div>
             </mat-card-content>
           </mat-card>
@@ -256,10 +278,34 @@
           <mat-card class="summary-card count-card">
             <mat-card-content>
               <div class="summary-icon">
+                <mat-icon>local_hospital</mat-icon>
+              </div>
+              <div class="summary-details">
+                <h3 class="summary-label">Sick Leave</h3>
+                <p class="summary-value">{{ studentAttendanceDashboard.summary?.sick_leave || 0 }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card count-card">
+            <mat-card-content>
+              <div class="summary-icon">
+                <mat-icon>event_busy</mat-icon>
+              </div>
+              <div class="summary-details">
+                <h3 class="summary-label">Leave</h3>
+                <p class="summary-value">{{ studentAttendanceDashboard.summary?.leave || 0 }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card count-card">
+            <mat-card-content>
+              <div class="summary-icon">
                 <mat-icon>people</mat-icon>
               </div>
               <div class="summary-details">
-                <h3 class="summary-label">Total Students</h3>
+                <h3 class="summary-label">Total Attendance</h3>
                 <p class="summary-value">{{ studentAttendanceDashboard.summary?.total_count || 0 }}</p>
               </div>
             </mat-card-content>
@@ -355,6 +401,163 @@
           </mat-card>
         </div>
 
+        <!-- Grade / Section — student list with attendance stats (same idea as branch-wise teachers) -->
+        <div class="branch-teacher-detail-section grade-section-student-section">
+          <mat-card class="detail-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>view_list</mat-icon>
+                Grade &amp; Section — Student Attendance
+              </mat-card-title>
+            </mat-card-header>
+            <mat-divider></mat-divider>
+            <mat-card-content>
+              <div class="selection-filters">
+                <mat-form-field appearance="outline" class="filter-field">
+                  <mat-label>Branch</mat-label>
+                  <mat-select [(value)]="selectedBranchForStudentClass" (selectionChange)="onBranchForStudentClassChange()">
+                    <mat-option [value]="null">Select branch</mat-option>
+                    <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                      {{ branch.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>business</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field" *ngIf="selectedBranchForStudentClass">
+                  <mat-label>Class / Grade</mat-label>
+                  <mat-select [(value)]="selectedGrade" (selectionChange)="onGradeChange()">
+                    <mat-option [value]="null">Select grade</mat-option>
+                    <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>school</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field" *ngIf="selectedBranchForStudentClass && selectedGrade">
+                  <mat-label>Section</mat-label>
+                  <mat-select [(value)]="selectedSection" (selectionChange)="onSectionChange()">
+                    <mat-option [value]="null">Select section</mat-option>
+                    <mat-option *ngFor="let section of sections" [value]="section.name">
+                      {{ section.name }} {{ section.code ? '(' + section.code + ')' : '' }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>class</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field" *ngIf="selectedBranchForStudentClass && selectedGrade && selectedSection">
+                  <mat-label>Filter by status</mat-label>
+                  <mat-select [(value)]="selectedStatus" (selectionChange)="onStatusChange()">
+                    <mat-option *ngFor="let opt of attendanceStatuses" [value]="opt.value">{{ opt.label }}</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>filter_list</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <div *ngIf="studentAttendanceByClassSection && selectedGrade && selectedSection" class="attendance-details">
+                <div class="details-header">
+                  <h3>{{ getGradeLabel(selectedGrade || '') }} — Section {{ selectedSection }}</h3>
+                  <div class="details-summary">
+                    <span class="summary-item">
+                      <mat-icon>check_circle</mat-icon>
+                      Present: {{ studentAttendanceByClassSection.summary?.present || 0 }}
+                    </span>
+                    <span class="summary-item">
+                      <mat-icon>cancel</mat-icon>
+                      Absent: {{ studentAttendanceByClassSection.summary?.absent || 0 }}
+                    </span>
+                    <span class="summary-item">
+                      <mat-icon>schedule</mat-icon>
+                      Late: {{ studentAttendanceByClassSection.summary?.late || 0 }}
+                    </span>
+                    <span class="summary-item">
+                      <mat-icon>local_hospital</mat-icon>
+                      Sick Leave: {{ studentAttendanceByClassSection.summary?.sick_leave || 0 }}
+                    </span>
+                    <span class="summary-item">
+                      <mat-icon>event_busy</mat-icon>
+                      Leave: {{ studentAttendanceByClassSection.summary?.leave || 0 }}
+                    </span>
+                    <span class="summary-item">
+                      <mat-icon>people</mat-icon>
+                      Total: {{ studentAttendanceByClassSection.summary?.total_count || 0 }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="attendance-table" *ngIf="getStudentClassRows().length > 0">
+                  <table mat-table [dataSource]="getStudentClassRows()" class="mat-elevation-z2">
+                    <ng-container matColumnDef="roll_number">
+                      <th mat-header-cell *matHeaderCellDef>Roll No.</th>
+                      <td mat-cell *matCellDef="let s">{{ s.roll_number || '-' }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="student_name">
+                      <th mat-header-cell *matHeaderCellDef>Student Name</th>
+                      <td mat-cell *matCellDef="let s">{{ s.first_name }} {{ s.last_name }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="admission_number">
+                      <th mat-header-cell *matHeaderCellDef>Admission No.</th>
+                      <td mat-cell *matCellDef="let s">{{ s.admission_number || '-' }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="present">
+                      <th mat-header-cell *matHeaderCellDef>Present</th>
+                      <td mat-cell *matCellDef="let s"><span class="count-badge present-badge">{{ s.present || 0 }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="absent">
+                      <th mat-header-cell *matHeaderCellDef>Absent</th>
+                      <td mat-cell *matCellDef="let s"><span class="count-badge absent-badge">{{ s.absent || 0 }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="late">
+                      <th mat-header-cell *matHeaderCellDef>Late</th>
+                      <td mat-cell *matCellDef="let s"><span class="count-badge late-badge">{{ s.late || 0 }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="sick_leave">
+                      <th mat-header-cell *matHeaderCellDef>Sick Leave</th>
+                      <td mat-cell *matCellDef="let s"><span class="count-badge sick-leave-badge">{{ s.sick_leave || 0 }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="leave">
+                      <th mat-header-cell *matHeaderCellDef>Leave</th>
+                      <td mat-cell *matCellDef="let s"><span class="count-badge leave-badge">{{ s.leave || 0 }}</span></td>
+                    </ng-container>
+                    <ng-container matColumnDef="attendance_percentage">
+                      <th mat-header-cell *matHeaderCellDef>Attendance %</th>
+                      <td mat-cell *matCellDef="let s">
+                        <span class="percentage-badge" [class.high-attendance]="s.attendance_percentage >= 90"
+                          [class.medium-attendance]="s.attendance_percentage >= 70 && s.attendance_percentage < 90"
+                          [class.low-attendance]="s.attendance_percentage < 70">
+                          {{ s.attendance_percentage || 0 }}%
+                        </span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="latest_status">
+                      <th mat-header-cell *matHeaderCellDef>Latest Status</th>
+                      <td mat-cell *matCellDef="let s">
+                        <span class="status-badge" [class.status-present]="s.latest_status === 'Present'"
+                          [class.status-absent]="s.latest_status === 'Absent'"
+                          [class.status-late]="s.latest_status === 'Late'"
+                          [class.status-leave]="s.latest_status === 'Leave' || s.latest_status === 'Sick Leave'">
+                          {{ s.latest_status }}
+                        </span>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="['roll_number', 'student_name', 'admission_number', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
+                    <tr mat-row *matRowDef="let row; columns: ['roll_number', 'student_name', 'admission_number', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
+                  </table>
+                </div>
+
+                <div *ngIf="getStudentClassRows().length === 0" class="empty-state">
+                  <mat-icon>info</mat-icon>
+                  <p>No students or no attendance in range for this class.</p>
+                </div>
+              </div>
+
+              <div *ngIf="!selectedBranchForStudentClass || !selectedGrade || !selectedSection" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>Select branch, grade, and section to list all students and their attendance for the selected period.</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
         <!-- Branch-wise Teacher Attendance Detail -->
         <div class="branch-teacher-detail-section">
           <mat-card class="detail-card">
@@ -399,8 +602,12 @@
                       Late: {{ teacherAttendanceByBranch.summary?.late || 0 }}
                     </span>
                     <span class="summary-item">
+                      <mat-icon>local_hospital</mat-icon>
+                      Sick Leave: {{ teacherAttendanceByBranch.summary?.sick_leave || 0 }}
+                    </span>
+                    <span class="summary-item">
                       <mat-icon>event_busy</mat-icon>
-                      Leaves: {{ teacherAttendanceByBranch.summary?.leaves || 0 }}
+                      Leave: {{ teacherAttendanceByBranch.summary?.leave || 0 }}
                     </span>
                     <span class="summary-item">
                       <mat-icon>people</mat-icon>
@@ -456,10 +663,17 @@
                       </td>
                     </ng-container>
 
-                    <ng-container matColumnDef="leaves">
-                      <th mat-header-cell *matHeaderCellDef>Leaves</th>
+                    <ng-container matColumnDef="sick_leave">
+                      <th mat-header-cell *matHeaderCellDef>Sick Leave</th>
                       <td mat-cell *matCellDef="let teacher">
-                        <span class="count-badge leave-badge">{{ teacher.leaves || 0 }}</span>
+                        <span class="count-badge sick-leave-badge">{{ teacher.sick_leave || 0 }}</span>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="leave">
+                      <th mat-header-cell *matHeaderCellDef>Leave</th>
+                      <td mat-cell *matCellDef="let teacher">
+                        <span class="count-badge leave-badge">{{ teacher.leave || 0 }}</span>
                       </td>
                     </ng-container>
 
@@ -487,10 +701,10 @@
                     </ng-container>
 
                     <tr mat-header-row
-                      *matHeaderRowDef="['employee_id', 'teacher_name', 'department', 'designation', 'present', 'absent', 'late', 'leaves', 'attendance_percentage', 'latest_status']">
+                      *matHeaderRowDef="['employee_id', 'teacher_name', 'department', 'designation', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']">
                     </tr>
                     <tr mat-row
-                      *matRowDef="let row; columns: ['employee_id', 'teacher_name', 'department', 'designation', 'present', 'absent', 'late', 'leaves', 'attendance_percentage', 'latest_status']">
+                      *matRowDef="let row; columns: ['employee_id', 'teacher_name', 'department', 'designation', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']">
                     </tr>
                   </table>
                 </div>
