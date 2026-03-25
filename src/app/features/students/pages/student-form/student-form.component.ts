@@ -141,8 +141,15 @@ export class StudentFormComponent implements OnInit {
    * Setup listeners to reload grades/sections when branch/grade changes
    */
   private setupDynamicGradeAndSectionLoading(): void {
-    // Branch -> load grades, clear grade+section
+    // Branch -> load grades, clear grade+section (create mode only; edit keeps academic placement)
     this.studentForm.get('branch_id')?.valueChanges.subscribe((branchId: number | null) => {
+      if (this.isEditMode) {
+        if (branchId) {
+          this.loadGradesForBranch(branchId);
+        }
+        return;
+      }
+
       this.grades = [];
       this.sections = [];
       this.studentForm.patchValue({ grade: '', section: null }, { emitEvent: false });
@@ -155,8 +162,12 @@ export class StudentFormComponent implements OnInit {
       }
     });
 
-    // Grade -> load sections for current branch
+    // Grade -> load sections for current branch (create mode only)
     this.studentForm.get('grade')?.valueChanges.subscribe((grade: string) => {
+      if (this.isEditMode) {
+        return;
+      }
+
       const branchId = this.studentForm.get('branch_id')?.value as number | null;
 
       this.sections = [];
@@ -168,6 +179,25 @@ export class StudentFormComponent implements OnInit {
         this.loadingSections = false;
       }
     });
+  }
+
+  /** Label for grade in Academic Details when grade/section are read-only (edit mode). */
+  getGradeDisplayLabel(): string {
+    const v = this.studentForm.get('grade')?.value;
+    if (v === null || v === undefined || v === '') {
+      return '—';
+    }
+    const g = this.grades.find((x) => x.value === v);
+    return g ? g.label : String(v);
+  }
+
+  /** Section text for read-only Academic Details. */
+  getSectionDisplayLabel(): string {
+    const s = this.studentForm.get('section')?.value;
+    if (s === null || s === undefined || s === '') {
+      return '—';
+    }
+    return String(s);
   }
 
   private initForm(): void {

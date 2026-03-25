@@ -137,16 +137,21 @@
               <span class="subject-name">{{ result.subject_name }}</span>
               <span class="result-date">{{ result.exam_date | date:'mediumDate' }}</span>
             </div>
-            <div class="result-score" [ngClass]="getResultClass(result.marks_obtained, result.total_marks, result.passing_marks)">
-              <span class="score-value">{{ result.marks_obtained }} / {{ result.total_marks }}</span>
+            <div class="result-score" [ngClass]="getResultClassForRow(result)">
+              <span class="score-value" *ngIf="!result.is_absent">{{ result.marks_obtained }} / {{ result.total_marks }}</span>
+              <span class="score-value absent-text" *ngIf="result.is_absent">Absent</span>
             </div>
             <div class="result-score-pct">
-              <span class="score-pct">{{ getPercentage(result.marks_obtained, result.total_marks) }}%</span>
+              <span class="score-pct">{{ getPercentageLabel(result) }}</span>
             </div>
             <div class="result-meta">
-              <span class="grade">Grade: <strong>{{ result.grade }}</strong></span>
-              <span class="status" [ngClass]="getStatusClass(result.is_pass)">
-                {{ result.is_pass ? 'Pass' : 'Fail' }}
+              <span class="grade">Grade: <strong>{{ result.is_absent ? '—' : result.grade }}</strong></span>
+              <span
+                class="status"
+                [ngClass]="getExamResultStatusClass(result)"
+                [matTooltip]="getExamResultStatusTooltip(result)"
+                matTooltipPosition="above">
+                {{ getExamResultStatusLabel(result) }}
               </span>
             </div>
             <div class="result-comment" *ngIf="result.remarks">

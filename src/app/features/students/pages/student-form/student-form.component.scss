@@ -6,6 +6,10 @@
   margin: 0 auto;
 }
 
+.academic-readonly input[readonly] {
+  cursor: default;
+}
+
 .form-card {
   background: var(--card-background);
   border-radius: var(--radius-md);

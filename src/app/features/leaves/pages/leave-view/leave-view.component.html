@@ -21,8 +21,20 @@
   <mat-card class="view-header-card">
     <mat-card-content>
       <div class="view-header">
-        <div class="view-avatar">
-          <mat-icon class="avatar-icon">{{ leave.leave_for === 'student' ? 'school' : 'person' }}</mat-icon>
+        <div
+          class="view-avatar"
+          [matTooltip]="(profilePictureUrl && showProfilePicture) ? getApplicantAvatarTooltip() : ''"
+          matTooltipPosition="below">
+          <img
+            *ngIf="profilePictureUrl && showProfilePicture"
+            [src]="profilePictureUrl"
+            [alt]="leave.first_name + ' ' + leave.last_name"
+            class="leave-profile-avatar"
+            (load)="onProfileImageLoad()"
+            (error)="onProfileImageError()" />
+          <mat-icon *ngIf="!profilePictureUrl || !showProfilePicture" class="avatar-icon">
+            {{ leave.leave_for === 'student' ? 'school' : 'person' }}
+          </mat-icon>
         </div>
         <div class="view-info">
           <h1 class="view-name">{{ leave.first_name }} {{ leave.last_name }}</h1>

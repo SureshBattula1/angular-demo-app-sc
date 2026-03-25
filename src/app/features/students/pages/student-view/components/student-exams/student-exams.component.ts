@@ -123,6 +123,7 @@ export class StudentExamsComponent implements OnInit, OnChanges {
             percentage: result.percentage,
             grade: result.grade,
             is_pass: result.is_pass,
+            is_absent: !!result.is_absent,
             remarks: result.remarks || null
           }));
           this.examResultsByExam = this.groupResultsByExam(this.examResults);
@@ -218,12 +219,56 @@ export class StudentExamsComponent implements OnInit, OnChanges {
     return 'score-fail';
   }
 
+  /** Marks cell styling; absent uses dedicated style (no score band). */
+  getResultClassForRow(result: { is_absent?: boolean; marks_obtained: number; total_marks: number; passing_marks: number }): string {
+    if (result.is_absent) {
+      return 'score-absent';
+    }
+    return this.getResultClass(result.marks_obtained, result.total_marks, result.passing_marks);
+  }
+
   getPercentage(obtained: number, total: number): number {
+    if (!total) {
+      return 0;
+    }
     return Math.round((obtained / total) * 100);
+  }
+
+  getPercentageLabel(result: { is_absent?: boolean; marks_obtained: number; total_marks: number }): string {
+    if (result.is_absent) {
+      return '—';
+    }
+    return `${this.getPercentage(result.marks_obtained, result.total_marks)}%`;
   }
 
   getStatusClass(isPass: boolean): string {
     return isPass ? 'status-pass' : 'status-fail';
+  }
+
+  getExamResultStatusLabel(result: { is_absent?: boolean; is_pass: boolean }): string {
+    if (result.is_absent) {
+      return 'Absent';
+    }
+    return result.is_pass ? 'Pass' : 'Fail';
+  }
+
+  getExamResultStatusClass(result: { is_absent?: boolean; is_pass: boolean }): string {
+    if (result.is_absent) {
+      return 'status-absent';
+    }
+    return result.is_pass ? 'status-pass' : 'status-fail';
+  }
+
+  /** Tooltip when absent (and optional Pass/Fail context). */
+  getExamResultStatusTooltip(result: { is_absent?: boolean; is_pass: boolean; remarks?: string | null }): string {
+    if (result.is_absent) {
+      const base = 'Marked absent for this exam. No marks were awarded.';
+      if (result.remarks && String(result.remarks).trim()) {
+        return `${base} ${String(result.remarks).trim()}`;
+      }
+      return base;
+    }
+    return result.is_pass ? 'Passed this subject' : 'Did not meet passing marks';
   }
 
   downloadUpcomingSchedulesPdf(): void {
@@ -429,15 +474,24 @@ export class StudentExamsComponent implements OnInit, OnChanges {
         doc.setTextColor(31, 41, 55);
         doc.setFontSize(10);
         const dateStr = r.exam_date ? new Date(r.exam_date).toLocaleDateString() : '';
-        const pct = this.getPercentage(r.marks_obtained, r.total_marks);
-        const status = r.is_pass ? 'Pass' : 'Fail';
         doc.text(r.subject_name, 18, y + 1);
-        doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 60, y + 1);
-        doc.setFont('helvetica', 'bold');
-        doc.text(r.grade, 95, y + 1);
-        doc.setFont('helvetica', 'normal');
-        if (r.is_pass) { doc.setTextColor(34, 197, 94); } else { doc.setTextColor(239, 68, 68); }
-        doc.text(status, 125, y + 1);
+        if (r.is_absent) {
+          doc.text('Absent', 60, y + 1);
+          doc.setFont('helvetica', 'bold');
+          doc.text('—', 95, y + 1);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(100, 116, 139);
+          doc.text('Absent', 125, y + 1);
+        } else {
+          const pct = this.getPercentage(r.marks_obtained, r.total_marks);
+          const status = r.is_pass ? 'Pass' : 'Fail';
+          doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 60, y + 1);
+          doc.setFont('helvetica', 'bold');
+          doc.text(String(r.grade ?? ''), 95, y + 1);
+          doc.setFont('helvetica', 'normal');
+          if (r.is_pass) { doc.setTextColor(34, 197, 94); } else { doc.setTextColor(239, 68, 68); }
+          doc.text(status, 125, y + 1);
+        }
         doc.setTextColor(107, 114, 128);
         doc.text(dateStr, 155, y + 1);
         doc.setTextColor(31, 41, 55);
@@ -531,15 +585,24 @@ export class StudentExamsComponent implements OnInit, OnChanges {
           doc.setTextColor(31, 41, 55);
           doc.setFontSize(10);
           const dateStr = r.exam_date ? new Date(r.exam_date).toLocaleDateString() : '';
-          const pct = this.getPercentage(r.marks_obtained, r.total_marks);
-          const status = r.is_pass ? 'Pass' : 'Fail';
           doc.text(r.subject_name, 18, y + 1);
-          doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 60, y + 1);
-          doc.setFont('helvetica', 'bold');
-          doc.text(r.grade, 95, y + 1);
-          doc.setFont('helvetica', 'normal');
-          if (r.is_pass) { doc.setTextColor(34, 197, 94); } else { doc.setTextColor(239, 68, 68); }
-          doc.text(status, 125, y + 1);
+          if (r.is_absent) {
+            doc.text('Absent', 60, y + 1);
+            doc.setFont('helvetica', 'bold');
+            doc.text('—', 95, y + 1);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text('Absent', 125, y + 1);
+          } else {
+            const pct = this.getPercentage(r.marks_obtained, r.total_marks);
+            const status = r.is_pass ? 'Pass' : 'Fail';
+            doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 60, y + 1);
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(r.grade ?? ''), 95, y + 1);
+            doc.setFont('helvetica', 'normal');
+            if (r.is_pass) { doc.setTextColor(34, 197, 94); } else { doc.setTextColor(239, 68, 68); }
+            doc.text(status, 125, y + 1);
+          }
           doc.setTextColor(107, 114, 128);
           doc.text(dateStr, 155, y + 1);
           doc.setTextColor(31, 41, 55);

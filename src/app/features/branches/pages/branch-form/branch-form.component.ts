@@ -104,9 +104,9 @@ export class BranchFormComponent implements OnInit {
       emergency_contact: [''],
       
       // Principal
-      principal_name: [''],
-      principal_contact: [''],
-      principal_email: ['', Validators.email],
+      principal_name: ['', [Validators.required, Validators.maxLength(255)]],
+      principal_contact: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]+$/), Validators.maxLength(20)]],
+      principal_email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
       // Branch Admin: when creating branch, optional password to create Branch Admin user with principal name/email
       branch_admin_password: ['', [Validators.minLength(8)]],
 
@@ -358,6 +358,8 @@ export class BranchFormComponent implements OnInit {
       pincode: 'Pincode',
       phone: 'Phone',
       email: 'Email',
+      principal_name: 'Principal Name',
+      principal_contact: 'Principal Contact',
       principal_email: 'Principal Email'
     };
     return labels[fieldName] || fieldName;

@@ -5,6 +5,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { LeaveService } from '../../services/leave.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Leave } from '../../../../core/models/leave.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-leave-view',
@@ -17,6 +18,8 @@ export class LeaveViewComponent implements OnInit {
   leave?: Leave;
   isLoading = true;
   leaveId!: number;
+  showProfilePicture = false;
+  profilePictureUrl = '';
 
   constructor(
     private leaveService: LeaveService,
@@ -43,6 +46,7 @@ export class LeaveViewComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.leave = Array.isArray(response.data) ? response.data[0] : response.data;
+          this.applyLeaveProfilePicture(this.leave);
         }
         this.isLoading = false;
       },
@@ -100,6 +104,52 @@ export class LeaveViewComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/leaves']);
+  }
+
+  private applyLeaveProfilePicture(leave: Leave | undefined): void {
+    if (!leave) {
+      this.profilePictureUrl = '';
+      this.showProfilePicture = false;
+      return;
+    }
+    const raw = leave.profile_picture ?? (leave as any).user_avatar ?? '';
+    this.profilePictureUrl = this.getFullImageUrl(typeof raw === 'string' ? raw : '');
+    this.showProfilePicture = !!this.profilePictureUrl;
+  }
+
+  /**
+   * Convert backend image path to full URL (same rules as student/teacher view).
+   */
+  private getFullImageUrl(imagePath: string): string {
+    if (!imagePath?.trim()) {
+      return '';
+    }
+    const normalizedPath = imagePath.trim();
+    if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
+      return normalizedPath;
+    }
+    const baseUrl = environment.apiUrl.replace('/api', '').replace(/\/$/, '');
+    const cleanPath = normalizedPath.replace(/^\/+/, '');
+    if (cleanPath.startsWith('storage/')) {
+      return `${baseUrl}/${cleanPath}`;
+    }
+    return `${baseUrl}/storage/${cleanPath}`;
+  }
+
+  onProfileImageLoad(): void {
+    this.showProfilePicture = true;
+  }
+
+  onProfileImageError(): void {
+    this.showProfilePicture = false;
+    this.profilePictureUrl = '';
+  }
+
+  getApplicantAvatarTooltip(): string {
+    if (!this.leave) {
+      return '';
+    }
+    return this.leave.leave_for === 'student' ? 'Student profile' : 'Teacher profile';
   }
 }
 

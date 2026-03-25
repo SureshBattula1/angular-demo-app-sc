@@ -170,16 +170,22 @@
           </h3>
           
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-third">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Principal Name</mat-label>
               <input matInput formControlName="principal_name" placeholder="Enter principal name">
               <mat-icon matPrefix>badge</mat-icon>
+              <mat-error *ngIf="branchForm.get('principal_name')?.invalid && branchForm.get('principal_name')?.touched">
+                {{ getErrorMessage('principal_name') }}
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Principal Contact</mat-label>
               <input matInput formControlName="principal_contact" placeholder="Phone number">
               <mat-icon matPrefix>phone_in_talk</mat-icon>
+              <mat-error *ngIf="branchForm.get('principal_contact')?.invalid && branchForm.get('principal_contact')?.touched">
+                {{ getErrorMessage('principal_contact') }}
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">

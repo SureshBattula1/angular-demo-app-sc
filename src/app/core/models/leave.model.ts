@@ -37,6 +37,8 @@ export interface Leave {
   designation?: string;
   branch_name?: string; // Branch name from join
   leave_for?: 'student' | 'teacher';
+  /** Resolved path or URL for applicant profile photo (leave detail API) */
+  profile_picture?: string | null;
 }
 
 export interface StudentLeave extends Leave {

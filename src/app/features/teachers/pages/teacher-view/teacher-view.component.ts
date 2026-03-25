@@ -150,18 +150,15 @@ export class TeacherViewComponent implements OnInit, OnDestroy {
         if (response.success && response.data) {
           this.teacher = response.data;
           
-          // Initialize profile picture
-          if (response.data.profile_picture) {
-            // The backend already returns a full URL, use it directly
-            this.profilePictureUrl = response.data.profile_picture;
-            this.showProfilePicture = true;
-          } else if (response.data.user?.avatar) {
-            // The backend already returns a full URL, use it directly
-            this.profilePictureUrl = response.data.user.avatar;
-            this.showProfilePicture = true;
-          } else {
-            this.showProfilePicture = false;
-          }
+          // Initialize profile picture (normalize relative storage paths to absolute URLs)
+          const imageCandidate =
+            response.data.profile_picture ||
+            response.data.user?.avatar ||
+            '';
+          this.profilePictureUrl = this.getFullImageUrl(
+            typeof imageCandidate === 'string' ? imageCandidate : ''
+          );
+          this.showProfilePicture = !!this.profilePictureUrl;
           
           this.isLoading = false;
           
@@ -178,26 +175,22 @@ export class TeacherViewComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get full URL for image display
+   * Get full URL for image display (aligned with student view: supports /storage/* and raw paths)
    */
   getFullImageUrl(imagePath: string): string {
-    if (!imagePath) {
+    if (!imagePath?.trim()) {
       return '';
     }
-    
-    // If already a full URL, return as is
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
+    const normalizedPath = imagePath.trim();
+    if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
+      return normalizedPath;
     }
-    
-    // Remove storage/ prefix if it exists (we'll add it back)
-    imagePath = imagePath.replace(/^storage\//, '');
-    
-    // Construct full URL - remove /api from base URL
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    const fullUrl = `${baseUrl}/storage/${imagePath}`;
-    
-    return fullUrl;
+    const baseUrl = environment.apiUrl.replace('/api', '').replace(/\/$/, '');
+    const cleanPath = normalizedPath.replace(/^\/+/, '');
+    if (cleanPath.startsWith('storage/')) {
+      return `${baseUrl}/${cleanPath}`;
+    }
+    return `${baseUrl}/storage/${cleanPath}`;
   }
 
   /**

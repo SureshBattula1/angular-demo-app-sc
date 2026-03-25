@@ -226,55 +226,76 @@
           </h3>
           
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Grade *</mat-label>
-              <mat-select
-                formControlName="grade"
-                [disabled]="!studentForm.get('branch_id')?.value"
-              >
-                <mat-option *ngIf="!studentForm.get('branch_id')?.value" disabled>
-                  Select branch first
-                </mat-option>
-                <mat-option *ngIf="loadingGrades" disabled>
-                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-                  Loading grades...
-                </mat-option>
-                <mat-option *ngFor="let g of grades" [value]="g.value">{{ g.label }}</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>grade</mat-icon>
-              <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
-              <mat-hint *ngIf="studentForm.get('branch_id')?.value && grades.length > 0">
-                {{ grades.length }} grades available
-              </mat-hint>
-              <mat-error *ngIf="studentForm.get('grade')?.invalid">{{ getErrorMessage('grade') }}</mat-error>
-            </mat-form-field>
+            <!-- Create: grade & section are editable -->
+            <ng-container *ngIf="!isEditMode">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Grade *</mat-label>
+                <mat-select
+                  formControlName="grade"
+                  [disabled]="!studentForm.get('branch_id')?.value"
+                >
+                  <mat-option *ngIf="!studentForm.get('branch_id')?.value" disabled>
+                    Select branch first
+                  </mat-option>
+                  <mat-option *ngIf="loadingGrades" disabled>
+                    <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                    Loading grades...
+                  </mat-option>
+                  <mat-option *ngFor="let g of grades" [value]="g.value">{{ g.label }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>grade</mat-icon>
+                <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
+                <mat-hint *ngIf="studentForm.get('branch_id')?.value && grades.length > 0">
+                  {{ grades.length }} grades available
+                </mat-hint>
+                <mat-error *ngIf="studentForm.get('grade')?.invalid">{{ getErrorMessage('grade') }}</mat-error>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Section</mat-label>
-              <mat-select
-                formControlName="section"
-                [disabled]="!studentForm.get('branch_id')?.value || !studentForm.get('grade')?.value"
-              >
-                <mat-option [value]="null">None</mat-option>
-                <mat-option *ngIf="!studentForm.get('branch_id')?.value" disabled>
-                  Select branch first
-                </mat-option>
-                <mat-option *ngIf="studentForm.get('branch_id')?.value && !studentForm.get('grade')?.value" disabled>
-                  Select grade first
-                </mat-option>
-                <mat-option *ngIf="loadingSections" disabled>
-                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-                  Loading sections...
-                </mat-option>
-                <mat-option *ngFor="let s of sections" [value]="s.name">{{ s.name }} ({{ s.grade_label }})</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>class</mat-icon>
-              <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
-              <mat-hint *ngIf="!studentForm.get('grade')?.value">Select a grade first to load sections</mat-hint>
-              <mat-hint *ngIf="studentForm.get('grade')?.value && sections.length === 0 && !loadingSections">
-                No sections available for this grade
-              </mat-hint>
-            </mat-form-field>
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Section</mat-label>
+                <mat-select
+                  formControlName="section"
+                  [disabled]="!studentForm.get('branch_id')?.value || !studentForm.get('grade')?.value"
+                >
+                  <mat-option [value]="null">None</mat-option>
+                  <mat-option *ngIf="!studentForm.get('branch_id')?.value" disabled>
+                    Select branch first
+                  </mat-option>
+                  <mat-option *ngIf="studentForm.get('branch_id')?.value && !studentForm.get('grade')?.value" disabled>
+                    Select grade first
+                  </mat-option>
+                  <mat-option *ngIf="loadingSections" disabled>
+                    <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                    Loading sections...
+                  </mat-option>
+                  <mat-option *ngFor="let s of sections" [value]="s.name">{{ s.name }} ({{ s.grade_label }})</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>class</mat-icon>
+                <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
+                <mat-hint *ngIf="!studentForm.get('grade')?.value">Select a grade first to load sections</mat-hint>
+                <mat-hint *ngIf="studentForm.get('grade')?.value && sections.length === 0 && !loadingSections">
+                  No sections available for this grade
+                </mat-hint>
+              </mat-form-field>
+            </ng-container>
+
+            <!-- Edit: grade & section are read-only (use promotion flows to change class) -->
+            <ng-container *ngIf="isEditMode">
+              <input type="hidden" formControlName="grade" />
+              <input type="hidden" formControlName="section" />
+              <mat-form-field appearance="outline" class="form-field-half academic-readonly">
+                <mat-label>Grade *</mat-label>
+                <input matInput [value]="getGradeDisplayLabel()" readonly />
+                <mat-icon matPrefix>grade</mat-icon>
+                <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="form-field-half academic-readonly">
+                <mat-label>Section</mat-label>
+                <input matInput [value]="getSectionDisplayLabel()" readonly />
+                <mat-icon matPrefix>class</mat-icon>
+                <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
+              </mat-form-field>
+            </ng-container>
           </div>
 
           <div class="form-row">
