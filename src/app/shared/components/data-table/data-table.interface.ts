@@ -45,6 +45,10 @@ export interface TableConfig {
   showAddButton?: boolean;        // Show/hide the add button (default: true)
   addButtonPermission?: string | string[]; // Permission required for add button
   addButtonPermissionMode?: 'any' | 'all'; // How to check multiple permissions for add button
+  /** Overrides default label "ADD " + (title||'ITEM').toUpperCase() for the primary header button */
+  primaryButtonLabel?: string;
+  /** Material icon for the primary button (default: `add`) */
+  primaryButtonIcon?: string;
 }
 
 export interface SearchCriteria {

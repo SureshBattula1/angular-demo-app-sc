@@ -69,6 +69,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'], permissionMode: 'any' },
     { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
     { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
+    { icon: 'hub', label: 'Bulk Management', route: '/bulk-management', permission: 'bulk_management.view', tooltip: 'Bulk Management' },
     { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
     { icon: 'trending_up', label: 'Promotions', route: '/promotions', permission: ['students.promote', 'students.edit'], permissionMode: 'any' },
     { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'import.view' },

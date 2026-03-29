@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { combineLatest } from 'rxjs';
-import { startWith, take } from 'rxjs/operators';
+import { finalize, startWith, take } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { AdmissionService, AdmissionApplication } from '../../services/admission.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { GlobalLoadingService } from '../../../../core/services/global-loading.service';
 import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { AcademicYearService, AcademicYear } from '../../../settings/services/academic-year.service';
 import { Section } from '../../../../core/models/section.model';
@@ -81,6 +82,7 @@ export class AdmissionFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
+    private globalLoading: GlobalLoadingService,
     private cdr: ChangeDetectorRef,
     private academicYearContext: AcademicYearContextService,
     private academicYearService: AcademicYearService
@@ -468,6 +470,7 @@ export class AdmissionFormComponent implements OnInit {
     }
 
     this.isLoading = true;
+    this.globalLoading.show();
     const formData = { ...this.admissionForm.value };
     
     // Convert empty strings to null for optional fields
@@ -481,22 +484,29 @@ export class AdmissionFormComponent implements OnInit {
       ? this.admissionService.updateApplication(this.applicationId, formData)
       : this.admissionService.createApplication(formData);
 
-    request.subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.errorHandler.showSuccess(
-            this.isEditMode 
-              ? 'Admission application updated successfully' 
-              : 'Admission application created successfully'
-          );
-          this.router.navigate(['/admissions']);
+    request
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.globalLoading.hide();
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess(
+              this.isEditMode
+                ? 'Admission application updated successfully'
+                : 'Admission application created successfully'
+            );
+            this.router.navigate(['/admissions']);
+          }
+        },
+        error: (error) => {
+          this.errorHandler.handleError(error);
         }
-      },
-      error: (error) => {
-        this.errorHandler.handleError(error);
-        this.isLoading = false;
-      }
-    });
+      });
   }
 
   onCancel(): void {

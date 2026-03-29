@@ -1,0 +1,144 @@
+<!-- Delivery log: list (data-table only) -->
+<div class="sms-tab-page" *ngIf="view === 'delivery' && !showBatchDetailPage">
+  <div class="sms-tab-empty" *ngIf="branchListReady && branches.length === 0">
+    <p class="sms-tab-empty__text">No branches available for your account.</p>
+  </div>
+
+  <ng-container *ngIf="branchListReady && branches.length > 0 && selectedBranchId !== null">
+    <app-data-table
+      #queueTable
+      [data]="queueRows"
+      [config]="tableConfig"
+      [advancedSearchConfig]="advancedSearchConfig"
+      [title]="'WhatsApp delivery log'"
+      [loading]="queuesLoading"
+      (actionClicked)="onQueueAction($event)"
+      (rowClicked)="onQueueRowClick($event)"
+      (paginationChanged)="onQueuePagination($event)"
+      (sortChanged)="onQueueSort($event)"
+      (advancedSearchChanged)="onQueueAdvancedSearch($event)"
+      (searchResetEvent)="onQueueSearchReset()">
+    </app-data-table>
+
+    <div class="sms-tab-hint" *ngIf="!queuesLoading && queueRows.length > 0">
+      <mat-icon>touch_app</mat-icon>
+      <p>Click a row to open recipient status for that batch.</p>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Separate full-page view: recipients for one batch -->
+<div class="sms-tab-batch-page" *ngIf="view === 'delivery' && showBatchDetailPage">
+  <div class="sms-tab-batch-page__bar">
+    <button mat-stroked-button type="button" (click)="backToDeliveryLogFromBatch()">
+      <mat-icon>arrow_back</mat-icon>
+      Delivery log
+    </button>
+  </div>
+
+  <ng-container *ngIf="branchListReady && selectedBranchId !== null">
+    <section class="sms-tab-recipients" aria-labelledby="sms-tab-recipients-heading">
+      <div class="sms-tab-recipients-head">
+        <h2 id="sms-tab-recipients-heading" class="sms-tab-recipients-title">
+          <mat-icon>person_pin</mat-icon>
+          Recipients — batch #{{ selectedQueue?.id ?? batchDetailQueueId }}
+        </h2>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          *ngIf="canResend"
+          [disabled]="resending || detailLoading"
+          (click)="resendFailedSkipped()">
+          <mat-icon>replay</mat-icon>
+          Resend failed &amp; skipped
+        </button>
+      </div>
+
+      <p class="sms-tab-meta" *ngIf="detail?.queue">
+        <span>Provider: <strong>{{ detail!.queue.provider }}</strong></span>
+        <span class="sms-tab-meta-sep">·</span>
+        <span>Recipients: <strong>{{ detail!.queue.recipient_count }}</strong></span>
+      </p>
+
+      <div class="sms-tab-filters">
+        <mat-form-field appearance="outline" class="sms-tab-filter-field">
+          <mat-label>Status filter</mat-label>
+          <mat-select
+            [(ngModel)]="recipientStatusFilter"
+            name="recipientStatus"
+            (selectionChange)="onRecipientFilterChange()">
+            <mat-option value="">All</mat-option>
+            <mat-option value="pending">Pending</mat-option>
+            <mat-option value="sent">Sent</mat-option>
+            <mat-option value="failed">Failed</mat-option>
+            <mat-option value="skipped">Skipped</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="sms-tab-loading sms-tab-loading--inline" *ngIf="detailLoading">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Loading recipients…</span>
+      </div>
+
+      <div class="sms-tab-table-wrap" *ngIf="!detailLoading && detail">
+        <table mat-table [dataSource]="recipientsData()" class="sms-tab-table mat-elevation-z0">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let r">{{ r.recipient_name || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let r">{{ r.recipient_type }}</td>
+          </ng-container>
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let r">{{ r.recipient_id }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let r">
+              <span [ngClass]="statusClass(r.status)">{{ r.status }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="error">
+            <th mat-header-cell *matHeaderCellDef>Notes</th>
+            <td mat-cell *matCellDef="let r" class="sms-tab-cell-error">
+              {{ r.error_message || '—' }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="sent_at">
+            <th mat-header-cell *matHeaderCellDef>Sent at</th>
+            <td mat-cell *matCellDef="let r">{{ formatDate(r.sent_at) }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="recipientColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: recipientColumns"></tr>
+        </table>
+        <mat-paginator
+          *ngIf="detail.recipients"
+          [length]="recipientsTotal()"
+          [pageIndex]="recipientsPageIndex"
+          [pageSize]="recipientsPageSize"
+          [pageSizeOptions]="[25, 50, 100]"
+          (page)="onRecipientsPage($event)"
+          showFirstLastButtons></mat-paginator>
+      </div>
+    </section>
+  </ng-container>
+</div>
+
+<!-- Send WhatsApp: full panel with back to delivery log -->
+<div class="sms-tab-send" *ngIf="view === 'send'">
+  <div class="sms-tab-send-bar">
+    <button mat-stroked-button type="button" (click)="backToDeliveryLog()">
+      <mat-icon>arrow_back</mat-icon>
+      Delivery log
+    </button>
+  </div>
+  <app-sms-send-panel
+    [branchId]="sendPanelBranchId()"
+    [messageChannel]="'whatsapp'"
+    (bulkQueued)="onBulkQueued()"></app-sms-send-panel>
+</div>

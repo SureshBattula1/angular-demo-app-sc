@@ -102,6 +102,8 @@ export interface BranchListResponse {
   data: Branch[];
   count?: number;
   total?: number;
+  /** From GET /branches/accessible — SuperAdmin / cross-branch viewers */
+  can_view_all_branches?: boolean;
   meta?: {
     current_page?: number;
     per_page?: number;

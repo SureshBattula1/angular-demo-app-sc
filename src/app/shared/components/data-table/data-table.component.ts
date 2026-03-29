@@ -568,6 +568,22 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   onAdd(): void {
     this.actionClicked.emit({ action: 'add', row: null });
   }
+
+  /** Header primary button label (templates-style ADD TITLE vs custom). */
+  getPrimaryButtonLabel(): string {
+    if (this.config.primaryButtonLabel) {
+      return this.config.primaryButtonLabel;
+    }
+    return `ADD ${(this.title || 'ITEM').toUpperCase()}`;
+  }
+
+  /** Empty-state primary button (sentence case). */
+  getPrimaryButtonEmptyStateLabel(): string {
+    if (this.config.primaryButtonLabel) {
+      return this.config.primaryButtonLabel;
+    }
+    return `Add ${this.title || 'Item'}`;
+  }
   
   // Utility Functions
   getCellValue(row: any, column: TableColumn): any {

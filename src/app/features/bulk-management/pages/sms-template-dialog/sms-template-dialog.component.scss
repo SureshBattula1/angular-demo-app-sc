@@ -1,0 +1,46 @@
+.dialog-body {
+  min-width: min(480px, 92vw);
+  max-width: 560px;
+  padding-top: 4px;
+}
+
+.dialog-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+
+  code {
+    font-size: 12px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: var(--gray-100);
+  }
+}
+
+.full {
+  width: 100%;
+}
+
+.audience-field {
+  margin-top: 4px;
+}
+
+.tag-sheet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tag-sheet-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tag-chip {
+  font-size: 11px;
+  min-height: 28px;
+}

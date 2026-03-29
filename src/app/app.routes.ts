@@ -40,6 +40,15 @@ export const routes: Routes = [
         data: { permissions: 'groups.view' }
       },
       {
+        path: 'bulk-management',
+        loadComponent: () =>
+          import('./features/bulk-management/pages/bulk-management-shell/bulk-management-shell.component').then(
+            m => m.BulkManagementShellComponent
+          ),
+        canActivate: [permissionGuard],
+        data: { permissions: 'bulk_management.view' }
+      },
+      {
         path: 'sections',
         loadChildren: () => import('./features/sections/sections.routes').then(m => m.SECTIONS_ROUTES),
         canActivate: [permissionGuard],

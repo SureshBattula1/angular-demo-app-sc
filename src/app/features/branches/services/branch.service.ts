@@ -27,7 +27,8 @@ export class BranchService {
           data: branches,
           count: branches.length,
           total: branches.length,
-          message: response.message
+          message: response.message,
+          can_view_all_branches: !!response.can_view_all_branches
         };
       })
     );

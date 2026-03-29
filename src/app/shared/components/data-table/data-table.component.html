@@ -14,9 +14,8 @@
           class="primary-action-btn"
           *ngIf="shouldShowAddButton()"
           (click)="onAdd()">
-          <mat-icon>add</mat-icon>
-           {{ (title || 'ITEM').toUpperCase() }}
-          <!-- <mat-icon>keyboard_arrow_down</mat-icon> -->
+          <mat-icon>{{ config.primaryButtonIcon || 'add' }}</mat-icon>
+          {{ getPrimaryButtonLabel() }}
         </button>
         
         <!-- View Toggle (Mobile) -->
@@ -105,8 +104,8 @@
         No {{ title.toLowerCase() || 'records' }} available yet.
       </p>
       <button mat-raised-button color="primary" *ngIf="shouldShowAddButton()" (click)="onAdd()">
-        <mat-icon>add</mat-icon>
-        Add {{ title || 'Item' }}
+        <mat-icon>{{ config.primaryButtonIcon || 'add' }}</mat-icon>
+        {{ getPrimaryButtonEmptyStateLabel() }}
       </button>
     </div>
   </div>
