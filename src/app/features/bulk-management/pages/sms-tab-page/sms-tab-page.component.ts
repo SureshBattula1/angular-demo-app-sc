@@ -117,8 +117,7 @@ export class SmsTabPageComponent implements OnInit, OnChanges {
     defaultPageSize: 15,
     selectable: false,
     primaryButtonLabel: 'Send SMS',
-    primaryButtonIcon: 'send',
-    addButtonPermission: 'bulk_management.edit'
+    primaryButtonIcon: 'send'
   };
 
   /** Built when branches load; includes Branch in the advanced search drawer (replacing the old toolbar). */
@@ -266,7 +265,7 @@ export class SmsTabPageComponent implements OnInit, OnChanges {
   }
 
   get canResend(): boolean {
-    return this.permission.hasPermission('bulk_management.edit');
+    return true;
   }
 
   /** Apply branch list and load queue log (shared by shell hydration and API). */
@@ -276,7 +275,8 @@ export class SmsTabPageComponent implements OnInit, OnChanges {
     this.syncQueueTableColumns();
     const fromInput = this.normalizeBranchId(this.branchId);
     this.applySmsQueryParams(this.route.snapshot.queryParams as Record<string, string | undefined>);
-    if (this.selectedBranchId === null && fromInput !== null) {
+    // Shell always passes a default branch for send panel; do not scope the delivery log to it when user may see all branches.
+    if (this.selectedBranchId === null && fromInput !== null && !this.canViewAllBranches) {
       this.selectedBranchId = fromInput;
     }
     if (!this.canViewAllBranches && this.selectedBranchId === null && branchList.length > 0) {
@@ -547,7 +547,7 @@ export class SmsTabPageComponent implements OnInit, OnChanges {
           sort_by: this.queueSortField,
           sort_direction: this.queueSortDirection
         },
-        this.academicYearContext.selectedYearId
+        this.academicYearContext.effectiveYearId()
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

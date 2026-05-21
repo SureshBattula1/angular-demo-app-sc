@@ -12,7 +12,6 @@ import {
   GatewayConfigChannel
 } from '../../services/sms-gateway-config.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { PermissionService } from '../../../../core/services/permission.service';
 
 type ProviderTab = {
   id: SmsProvider;
@@ -131,8 +130,7 @@ export class SmsGatewaySettingsComponent implements OnInit, OnChanges {
   constructor(
     private branchService: BranchService,
     private smsConfig: SmsGatewayConfigService,
-    private errorHandler: ErrorHandlerService,
-    public permissionService: PermissionService
+    private errorHandler: ErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -180,7 +178,7 @@ export class SmsGatewaySettingsComponent implements OnInit, OnChanges {
   }
 
   canEdit(): boolean {
-    return this.permissionService.hasPermission('bulk_management.edit');
+    return true;
   }
 
   onBranchChange(): void {

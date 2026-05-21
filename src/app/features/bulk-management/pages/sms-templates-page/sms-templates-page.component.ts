@@ -8,14 +8,15 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableConfig } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { Branch } from '../../../../core/models/branch.model';
+import { ApiResponse } from '../../../../core/services/api.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import {
   SmsTemplate,
   SmsTemplateAudience,
-  SmsTemplateService
+  SmsTemplateService,
+  SmsTemplatesIndexData
 } from '../../services/sms-template.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { PermissionService } from '../../../../core/services/permission.service';
 import {
   SmsTemplateDialogComponent,
   SmsTemplateDialogData
@@ -39,7 +40,6 @@ export class SmsTemplatesPageComponent implements OnInit {
   private sms = inject(SmsTemplateService);
   private branchService = inject(BranchService);
   private errorHandler = inject(ErrorHandlerService);
-  private permission = inject(PermissionService);
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
@@ -81,15 +81,13 @@ export class SmsTemplatesPageComponent implements OnInit {
         icon: 'edit',
         label: 'Edit',
         color: 'primary',
-        action: (row: SmsTemplateRow) => this.openDialog(row),
-        permission: 'bulk_management.edit'
+        action: (row: SmsTemplateRow) => this.openDialog(row)
       },
       {
         icon: 'toggle_on',
         label: 'Deactivate',
         color: 'accent',
         action: (row: SmsTemplateRow) => this.toggleStatus(row),
-        permission: 'bulk_management.edit',
         show: (row: SmsTemplateRow) => row.is_active
       },
       {
@@ -97,15 +95,13 @@ export class SmsTemplatesPageComponent implements OnInit {
         label: 'Activate',
         color: 'warn',
         action: (row: SmsTemplateRow) => this.toggleStatus(row),
-        permission: 'bulk_management.edit',
         show: (row: SmsTemplateRow) => !row.is_active
       },
       {
         icon: 'delete',
         label: 'Delete',
         color: 'warn',
-        action: (row: SmsTemplateRow) => this.deleteTemplate(row),
-        permission: 'bulk_management.edit'
+        action: (row: SmsTemplateRow) => this.deleteTemplate(row)
       }
     ],
     selectable: false,
@@ -113,8 +109,7 @@ export class SmsTemplatesPageComponent implements OnInit {
     searchable: true,
     advancedSearch: true,
     exportable: false,
-    responsive: true,
-    addButtonPermission: 'bulk_management.edit'
+    responsive: true
   };
 
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -158,52 +153,33 @@ export class SmsTemplatesPageComponent implements OnInit {
   reload(): void {
     this.loading = true;
     this.templates = [];
-    this.branchService.getBranches({ is_active: true }).subscribe({
-      next: res => {
-        this.branches = res.data ?? [];
-        if (this.branches.length === 0) {
-          this.loading = false;
+    forkJoin({
+      branches: this.branchService.getBranches({ is_active: true }),
+      templates: this.sms.listAll().pipe(
+        catchError(() =>
+          of({ success: false as const, data: undefined } as ApiResponse<SmsTemplatesIndexData>)
+        )
+      )
+    }).subscribe({
+      next: ({ branches, templates: tplRes }) => {
+        this.loading = false;
+        this.branches = branches.data ?? [];
+        if (!tplRes.success || !tplRes.data) {
           this.allowedTags = [];
           return;
         }
-
-        const requests = this.branches.map(b =>
-          this.sms.list(b.id).pipe(
-            catchError(() => of({ success: false, data: undefined } as { success: boolean; data?: { templates?: SmsTemplate[]; allowed_tags?: string[] } }))
-          )
+        this.allowedTags = tplRes.data.allowed_tags ?? [];
+        const merged: SmsTemplateRow[] = (tplRes.data.templates ?? []).map((t: SmsTemplate) =>
+          this.toRow(t, t.branch_name ?? '')
         );
-
-        forkJoin(requests).subscribe({
-          next: results => {
-            this.loading = false;
-            const merged: SmsTemplateRow[] = [];
-            let tags: string[] = [];
-            results.forEach((apiRes, idx) => {
-              const b = this.branches[idx];
-              if (apiRes.success && apiRes.data) {
-                if (!tags.length && apiRes.data.allowed_tags?.length) {
-                  tags = apiRes.data.allowed_tags;
-                }
-                (apiRes.data.templates ?? []).forEach(t => {
-                  merged.push(this.toRow(t, b.name));
-                });
-              }
-            });
-            this.allowedTags = tags;
-            merged.sort((a, c) => {
-              const byBranch = a.branch_name.localeCompare(c.branch_name);
-              if (byBranch !== 0) {
-                return byBranch;
-              }
-              return a.name.localeCompare(c.name);
-            });
-            this.templates = merged;
-          },
-          error: err => {
-            this.loading = false;
-            this.errorHandler.handleError(err);
+        merged.sort((a, c) => {
+          const byBranch = a.branch_name.localeCompare(c.branch_name);
+          if (byBranch !== 0) {
+            return byBranch;
           }
+          return a.name.localeCompare(c.name);
         });
+        this.templates = merged;
       },
       error: err => {
         this.loading = false;
@@ -259,9 +235,6 @@ export class SmsTemplatesPageComponent implements OnInit {
   }
 
   deleteTemplate(t: SmsTemplateRow): void {
-    if (!this.permission.hasPermission('bulk_management.edit')) {
-      return;
-    }
     if (!confirm(`Delete template "${t.name}"?`)) {
       return;
     }
@@ -277,9 +250,6 @@ export class SmsTemplatesPageComponent implements OnInit {
   }
 
   toggleStatus(t: SmsTemplateRow): void {
-    if (!this.permission.hasPermission('bulk_management.edit')) {
-      return;
-    }
     this.sms.update(t.branch_id, t.id, { is_active: !t.is_active }).subscribe({
       next: res => {
         if (res.success) {

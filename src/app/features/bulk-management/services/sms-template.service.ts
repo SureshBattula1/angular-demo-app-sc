@@ -13,6 +13,8 @@ export interface SmsTemplate {
   body: string;
   audience: SmsTemplateAudience;
   is_active: boolean;
+  /** Present on aggregated list API (`/branches/sms-templates`). */
+  branch_name?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -84,6 +86,11 @@ export class SmsTemplateService {
 
   list(branchId: number): Observable<ApiResponse<SmsTemplatesIndexData>> {
     return this.api.get<SmsTemplatesIndexData>(`/branches/${branchId}/sms-templates`);
+  }
+
+  /** All templates for accessible branches in one request (replaces N× per-branch list calls). */
+  listAll(params?: { branch_id?: number }): Observable<ApiResponse<SmsTemplatesIndexData>> {
+    return this.api.get<SmsTemplatesIndexData>('/branches/sms-templates', params);
   }
 
   recipientOptions(

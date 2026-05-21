@@ -4,7 +4,8 @@
     <p class="sms-tab-empty__text">No branches available for your account.</p>
   </div>
 
-  <ng-container *ngIf="branchListReady && branches.length > 0 && selectedBranchId !== null">
+  <ng-container
+    *ngIf="branchListReady && branches.length > 0 && (canViewAllBranches || selectedBranchId !== null)">
     <app-data-table
       #queueTable
       [data]="queueRows"

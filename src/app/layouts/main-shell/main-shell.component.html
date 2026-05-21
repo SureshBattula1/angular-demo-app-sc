@@ -76,8 +76,8 @@
       <mat-nav-list>
         <!-- Dynamic Menu Items -->
         <ng-container *ngFor="let item of menuItems">
-          <a mat-list-item 
-             *hasPermission="item.permission; hasPermissionMode: item.permissionMode || 'all'"
+          <a mat-list-item
+             *ngIf="item.public"
              [routerLink]="item.route"
              routerLinkActive="active"
              [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
@@ -88,6 +88,20 @@
             <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
             <span matListItemTitle [class.hidden]="isSidebarCollapsed">{{ item.label }}</span>
           </a>
+          <ng-container *ngIf="!item.public">
+            <a mat-list-item
+               *hasPermission="item.permission!; hasPermissionMode: item.permissionMode || 'all'"
+               [routerLink]="item.route"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+               (click)="onMenuItemClick()"
+               [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? (item.tooltip || item.label) : null"
+               [matTooltipPosition]="'right'"
+               [matTooltipDisabled]="isMobileOrTablet()">
+              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+              <span matListItemTitle [class.hidden]="isSidebarCollapsed">{{ item.label }}</span>
+            </a>
+          </ng-container>
         </ng-container>
       </mat-nav-list>
     </mat-sidenav>

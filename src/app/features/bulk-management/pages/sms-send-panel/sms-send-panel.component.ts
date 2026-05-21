@@ -154,7 +154,7 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
   }
 
   canEdit(): boolean {
-    return this.permission.hasPermission('bulk_management.edit');
+    return true;
   }
 
   parseBranchId(v: number | string | null | undefined): number | null {

@@ -4,7 +4,7 @@ import { AcademicYearContextService } from '../services/academic-year-context.se
 
 export const academicYearInterceptor: HttpInterceptorFn = (req, next) => {
   const context = inject(AcademicYearContextService);
-  const yearId = context.selectedYearId;
+  const yearId = context.effectiveYearId();
 
   if (yearId != null) {
     const cloned = req.clone({

@@ -49,6 +49,15 @@ export class AcademicYearContextService {
     return y?.id ?? null;
   }
 
+  /**
+   * Same academic year as the top toolbar: in-memory selection, or localStorage if the model
+   * is not hydrated yet. Use this for API query params and interceptors so requests match the
+   * toolbar before async `getById` completes.
+   */
+  effectiveYearId(): number | null {
+    return this.selectedYearId ?? this.getStoredId();
+  }
+
   /** Snapshot of selected year. */
   get selectedYear(): AcademicYear | null {
     return this.currentYear$.value;

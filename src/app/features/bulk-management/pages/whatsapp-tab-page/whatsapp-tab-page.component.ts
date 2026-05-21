@@ -116,8 +116,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
     defaultPageSize: 15,
     selectable: false,
     primaryButtonLabel: 'Send WhatsApp',
-    primaryButtonIcon: 'send',
-    addButtonPermission: 'bulk_management.edit'
+    primaryButtonIcon: 'send'
   };
 
   /** Built when branches load; includes Branch in the advanced search drawer (replacing the old toolbar). */
@@ -265,7 +264,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
   }
 
   get canResend(): boolean {
-    return this.permission.hasPermission('bulk_management.edit');
+    return true;
   }
 
   /** Apply branch list and load queue log (shared by shell hydration and API). */
@@ -275,7 +274,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
     this.syncQueueTableColumns();
     const fromInput = this.normalizeBranchId(this.branchId);
     this.applyWaQueryParams(this.route.snapshot.queryParams as Record<string, string | undefined>);
-    if (this.selectedBranchId === null && fromInput !== null) {
+    if (this.selectedBranchId === null && fromInput !== null && !this.canViewAllBranches) {
       this.selectedBranchId = fromInput;
     }
     if (!this.canViewAllBranches && this.selectedBranchId === null && branchList.length > 0) {
@@ -546,7 +545,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
           sort_by: this.queueSortField,
           sort_direction: this.queueSortDirection
         },
-        this.academicYearContext.selectedYearId
+        this.academicYearContext.effectiveYearId()
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

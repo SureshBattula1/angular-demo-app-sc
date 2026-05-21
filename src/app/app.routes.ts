@@ -44,9 +44,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/bulk-management/pages/bulk-management-shell/bulk-management-shell.component').then(
             m => m.BulkManagementShellComponent
-          ),
-        canActivate: [permissionGuard],
-        data: { permissions: 'bulk_management.view' }
+          )
       },
       {
         path: 'sections',
