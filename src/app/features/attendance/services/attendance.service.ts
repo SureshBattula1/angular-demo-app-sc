@@ -83,6 +83,42 @@ export class AttendanceService {
     );
   }
 
+  getStudentAttendanceOverview(studentId: number): Observable<ApiResponse<{
+    current_year: {
+      percentage: number;
+      present: number;
+      absent: number;
+      total_days: number;
+      academic_year_id?: number | null;
+      academic_year_name?: string | null;
+    };
+    by_month: Array<{
+      month: string;
+      month_label: string;
+      absent: number;
+      present: number;
+      total_days: number;
+    }>;
+  }>> {
+    return this.http.get<ApiResponse<{
+      current_year: {
+        percentage: number;
+        present: number;
+        absent: number;
+        total_days: number;
+        academic_year_id?: number | null;
+        academic_year_name?: string | null;
+      };
+      by_month: Array<{
+        month: string;
+        month_label: string;
+        absent: number;
+        present: number;
+        total_days: number;
+      }>;
+    }>>(`${this.apiUrl}/student/${studentId}/overview`);
+  }
+
   /**
    * Get student attendance history
    */

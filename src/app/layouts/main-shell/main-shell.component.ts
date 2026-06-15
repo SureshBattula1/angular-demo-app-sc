@@ -148,7 +148,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
       this.academicYearContext.selectedYear$.subscribe(y => {
         this.selectedAcademicYearId = y?.id ?? null;
         this.selectedAcademicYearName = y?.name ?? '';
-        this.isPastAcademicYear = !!(y?.end_date && new Date(y.end_date) < new Date());
+        this.isPastAcademicYear = this.isAcademicYearPast(y);
         this.cdr.detectChanges();
       });
       this.academicYearContext.getActiveYears().subscribe(res => {
@@ -166,7 +166,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
       this.academicYearContext.setSelected(year);
       this.selectedAcademicYearId = yearId;
       this.selectedAcademicYearName = year.name;
-      this.isPastAcademicYear = !!(year.end_date && new Date(year.end_date) < new Date());
+      this.isPastAcademicYear = this.isAcademicYearPast(year);
       this.cdr.detectChanges();
       this.errorHandler.showSuccess(`Academic year set to ${year.name}`);
       const existingAdditional = (this.userPreferenceService.preferences()?.additional_settings as Record<string, unknown>) || {};
@@ -176,6 +176,19 @@ export class MainShellComponent implements OnInit, OnDestroy {
         error: () => { /* preference save failed; year still updated in context */ }
       });
     }
+  }
+
+  /** Past = ended and not the designated current working year (matches backend AcademicYear::isPast). */
+  private isAcademicYearPast(year: AcademicYear | null | undefined): boolean {
+    if (!year?.end_date) {
+      return false;
+    }
+    if (year.is_current) {
+      return false;
+    }
+    const end = new Date(year.end_date);
+    end.setHours(23, 59, 59, 999);
+    return end < new Date();
   }
 
   /**
