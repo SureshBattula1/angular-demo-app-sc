@@ -29,6 +29,92 @@
     overflow: hidden;
   }
   
+  .academic-overview {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+    margin-left: auto;
+
+    &.loading {
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      min-height: 72px;
+    }
+
+    .overview-ring-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-width: 64px;
+
+      &.clickable {
+        cursor: pointer;
+        border-radius: var(--radius-md);
+        padding: 4px;
+        margin: -4px;
+        transition: background var(--transition-fast);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.12);
+        }
+      }
+    }
+
+    .overview-ring {
+      position: relative;
+      width: 56px;
+      height: 56px;
+
+      .progress-ring-circle-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.25);
+        stroke-width: 5;
+      }
+
+      .progress-ring-circle {
+        fill: none;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-dasharray: 138.23;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+        transition: stroke-dashoffset 0.4s ease, stroke 0.3s ease;
+      }
+
+      .ring-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--white);
+      }
+    }
+
+    .ring-label {
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.95;
+    }
+
+    .ring-sublabel {
+      font-size: 9px;
+      opacity: 0.8;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   .view-info {
     flex: 1;
     min-width: 0;
@@ -178,6 +264,79 @@
   }
 }
 
+// Breakdown menus (Overall marks / Attendance months)
+::ng-deep .years-breakdown-menu,
+::ng-deep .months-breakdown-menu {
+  min-width: 220px;
+  max-width: 280px;
+
+  .years-menu-title {
+    opacity: 1 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-height: 40px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--primary-color);
+    }
+  }
+
+  .years-menu-subtitle {
+    opacity: 0.85 !important;
+    font-size: 11px;
+    min-height: 28px !important;
+    line-height: 1.2;
+    color: var(--text-secondary);
+  }
+
+  .years-menu-empty {
+    opacity: 0.7 !important;
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  .years-menu-row {
+    opacity: 1 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 16px;
+    min-height: 36px;
+    padding: 0 16px !important;
+
+    .year-name {
+      font-size: 13px;
+      color: var(--text-primary);
+      flex: 1;
+      text-align: left;
+    }
+
+    .year-pct {
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+  }
+
+  .years-menu-footer {
+    opacity: 1 !important;
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-height: 32px;
+
+    strong {
+      color: var(--primary-color);
+    }
+  }
+}
+
 .avatar-icon {
   display: flex !important;
   align-items: center;
@@ -193,14 +352,24 @@
   .view-header {
     gap: 20px;
     padding: 24px;
+    flex-wrap: wrap;
     
     .view-avatar {
       width: 70px;
       height: 70px;
       font-size: 28px;
     }
+
+    .academic-overview {
+      width: 100%;
+      justify-content: center;
+      margin-left: 0;
+      order: 3;
+    }
     
     .view-info {
+      flex: 1 1 calc(100% - 90px);
+      
       .view-name {
         font-size: 24px;
       }
@@ -243,6 +412,12 @@
       width: 64px;
       height: 64px;
       font-size: 26px;
+    }
+
+    .academic-overview {
+      margin-left: 0;
+      justify-content: center;
+      width: 100%;
     }
     
     .view-info {
