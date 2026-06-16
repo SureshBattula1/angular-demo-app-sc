@@ -105,7 +105,7 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
     return v.name;
   };
 
-  sendTemplateId: number | '' = '';
+  sendTemplateId: number | string = '';
   sendUseCustomBody = false;
   sendCustomBody = '';
 
@@ -522,10 +522,11 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
     if (this.sendUseCustomBody) {
       return this.sendCustomBody.trim();
     }
-    if (this.sendTemplateId === '') {
+    if (!this.sendTemplateId) {
       return '';
     }
-    const t = this.templates.find(x => x.id === this.sendTemplateId);
+    // Handle both string IDs (e.g., "aokB68MWl4Xq") and numeric IDs
+    const t = this.templates.find(x => String(x.id) === String(this.sendTemplateId));
     return t ? t.body.trim() : '';
   }
 
@@ -652,13 +653,24 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
 
   private buildBulkSendPayload(): Parameters<SmsTemplateService['bulkSend']>[1] {
     const body = this.messageBodyForSend();
-    const payload: Parameters<SmsTemplateService['bulkSend']>[1] = {
+    const payload: any = {
       audience: this.audience
     };
+    
     if (this.sendUseCustomBody) {
       payload.body = body;
-    } else if (this.sendTemplateId !== '') {
-      payload.template_id = Number(this.sendTemplateId);
+    } else if (this.sendTemplateId) {
+      // Handle both string IDs (UUID) and numeric IDs
+      let templateIdValue: string | number = this.sendTemplateId;
+      
+      // Try to parse as number first
+      const asNumber = Number(this.sendTemplateId);
+      if (!isNaN(asNumber) && asNumber > 0) {
+        templateIdValue = asNumber;
+      }
+      // Otherwise keep as string (for UUID-style IDs)
+      
+      payload.template_id = templateIdValue;
     } else {
       payload.body = body;
     }
@@ -679,7 +691,7 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
       }
     }
 
-    return payload;
+    return payload as Parameters<SmsTemplateService['bulkSend']>[1];
   }
 
   sendBulk(): void {

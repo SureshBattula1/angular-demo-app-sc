@@ -146,10 +146,10 @@ export class SmsTemplateService {
     branchId: string | number,
     payload: {
       body?: string;
-      template_id?: number;
+      template_id?: string | number;
       recipient_type: 'student' | 'teacher';
-      student_id?: number;
-      teacher_id?: number;
+      student_id?: string | number;
+      teacher_id?: string | number;
     }
   ): Observable<ApiResponse<SmsPreviewData>> {
     return this.api.post<SmsPreviewData>(`/branches/${branchId}/sms-templates/preview`, payload);
@@ -160,19 +160,19 @@ export class SmsTemplateService {
     payload:
       | {
           audience: SmsBulkAudience;
-          template_id?: number;
+          template_id?: string | number;
           body?: string;
           teacher_mode?: 'all' | 'selected';
-          teacher_ids?: number[];
+          teacher_ids?: (string | number)[];
           student_mode?: 'all' | 'filtered' | 'selected';
           student_filters?: { grade: string; section: string | null }[];
-          student_ids?: number[];
+          student_ids?: (string | number)[];
         }
       | {
           recipient_type: 'students' | 'teachers';
-          template_id?: number;
+          template_id?: string | number;
           body?: string;
-          recipient_ids?: number[];
+          recipient_ids?: (string | number)[];
           group_id?: number;
         },
     channel: 'sms' | 'whatsapp' = 'sms'
