@@ -44,7 +44,7 @@ import { StudentFeesComponent } from './components/student-fees/student-fees.com
 export class StudentViewComponent implements OnInit {
   student?: Student;
   isLoading = true;
-  studentId!: number;
+  studentId!: string;
   showProfilePicture = false;
   profilePictureUrl = '';
   
@@ -126,7 +126,7 @@ export class StudentViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.studentId = +params['id'];
+        this.studentId = params['id'];
         this.loadStudent();
       }
     });

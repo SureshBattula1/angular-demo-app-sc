@@ -16,7 +16,7 @@ import { MatDialog } from '@angular/material/dialog';
 export class ExamTermViewComponent implements OnInit {
   term: any = null;
   loading = false;
-  termId?: number;
+  termId?: string;
   returnTab?: string;
 
   constructor(
@@ -30,7 +30,7 @@ export class ExamTermViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.termId = +params['id'];
+        this.termId = params['id'];
         this.loadTerm();
       }
     });

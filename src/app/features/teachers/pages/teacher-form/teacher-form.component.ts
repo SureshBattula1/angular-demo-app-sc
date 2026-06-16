@@ -26,7 +26,7 @@ export class TeacherFormComponent implements OnInit {
   isEditMode = false;
   isLoading = false;
   isSubmitted = false;  // Track if form has been submitted
-  teacherId?: number;
+  teacherId?: string;
   currentTeacher?: Teacher;
   
   branches: any[] = [];
@@ -36,7 +36,7 @@ export class TeacherFormComponent implements OnInit {
   sameAsPermanentAddress = false;
   
   // For attachments - will be set after teacher is created/updated
-  attachmentModuleId: number | null = null;
+  attachmentModuleId: string | number | null = null;
   
   // Form sections visibility
   showPayrollDetails = false;
@@ -187,9 +187,9 @@ export class TeacherFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.teacherId = +params['id'];
+        this.teacherId = params['id'];
         this.isEditMode = true;
-        this.loadTeacher(this.teacherId);
+        this.loadTeacher(this.teacherId!);
       }
     });
   }
@@ -385,7 +385,7 @@ export class TeacherFormComponent implements OnInit {
     });
   }
 
-  private loadTeacher(id: number): void {
+  private loadTeacher(id: string): void {
     this.isLoading = true;
     
     this.teacherService.getTeacher(id).subscribe({

@@ -19,7 +19,7 @@ export class SchoolViewComponent implements OnInit {
   school?: School;
   stats?: any;
   isLoading = true;
-  schoolId!: number;
+  schoolId!: string;
 
   constructor(
     private schoolService: CompanySchoolService,
@@ -32,7 +32,7 @@ export class SchoolViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.schoolId = +params['id'];
+        this.schoolId = params['id'];
         this.loadSchool();
         this.loadStats();
       }

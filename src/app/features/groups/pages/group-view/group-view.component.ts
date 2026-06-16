@@ -16,8 +16,8 @@ import { StudentGroup, GroupMember } from '../../../../core/models/class-section
 export class GroupViewComponent implements OnInit {
   group?: StudentGroup;
   isLoading = true;
-  groupId!: number;
-  removingMemberId: number | null = null;
+  groupId!: string;
+  removingMemberId: string | number | null = null;
 
   constructor(
     private groupService: GroupService,
@@ -29,7 +29,7 @@ export class GroupViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.groupId = +params['id'];
+        this.groupId = params['id'];
         this.loadGroup();
       }
     });

@@ -14,7 +14,7 @@ export class WhatsAppBulkLogService {
   constructor(private api: ApiService) {}
 
   listLogs(
-    branchId: number | null | undefined,
+    branchId: string | number | null | undefined,
     page = 1,
     perPage = 15,
     filters?: {
@@ -24,11 +24,11 @@ export class WhatsAppBulkLogService {
       sort_by?: string;
       sort_direction?: 'asc' | 'desc';
     },
-    academicYearId?: number | null
+    academicYearId?: string | number | null
   ): Observable<ApiResponse<LaravelPaginator<SmsBulkQueueRow>>> {
     const params: Record<string, unknown> = { page, per_page: perPage };
     if (branchId !== null && branchId !== undefined) {
-      params['branch_id'] = Number(branchId);
+      params['branch_id'] = branchId;
     }
     if (academicYearId != null) {
       params['academic_year_id'] = academicYearId;
@@ -52,7 +52,7 @@ export class WhatsAppBulkLogService {
   }
 
   getDetail(
-    branchId: number,
+    branchId: string | number,
     queueId: number,
     page = 1,
     perPage = 50,
@@ -69,7 +69,7 @@ export class WhatsAppBulkLogService {
   }
 
   resend(
-    branchId: number,
+    branchId: string | number,
     queueId: number,
     items?: { recipient_type: string; recipient_id: number }[]
   ): Observable<ApiResponse<{ recipient_count: number; chunks_dispatched: number }>> {

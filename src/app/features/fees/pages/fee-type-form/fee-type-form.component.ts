@@ -26,7 +26,7 @@ export class FeeTypeFormComponent implements OnInit {
   
   branches: any[] = [];
   academicYears: AcademicYear[] = [];
-  private currentAcademicYearId: number | null = null;
+  private currentAcademicYearId: string | number | null = null;
   
   constructor(
     private fb: FormBuilder,

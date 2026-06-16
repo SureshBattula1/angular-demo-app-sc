@@ -37,7 +37,7 @@ export class SmsGatewayConfigService {
   constructor(private api: ApiService) {}
 
   getForBranch(
-    branchId: number,
+    branchId: string | number,
     channel: GatewayConfigChannel = 'sms'
   ): Observable<ApiResponse<SmsGatewayIndexData>> {
     return this.api.get<SmsGatewayIndexData>(`/branches/${branchId}/sms-gateway-config`, {
@@ -46,7 +46,7 @@ export class SmsGatewayConfigService {
   }
 
   save(
-    branchId: number,
+    branchId: string | number,
     provider: SmsProvider,
     payload: Record<string, string | undefined>,
     channel: GatewayConfigChannel = 'sms'
@@ -60,7 +60,7 @@ export class SmsGatewayConfigService {
 
   /** Send a test SMS or WhatsApp using saved credentials (backend requires Active status). */
   sendTest(
-    branchId: number,
+    branchId: string | number,
     provider: SmsProvider,
     to: string,
     message: string,

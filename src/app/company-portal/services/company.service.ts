@@ -31,7 +31,7 @@ export class CompanyService {
   /**
    * Get company by ID
    */
-  getCompany(id: number): Observable<ApiResponse<Company>> {
+  getCompany(id: string | number): Observable<ApiResponse<Company>> {
     return this.companyApiService.get<Company>(`/companies/${id}`);
   }
 
@@ -45,14 +45,14 @@ export class CompanyService {
   /**
    * Update company
    */
-  updateCompany(id: number, data: Partial<Company>): Observable<ApiResponse<Company>> {
+  updateCompany(id: string | number, data: Partial<Company>): Observable<ApiResponse<Company>> {
     return this.companyApiService.put<Company>(`/companies/${id}`, data);
   }
 
   /**
    * Delete company
    */
-  deleteCompany(id: number): Observable<ApiResponse<void>> {
+  deleteCompany(id: string | number): Observable<ApiResponse<void>> {
     return this.companyApiService.delete<void>(`/companies/${id}`);
   }
 }

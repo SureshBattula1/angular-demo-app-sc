@@ -14,7 +14,7 @@ import { ErrorHandlerService } from '../../../../../core/services/error-handler.
 })
 export class AcademicYearViewComponent implements OnInit {
   academicYear: AcademicYear | null = null;
-  id: number | null = null;
+  id: string | null = null;
   loading = false;
 
   constructor(
@@ -27,7 +27,7 @@ export class AcademicYearViewComponent implements OnInit {
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
-      this.id = +idParam;
+      this.id = idParam;
       this.loadAcademicYear();
     }
   }

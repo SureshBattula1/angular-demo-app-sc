@@ -17,7 +17,7 @@ import { Subject } from '../../../../core/models/subject.model';
 export class SubjectViewComponent implements OnInit {
   subject?: Subject;
   isLoading = true;
-  subjectId!: number;
+  subjectId!: string;
   returnTab?: string;
 
   // Permission checks
@@ -38,7 +38,7 @@ export class SubjectViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.subjectId = +params['id'];
+        this.subjectId = params['id'];
         this.loadSubject();
       }
     });

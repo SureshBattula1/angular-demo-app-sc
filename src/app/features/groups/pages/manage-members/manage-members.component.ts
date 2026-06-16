@@ -27,9 +27,9 @@ export class ManageMembersComponent implements OnInit {
   loadingGrades = false;
   loadingSections = false;
   adding = false;
-  removingId: number | null = null;
-  groupId!: number;
-  selectedStudentId: number | null = null;
+  removingId: string | number | null = null;
+  groupId!: string;
+  selectedStudentId: string | number | null = null;
   studentSearchText = '';
   private selectedStudentLabel: string | null = null;
   selectedGrade: string | null = null;
@@ -53,7 +53,7 @@ export class ManageMembersComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.groupId = +params['id'];
+        this.groupId = params['id'];
         this.loadGroup();
       }
     });
@@ -122,7 +122,7 @@ export class ManageMembersComponent implements OnInit {
     });
   }
 
-  private loadGradesForBranch(branchId: number): void {
+  private loadGradesForBranch(branchId: string | number): void {
     this.loadingGrades = true;
     this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
@@ -140,7 +140,7 @@ export class ManageMembersComponent implements OnInit {
     });
   }
 
-  private loadSectionsForGrade(branchId: number, grade: string): void {
+  private loadSectionsForGrade(branchId: string | number, grade: string): void {
     this.loadingSections = true;
     this.sectionService.getSections({
       branch_id: branchId,

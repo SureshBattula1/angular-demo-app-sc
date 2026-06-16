@@ -43,7 +43,7 @@ export class RoleService {
   /**
    * Get single role by ID
    */
-  getRole(id: number): Observable<ApiResponse<Role>> {
+  getRole(id: string | number): Observable<ApiResponse<Role>> {
     return this.http.get<ApiResponse<Role>>(`${this.apiUrl}/${id}`);
   }
 
@@ -57,21 +57,21 @@ export class RoleService {
   /**
    * Update existing role
    */
-  updateRole(id: number, role: Partial<Role>): Observable<ApiResponse<Role>> {
+  updateRole(id: string | number, role: Partial<Role>): Observable<ApiResponse<Role>> {
     return this.http.put<ApiResponse<Role>>(`${this.apiUrl}/${id}`, role);
   }
 
   /**
    * Delete role
    */
-  deleteRole(id: number): Observable<ApiResponse<void>> {
+  deleteRole(id: string | number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`);
   }
 
   /**
    * Assign permissions to role
    */
-  assignPermissions(roleId: number, permissionIds: number[]): Observable<ApiResponse<Role>> {
+  assignPermissions(roleId: string | number, permissionIds: (string | number)[]): Observable<ApiResponse<Role>> {
     return this.http.post<ApiResponse<Role>>(`${this.apiUrl}/${roleId}/permissions`, {
       permissions: permissionIds
     });
@@ -80,7 +80,7 @@ export class RoleService {
   /**
    * Get role permissions
    */
-  getRolePermissions(roleId: number): Observable<ApiResponse<Permission[]>> {
+  getRolePermissions(roleId: string | number): Observable<ApiResponse<Permission[]>> {
     return this.http.get<ApiResponse<Permission[]>>(`${this.apiUrl}/${roleId}/permissions`);
   }
 }

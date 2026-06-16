@@ -88,7 +88,7 @@ export class StudentService {
    * @param id - Student ID
    * @returns Observable of Student
    */
-  getStudentById(id: number): Observable<Student | null> {
+  getStudentById(id: string | number): Observable<Student | null> {
     return this.studentCrudService.getStudent(id).pipe(
       map((response: ApiResponse<Student>) => {
         if (response.success && response.data) {
@@ -118,7 +118,7 @@ export class StudentService {
    * @param student - Updated student data
    * @returns Observable of Student
    */
-  updateStudent(id: number, student: Partial<Student>): Observable<Student> {
+  updateStudent(id: string | number, student: Partial<Student>): Observable<Student> {
     return this.studentCrudService.updateStudent(id, student as any).pipe(
       map((response: ApiResponse<Student>) => {
         return response.data!;
@@ -131,7 +131,7 @@ export class StudentService {
    * @param id - Student ID
    * @returns Observable of boolean
    */
-  deleteStudent(id: number): Observable<boolean> {
+  deleteStudent(id: string | number): Observable<boolean> {
     return this.studentCrudService.deleteStudent(id).pipe(
       map((response: ApiResponse) => {
         return response.success;

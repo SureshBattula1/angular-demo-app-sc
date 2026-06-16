@@ -31,7 +31,7 @@ export class SmsTemplateDialogComponent implements OnInit {
   private errorHandler = inject(ErrorHandlerService);
 
   saving = false;
-  draftBranchId: number | null = null;
+  draftBranchId: string | number | null = null;
   draftName = '';
   draftBody = '';
   draftAudience: SmsTemplateAudience = 'student';

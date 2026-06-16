@@ -1,9 +1,9 @@
 export interface School {
-  id: number;
-  company_id: number;
+  id: string;
+  company_id: number | string;
   name: string;
   code: string;
-  main_branch_id?: number;
+  main_branch_id?: number | string;
   status: 'Active' | 'Inactive' | 'Suspended' | 'UnderConstruction';
   settings?: Record<string, unknown>;
   created_at?: string;
@@ -12,12 +12,12 @@ export interface School {
   
   // Relationships
   company?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   main_branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
     address?: string;
@@ -30,12 +30,12 @@ export interface School {
     website?: string;
   };
   branches?: Array<{
-    id: number;
+    id: string;
     name: string;
     code: string;
   }>;
   admin_user?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -51,7 +51,7 @@ export interface School {
 }
 
 export interface Company {
-  id: number;
+  id: string;
   name: string;
   code: string;
   email: string;

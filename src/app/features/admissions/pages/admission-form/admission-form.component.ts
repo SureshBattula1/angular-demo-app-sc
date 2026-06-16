@@ -26,7 +26,7 @@ export class AdmissionFormComponent implements OnInit {
   admissionForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  applicationId?: number;
+  applicationId?: string;
   currentApplication?: AdmissionApplication;
   
   branches: any[] = [];
@@ -104,9 +104,9 @@ export class AdmissionFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.applicationId = +params['id'];
+        this.applicationId = params['id'];
         this.isEditMode = true;
-        this.loadApplication(this.applicationId);
+        this.loadApplication(this.applicationId!);
       }
     });
   }
@@ -233,7 +233,7 @@ export class AdmissionFormComponent implements OnInit {
     }
   }
 
-  private loadApplication(id: number): void {
+  private loadApplication(id: string): void {
     this.isLoading = true;
     this.isLoadingApplication = true;
 

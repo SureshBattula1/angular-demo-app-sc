@@ -21,7 +21,7 @@ export class GroupFormComponent implements OnInit {
   groupForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  groupId?: number;
+  groupId?: string;
   currentGroup?: StudentGroup;
   
   groupTypes = [
@@ -51,9 +51,9 @@ export class GroupFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.groupId = +params['id'];
+        this.groupId = params['id'];
         this.isEditMode = true;
-        this.loadGroup(this.groupId);
+        this.loadGroup(this.groupId!);
       }
     });
   }
@@ -84,7 +84,7 @@ export class GroupFormComponent implements OnInit {
     });
   }
 
-  private loadGroup(id: number): void {
+  private loadGroup(id: string | number): void {
     this.isLoading = true;
 
     this.groupService.getGroup(id).subscribe({

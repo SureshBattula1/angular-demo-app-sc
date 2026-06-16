@@ -84,7 +84,7 @@ export interface SmsStudentSearchItem {
 export class SmsTemplateService {
   constructor(private api: ApiService) {}
 
-  list(branchId: number): Observable<ApiResponse<SmsTemplatesIndexData>> {
+  list(branchId: string | number): Observable<ApiResponse<SmsTemplatesIndexData>> {
     return this.api.get<SmsTemplatesIndexData>(`/branches/${branchId}/sms-templates`);
   }
 
@@ -94,7 +94,7 @@ export class SmsTemplateService {
   }
 
   recipientOptions(
-    branchId: number,
+    branchId: string | number,
     channel: 'sms' | 'whatsapp' = 'sms'
   ): Observable<ApiResponse<SmsRecipientOptionsData>> {
     const seg = channel === 'whatsapp' ? 'whatsapp' : 'sms';
@@ -102,7 +102,7 @@ export class SmsTemplateService {
   }
 
   searchStudents(
-    branchId: number,
+    branchId: string | number,
     q: string,
     channel: 'sms' | 'whatsapp' = 'sms'
   ): Observable<ApiResponse<{ students: SmsStudentSearchItem[] }>> {
@@ -114,7 +114,7 @@ export class SmsTemplateService {
   }
 
   create(
-    branchId: number,
+    branchId: string | number,
     payload: {
       name: string;
       body: string;
@@ -126,7 +126,7 @@ export class SmsTemplateService {
   }
 
   update(
-    branchId: number,
+    branchId: string | number,
     templateId: number,
     payload: Partial<{
       name: string;
@@ -138,12 +138,12 @@ export class SmsTemplateService {
     return this.api.put(`/branches/${branchId}/sms-templates/${templateId}`, payload);
   }
 
-  delete(branchId: number, templateId: number): Observable<ApiResponse<void>> {
+  delete(branchId: string | number, templateId: number): Observable<ApiResponse<void>> {
     return this.api.delete(`/branches/${branchId}/sms-templates/${templateId}`);
   }
 
   preview(
-    branchId: number,
+    branchId: string | number,
     payload: {
       body?: string;
       template_id?: number;
@@ -156,7 +156,7 @@ export class SmsTemplateService {
   }
 
   bulkSend(
-    branchId: number,
+    branchId: string | number,
     payload:
       | {
           audience: SmsBulkAudience;
@@ -183,7 +183,7 @@ export class SmsTemplateService {
 
   /** Same body as bulk send — returns message + one sample render (no queue, no DB write). */
   previewBulkSend(
-    branchId: number,
+    branchId: string | number,
     payload: Parameters<SmsTemplateService['bulkSend']>[1],
     channel: 'sms' | 'whatsapp' = 'sms'
   ): Observable<ApiResponse<SmsBulkPreviewData>> {

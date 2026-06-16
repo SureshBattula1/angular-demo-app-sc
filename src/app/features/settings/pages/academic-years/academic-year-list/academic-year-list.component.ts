@@ -145,11 +145,11 @@ export class AcademicYearListComponent implements OnInit {
     this.view(row.id);
   }
 
-  view(id: number): void {
+  view(id: string | number): void {
     this.router.navigate(['/settings/academic-years/view', id]);
   }
 
-  edit(id: number): void {
+  edit(id: string | number): void {
     this.router.navigate(['/settings/academic-years/edit', id]);
   }
 

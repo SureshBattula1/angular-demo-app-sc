@@ -43,7 +43,7 @@ interface GroupedPermissions {
 export class UserFormComponent implements OnInit {
   userForm: FormGroup;
   isEditMode = false;
-  userId: number | null = null;
+  userId: string | null = null;
   isLoading = false;
   isSubmitting = false;
   hidePassword = true;
@@ -83,7 +83,7 @@ export class UserFormComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
-      this.userId = parseInt(id, 10);
+      this.userId = id;
     } else {
       // Password required for create
       this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);

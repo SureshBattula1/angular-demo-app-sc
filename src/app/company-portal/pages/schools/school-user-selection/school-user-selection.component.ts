@@ -13,7 +13,7 @@ import { ApiService } from '../../../../core/services/api.service';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 export interface SchoolUserSelectionData {
-  schoolId: number;
+  schoolId: string | number;
   schoolName: string;
 }
 

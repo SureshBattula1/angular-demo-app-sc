@@ -1,12 +1,12 @@
 export interface User {
-  id: number;
+  id: string;
   first_name: string;
   last_name: string;
   full_name?: string;
   email: string;
   role?: string;
-  role_id?: number;
-  branch_id?: number;
+  role_id?: number | string;
+  branch_id?: number | string;
   branch?: any;
   permissions?: string[];
   is_active?: boolean;
@@ -22,8 +22,8 @@ export interface CreateUserRequest {
   username?: string;
   password: string;
   password_confirmation: string;
-  role_id: number;
-  branch_id?: number;
+  role_id: number | string;
+  branch_id?: number | string;
   is_active?: boolean;
 }
 
@@ -34,8 +34,8 @@ export interface UpdateUserRequest {
   username?: string;
   password?: string;
   password_confirmation?: string;
-  role_id?: number;
-  branch_id?: number;
+  role_id?: number | string;
+  branch_id?: number | string;
   is_active?: boolean;
 }
 

@@ -25,7 +25,7 @@ interface GroupedPermissions {
 })
 export class UserViewComponent implements OnInit {
   user: User | null = null;
-  userId: number | null = null;
+  userId: string | null = null;
   isLoading = false;
   userRole: Role | null = null;
   permissionsByModule: Record<string, Permission[]> = {};
@@ -44,7 +44,7 @@ export class UserViewComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.userId = parseInt(id, 10);
+      this.userId = id;
       this.loadUser();
     }
   }
@@ -121,7 +121,7 @@ export class UserViewComponent implements OnInit {
     this.groupedUserPermissions = Array.from(moduleMap.values());
   }
 
-  loadUserRole(roleId: number): void {
+  loadUserRole(roleId: number | string): void {
     this.roleService.getRole(roleId).subscribe({
       next: (response) => {
         if (response.success) {

@@ -19,7 +19,7 @@ export class SchoolFormComponent implements OnInit {
   schoolForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  schoolId?: number;
+  schoolId?: string;
   currentSchool?: School;
 
   companies: Company[] = [];
@@ -56,14 +56,14 @@ export class SchoolFormComponent implements OnInit {
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.schoolId = +params['id'];
+        this.schoolId = params['id'];
         this.isEditMode = this.router.url.includes('/edit');
         if (this.isEditMode) {
           // In edit mode, make password optional (user can leave blank to keep current password)
           this.schoolForm.get('admin_user.password')?.clearValidators();
           this.schoolForm.get('admin_user.password')?.setValidators([Validators.minLength(8)]);
           this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
-          this.loadSchool(this.schoolId);
+          this.loadSchool(this.schoolId!);
         } else {
           // In create mode, password is required
           this.schoolForm.get('admin_user.password')?.setValidators([Validators.required, Validators.minLength(8)]);
@@ -137,7 +137,7 @@ export class SchoolFormComponent implements OnInit {
     });
   }
 
-  private loadSchool(id: number): void {
+  private loadSchool(id: string): void {
     this.isLoading = true;
 
     this.schoolService.getSchool(id).subscribe({

@@ -10,7 +10,7 @@ export interface ImportModule {
 }
 
 export interface ImportContext {
-  branch_id: number;
+  branch_id: number | string;
   grade?: string;  // Required for students, not for teachers
   section?: string;  // Optional
   academic_year?: string;  // Required for students, not for teachers
@@ -39,7 +39,7 @@ export interface ValidationResult {
 }
 
 export interface ImportRecord {
-  id: number;
+  id: string;
   batch_id: string;
   row_number: number;
   validation_status: 'pending' | 'valid' | 'invalid';
@@ -66,11 +66,11 @@ export interface ImportPreview {
 }
 
 export interface ImportHistory {
-  id: number;
+  id: string;
   batch_id: string;
   entity_type: string;
-  uploaded_by: number;
-  branch_id: number | null;
+  uploaded_by: number | string;
+  branch_id: number | string | null;
   file_name: string;
   file_size: number;
   import_context: ImportContext | null;
@@ -88,13 +88,13 @@ export interface ImportHistory {
   created_at: string;
   updated_at: string;
   uploader?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
   };
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };

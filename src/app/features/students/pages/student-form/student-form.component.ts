@@ -31,7 +31,7 @@ export class StudentFormComponent implements OnInit {
   studentForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  studentId?: number;
+  studentId?: string;
   currentStudent?: Student;
   
   branches: any[] = [];
@@ -130,9 +130,9 @@ export class StudentFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.studentId = +params['id'];
+        this.studentId = params['id'];
         this.isEditMode = true;
-        this.loadStudent(this.studentId);
+        this.loadStudent(this.studentId!);
       }
     });
   }
@@ -411,7 +411,7 @@ export class StudentFormComponent implements OnInit {
     });
   }
 
-  private loadStudent(id: number): void {
+  private loadStudent(id: string): void {
     this.isLoading = true;
     
     this.studentCrudService.getStudent(id).subscribe({

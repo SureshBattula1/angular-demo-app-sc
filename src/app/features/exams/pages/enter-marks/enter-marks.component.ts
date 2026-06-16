@@ -29,7 +29,7 @@ interface StudentMark {
 export class EnterMarksComponent implements OnInit {
   loading = false;
   saving = false;
-  scheduleId?: number;
+  scheduleId?: string;
   schedule: any = null;
   students: StudentMark[] = [];
   marksForm!: FormGroup;
@@ -55,7 +55,7 @@ export class EnterMarksComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      this.scheduleId = +params['schedule_id'];
+      this.scheduleId = params['schedule_id'];
       this.returnTab = params['returnTab'] || 'schedules';
       if (this.scheduleId) {
         this.loadScheduleData();

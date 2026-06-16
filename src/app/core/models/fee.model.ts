@@ -1,5 +1,5 @@
 export interface FeeStructure {
-  id?: string | number;
+  id?: string;
   branch_id: string | number;
   grade: string;
   fee_type: 'Tuition' | 'Library' | 'Laboratory' | 'Sports' | 'Transport' | 'Exam' | 'Other';
@@ -23,7 +23,7 @@ export interface FeeStructure {
 }
 
 export interface FeePayment {
-  id?: string | number;
+  id?: string;
   fee_structure_id: string | number;
   student_id: string | number;
   amount_paid: number;
@@ -49,7 +49,7 @@ export interface FeePayment {
   /** Section name from API (e.g. "A") */
   student_section?: string;
   past_transactions?: Array<{
-    id: string | number;
+    id: string;
     receipt_number?: string;
     payment_date: string;
     payment_method?: string;
@@ -73,7 +73,7 @@ export interface FeeFilters {
   grade?: string;
   fee_type?: string;
   academic_year?: string;
-  academic_year_id?: number;
+  academic_year_id?: number | string;
   student_id?: string;
   payment_status?: string;
   payment_method?: string;
@@ -93,7 +93,7 @@ export interface FeeStatistics {
 }
 
 export interface FeeType {
-  id?: string | number;
+  id?: string;
   name: string;
   code: string;
   description?: string;

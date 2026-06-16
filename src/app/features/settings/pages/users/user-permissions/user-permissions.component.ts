@@ -37,7 +37,7 @@ interface GroupedPermissions {
   styleUrls: ['./user-permissions.component.scss']
 })
 export class UserPermissionsComponent implements OnInit {
-  userId: number | null = null;
+  userId: string | null = null;
   userData: any = null;
   permissions: PermissionItem[] = [];
   groupedPermissions: GroupedPermissions[] = [];
@@ -57,7 +57,7 @@ export class UserPermissionsComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.userId = parseInt(id, 10);
+      this.userId = id;
       this.loadUserPermissions();
     } else {
       this.errorHandler.showError('Invalid user ID');

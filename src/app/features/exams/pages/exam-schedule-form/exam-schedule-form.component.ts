@@ -238,7 +238,7 @@ export class ExamScheduleFormComponent implements OnInit {
   scheduleForm!: FormGroup;
   isEditMode = false;
   saving = false;
-  scheduleId?: number;
+  scheduleId?: string;
   returnTab?: string;
   
   exams: any[] = [];
@@ -270,7 +270,7 @@ export class ExamScheduleFormComponent implements OnInit {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode = true;
-        this.scheduleId = +params['id'];
+        this.scheduleId = params['id'];
         this.loadSchedule();
       }
     });

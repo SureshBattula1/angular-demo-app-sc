@@ -78,7 +78,7 @@ export class SmsGatewaySettingsComponent implements OnInit, OnChanges {
   }
 
   branches: Branch[] = [];
-  branchId: number | null = null;
+  branchId: string | number | null = null;
   activeProvider: SmsProvider = 'twilio';
   loading = false;
   saving = false;
@@ -158,19 +158,19 @@ export class SmsGatewaySettingsComponent implements OnInit, OnChanges {
       return;
     }
     const id = Number(v);
-    if (isNaN(id) || id === this.branchId) {
+    if (isNaN(id) || String(id) === String(this.branchId)) {
       return;
     }
-    if (this.branches.some(b => b.id === id)) {
+    if (this.branches.some(b => String(b.id) === String(id))) {
       this.branchId = id;
       this.loadConfigs();
     }
   }
 
-  private resolveInitialBranchId(list: Branch[]): number {
+  private resolveInitialBranchId(list: Branch[]): string | number {
     if (this.useExternalBranchFilter && this.externalBranchId !== '' && this.externalBranchId != null) {
       const id = Number(this.externalBranchId);
-      if (!isNaN(id) && list.some(b => b.id === id)) {
+      if (!isNaN(id) && list.some(b => String(b.id) === String(id))) {
         return id;
       }
     }

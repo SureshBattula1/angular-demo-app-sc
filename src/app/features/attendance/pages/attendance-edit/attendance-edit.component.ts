@@ -17,7 +17,7 @@ import { StudentAttendance } from '../../../../core/models/attendance.model';
 export class AttendanceEditComponent implements OnInit {
   attendanceForm!: FormGroup;
   isLoading = false;
-  attendanceId?: number;
+  attendanceId?: string;
   attendance?: StudentAttendance;
   returnTab: 'student' | 'teacher' = 'student'; // Store the tab to return to
   
@@ -43,7 +43,7 @@ export class AttendanceEditComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.attendanceId = +params['id'];
+        this.attendanceId = params['id'];
         
         // Capture the returnTab query param
         this.route.queryParams.subscribe(queryParams => {

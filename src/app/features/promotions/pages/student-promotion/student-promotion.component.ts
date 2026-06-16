@@ -48,7 +48,7 @@ export class StudentPromotionComponent implements OnInit {
   academicYears: AcademicYear[] = [];
   
   // Filters
-  filterBranchId: number | null = null;
+  filterBranchId: string | null = null;
   filterFromGrade: string | null = null;
   
   // Promotion options
@@ -81,9 +81,9 @@ export class StudentPromotionComponent implements OnInit {
     // Get student IDs from query params if coming from list page
     this.route.queryParams.subscribe(params => {
       if (params['student_ids']) {
-        const studentIds = Array.isArray(params['student_ids']) 
-          ? params['student_ids'].map((id: string) => parseInt(id))
-          : [parseInt(params['student_ids'])];
+        const studentIds = Array.isArray(params['student_ids'])
+          ? params['student_ids']
+          : [params['student_ids']];
         // Store for later use
         this.route.snapshot.queryParams['student_ids'] = studentIds;
       }
@@ -95,7 +95,7 @@ export class StudentPromotionComponent implements OnInit {
       
       if (params['branch_id']) {
         this.promotionForm.patchValue({ branch_id: params['branch_id'] });
-        this.filterBranchId = parseInt(params['branch_id']);
+        this.filterBranchId = params['branch_id'];
       }
     });
   }
@@ -319,8 +319,8 @@ export class StudentPromotionComponent implements OnInit {
           // Auto-select students from query params if provided
           const queryStudentIds = this.route.snapshot.queryParams['student_ids'];
           if (queryStudentIds && Array.isArray(queryStudentIds)) {
-            const idsToSelect = queryStudentIds.map((id: string | number) => parseInt(id.toString()));
-            const studentsToSelect = this.fromGradeStudents.filter(s => idsToSelect.includes(s.id));
+            const idsToSelect = queryStudentIds.map((id: string | number) => id.toString());
+            const studentsToSelect = this.fromGradeStudents.filter(s => idsToSelect.includes(s.id.toString()));
             this.selectedStudents = studentsToSelect;
             this.promotionForm.patchValue({ 
               student_ids: studentsToSelect.map(s => s.id) 
@@ -534,9 +534,9 @@ export class StudentPromotionComponent implements OnInit {
     this.router.navigate(['/students']);
   }
 
-  getAcademicYearName(id: number | null | undefined): string {
+  getAcademicYearName(id: string | number | null | undefined): string {
     if (id == null) return '';
-    return this.academicYears.find(y => y.id === id)?.name ?? '';
+    return this.academicYears.find(y => String(y.id) === String(id))?.name ?? '';
   }
 
   // --- Revert tab ---

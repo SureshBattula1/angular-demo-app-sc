@@ -21,7 +21,7 @@ export class StudentCrudService {
   /**
    * Get student by ID
    */
-  getStudent(id: number): Observable<ApiResponse<Student>> {
+  getStudent(id: string | number): Observable<ApiResponse<Student>> {
     return this.apiService.get<Student>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -35,28 +35,28 @@ export class StudentCrudService {
   /**
    * Update student
    */
-  updateStudent(id: number, studentData: Partial<StudentFormData>): Observable<ApiResponse<Student>> {
+  updateStudent(id: string | number, studentData: Partial<StudentFormData>): Observable<ApiResponse<Student>> {
     return this.apiService.put<Student>(`${this.ENDPOINT}/${id}`, studentData);
   }
 
   /**
    * Delete student (soft delete - makes inactive)
    */
-  deleteStudent(id: number): Observable<ApiResponse> {
+  deleteStudent(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
   /**
    * Restore soft-deleted student (reactivate)
    */
-  restoreStudent(id: number): Observable<ApiResponse> {
+  restoreStudent(id: string | number): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/${id}/restore`, {});
   }
 
   /**
    * Upload profile picture
    */
-  uploadProfilePicture(id: number, file: File): Observable<ApiResponse<{file_path: string, file_url: string}>> {
+  uploadProfilePicture(id: string | number, file: File): Observable<ApiResponse<{file_path: string, file_url: string}>> {
     const formData = new FormData();
     formData.append('profile_picture', file);
     

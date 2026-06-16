@@ -1,7 +1,7 @@
 export interface AccountCategory {
-  id: number;
-  branch_id?: number | null;
-  academic_year_id?: number | null;
+  id: string;
+  branch_id?: number | string | null;
+  academic_year_id?: number | string | null;
   name: string;
   code: string;
   type: 'Income' | 'Expense';
@@ -13,17 +13,17 @@ export interface AccountCategory {
   
   // Relationships
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   academicYear?: {
-    id: number;
+    id: string;
     name: string;
   };
   /** Laravel API may return snake_case */
   academic_year?: {
-    id: number;
+    id: string;
     name: string;
   };
   transactions?: Transaction[];
@@ -31,8 +31,8 @@ export interface AccountCategory {
 }
 
 export interface AccountCategoryFormData {
-  branch_id?: number | null;
-  academic_year_id?: number | null;
+  branch_id?: number | string | null;
+  academic_year_id?: number | string | null;
   name: string;
   code: string;
   type: 'Income' | 'Expense';
@@ -42,16 +42,16 @@ export interface AccountCategoryFormData {
 }
 
 export interface Transaction {
-  id: number;
-  branch_id: number;
-  category_id: number;
+  id: string;
+  branch_id: number | string;
+  category_id: number | string;
   transaction_number: string;
   transaction_date: string;
   type: 'Income' | 'Expense';
   amount: number;
   party_name?: string;
   party_type?: string;
-  party_id?: number;
+  party_id?: number | string;
   payment_method: 'Cash' | 'Check' | 'Card' | 'Bank Transfer' | 'UPI' | 'Other';
   payment_reference?: string;
   bank_name?: string;
@@ -59,8 +59,8 @@ export interface Transaction {
   notes?: string;
   attachments?: string[];
   status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled';
-  created_by: number;
-  approved_by?: number;
+  created_by: number | string;
+  approved_by?: number | string;
   approved_at?: string;
   financial_year: string;
   month: string;
@@ -71,18 +71,18 @@ export interface Transaction {
   // Relationships
   category?: AccountCategory;
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   createdBy?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
   };
   approvedBy?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
   };
@@ -90,9 +90,9 @@ export interface Transaction {
 }
 
 export interface SalaryPayment {
-  id: number;
-  transaction_id: number;
-  employee_id: number;
+  id: string;
+  transaction_id: number | string;
+  employee_id: number | string;
   employee_type: 'Teacher' | 'Staff';
   basic_salary: number;
   allowances: number;
@@ -102,7 +102,7 @@ export interface SalaryPayment {
   salary_year: string;
   remarks?: string;
   employee?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -110,9 +110,9 @@ export interface SalaryPayment {
 }
 
 export interface Budget {
-  id: number;
-  branch_id: number;
-  category_id: number;
+  id: string;
+  branch_id: number | string;
+  category_id: number | string;
   financial_year: string;
   allocated_amount: number;
   utilized_amount: number;
@@ -148,14 +148,14 @@ export interface AccountDashboard {
 }
 
 export interface TransactionFormData {
-  branch_id: number;
-  category_id: number;
+  branch_id: number | string;
+  category_id: number | string;
   transaction_date: string;
   type: 'Income' | 'Expense';
   amount: number;
   party_name?: string;
   party_type?: string;
-  party_id?: number;
+  party_id?: number | string;
   payment_method: string;
   payment_reference?: string;
   bank_name?: string;
@@ -163,7 +163,7 @@ export interface TransactionFormData {
   notes?: string;
   is_salary?: boolean;
   salary_details?: {
-    employee_id: number;
+    employee_id: number | string;
     employee_type: string;
     basic_salary: number;
     allowances?: number;

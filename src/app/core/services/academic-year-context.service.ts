@@ -20,7 +20,7 @@ export class AcademicYearContextService {
     const id = this.getStoredId();
     if (id != null) {
       this.currentYear$.next({
-        id,
+        id: String(id),
         name: '',
         start_date: '',
         end_date: '',
@@ -36,7 +36,7 @@ export class AcademicYearContextService {
   }
 
   /** Currently selected academic year id. */
-  get selectedYearId$(): Observable<number | null> {
+  get selectedYearId$(): Observable<string | number | null> {
     return this.currentYear$.pipe(
       map(y => y?.id ?? null),
       distinctUntilChanged()
@@ -44,7 +44,7 @@ export class AcademicYearContextService {
   }
 
   /** Snapshot of selected year id (for sync use in interceptors). */
-  get selectedYearId(): number | null {
+  get selectedYearId(): string | number | null {
     const y = this.currentYear$.value;
     return y?.id ?? null;
   }
@@ -54,7 +54,7 @@ export class AcademicYearContextService {
    * is not hydrated yet. Use this for API query params and interceptors so requests match the
    * toolbar before async `getById` completes.
    */
-  effectiveYearId(): number | null {
+  effectiveYearId(): string | number | null {
     return this.selectedYearId ?? this.getStoredId();
   }
 
@@ -115,11 +115,10 @@ export class AcademicYearContextService {
     }
   }
 
-  private getStoredId(): number | null {
+  private getStoredId(): string | number | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw == null || raw === '') return null;
-    const n = parseInt(raw, 10);
-    return isNaN(n) ? null : n;
+    return raw;
   }
 
   /** Set the selected academic year and persist id. */
@@ -135,8 +134,8 @@ export class AcademicYearContextService {
   /**
    * Load a specific academic year by ID and set as selected (e.g. from backend preferences).
    */
-  loadYearById(id: number): void {
-    this.setSelected({ id, name: '', start_date: '', end_date: '', is_current: false, is_active: true } as AcademicYear);
+  loadYearById(id: string | number): void {
+    this.setSelected({ id: String(id), name: '', start_date: '', end_date: '', is_current: false, is_active: true } as AcademicYear);
     this.academicYearService.getById(id).subscribe({
       next: (r) => {
         if (r.success && r.data) {

@@ -18,7 +18,7 @@ export class CompanyFormComponent implements OnInit {
   companyForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  companyId?: number;
+  companyId?: string;
   currentCompany?: Company;
 
   statusOptions = [
@@ -40,10 +40,10 @@ export class CompanyFormComponent implements OnInit {
 
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.companyId = +params['id'];
+        this.companyId = params['id'];
         this.isEditMode = this.router.url.includes('/edit');
         if (this.isEditMode) {
-          this.loadCompany(this.companyId);
+          this.loadCompany(this.companyId!);
         }
       }
     });
@@ -66,7 +66,7 @@ export class CompanyFormComponent implements OnInit {
     });
   }
 
-  private loadCompany(id: number): void {
+  private loadCompany(id: string): void {
     this.isLoading = true;
 
     this.companyService.getCompany(id).subscribe({

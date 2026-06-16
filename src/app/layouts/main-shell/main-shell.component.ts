@@ -45,7 +45,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   currentRoute = '';  // Track current route for active state
   isImpersonating = false; // Track impersonation state
   academicYears: AcademicYear[] = [];
-  selectedAcademicYearId: number | null = null;
+  selectedAcademicYearId: string | number | null = null;
   selectedAcademicYearName: string = '';
   isPastAcademicYear = false;
   
@@ -160,8 +160,8 @@ export class MainShellComponent implements OnInit, OnDestroy {
     }
   }
 
-  onAcademicYearChange(yearId: number): void {
-    const year = this.academicYears.find(y => y.id === yearId);
+  onAcademicYearChange(yearId: string | number): void {
+    const year = this.academicYears.find(y => String(y.id) === String(yearId));
     if (year) {
       this.academicYearContext.setSelected(year);
       this.selectedAcademicYearId = yearId;

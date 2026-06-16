@@ -32,7 +32,7 @@ export class PromotionService {
     from_grade: string;
     to_grade: string;
     to_academic_year_id: number;
-    from_academic_year_id?: number;
+    from_academic_year_id?: number | string;
     check_eligibility?: boolean;
     from_section?: string;
     to_section?: string;
@@ -72,7 +72,7 @@ export class PromotionService {
   /**
    * Get promotion history for a student
    */
-  getPromotionHistory(studentId: number): Observable<ApiResponse> {
+  getPromotionHistory(studentId: string | number): Observable<ApiResponse> {
     return this.apiService.get(`${this.ENDPOINT}/${studentId}/promotion-history`);
   }
 }

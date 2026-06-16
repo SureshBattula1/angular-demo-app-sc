@@ -84,7 +84,7 @@ export class StudentHeaderComponent implements OnInit, OnChanges {
     }
   }
 
-  private getStudentUserId(): number | null {
+  private getStudentUserId(): string | number | null {
     if (!this.student) return null;
     return this.student.user_id || this.student.id || null;
   }

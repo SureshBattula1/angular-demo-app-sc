@@ -1,30 +1,30 @@
 export interface Subject {
-  id: number;
+  id: string;
   name: string;
   code: string;
   description: string | null;
-  department_id: number;
-  teacher_id: number | null;
+  department_id: number | string;
+  teacher_id: number | string | null;
   grade_level: string;
   grade_label?: string;
   credits: number;
   type: 'Core' | 'Elective' | 'Language' | 'Lab' | 'Activity';
-  branch_id: number;
+  branch_id: number | string;
   is_active: boolean;
   status_label?: string;
   department?: {
-    id: number;
+    id: string;
     name: string;
     head: string;
   };
   teacher?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
   };
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
@@ -37,11 +37,11 @@ export interface Subject {
 export interface SubjectFormData {
   name: string;
   code: string;
-  department_id: number;
+  department_id: number | string;
   grade_level: string;
   type: string;
-  branch_id: number;
-  teacher_id?: number | null;
+  branch_id: number | string;
+  teacher_id?: number | string | null;
   credits?: number;
   description?: string | null;
   is_active?: boolean;

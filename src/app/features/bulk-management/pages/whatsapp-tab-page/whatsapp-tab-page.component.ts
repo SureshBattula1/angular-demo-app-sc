@@ -87,7 +87,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
   batchDetailQueueId: number | null = null;
 
   branches: Branch[] = [];
-  selectedBranchId: number | null = null;
+  selectedBranchId: string | number | null = null;
 
   /** False until branches are known (from shell or API). */
   branchListReady = false;
@@ -278,7 +278,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
       this.selectedBranchId = fromInput;
     }
     if (!this.canViewAllBranches && this.selectedBranchId === null && branchList.length > 0) {
-      this.selectedBranchId = branchList[0].id;
+      this.selectedBranchId = this.normalizeBranchId(branchList[0].id);
     }
     if (this.canViewAllBranches || this.selectedBranchId !== null) {
       this.rebuildAdvancedSearchConfig();
@@ -331,7 +331,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
           options: branchOptions,
           defaultValue:
             this.selectedBranchId ??
-            (this.canViewAllBranches ? '' : (this.branches[0]?.id as number | undefined))
+            (this.canViewAllBranches ? '' : (this.branches[0]?.id as string | number | undefined))
         },
         {
           key: 'batch_status',
@@ -378,7 +378,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
       this.selectedBranchId = null;
     } else if (rawBranch !== undefined && rawBranch !== null && rawBranch !== '') {
       const n = typeof rawBranch === 'number' ? rawBranch : parseInt(String(rawBranch), 10);
-      if (!Number.isNaN(n) && this.branches.some(b => b.id === n)) {
+      if (!Number.isNaN(n) && this.branches.some(b => String(b.id) === String(n))) {
         this.selectedBranchId = n;
       }
     }
@@ -399,7 +399,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
     if (this.canViewAllBranches) {
       this.selectedBranchId = fromInput ?? null;
     } else {
-      this.selectedBranchId = fromInput ?? this.branches[0]?.id ?? null;
+      this.selectedBranchId = fromInput ?? this.normalizeBranchId(this.branches[0]?.id ?? null);
     }
     this.queueTable?.resetServerState();
     this.rebuildAdvancedSearchConfig();
@@ -517,7 +517,7 @@ export class WhatsAppTabPageComponent implements OnInit, OnChanges {
       return;
     }
     this.queuesLoading = true;
-    let branchParam: number | null | undefined = this.selectedBranchId;
+    let branchParam: string | number | null | undefined = this.selectedBranchId;
     const fb = this.queueFilters['branch_id'];
     if (fb !== undefined && fb !== null && String(fb).trim() !== '') {
       const n = typeof fb === 'number' ? fb : parseInt(String(fb), 10);

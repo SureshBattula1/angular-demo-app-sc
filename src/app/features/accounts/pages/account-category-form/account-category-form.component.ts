@@ -22,7 +22,7 @@ export class AccountCategoryFormComponent implements OnInit {
   isEditMode = false;
   isLoading = false;
   isSaving = false;
-  categoryId?: number;
+  categoryId?: string;
   currentCategory?: AccountCategory;
   returnTab?: string;
   
@@ -82,9 +82,9 @@ export class AccountCategoryFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id'] && params['id'] !== 'new') {
-        this.categoryId = +params['id'];
+        this.categoryId = params['id'];
         this.isEditMode = true;
-        this.loadCategory(this.categoryId);
+        this.loadCategory(this.categoryId!);
       }
     });
 
@@ -153,7 +153,7 @@ export class AccountCategoryFormComponent implements OnInit {
     });
   }
 
-  private loadCategory(id: number): void {
+  private loadCategory(id: string): void {
     this.isLoading = true;
     
     this.accountService.getCategory(id).subscribe({

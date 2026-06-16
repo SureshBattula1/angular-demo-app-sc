@@ -20,7 +20,7 @@ export class BranchViewComponent implements OnInit {
   branch?: Branch;
   stats?: BranchStats;
   isLoading = true;
-  branchId!: number;
+  branchId!: string;
   showLogo = false;
 
   // Permission checks
@@ -44,7 +44,7 @@ export class BranchViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.branchId = +params['id'];
+        this.branchId = params['id'];
         this.loadBranch();
         this.loadStats();
       }

@@ -17,7 +17,7 @@ export class TeacherService {
   }
 
   // Get single teacher by ID
-  getTeacher(id: number): Observable<ApiResponse<any>> {
+  getTeacher(id: string | number): Observable<ApiResponse<any>> {
     return this.apiService.get(`${this.ENDPOINT}/${id}`);
   }
 
@@ -27,22 +27,22 @@ export class TeacherService {
   }
 
   // Update teacher
-  updateTeacher(id: number, data: any): Observable<ApiResponse<Teacher>> {
+  updateTeacher(id: string | number, data: any): Observable<ApiResponse<Teacher>> {
     return this.apiService.put<Teacher>(`${this.ENDPOINT}/${id}`, data);
   }
 
   // Delete teacher (soft delete - makes inactive)
-  deleteTeacher(id: number): Observable<ApiResponse<any>> {
+  deleteTeacher(id: string | number): Observable<ApiResponse<any>> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
   // Restore soft-deleted teacher (reactivate)
-  restoreTeacher(id: number): Observable<ApiResponse<any>> {
+  restoreTeacher(id: string | number): Observable<ApiResponse<any>> {
     return this.apiService.post(`${this.ENDPOINT}/${id}/restore`, {});
   }
 
   // Upload profile picture
-  uploadProfilePicture(id: number, file: File): Observable<ApiResponse<{file_path: string, file_url: string}>> {
+  uploadProfilePicture(id: string | number, file: File): Observable<ApiResponse<{file_path: string, file_url: string}>> {
     const formData = new FormData();
     formData.append('profile_picture', file);
     
@@ -51,17 +51,17 @@ export class TeacherService {
   }
 
   // Get teacher assignments
-  getAssignments(teacherId: number): Observable<ApiResponse<any>> {
+  getAssignments(teacherId: string | number): Observable<ApiResponse<any>> {
     return this.apiService.get(`${this.ENDPOINT}/${teacherId}/assignments`);
   }
 
   // Get teacher attendance
-  getAttendance(teacherId: number, params: any): Observable<ApiResponse<any>> {
+  getAttendance(teacherId: string | number, params: any): Observable<ApiResponse<any>> {
     return this.apiService.get(`${this.ENDPOINT}/${teacherId}/attendance`, params);
   }
 
   // Get teacher leaves
-  getLeaves(teacherId: number, params: any): Observable<ApiResponse<any>> {
+  getLeaves(teacherId: string | number, params: any): Observable<ApiResponse<any>> {
     return this.apiService.get(`${this.ENDPOINT}/${teacherId}/leaves`, params);
   }
 }

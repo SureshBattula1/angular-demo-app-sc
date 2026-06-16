@@ -28,7 +28,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
   loading = false;
   submitting = false;
   isEditMode = false;
-  leaveId?: number;
+  leaveId?: string;
   isLoadingData = false; // Flag to prevent form reset during data load
 
   leaveType: 'student' | 'teacher' = 'student';
@@ -53,7 +53,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
   reason: string = '';
   remarks: string = '';
   substituteTeacherId: string | null = null;
-  selectedAcademicYearId: number | null = null;
+  selectedAcademicYearId: string | number | null = null;
 
   studentLeaveTypes: LeaveType[] = [
     'Sick Leave',
@@ -110,7 +110,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.leaveId = +params['id'];
+        this.leaveId = params['id'];
         this.isEditMode = true;
         // Ensure type is set from query params before loading data
         const snapshot = this.route.snapshot.queryParams;
@@ -166,7 +166,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
           // Always set leaveType to ensure toggle button reflects the correct value
           this.leaveType = newLeaveType;
           this.selectedBranch = leave.branch_id ? +leave.branch_id : null;
-          this.selectedAcademicYearId = leave.academic_year_id ? Number(leave.academic_year_id) : null;
+          this.selectedAcademicYearId = leave.academic_year_id ?? null;
           this.fromDate = leave.from_date ? new Date(leave.from_date) : null;
           this.toDate = leave.to_date ? new Date(leave.to_date) : null;
           this.selectedLeaveType = leave.leave_type;

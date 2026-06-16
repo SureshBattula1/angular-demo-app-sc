@@ -25,7 +25,7 @@ export class SubjectFormComponent implements OnInit {
   subjectForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  subjectId?: number;
+  subjectId?: string;
   currentSubject?: Subject;
   returnTab?: string;
   
@@ -69,9 +69,9 @@ export class SubjectFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.subjectId = +params['id'];
+        this.subjectId = params['id'];
         this.isEditMode = true;
-        this.loadSubject(this.subjectId);
+        this.loadSubject(this.subjectId!);
       }
     });
     
@@ -96,7 +96,7 @@ export class SubjectFormComponent implements OnInit {
     });
   }
 
-  private loadSubject(id: number): void {
+  private loadSubject(id: string | number): void {
     this.isLoading = true;
     
     this.subjectService.getSubject(id).subscribe({

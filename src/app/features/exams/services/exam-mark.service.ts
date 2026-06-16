@@ -32,7 +32,7 @@ export class ExamMarkService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/exam-marks`;
 
-  getStudentMarksOverview(studentId: number): Observable<ApiResponse<StudentMarksOverview>> {
+  getStudentMarksOverview(studentId: string | number): Observable<ApiResponse<StudentMarksOverview>> {
     return this.http.get<ApiResponse<StudentMarksOverview>>(
       `${this.apiUrl}/student/${studentId}/overview`
     );

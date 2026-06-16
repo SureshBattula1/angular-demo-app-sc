@@ -879,11 +879,11 @@ export class AccountListComponent implements OnInit, OnDestroy {
   }
 
   // TrackBy functions for better performance
-  trackByTransactionId(index: number, item: Transaction): number {
+  trackByTransactionId(index: number, item: Transaction): string | number {
     return item.id;
   }
 
-  trackByCategoryId(index: number, item: AccountCategory): number {
+  trackByCategoryId(index: number, item: AccountCategory): string | number {
     return item.id;
   }
 

@@ -29,7 +29,7 @@ export class ExamTermService {
     return this.apiService.get<ExamTerm[]>(this.ENDPOINT, params);
   }
 
-  getExamTerm(id: number): Observable<ApiResponse<ExamTerm>> {
+  getExamTerm(id: string | number): Observable<ApiResponse<ExamTerm>> {
     return this.apiService.get<ExamTerm>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -37,11 +37,11 @@ export class ExamTermService {
     return this.apiService.post<ExamTerm>(this.ENDPOINT, data);
   }
 
-  updateExamTerm(id: number, data: Partial<ExamTerm>): Observable<ApiResponse<ExamTerm>> {
+  updateExamTerm(id: string | number, data: Partial<ExamTerm>): Observable<ApiResponse<ExamTerm>> {
     return this.apiService.put<ExamTerm>(`${this.ENDPOINT}/${id}`, data);
   }
 
-  deleteExamTerm(id: number): Observable<ApiResponse> {
+  deleteExamTerm(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 }

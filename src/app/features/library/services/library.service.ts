@@ -109,7 +109,7 @@ export class LibraryService {
   /**
    * Get student's book issues
    */
-  getStudentIssues(studentId: number): Observable<ApiResponse<BookIssue[]>> {
+  getStudentIssues(studentId: string | number): Observable<ApiResponse<BookIssue[]>> {
     return this.apiService.get<BookIssue[]>(`/students/${studentId}/book-issues`);
   }
 }

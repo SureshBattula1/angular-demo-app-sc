@@ -29,12 +29,12 @@ export class HolidayViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.loadHoliday(+params['id']);
+        this.loadHoliday(params['id']);
       }
     });
   }
 
-  loadHoliday(id: number): void {
+  loadHoliday(id: string | number): void {
     this.loading = true;
     this.holidayService.getHoliday(id).subscribe({
       next: (response) => {

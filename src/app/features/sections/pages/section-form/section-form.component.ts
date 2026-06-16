@@ -21,7 +21,7 @@ export class SectionFormComponent implements OnInit {
   sectionForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  sectionId?: number;
+  sectionId?: string;
   currentSection?: Section;
   
   branches: any[] = [];
@@ -58,9 +58,9 @@ export class SectionFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.sectionId = +params['id'];
+        this.sectionId = params['id'];
         this.isEditMode = true;
-        this.loadSection(this.sectionId);
+        this.loadSection(this.sectionId!);
       }
     });
   }
@@ -78,7 +78,7 @@ export class SectionFormComponent implements OnInit {
     });
   }
 
-  private loadSection(id: number): void {
+  private loadSection(id: string | number): void {
     this.isLoading = true;
     
     this.sectionService.getSection(id).subscribe({

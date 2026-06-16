@@ -1,7 +1,7 @@
 export interface ClassSection {
   grade: string;
   section: string | null;
-  branch_id: number;
+  branch_id: number | string;
   academic_year: string;
   student_count: number;
   class_name: string;
@@ -18,18 +18,18 @@ export interface Section {
 }
 
 export interface StudentGroup {
-  id: number;
-  branch_id: number;
+  id: string;
+  branch_id: number | string;
   name: string;
   code: string;
   type: 'Academic' | 'Sports' | 'Cultural' | 'Club';
   academic_year: string;
-  academic_year_id?: number | null;
+  academic_year_id?: number | string | null;
   description?: string;
   is_active: boolean;
   member_count?: number;
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
@@ -39,9 +39,9 @@ export interface StudentGroup {
 }
 
 export interface GroupMember {
-  id: number;
-  group_id: number;
-  student_id: number;
+  id: string;
+  group_id: number | string;
+  student_id: number | string;
   joined_date: string;
   role: 'Member' | 'Leader';
   is_active: boolean;
@@ -49,7 +49,7 @@ export interface GroupMember {
   section?: string;
   grade_label?: string;
   student?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -65,12 +65,12 @@ export interface GroupMember {
 }
 
 export interface GroupFormData {
-  branch_id: number;
+  branch_id: number | string;
   name: string;
   code: string;
   type: string;
   academic_year?: string;
-  academic_year_id?: number;
+  academic_year_id?: number | string;
   description?: string;
   is_active?: boolean;
 }

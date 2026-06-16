@@ -41,7 +41,7 @@ export class ExamScheduleService {
     return this.apiService.get<ExamSchedule[]>(this.ENDPOINT, params);
   }
 
-  getSchedule(id: number): Observable<ApiResponse<ExamSchedule>> {
+  getSchedule(id: string | number): Observable<ApiResponse<ExamSchedule>> {
     return this.apiService.get<ExamSchedule>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -49,15 +49,15 @@ export class ExamScheduleService {
     return this.apiService.post<ExamSchedule>(this.ENDPOINT, data);
   }
 
-  updateSchedule(id: number, data: Partial<ExamSchedule>): Observable<ApiResponse<ExamSchedule>> {
+  updateSchedule(id: string | number, data: Partial<ExamSchedule>): Observable<ApiResponse<ExamSchedule>> {
     return this.apiService.put<ExamSchedule>(`${this.ENDPOINT}/${id}`, data);
   }
 
-  deleteSchedule(id: number): Observable<ApiResponse> {
+  deleteSchedule(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
-  getStudents(id: number): Observable<ApiResponse<any[]>> {
+  getStudents(id: string | number): Observable<ApiResponse<any[]>> {
     return this.apiService.get<any[]>(`${this.ENDPOINT}/${id}/students`);
   }
 }

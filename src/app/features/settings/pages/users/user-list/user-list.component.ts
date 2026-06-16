@@ -299,15 +299,15 @@ export class UserListComponent implements OnInit {
     this.viewUser(row.id);
   }
 
-  viewUser(id: number): void {
+  viewUser(id: string | number): void {
     this.router.navigate(['/settings/users/view', id]);
   }
 
-  editUser(id: number): void {
+  editUser(id: string | number): void {
     this.router.navigate(['/settings/users/edit', id]);
   }
 
-  managePermissions(id: number): void {
+  managePermissions(id: string | number): void {
     this.router.navigate(['/settings/users', id, 'permissions']);
   }
 

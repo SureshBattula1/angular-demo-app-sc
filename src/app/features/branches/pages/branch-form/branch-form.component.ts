@@ -24,13 +24,13 @@ export class BranchFormComponent implements OnInit {
   branchForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  branchId?: number;
+  branchId?: string;
   currentBranch?: Branch;
   logoUrl?: string;
   currentLogoUrl?: string;
   
   // For attachments - will be set after branch is created/updated
-  attachmentModuleId: number | null = null;
+  attachmentModuleId: string | number | null = null;
 
   hideBranchAdminPassword = true;
   
@@ -69,9 +69,9 @@ export class BranchFormComponent implements OnInit {
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.branchId = +params['id'];
+        this.branchId = params['id'];
         this.isEditMode = true;
-        this.loadBranch(this.branchId);
+        this.loadBranch(this.branchId!);
       }
     });
   }
@@ -137,7 +137,7 @@ export class BranchFormComponent implements OnInit {
     });
   }
 
-  private loadBranch(id: number): void {
+  private loadBranch(id: string | number): void {
     this.isLoading = true;
     
     this.branchService.getBranch(id).subscribe({
@@ -230,7 +230,7 @@ export class BranchFormComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.parentBranches = response.data.filter(b => 
-            !this.branchId || b.id !== this.branchId
+            !this.branchId || String(b.id) !== String(this.branchId)
           );
         }
       },

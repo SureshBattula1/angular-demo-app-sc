@@ -17,7 +17,7 @@ import { Department } from '../../../../core/models/department.model';
 export class DepartmentViewComponent implements OnInit {
   department?: Department;
   isLoading = true;
-  departmentId!: number;
+  departmentId!: string;
 
   // Permission checks
   hasEditPermission = false;
@@ -37,7 +37,7 @@ export class DepartmentViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.departmentId = +params['id'];
+        this.departmentId = params['id'];
         this.loadDepartment();
       }
     });

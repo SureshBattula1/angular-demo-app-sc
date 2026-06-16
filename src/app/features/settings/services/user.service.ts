@@ -43,7 +43,7 @@ export class UserService {
   /**
    * Get single user by ID
    */
-  getUser(id: number): Observable<ApiResponse<User>> {
+  getUser(id: string | number): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(`${this.apiUrl}/${id}`);
   }
 
@@ -57,28 +57,28 @@ export class UserService {
   /**
    * Update existing user
    */
-  updateUser(id: number, user: UpdateUserRequest): Observable<ApiResponse<User>> {
+  updateUser(id: string | number, user: UpdateUserRequest): Observable<ApiResponse<User>> {
     return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}`, user);
   }
 
   /**
    * Delete user
    */
-  deleteUser(id: number): Observable<ApiResponse<void>> {
+  deleteUser(id: string | number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`);
   }
 
   /**
    * Toggle user active status
    */
-  toggleUserStatus(id: number): Observable<ApiResponse<User>> {
+  toggleUserStatus(id: string | number): Observable<ApiResponse<User>> {
     return this.http.patch<ApiResponse<User>>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
 
   /**
    * Reset user password
    */
-  resetPassword(id: number, password: string, passwordConfirmation: string): Observable<ApiResponse<void>> {
+  resetPassword(id: string | number, password: string, passwordConfirmation: string): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${id}/reset-password`, {
       password,
       password_confirmation: passwordConfirmation
@@ -88,14 +88,14 @@ export class UserService {
   /**
    * Get user permissions
    */
-  getUserPermissions(id: number): Observable<ApiResponse<any>> {
+  getUserPermissions(id: string | number): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${this.apiUrl}/${id}/permissions`);
   }
 
   /**
    * Update user permissions
    */
-  updateUserPermissions(id: number, permissions: any[]): Observable<ApiResponse<void>> {
+  updateUserPermissions(id: string | number, permissions: any[]): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${id}/permissions`, {
       permissions
     });
@@ -104,7 +104,7 @@ export class UserService {
   /**
    * Assign roles to user
    */
-  assignRoles(id: number, roleIds: number[], primaryRoleId?: number): Observable<ApiResponse<void>> {
+  assignRoles(id: string | number, roleIds: number[], primaryRoleId?: string | number): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/${id}/roles`, {
       role_ids: roleIds,
       primary_role_id: primaryRoleId

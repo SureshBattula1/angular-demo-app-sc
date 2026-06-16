@@ -16,7 +16,7 @@ import { HasPermissionDirective } from '../../../../../core/directives/has-permi
 })
 export class RoleViewComponent implements OnInit {
   role: Role | null = null;
-  roleId: number | null = null;
+  roleId: string | null = null;
   isLoading = false;
   permissionsByModule: Record<string, Permission[]> = {};
 
@@ -30,7 +30,7 @@ export class RoleViewComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.roleId = parseInt(id, 10);
+      this.roleId = id;
       this.loadRole();
     }
   }

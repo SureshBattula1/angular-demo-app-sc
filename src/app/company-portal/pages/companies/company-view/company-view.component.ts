@@ -129,7 +129,7 @@ import { Company } from '../../../../core/models/school.model';
 export class CompanyViewComponent implements OnInit {
   company?: Company & { schools?: Array<{ id: number; name: string; code: string; status?: string }> };
   isLoading = true;
-  companyId!: number;
+  companyId!: string;
 
   constructor(
     private companyService: CompanyService,
@@ -141,7 +141,7 @@ export class CompanyViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.companyId = +params['id'];
+        this.companyId = params['id'];
         this.loadCompany();
       }
     });

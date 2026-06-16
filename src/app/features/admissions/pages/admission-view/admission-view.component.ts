@@ -17,7 +17,7 @@ import { MatDialog } from '@angular/material/dialog';
 export class AdmissionViewComponent implements OnInit {
   application?: AdmissionApplication;
   isLoading = true;
-  applicationId!: number;
+  applicationId!: string;
   activeTabIndex = 0; // For mat-tab-group selectedIndex
   isEditMode = false; // Track if we're in edit mode (viewing existing application)
   branches: any[] = [];
@@ -35,7 +35,7 @@ export class AdmissionViewComponent implements OnInit {
     this.loadBranches();
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.applicationId = +params['id'];
+        this.applicationId = params['id'];
         this.loadApplication();
       }
     });

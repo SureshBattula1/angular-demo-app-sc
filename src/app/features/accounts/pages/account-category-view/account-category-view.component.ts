@@ -18,7 +18,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class AccountCategoryViewComponent implements OnInit {
   category?: AccountCategory;
   isLoading = true;
-  categoryId!: number;
+  categoryId!: string;
   returnTab?: string;
 
   // Permission checks
@@ -40,7 +40,7 @@ export class AccountCategoryViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.categoryId = +params['id'];
+        this.categoryId = params['id'];
         this.loadCategory();
       }
     });

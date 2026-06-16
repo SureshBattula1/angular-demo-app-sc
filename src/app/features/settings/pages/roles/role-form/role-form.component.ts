@@ -18,11 +18,11 @@ import { ErrorHandlerService } from '../../../../../core/services/error-handler.
 export class RoleFormComponent implements OnInit {
   roleForm: FormGroup;
   isEditMode = false;
-  roleId: number | null = null;
+  roleId: string | null = null;
   isLoading = false;
   isSubmitting = false;
   allPermissions: Permission[] = [];
-  selectedPermissionIds: number[] = [];
+  selectedPermissionIds: (string | number)[] = [];
   permissionsByModule: Record<string, Permission[]> = {};
 
   constructor(
@@ -45,7 +45,7 @@ export class RoleFormComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
-      this.roleId = parseInt(id, 10);
+      this.roleId = id;
       this.loadRole();
     }
   }
@@ -155,7 +155,7 @@ export class RoleFormComponent implements OnInit {
     });
   }
 
-  togglePermission(permissionId: number): void {
+  togglePermission(permissionId: string | number): void {
     const index = this.selectedPermissionIds.indexOf(permissionId);
     if (index > -1) {
       this.selectedPermissionIds.splice(index, 1);
@@ -164,7 +164,7 @@ export class RoleFormComponent implements OnInit {
     }
   }
 
-  isPermissionSelected(permissionId: number): boolean {
+  isPermissionSelected(permissionId: string | number): boolean {
     return this.selectedPermissionIds.includes(permissionId);
   }
 
@@ -223,7 +223,7 @@ export class RoleFormComponent implements OnInit {
     });
   }
 
-  assignPermissions(roleId: number): void {
+  assignPermissions(roleId: string | number): void {
     this.roleService.assignPermissions(roleId, this.selectedPermissionIds).subscribe({
       next: (response) => {
         if (response.success) {

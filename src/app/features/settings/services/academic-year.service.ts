@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 
 export interface AcademicYear {
-  id: number;
+  id: string;
   name: string;
   start_date: string;
   end_date: string;
@@ -43,7 +43,7 @@ export class AcademicYearService {
     return this.apiService.get<AcademicYear[]>(this.ENDPOINT, params) as Observable<ApiResponse<AcademicYear[]>>;
   }
 
-  getById(id: number): Observable<ApiResponse<AcademicYear>> {
+  getById(id: string | number): Observable<ApiResponse<AcademicYear>> {
     return this.apiService.get<AcademicYear>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -56,11 +56,11 @@ export class AcademicYearService {
     return this.apiService.post<AcademicYear>(this.ENDPOINT, data);
   }
 
-  update(id: number, data: Partial<AcademicYearFormData>): Observable<ApiResponse<AcademicYear>> {
+  update(id: string | number, data: Partial<AcademicYearFormData>): Observable<ApiResponse<AcademicYear>> {
     return this.apiService.put<AcademicYear>(`${this.ENDPOINT}/${id}`, data);
   }
 
-  delete(id: number): Observable<ApiResponse<void>> {
+  delete(id: string | number): Observable<ApiResponse<void>> {
     return this.apiService.delete<void>(`${this.ENDPOINT}/${id}`);
   }
 }

@@ -1,5 +1,5 @@
 export interface Role {
-  id: number;
+  id: string;
   name: string;
   slug?: string;
   description?: string;
@@ -11,7 +11,7 @@ export interface Role {
 }
 
 export interface Permission {
-  id: number;
+  id: string;
   name: string;
   slug?: string;
   display_name?: string;
@@ -24,7 +24,7 @@ export interface Permission {
 }
 
 export interface RolePermission {
-  role_id: number;
-  permission_id: number;
+  role_id: number | string;
+  permission_id: number | string;
 }
 

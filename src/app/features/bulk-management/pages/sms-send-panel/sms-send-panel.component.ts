@@ -69,7 +69,7 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
   @Output() bulkQueued = new EventEmitter<{ queue_id?: number }>();
 
   branches: Branch[] = [];
-  selectedBranchId: number | null = null;
+  selectedBranchId: string | number | null = null;
   branchesLoading = false;
 
   loading = false;
@@ -144,7 +144,7 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
       const wanted = this.parseBranchId(this.branchId);
       if (
         wanted !== null &&
-        this.branches.some(b => b.id === wanted) &&
+        this.branches.some(b => String(b.id) === String(wanted)) &&
         this.selectedBranchId !== wanted
       ) {
         this.selectedBranchId = wanted;
@@ -165,7 +165,7 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
     return Number.isFinite(n) ? n : null;
   }
 
-  resolvedBranchId(): number | null {
+  resolvedBranchId(): string | number | null {
     return this.selectedBranchId;
   }
 
@@ -196,13 +196,13 @@ export class SmsSendPanelComponent implements OnInit, OnChanges {
 
   private applyParentBranchIfValid(): void {
     const wanted = this.parseBranchId(this.branchId);
-    if (wanted !== null && this.branches.some(b => b.id === wanted)) {
+    if (wanted !== null && this.branches.some(b => String(b.id) === String(wanted))) {
       this.selectedBranchId = wanted;
       return;
     }
     if (
       this.selectedBranchId === null ||
-      !this.branches.some(b => b.id === this.selectedBranchId)
+      !this.branches.some(b => String(b.id) === String(this.selectedBranchId))
     ) {
       this.selectedBranchId = this.branches[0]?.id ?? null;
     }

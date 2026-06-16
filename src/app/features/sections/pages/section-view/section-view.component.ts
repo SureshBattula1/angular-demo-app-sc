@@ -17,7 +17,7 @@ import { Section } from '../../../../core/models/section.model';
 export class SectionViewComponent implements OnInit {
   sectionData?: Section;
   isLoading = true;
-  sectionId!: number;
+  sectionId!: string;
 
   // Permission checks
   canEdit = false;
@@ -38,7 +38,7 @@ export class SectionViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.sectionId = +params['id'];
+        this.sectionId = params['id'];
         this.loadSection();
       }
     });

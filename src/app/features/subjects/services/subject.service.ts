@@ -15,7 +15,7 @@ export class SubjectService {
     return this.apiService.get<Subject[]>(this.ENDPOINT, params);
   }
 
-  getSubject(id: number): Observable<ApiResponse<Subject>> {
+  getSubject(id: string | number): Observable<ApiResponse<Subject>> {
     return this.apiService.get<Subject>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -23,11 +23,11 @@ export class SubjectService {
     return this.apiService.post<Subject>(this.ENDPOINT, subjectData);
   }
 
-  updateSubject(id: number, subjectData: Partial<SubjectFormData>): Observable<ApiResponse<Subject>> {
+  updateSubject(id: string | number, subjectData: Partial<SubjectFormData>): Observable<ApiResponse<Subject>> {
     return this.apiService.put<Subject>(`${this.ENDPOINT}/${id}`, subjectData);
   }
 
-  deleteSubject(id: number): Observable<ApiResponse> {
+  deleteSubject(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 }

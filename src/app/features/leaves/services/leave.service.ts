@@ -32,7 +32,7 @@ export class LeaveService {
   /**
    * Get single leave by ID
    */
-  getLeave(id: number, type?: 'student' | 'teacher'): Observable<LeaveResponse> {
+  getLeave(id: string | number, type?: 'student' | 'teacher'): Observable<LeaveResponse> {
     let params = new HttpParams();
     if (type) {
       params = params.set('type', type);
@@ -50,14 +50,14 @@ export class LeaveService {
   /**
    * Update existing leave
    */
-  updateLeave(id: number, leave: Partial<Leave>): Observable<LeaveResponse> {
+  updateLeave(id: string | number, leave: Partial<Leave>): Observable<LeaveResponse> {
     return this.http.put<LeaveResponse>(`${this.apiUrl}/${id}`, leave);
   }
 
   /**
    * Delete leave
    */
-  deleteLeave(id: number, type: 'student' | 'teacher'): Observable<LeaveResponse> {
+  deleteLeave(id: string | number, type: 'student' | 'teacher'): Observable<LeaveResponse> {
     const params = new HttpParams().set('type', type);
     return this.http.delete<LeaveResponse>(`${this.apiUrl}/${id}`, { params });
   }
@@ -99,7 +99,7 @@ export class LeaveService {
   /**
    * Approve leave
    */
-  approveLeave(id: number, type: 'student' | 'teacher', remarks?: string): Observable<LeaveResponse> {
+  approveLeave(id: string | number, type: 'student' | 'teacher', remarks?: string): Observable<LeaveResponse> {
     return this.http.put<LeaveResponse>(`${this.apiUrl}/${id}`, {
       status: 'Approved',
       remarks,
@@ -110,7 +110,7 @@ export class LeaveService {
   /**
    * Reject leave
    */
-  rejectLeave(id: number, type: 'student' | 'teacher', remarks?: string): Observable<LeaveResponse> {
+  rejectLeave(id: string | number, type: 'student' | 'teacher', remarks?: string): Observable<LeaveResponse> {
     return this.http.put<LeaveResponse>(`${this.apiUrl}/${id}`, {
       status: 'Rejected',
       remarks,
@@ -121,7 +121,7 @@ export class LeaveService {
   /**
    * Cancel leave
    */
-  cancelLeave(id: number, type: 'student' | 'teacher', remarks?: string): Observable<LeaveResponse> {
+  cancelLeave(id: string | number, type: 'student' | 'teacher', remarks?: string): Observable<LeaveResponse> {
     return this.http.put<LeaveResponse>(`${this.apiUrl}/${id}`, {
       status: 'Cancelled',
       remarks,

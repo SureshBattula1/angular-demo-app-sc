@@ -43,7 +43,7 @@ import { Holiday, HolidayFormData } from '../../../../core/models/holiday.model'
 export class HolidayFormComponent implements OnInit {
   holidayForm!: FormGroup;
   isEditMode = false;
-  holidayId: number | null = null;
+  holidayId: string | null = null;
   loading = false;
   submitting = false;
   branches: any[] = [];
@@ -79,7 +79,7 @@ export class HolidayFormComponent implements OnInit {
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.holidayId = +params['id'];
+        this.holidayId = params['id'];
         this.isEditMode = true;
         this.loadHoliday();
       }

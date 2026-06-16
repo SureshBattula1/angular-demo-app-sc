@@ -1,5 +1,5 @@
 export interface Leave {
-  id: number;
+  id: string;
   student_id?: string;
   teacher_id?: string;
   branch_id?: string;

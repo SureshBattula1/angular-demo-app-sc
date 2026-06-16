@@ -32,7 +32,7 @@ export class ExamService {
     return this.apiService.get<Exam[]>(this.ENDPOINT, params);
   }
 
-  getExam(id: string): Observable<ApiResponse<Exam>> {
+  getExam(id: string | number): Observable<ApiResponse<Exam>> {
     return this.apiService.get<Exam>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -40,19 +40,19 @@ export class ExamService {
     return this.apiService.post<Exam>(this.ENDPOINT, data);
   }
 
-  updateExam(id: string, data: Partial<Exam>): Observable<ApiResponse<Exam>> {
+  updateExam(id: string | number, data: Partial<Exam>): Observable<ApiResponse<Exam>> {
     return this.apiService.put<Exam>(`${this.ENDPOINT}/${id}`, data);
   }
 
-  deleteExam(id: string): Observable<ApiResponse> {
+  deleteExam(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
-  getExamStatistics(id: string): Observable<ApiResponse> {
+  getExamStatistics(id: string | number): Observable<ApiResponse> {
     return this.apiService.get(`${this.ENDPOINT}/${id}/statistics`);
   }
 
-  getExamResults(id: string): Observable<ApiResponse> {
+  getExamResults(id: string | number): Observable<ApiResponse> {
     return this.apiService.get(`${this.ENDPOINT}/${id}/results`);
   }
 }

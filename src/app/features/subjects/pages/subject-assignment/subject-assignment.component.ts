@@ -17,7 +17,7 @@ import { AcademicYear, AcademicYearService } from '../../../settings/services/ac
 
 interface SubjectAssignment {
   subject: Subject;
-  teacher_id: number | null;
+  teacher_id: number | string | null;
   selected: boolean;
 }
 
@@ -47,10 +47,10 @@ export class SubjectAssignmentComponent implements OnInit {
   academicYears: AcademicYear[] = [];
   
   // Selections
-  selectedBranch: number | null = null;
+  selectedBranch: number | string | null = null;
   selectedGrade: string | null = null;
   selectedSection: Section | null = null;
-  selectedAcademicYearId: number | null = null;
+  selectedAcademicYearId: number | string | null = null;
   academicYear: string = this.getCurrentAcademicYear();
   
   constructor(

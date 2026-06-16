@@ -17,7 +17,7 @@ import { environment } from '../../../../../environments/environment';
 export class LeaveViewComponent implements OnInit {
   leave?: Leave;
   isLoading = true;
-  leaveId!: number;
+  leaveId!: string;
   showProfilePicture = false;
   profilePictureUrl = '';
 
@@ -31,7 +31,7 @@ export class LeaveViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.leaveId = +params['id'];
+        this.leaveId = params['id'];
         // Get type from query params
         const snapshot = this.route.snapshot.queryParams;
         const type = snapshot['type'] === 'teacher' ? 'teacher' : 'student';

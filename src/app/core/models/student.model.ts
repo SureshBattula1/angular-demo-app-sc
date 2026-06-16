@@ -1,7 +1,7 @@
 export interface Student {
-  id: number;
-  user_id: number;
-  branch_id: number;
+  id: string;
+  user_id: number | string;
+  branch_id: number | string;
   admission_number: string;
   admission_date: string | Date;
   roll_number: string | null;
@@ -11,11 +11,11 @@ export interface Student {
   grade_label?: string;
   section: string | null;
   academic_year: string;
-  academic_year_id?: number | null;
+  academic_year_id?: number | string | null;
   current_grade?: string;
   current_grade_label?: string;
   current_section?: string | null;
-  current_academic_year_id?: number | null;
+  current_academic_year_id?: number | string | null;
   stream: string | null;
   elective_subjects?: string;
   
@@ -66,7 +66,7 @@ export interface Student {
   sibling_discount_percentage?: number;
   
   // Parent Information
-  parent_id: number | null;
+  parent_id: number | string | null;
   father_name: string;
   father_occupation: string | null;
   father_phone: string;
@@ -179,7 +179,7 @@ export interface Student {
   
   // Branch relationship
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
@@ -200,7 +200,7 @@ export interface Student {
   
   // User relationship
   user?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -229,7 +229,7 @@ export interface StudentFormData {
   password?: string;
   
   // Admission
-  branch_id: number;
+  branch_id: number | string;
   admission_number: string;
   admission_date: string | Date;
   roll_number?: string | null;
@@ -237,7 +237,7 @@ export interface StudentFormData {
   // Academic
   grade: string;
   section?: string | null;
-  academic_year_id: number;
+  academic_year_id: number | string;
   stream?: string | null;
   
   // Personal

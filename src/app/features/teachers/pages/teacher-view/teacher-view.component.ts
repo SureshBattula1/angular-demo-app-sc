@@ -38,7 +38,7 @@ export class TeacherViewComponent implements OnInit, OnDestroy {
   
   teacher: Teacher | null = null;
   isLoading = false;
-  teacherId!: number;
+  teacherId!: string;
   showProfilePicture = false;
   profilePictureUrl = '';
   
@@ -103,7 +103,7 @@ export class TeacherViewComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(params => {
       if (params['id']) {
-        this.teacherId = +params['id'];
+        this.teacherId = params['id'];
         this.loadTeacher();
         // Don't load attendance automatically - wait for user interaction
       }

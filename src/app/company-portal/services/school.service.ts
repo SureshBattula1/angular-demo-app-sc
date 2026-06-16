@@ -31,7 +31,7 @@ export class CompanySchoolService {
   /**
    * Get school by ID
    */
-  getSchool(id: number): Observable<ApiResponse<School>> {
+  getSchool(id: string | number): Observable<ApiResponse<School>> {
     return this.companyApiService.get<School>(`/schools/${id}`);
   }
 
@@ -52,7 +52,7 @@ export class CompanySchoolService {
   /**
    * Update school
    */
-  updateSchool(id: number, data: Partial<School>): Observable<ApiResponse<School>> {
+  updateSchool(id: string | number, data: Partial<School>): Observable<ApiResponse<School>> {
     return this.companyApiService.put<School>(`/schools/${id}`, data).pipe(
       tap(response => {
         if (response.success && response.data) {
@@ -70,7 +70,7 @@ export class CompanySchoolService {
   /**
    * Delete school
    */
-  deleteSchool(id: number): Observable<ApiResponse<void>> {
+  deleteSchool(id: string | number): Observable<ApiResponse<void>> {
     return this.companyApiService.delete<void>(`/schools/${id}`).pipe(
       tap(response => {
         if (response.success) {
@@ -84,28 +84,28 @@ export class CompanySchoolService {
   /**
    * Activate school
    */
-  activateSchool(id: number): Observable<ApiResponse<School>> {
+  activateSchool(id: string | number): Observable<ApiResponse<School>> {
     return this.companyApiService.put<School>(`/schools/${id}/activate`, {});
   }
 
   /**
    * Deactivate school
    */
-  deactivateSchool(id: number): Observable<ApiResponse<School>> {
+  deactivateSchool(id: string | number): Observable<ApiResponse<School>> {
     return this.companyApiService.put<School>(`/schools/${id}/deactivate`, {});
   }
 
   /**
    * Get school statistics
    */
-  getSchoolStatistics(id: number): Observable<ApiResponse<any>> {
+  getSchoolStatistics(id: string | number): Observable<ApiResponse<any>> {
     return this.companyApiService.get<any>(`/schools/${id}/statistics`);
   }
 
   /**
    * Get users from a school
    */
-  getSchoolUsers(schoolId: number, params?: { role?: string }): Observable<ApiResponse<any[]>> {
+  getSchoolUsers(schoolId: string | number, params?: { role?: string }): Observable<ApiResponse<any[]>> {
     return this.companyApiService.get<any[]>(`/schools/${schoolId}/users`, params);
   }
 }

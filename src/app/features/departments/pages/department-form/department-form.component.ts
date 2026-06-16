@@ -19,7 +19,7 @@ export class DepartmentFormComponent implements OnInit {
   departmentForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  departmentId?: number;
+  departmentId?: string;
   currentDepartment?: Department;
   
   branches: any[] = [];
@@ -53,9 +53,9 @@ export class DepartmentFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.departmentId = +params['id'];
+        this.departmentId = params['id'];
         this.isEditMode = true;
-        this.loadDepartment(this.departmentId);
+        this.loadDepartment(this.departmentId!);
       }
     });
   }
@@ -74,7 +74,7 @@ export class DepartmentFormComponent implements OnInit {
     });
   }
 
-  private loadDepartment(id: number): void {
+  private loadDepartment(id: string | number): void {
     this.isLoading = true;
     
     this.departmentService.getDepartment(id).subscribe({

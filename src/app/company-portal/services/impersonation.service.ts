@@ -42,7 +42,7 @@ export class ImpersonationService {
   /**
    * Start impersonation session
    */
-  startImpersonation(userId: number, reason?: string): Observable<ApiResponse<any>> {
+  startImpersonation(userId: string | number, reason?: string): Observable<ApiResponse<any>> {
     return this.companyApiService.post<any>(`/impersonate/${userId}`, { reason }).pipe(
       tap(response => {
         if (response.success && response.data) {

@@ -15,9 +15,9 @@ import { StudentAttendance, TeacherAttendance } from '../../../../core/models/at
 })
 export class AttendanceViewComponent implements OnInit {
   loading = false;
-  attendanceId?: number;
-  studentId?: number;
-  teacherId?: number;
+  attendanceId?: string;
+  studentId?: string;
+  teacherId?: string;
   showReport = false;
   reportType: 'student' | 'teacher' = 'student';
   returnTab: 'student' | 'teacher' = 'student'; // Store the tab to return to
@@ -37,7 +37,7 @@ export class AttendanceViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.attendanceId = +params['id'];
+        this.attendanceId = params['id'];
         
         // Check if we need to show report
         this.route.queryParams.subscribe(queryParams => {

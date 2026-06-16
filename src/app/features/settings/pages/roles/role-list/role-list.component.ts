@@ -229,11 +229,11 @@ export class RoleListComponent implements OnInit {
     this.viewRole(row.id);
   }
 
-  viewRole(id: number): void {
+  viewRole(id: string | number): void {
     this.router.navigate(['/settings/roles/view', id]);
   }
 
-  editRole(id: number): void {
+  editRole(id: string | number): void {
     this.router.navigate(['/settings/roles/edit', id]);
   }
 

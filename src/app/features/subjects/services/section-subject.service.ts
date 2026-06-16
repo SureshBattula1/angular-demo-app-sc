@@ -19,13 +19,13 @@ export interface SectionSubjectAssignment {
 }
 
 export interface BulkAssignmentRequest {
-  section_id: number;
+  section_id: number | string;
   subjects: {
-    subject_id: number;
-    teacher_id?: number;
+    subject_id: number | string;
+    teacher_id?: number | string;
   }[];
-  branch_id: number;
-  academic_year_id: number;
+  branch_id: number | string;
+  academic_year_id: number | string;
   academic_year: string;
 }
 
@@ -60,7 +60,7 @@ export class SectionSubjectService {
   /**
    * Get subjects assigned to a section
    */
-  getSectionSubjects(sectionId: number, academicYearId?: number | null, academicYear?: string): Observable<SectionSubjectsResponse> {
+  getSectionSubjects(sectionId: string | number, academicYearId?: number | null, academicYear?: string): Observable<SectionSubjectsResponse> {
     const params: Record<string, unknown> = {};
     if (academicYearId) params['academic_year_id'] = academicYearId;
     if (academicYear) params['academic_year'] = academicYear;
@@ -91,14 +91,14 @@ export class SectionSubjectService {
   /**
    * Update assignment (change teacher)
    */
-  updateAssignment(id: number, data: Partial<SectionSubjectAssignment>): Observable<ApiResponse<SectionSubjectAssignment>> {
+  updateAssignment(id: string | number, data: Partial<SectionSubjectAssignment>): Observable<ApiResponse<SectionSubjectAssignment>> {
     return this.apiService.put<SectionSubjectAssignment>(`${this.ENDPOINT}/${id}`, data);
   }
 
   /**
    * Remove subject from section
    */
-  removeSubject(id: number): Observable<ApiResponse> {
+  removeSubject(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 }

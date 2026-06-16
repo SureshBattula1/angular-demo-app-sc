@@ -7,7 +7,7 @@ export interface Grade {
   students_count?: number;
   sections?: string[];
   classes_count?: number;
-  branch_id?: number | null;
+  branch_id?: number | string | null;
   branch_name?: string | null;
   is_active?: boolean;
   created_at?: string;

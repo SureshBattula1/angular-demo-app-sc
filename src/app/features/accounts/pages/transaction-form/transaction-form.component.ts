@@ -19,7 +19,7 @@ export class TransactionFormComponent implements OnInit {
   transactionForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  transactionId?: number;
+  transactionId?: string;
   currentTransaction?: Transaction;
   
   branches: any[] = [];
@@ -67,9 +67,9 @@ export class TransactionFormComponent implements OnInit {
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.transactionId = +params['id'];
+        this.transactionId = params['id'];
         this.isEditMode = true;
-        this.loadTransaction(this.transactionId);
+        this.loadTransaction(this.transactionId!);
       } else {
         // Create mode: load categories for all accessible branches (no branch filter yet)
         this.loadCategories();
@@ -113,7 +113,7 @@ export class TransactionFormComponent implements OnInit {
     });
   }
 
-  private loadTransaction(id: number): void {
+  private loadTransaction(id: string): void {
     this.isLoading = true;
 
     this.accountService.getTransaction(id).subscribe({
@@ -155,7 +155,7 @@ export class TransactionFormComponent implements OnInit {
   }
 
   /** Load categories, optionally filtered by branch_id (so edit mode and branch change get the right list) */
-  private loadCategories(branchId?: number): void {
+  private loadCategories(branchId?: string | number): void {
     this.loadingCategories = true;
     const params: Record<string, unknown> = { is_active: true };
     if (branchId != null) {

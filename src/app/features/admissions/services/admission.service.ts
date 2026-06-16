@@ -3,11 +3,11 @@ import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 
 export interface AdmissionApplication {
-  id?: number;
-  branch_id: number;
+  id?: string;
+  branch_id: number | string;
   application_number?: string;
   application_date: string;
-  academic_year_id?: number;
+  academic_year_id?: number | string;
   academic_year?: string;
   applying_for_grade: string;
   applying_for_section?: string;
@@ -127,7 +127,7 @@ export class AdmissionService {
   /**
    * Get single admission application
    */
-  getApplication(id: number): Observable<ApiResponse<AdmissionApplication>> {
+  getApplication(id: string | number): Observable<ApiResponse<AdmissionApplication>> {
     return this.apiService.get<AdmissionApplication>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -141,21 +141,21 @@ export class AdmissionService {
   /**
    * Update admission application
    */
-  updateApplication(id: number, data: Partial<AdmissionApplication>): Observable<ApiResponse<AdmissionApplication>> {
+  updateApplication(id: string | number, data: Partial<AdmissionApplication>): Observable<ApiResponse<AdmissionApplication>> {
     return this.apiService.put<AdmissionApplication>(`${this.ENDPOINT}/${id}`, data);
   }
 
   /**
    * Delete admission application
    */
-  deleteApplication(id: number): Observable<ApiResponse> {
+  deleteApplication(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
   /**
    * Update application status
    */
-  updateStatus(id: number, status: string, remarks?: string): Observable<ApiResponse<AdmissionApplication>> {
+  updateStatus(id: string | number, status: string, remarks?: string): Observable<ApiResponse<AdmissionApplication>> {
     return this.apiService.post<AdmissionApplication>(`${this.ENDPOINT}/${id}/update-status`, {
       status,
       remarks
@@ -172,7 +172,7 @@ export class AdmissionService {
   /**
    * Convert admission application to student
    */
-  convertToStudent(id: number, password?: string): Observable<ApiResponse<any>> {
+  convertToStudent(id: string | number, password?: string): Observable<ApiResponse<any>> {
     const data: any = {};
     if (password) {
       data.password = password;

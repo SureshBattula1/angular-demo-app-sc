@@ -1,11 +1,11 @@
 export interface Teacher {
-  id: number;
-  user_id: number;
-  branch_id: number;
+  id: string;
+  user_id: number | string;
+  branch_id: number | string;
   employee_id: string;
   category_type: 'Teaching' | 'Non-Teaching';
   designation: string;
-  department_id?: number;
+  department_id?: number | string;
   
   // Enhanced Personal Details
   first_name: string;
@@ -183,7 +183,7 @@ export interface Teacher {
   
   // Relationships
   user?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -193,15 +193,15 @@ export interface Teacher {
     is_active: boolean;
     [key: string]: any;
   };
-  
+
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
-  
+
   department?: {
-    id: number;
+    id: string;
     name: string;
   };
   
@@ -224,14 +224,14 @@ export interface TeacherFormData {
   whatsapp_number?: string;
   landline_number?: string;
   password?: string;
-  branch_id: number;
+  branch_id: number | string;
   is_active?: boolean;
-  
+
   // Teacher Specific
   employee_id: string;
   category_type: 'Teaching' | 'Non-Teaching';
   designation: string;
-  department_id?: number;
+  department_id?: number | string;
   
   // Identity Documents
   gender: 'Male' | 'Female' | 'Other';

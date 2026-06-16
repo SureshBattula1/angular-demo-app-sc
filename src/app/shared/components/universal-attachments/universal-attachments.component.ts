@@ -36,7 +36,7 @@ interface AttachmentInput {
 })
 export class UniversalAttachmentsComponent implements OnInit, OnChanges {
   @Input() module!: string; // 'branch', 'teacher', etc.
-  @Input() moduleId!: number | null;
+  @Input() moduleId!: string | number | null;
   @Input() mode: 'view' | 'form' = 'form';
   @Output() attachmentsUploaded = new EventEmitter<Attachment[]>();
 

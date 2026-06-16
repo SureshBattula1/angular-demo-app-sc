@@ -41,7 +41,7 @@ export class AttendanceService {
   /**
    * Get attendance by ID
    */
-  getAttendanceById(id: number): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
+  getAttendanceById(id: string | number): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
     return this.http.get<ApiResponse<StudentAttendance | TeacherAttendance>>(
       `${this.apiUrl}/${id}`
     );
@@ -50,7 +50,7 @@ export class AttendanceService {
   /**
    * Update attendance record
    */
-  updateAttendance(id: number, data: Partial<StudentAttendance | TeacherAttendance>): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
+  updateAttendance(id: string | number, data: Partial<StudentAttendance | TeacherAttendance>): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
     return this.http.put<ApiResponse<StudentAttendance | TeacherAttendance>>(
       `${this.apiUrl}/${id}`,
       data
@@ -83,7 +83,7 @@ export class AttendanceService {
     );
   }
 
-  getStudentAttendanceOverview(studentId: number): Observable<ApiResponse<{
+  getStudentAttendanceOverview(studentId: string | number): Observable<ApiResponse<{
     current_year: {
       percentage: number;
       present: number;
@@ -122,7 +122,7 @@ export class AttendanceService {
   /**
    * Get student attendance history
    */
-  getStudentAttendance(studentId: number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: StudentAttendance[]; summary: any }>> {
+  getStudentAttendance(studentId: string | number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: StudentAttendance[]; summary: any }>> {
     let params = new HttpParams();
     
     if (filters?.from_date) {
@@ -141,7 +141,7 @@ export class AttendanceService {
   /**
    * Get teacher attendance history
    */
-  getTeacherAttendance(teacherId: number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: TeacherAttendance[]; summary: any }>> {
+  getTeacherAttendance(teacherId: string | number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: TeacherAttendance[]; summary: any }>> {
     let params = new HttpParams();
     
     if (filters?.from_date) {

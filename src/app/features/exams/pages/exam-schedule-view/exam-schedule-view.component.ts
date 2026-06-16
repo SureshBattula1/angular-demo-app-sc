@@ -16,7 +16,7 @@ import { MatDialog } from '@angular/material/dialog';
 export class ExamScheduleViewComponent implements OnInit {
   schedule: any = null;
   loading = false;
-  scheduleId?: number;
+  scheduleId?: string;
   returnTab?: string;
 
   constructor(
@@ -30,7 +30,7 @@ export class ExamScheduleViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.scheduleId = +params['id'];
+        this.scheduleId = params['id'];
         this.loadSchedule();
       }
     });

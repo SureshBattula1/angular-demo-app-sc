@@ -50,7 +50,7 @@ export class PermissionService {
   /**
    * Get single permission by ID
    */
-  getPermission(id: number): Observable<ApiResponse<Permission>> {
+  getPermission(id: string | number): Observable<ApiResponse<Permission>> {
     return this.http.get<ApiResponse<Permission>>(`${this.apiUrl}/${id}`);
   }
 
@@ -64,14 +64,14 @@ export class PermissionService {
   /**
    * Update existing permission
    */
-  updatePermission(id: number, permission: Partial<Permission>): Observable<ApiResponse<Permission>> {
+  updatePermission(id: string | number, permission: Partial<Permission>): Observable<ApiResponse<Permission>> {
     return this.http.put<ApiResponse<Permission>>(`${this.apiUrl}/${id}`, permission);
   }
 
   /**
    * Delete permission
    */
-  deletePermission(id: number): Observable<ApiResponse<void>> {
+  deletePermission(id: string | number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`);
   }
 }

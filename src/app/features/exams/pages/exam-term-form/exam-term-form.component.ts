@@ -19,7 +19,7 @@ export class ExamTermFormComponent implements OnInit {
   termForm!: FormGroup;
   isEditMode = false;
   saving = false;
-  termId: number | undefined = undefined;
+  termId: string | undefined = undefined;
   branches: any[] = [];
   academicYears: AcademicYear[] = [];
   loadingAcademicYears = false;
@@ -46,7 +46,7 @@ export class ExamTermFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.termId = +params['id'];
+        this.termId = params['id'];
         this.isEditMode = !isViewMode; // Only edit mode if NOT view mode
         this.loadTerm();
       }

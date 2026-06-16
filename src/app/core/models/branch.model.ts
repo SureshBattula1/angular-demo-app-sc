@@ -1,10 +1,10 @@
 export interface Branch {
-  id: number;
+  id: string;
   name: string;
   code: string;
   branch_type: 'HeadOffice' | 'RegionalOffice' | 'School' | 'Campus' | 'SubBranch';
-  parent_branch_id?: number;
-  school_id?: number;
+  parent_branch_id?: number | string;
+  school_id?: number | string;
   
   // Location
   address: string;
@@ -119,8 +119,8 @@ export interface BranchFormData {
   name: string;
   code: string;
   branch_type: string;
-  parent_branch_id?: number | null;
-  school_id?: number | null;
+  parent_branch_id?: number | string | null;
+  school_id?: number | string | null;
   address: string;
   city: string;
   state: string;

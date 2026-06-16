@@ -16,7 +16,7 @@ import { ErrorHandlerService } from '../../../../../core/services/error-handler.
 export class AcademicYearFormComponent implements OnInit {
   form: FormGroup;
   isEditMode = false;
-  id: number | null = null;
+  id: string | null = null;
   loading = false;
   submitting = false;
 
@@ -41,7 +41,7 @@ export class AcademicYearFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.isEditMode = true;
-      this.id = +idParam;
+      this.id = idParam;
       this.loadAcademicYear();
     }
   }
