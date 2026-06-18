@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -12,7 +12,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
+import { OverviewContainerComponent } from './components/overview-container.component';
 import { DashboardService } from './dashboard.service';
+import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../branches/services/branch.service';
 import { Subscription } from 'rxjs';
 
@@ -32,12 +34,16 @@ import { Subscription } from 'rxjs';
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule,
-    IndianCurrencyPipe
+    IndianCurrencyPipe,
+    OverviewContainerComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  // User role for role-based UI visibility - use a signal to be reactive
+  userRole = signal<string>('');
+  
   // Date range controls
   selectedPeriod = new FormControl('today');
   customFromDate = new FormControl();
@@ -70,31 +76,65 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private dashboardService: DashboardService,
+    private authService: AuthService,
     private branchService: BranchService
   ) {}
 
   ngOnInit(): void {
+    // Get user role for conditional rendering - handle async loading
+    const currentUser = this.authService.currentUser();
+
+    if (currentUser) {
+      this.setUserRole(currentUser);
+    } else {
+      // If user is not loaded yet, subscribe to currentUser changes
+      const userSub = this.authService.currentUser$.subscribe((user) => {
+        if (user) {
+          this.setUserRole(user);
+        }
+      });
+      this.subscriptions.push(userSub);
+    }
+
     // Explicitly set default branch to 'all' (All Branches)
     this.selectedBranch.setValue('all');
-    
+
     // Load branches first
     this.loadBranches();
-    
-    // Load dashboard data
-    this.loadDashboard();
-    
-    // Auto-refresh every 5 minutes for 'today' view
-    this.autoRefreshInterval = setInterval(() => {
-      if (this.selectedPeriod.value === 'today') {
-        this.loadDashboard(false); // Refresh without showing loader
-      }
-    }, 300000); // 5 minutes
-    
+
     // Listen to period changes
     const periodSub = this.selectedPeriod.valueChanges.subscribe(() => {
-      this.loadDashboard();
+      const role = this.userRole();
+      if (role === 'SuperAdmin' || role === 'Admin' || role === 'BranchAdmin' || role === 'Accountant') {
+        this.loadDashboard();
+      }
     });
     this.subscriptions.push(periodSub);
+  }
+
+  /**
+   * Set user role and start dashboard loading if applicable
+   */
+  private setUserRole(user: any): void {
+    const role = user?.role?.trim() || '';
+    this.userRole.set(role);
+
+    console.log('Dashboard User Role Set:', role, 'for user:', user?.email);
+
+    // Load dashboard data (only for SuperAdmin, Admin, BranchAdmin, and Accountant roles)
+    if (role === 'SuperAdmin' || role === 'Admin' || role === 'BranchAdmin' || role === 'Accountant') {
+      console.log('Loading full dashboard for role:', role);
+      this.loadDashboard();
+
+      // Auto-refresh every 5 minutes for 'today' view
+      this.autoRefreshInterval = setInterval(() => {
+        if (this.selectedPeriod.value === 'today') {
+          this.loadDashboard(false); // Refresh without showing loader
+        }
+      }, 300000); // 5 minutes
+    } else {
+      console.log('Skipping full dashboard for role:', role, '(Teacher/Student see overview only)');
+    }
   }
   
   /**

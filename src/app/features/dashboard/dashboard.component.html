@@ -1,6 +1,27 @@
 <div class="dashboard-container">
-  
-  <!-- Dashboard Header with Date Range Selector -->
+
+  <!-- TEACHER DASHBOARD (Overview only) -->
+  <ng-container *ngIf="userRole() === 'Teacher'">
+    <app-overview-container></app-overview-container>
+  </ng-container>
+
+  <!-- STUDENT DASHBOARD (Overview only) -->
+  <ng-container *ngIf="userRole() === 'Student'">
+    <app-overview-container></app-overview-container>
+  </ng-container>
+
+  <!-- ACCOUNTANT DASHBOARD (Overview + Financial) -->
+  <ng-container *ngIf="userRole() === 'Accountant'">
+    <app-overview-container></app-overview-container>
+  </ng-container>
+
+  <!-- ADMIN DASHBOARD (SuperAdmin, Admin, BranchAdmin - Full dashboard) -->
+  <ng-container *ngIf="userRole() === 'SuperAdmin' || userRole() === 'Admin' || userRole() === 'BranchAdmin'">
+    <!-- Role-Based Overview Container -->
+    <app-overview-container></app-overview-container>
+
+    <!-- Dashboard Details (only for SuperAdmin, Admin, BranchAdmin) -->
+    <!-- Dashboard Header with Date Range Selector -->
   <div class="dashboard-header">
     
     <!-- Filters Row: Branch + Date Range -->
@@ -379,11 +400,7 @@
           </div>
         </mat-card-content>
       </mat-card>
-    </div>
+    <!-- End Dashboard Details (only shown for Admin roles) -->
+  </ng-container>
 
-   
-
-
-
-  </div>
 </div>
