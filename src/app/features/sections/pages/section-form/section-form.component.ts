@@ -91,6 +91,8 @@ export class SectionFormComponent implements OnInit {
             this.loadGradesForBranch(Number(response.data.branch_id));
             this.sectionForm.get('grade_level')?.enable({ emitEvent: false });
           }
+          // Branch is immutable once a section exists (backend ignores branch_id on update).
+          this.sectionForm.get('branch_id')?.disable({ emitEvent: false });
           this.isLoading = false;
         }
       },

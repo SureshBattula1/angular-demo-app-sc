@@ -89,6 +89,8 @@ export class DepartmentFormComponent implements OnInit {
             data.established_date = new Date(dateOnly);
           }
           this.departmentForm.patchValue(data);
+          // Branch is immutable once a department exists (backend ignores branch_id on update).
+          this.departmentForm.get('branch_id')?.disable({ emitEvent: false });
           this.isLoading = false;
         }
       },
