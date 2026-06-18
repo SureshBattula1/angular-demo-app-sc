@@ -12,7 +12,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
-import { OverviewContainerComponent } from './components/overview-container.component';
 import { DashboardService } from './dashboard.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../branches/services/branch.service';
@@ -34,8 +33,7 @@ import { Subscription } from 'rxjs';
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule,
-    IndianCurrencyPipe,
-    OverviewContainerComponent
+    IndianCurrencyPipe
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']

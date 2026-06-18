@@ -19,11 +19,6 @@ export interface DashboardResponse {
   data: DashboardStats;
 }
 
-export interface OverviewResponse {
-  success: boolean;
-  data: any;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -58,34 +53,6 @@ export class DashboardService {
     }
     
     return this.http.get<DashboardResponse>(`${this.apiUrl}/stats`, { params: httpParams });
-  }
-
-  /**
-   * Get SuperAdmin overview - all branches and financial data
-   */
-  getSuperAdminOverview(): Observable<OverviewResponse> {
-    return this.http.get<OverviewResponse>(`${this.apiUrl}/overview/superadmin`);
-  }
-
-  /**
-   * Get Admin/Branch Admin overview
-   */
-  getAdminOverview(branchId: number | string): Observable<OverviewResponse> {
-    return this.http.get<OverviewResponse>(`${this.apiUrl}/overview/admin/${branchId}`);
-  }
-
-  /**
-   * Get Teacher overview
-   */
-  getTeacherOverview(): Observable<OverviewResponse> {
-    return this.http.get<OverviewResponse>(`${this.apiUrl}/overview/teacher`);
-  }
-
-  /**
-   * Get Student overview
-   */
-  getStudentOverview(): Observable<OverviewResponse> {
-    return this.http.get<OverviewResponse>(`${this.apiUrl}/overview/student`);
   }
 
 }
