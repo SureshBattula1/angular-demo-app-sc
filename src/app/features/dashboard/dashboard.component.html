@@ -391,4 +391,222 @@
     <!-- End Dashboard Details (only shown for Admin roles) -->
   </ng-container>
 
+  <!-- TEACHER DASHBOARD (simplified: teacher/student counts + attendance) -->
+  <ng-container *ngIf="userRole() === 'Teacher'">
+
+    <div class="dashboard-header">
+      <h2 class="dashboard-title">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard
+      </h2>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-container">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-raised-button color="primary" (click)="loadDashboard()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+
+    <div *ngIf="!loading && !error && dashboardData" class="dashboard-content">
+
+      <!-- OVERVIEW CARDS -->
+      <div class="stats-grid">
+        <!-- Teachers Card -->
+        <div class="stat-card success">
+          <div class="card-icon">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="card-content">
+            <div class="stat-value">{{ dashboardData.overview.total_teachers | number }}</div>
+            <div class="stat-label">Total Teachers</div>
+          </div>
+        </div>
+
+        <!-- Students Card -->
+        <div class="stat-card primary">
+          <div class="card-icon">
+            <mat-icon>school</mat-icon>
+          </div>
+          <div class="card-content">
+            <div class="stat-value">{{ dashboardData.overview.total_students | number }}</div>
+            <div class="stat-label">Total Students</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE CARDS -->
+      <div class="charts-grid">
+        <!-- Teacher Attendance Card -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>how_to_reg</mat-icon>
+              Teacher Attendance
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="attendance-summary">
+              <div class="attendance-circle" [style.--percentage]="dashboardData.attendance.teachers.rate">
+                <svg class="progress-ring" width="140" height="140">
+                  <circle class="progress-ring-circle-bg" cx="70" cy="70" r="60"></circle>
+                  <circle class="progress-ring-circle" cx="70" cy="70" r="60"
+                          [style.strokeDashoffset]="calculateStrokeDashoffset(dashboardData.attendance.teachers.rate)">
+                  </circle>
+                </svg>
+                <div class="percentage-text">{{ dashboardData.attendance.teachers.rate }}%</div>
+              </div>
+              <div class="attendance-details">
+                <div class="detail-row">
+                  <span class="label">Present:</span>
+                  <span class="value success">{{ dashboardData.attendance.teachers.present }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Absent:</span>
+                  <span class="value danger">{{ dashboardData.attendance.teachers.absent }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">On Leave:</span>
+                  <span class="value warning">{{ dashboardData.attendance.teachers.leaves }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Student Attendance Card -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>school</mat-icon>
+              Student Attendance
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="attendance-summary">
+              <div class="attendance-circle" [style.--percentage]="dashboardData.attendance.students.rate">
+                <svg class="progress-ring" width="140" height="140">
+                  <circle class="progress-ring-circle-bg" cx="70" cy="70" r="60"></circle>
+                  <circle class="progress-ring-circle" cx="70" cy="70" r="60"
+                          [style.strokeDashoffset]="calculateStrokeDashoffset(dashboardData.attendance.students.rate)">
+                  </circle>
+                </svg>
+                <div class="percentage-text">{{ dashboardData.attendance.students.rate }}%</div>
+              </div>
+              <div class="attendance-details">
+                <div class="detail-row">
+                  <span class="label">Present:</span>
+                  <span class="value success">{{ dashboardData.attendance.students.present }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Absent:</span>
+                  <span class="value danger">{{ dashboardData.attendance.students.absent }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">On Leave:</span>
+                  <span class="value warning">{{ dashboardData.attendance.students.leaves }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- STUDENT DASHBOARD (simplified: student count + student attendance) -->
+  <ng-container *ngIf="userRole() === 'Student'">
+
+    <div class="dashboard-header">
+      <h2 class="dashboard-title">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard
+      </h2>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-container">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-raised-button color="primary" (click)="loadDashboard()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+
+    <div *ngIf="!loading && !error && dashboardData" class="dashboard-content">
+
+      <!-- OVERVIEW CARDS -->
+      <div class="stats-grid">
+        <!-- Students Card -->
+        <div class="stat-card primary">
+          <div class="card-icon">
+            <mat-icon>school</mat-icon>
+          </div>
+          <div class="card-content">
+            <div class="stat-value">{{ dashboardData.overview.total_students | number }}</div>
+            <div class="stat-label">Total Students</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE CARDS -->
+      <div class="charts-grid">
+        <!-- Student Attendance Card -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>school</mat-icon>
+              Student Attendance
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="attendance-summary">
+              <div class="attendance-circle" [style.--percentage]="dashboardData.attendance.students.rate">
+                <svg class="progress-ring" width="140" height="140">
+                  <circle class="progress-ring-circle-bg" cx="70" cy="70" r="60"></circle>
+                  <circle class="progress-ring-circle" cx="70" cy="70" r="60"
+                          [style.strokeDashoffset]="calculateStrokeDashoffset(dashboardData.attendance.students.rate)">
+                  </circle>
+                </svg>
+                <div class="percentage-text">{{ dashboardData.attendance.students.rate }}%</div>
+              </div>
+              <div class="attendance-details">
+                <div class="detail-row">
+                  <span class="label">Present:</span>
+                  <span class="value success">{{ dashboardData.attendance.students.present }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Absent:</span>
+                  <span class="value danger">{{ dashboardData.attendance.students.absent }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">On Leave:</span>
+                  <span class="value warning">{{ dashboardData.attendance.students.leaves }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </div>
+  </ng-container>
+
 </div>

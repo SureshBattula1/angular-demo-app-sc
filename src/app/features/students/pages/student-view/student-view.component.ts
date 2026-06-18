@@ -54,6 +54,10 @@ export class StudentViewComponent implements OnInit {
   
   // Flag to check if this is a student viewing their own profile
   isStudentView = false;
+
+  // True when the logged-in user has the Student role (restricts view to Info only,
+  // no delete, and only their own record — enforced on the backend too)
+  isStudent = false;
   
   // Attendance data
   attendanceStats = {
@@ -135,6 +139,9 @@ export class StudentViewComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.isStudentView = params['studentView'] === 'true';
     });
+
+    // Track student role (used to hide the Delete action on their own record)
+    this.isStudent = this.authService.currentUser()?.role === 'Student';
   }
   
   /**

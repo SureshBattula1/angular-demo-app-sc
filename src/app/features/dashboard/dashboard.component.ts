@@ -100,12 +100,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Load branches first
     this.loadBranches();
 
-    // Listen to period changes
+    // Listen to period changes (period toggle is only shown for admin roles,
+    // but reloading is safe for any role)
     const periodSub = this.selectedPeriod.valueChanges.subscribe(() => {
-      const role = this.userRole();
-      if (role === 'SuperAdmin' || role === 'Admin' || role === 'BranchAdmin' || role === 'Accountant') {
-        this.loadDashboard();
-      }
+      this.loadDashboard();
     });
     this.subscriptions.push(periodSub);
   }
@@ -119,20 +117,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     console.log('Dashboard User Role Set:', role, 'for user:', user?.email);
 
-    // Load dashboard data (only for SuperAdmin, Admin, BranchAdmin, and Accountant roles)
-    if (role === 'SuperAdmin' || role === 'Admin' || role === 'BranchAdmin' || role === 'Accountant') {
-      console.log('Loading full dashboard for role:', role);
-      this.loadDashboard();
+    // Load dashboard data for ALL roles. The backend scopes the data to the user's
+    // accessible branches and the template renders a role-appropriate subset:
+    //  - SuperAdmin / Admin / BranchAdmin: full dashboard
+    //  - Teacher: total teachers, total students, teacher + student attendance
+    //  - Student: total students, student attendance
+    this.loadDashboard();
 
-      // Auto-refresh every 5 minutes for 'today' view
-      this.autoRefreshInterval = setInterval(() => {
-        if (this.selectedPeriod.value === 'today') {
-          this.loadDashboard(false); // Refresh without showing loader
-        }
-      }, 300000); // 5 minutes
-    } else {
-      console.log('Skipping full dashboard for role:', role, '(Teacher/Student see overview only)');
-    }
+    // Auto-refresh every 5 minutes for 'today' view
+    this.autoRefreshInterval = setInterval(() => {
+      if (this.selectedPeriod.value === 'today') {
+        this.loadDashboard(false); // Refresh without showing loader
+      }
+    }, 300000); // 5 minutes
   }
   
   /**

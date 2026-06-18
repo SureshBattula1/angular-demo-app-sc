@@ -59,38 +59,9 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         if (response.success) {
           this.errorHandler.showSuccess('Login successful! Welcome back.');
-          
-          // Check if user is a student and redirect to their profile
-          if (response.user && response.user.role === 'Student') {
-            console.log('Student login detected, fetching student record...');
-            // Get student ID by user_id and redirect to their profile
-            this.authService.getStudentByUserId(response.user.id).subscribe({
-              next: (studentResponse: any) => {
-                console.log('Student response:', studentResponse);
-                if (studentResponse.success && studentResponse.data) {
-                  console.log('Redirecting to student view:', studentResponse.data.id);
-                  // Use replaceUrl to prevent going back to login
-                  this.router.navigate(['/students/view', studentResponse.data.id], {
-                    queryParams: { studentView: 'true' },
-                    replaceUrl: true
-                  });
-                } else {
-                  // Show error if student record not found
-                  this.errorHandler.showError('Student profile not found. Please contact administrator.');
-                  this.authService.logout().subscribe();
-                }
-              },
-              error: (err) => {
-                console.error('Error fetching student:', err);
-                // Show error instead of fallback
-                this.errorHandler.showError('Failed to load student profile. Please contact administrator.');
-                this.authService.logout().subscribe();
-              }
-            });
-          } else {
-            // For non-student users, navigate to returnUrl
-            this.router.navigate([this.returnUrl]);
-          }
+
+          // All roles (including Students) land on the role-based dashboard
+          this.router.navigate([this.returnUrl]);
         } else {
           this.errorHandler.showError(response.message || 'Login failed');
         }
