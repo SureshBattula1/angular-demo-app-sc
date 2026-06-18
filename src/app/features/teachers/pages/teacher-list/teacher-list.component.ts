@@ -62,14 +62,12 @@ export class TeacherListComponent implements OnInit {
       { key: 'experience_years', header: 'Experience', sortable: true, width: '120px' },
       { key: 'nationality', header: 'Nationality', sortable: true, width: '120px' },
       { key: 'religion', header: 'Religion', sortable: true, width: '120px' },
-      { key: 'aadhaar_number', header: 'Aadhaar', width: '140px' },
-      { key: 'pan_number', header: 'PAN', width: '130px' },
+      // Aadhaar / PAN / Salary removed from the list (sensitive PII/financial) — shown on the detail view only.
       { key: 'city', header: 'City', sortable: true, width: '130px' },
       { key: 'state', header: 'State', sortable: true, width: '130px' },
       { key: 'emergency_contact_name', header: 'Emergency Contact', width: '150px' },
       { key: 'emergency_contact_phone', header: 'Emergency Phone', width: '140px' },
       { key: 'joining_date', header: 'Joining Date', sortable: true, width: '130px' },
-      { key: 'basic_salary', header: 'Salary', sortable: true, width: '120px' },
       { key: 'teacher_status', header: 'Status', type: 'badge', width: '110px', align: 'center' },
       {
         key: 'account_status_label',

@@ -241,7 +241,7 @@ export class TeacherFormComponent implements OnInit {
       date_of_birth: ['', Validators.required],
       place_of_birth: [''],
       // PAN format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F). Pattern accepts a-z/A-Z; we normalize to uppercase on blur.
-      pan_number: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10), Validators.pattern(/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/)]],
+      pan_number: ['', [Validators.minLength(10), Validators.maxLength(10), Validators.pattern(/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/)]],
       aadhaar_number: ['', [Validators.pattern(/^[0-9]{12}$/)]],
       passport_number: [''],
       passport_expiry: [''],
