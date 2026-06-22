@@ -188,7 +188,8 @@ export class SubjectListComponent implements OnInit {
 
   private loadGradesForBranch(branchId: string | number): void {
     this.setGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
-    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
+    // branchId may be an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         const options = (response.success && response.data)
           ? response.data.filter((g: any) => g.is_active).map((g: any) => ({ value: g.value, label: g.label }))

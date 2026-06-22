@@ -171,7 +171,8 @@ export class FeePaymentFormComponent implements OnInit {
       return;
     }
     this.loadingGrades = true;
-    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
+    // branchId may be an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.grades = response.data;

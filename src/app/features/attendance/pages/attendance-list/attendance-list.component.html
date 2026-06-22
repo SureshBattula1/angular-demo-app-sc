@@ -173,8 +173,8 @@
 
         <!-- Breakdown Section -->
         <div class="breakdown-section">
-          <!-- Attendance Status Breakdown -->
-          <mat-card class="breakdown-card"
+          <!-- Attendance Status Breakdown (full width) -->
+          <mat-card class="breakdown-card breakdown-card--full"
             *ngIf="teacherAttendanceDashboard.by_status && teacherAttendanceDashboard.by_status.length > 0">
             <mat-card-header>
               <mat-card-title>
@@ -194,35 +194,6 @@
                     <span class="category-meta">{{ item.count }} teachers</span>
                   </div>
                   <span class="category-amount">{{ item.percentage || 0 }}%</span>
-                </div>
-              </div>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Department Wise Breakdown -->
-          <mat-card class="breakdown-card"
-            *ngIf="teacherAttendanceDashboard.by_department && teacherAttendanceDashboard.by_department.length > 0">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon class="department-icon">business</mat-icon>
-                Attendance by Department
-              </mat-card-title>
-            </mat-card-header>
-            <mat-divider></mat-divider>
-            <mat-card-content>
-              <div class="category-list">
-                <div class="category-item" *ngFor="let item of teacherAttendanceDashboard.by_department">
-                  <div class="category-info">
-                    <span class="category-name">{{ item.department_name }}</span>
-                    <span class="category-meta">
-                      {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
-                    </span>
-                  </div>
-                  <span class="category-amount">{{ item.attendance_percentage || 0 }}%</span>
-                </div>
-                <div *ngIf="teacherAttendanceDashboard.by_department.length === 0" class="empty-state">
-                  <mat-icon>info</mat-icon>
-                  <p>No department data available</p>
                 </div>
               </div>
             </mat-card-content>
@@ -313,7 +284,7 @@
         </div>
 
         <!-- Breakdown Section -->
-        <div class="breakdown-section">
+        <div class="breakdown-section breakdown-section--stacked">
           <!-- Attendance Status Breakdown -->
           <mat-card class="breakdown-card"
             *ngIf="studentAttendanceDashboard.by_status && studentAttendanceDashboard.by_status.length > 0">
@@ -356,7 +327,7 @@
                   <div class="category-info">
                     <span class="category-name">{{ getGradeLabel(item.grade) }}</span>
                     <span class="category-meta">
-                      {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                      {{ item.present }} present • {{ item.absent }} absent • {{ item.late }} late • {{ item.sick_leave }} sick leave • {{ item.leave }} leave • {{ item.total }} total
                     </span>
                   </div>
                   <div class="amount-group">
@@ -387,7 +358,7 @@
                   <div class="category-info">
                     <span class="category-name">{{ getGradeLabel(item.grade) }} - Section {{ item.section }}</span>
                     <span class="category-meta">
-                      {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                      {{ item.present }} present • {{ item.absent }} absent • {{ item.late }} late • {{ item.sick_leave }} sick leave • {{ item.leave }} leave • {{ item.total }} total
                     </span>
                   </div>
                   <span class="category-amount">{{ item.attendance_percentage || 0 }}%</span>
@@ -486,17 +457,17 @@
 
                 <div class="attendance-table" *ngIf="getStudentClassRows().length > 0">
                   <table mat-table [dataSource]="getStudentClassRows()" class="mat-elevation-z2">
-                    <ng-container matColumnDef="roll_number">
-                      <th mat-header-cell *matHeaderCellDef>Roll No.</th>
-                      <td mat-cell *matCellDef="let s">{{ s.roll_number || '-' }}</td>
-                    </ng-container>
                     <ng-container matColumnDef="student_name">
                       <th mat-header-cell *matHeaderCellDef>Student Name</th>
                       <td mat-cell *matCellDef="let s">{{ s.first_name }} {{ s.last_name }}</td>
                     </ng-container>
-                    <ng-container matColumnDef="admission_number">
-                      <th mat-header-cell *matHeaderCellDef>Admission No.</th>
-                      <td mat-cell *matCellDef="let s">{{ s.admission_number || '-' }}</td>
+                    <ng-container matColumnDef="phone">
+                      <th mat-header-cell *matHeaderCellDef>Phone</th>
+                      <td mat-cell *matCellDef="let s">{{ s.phone || '-' }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="total_records">
+                      <th mat-header-cell *matHeaderCellDef>Total Attendance Taken</th>
+                      <td mat-cell *matCellDef="let s"><span class="count-badge total-badge">{{ s.total_records || 0 }}</span></td>
                     </ng-container>
                     <ng-container matColumnDef="present">
                       <th mat-header-cell *matHeaderCellDef>Present</th>
@@ -539,8 +510,8 @@
                         </span>
                       </td>
                     </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="['roll_number', 'student_name', 'admission_number', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
-                    <tr mat-row *matRowDef="let row; columns: ['roll_number', 'student_name', 'admission_number', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
+                    <tr mat-header-row *matHeaderRowDef="['student_name', 'phone', 'total_records', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
+                    <tr mat-row *matRowDef="let row; columns: ['student_name', 'phone', 'total_records', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
                   </table>
                 </div>
 
@@ -620,11 +591,6 @@
                 <div class="attendance-table"
                   *ngIf="teacherAttendanceByBranch.teachers && teacherAttendanceByBranch.teachers.length > 0">
                   <table mat-table [dataSource]="teacherAttendanceByBranch.teachers" class="mat-elevation-z2">
-                    <ng-container matColumnDef="employee_id">
-                      <th mat-header-cell *matHeaderCellDef>Employee ID</th>
-                      <td mat-cell *matCellDef="let teacher">{{ teacher.employee_id || '-' }}</td>
-                    </ng-container>
-
                     <ng-container matColumnDef="teacher_name">
                       <th mat-header-cell *matHeaderCellDef>Teacher Name</th>
                       <td mat-cell *matCellDef="let teacher">
@@ -632,14 +598,21 @@
                       </td>
                     </ng-container>
 
-                    <ng-container matColumnDef="department">
-                      <th mat-header-cell *matHeaderCellDef>Department</th>
-                      <td mat-cell *matCellDef="let teacher">{{ teacher.department_name || '-' }}</td>
+                    <ng-container matColumnDef="phone">
+                      <th mat-header-cell *matHeaderCellDef>Phone</th>
+                      <td mat-cell *matCellDef="let teacher">{{ teacher.user?.phone || teacher.phone || '-' }}</td>
                     </ng-container>
 
                     <ng-container matColumnDef="designation">
                       <th mat-header-cell *matHeaderCellDef>Designation</th>
                       <td mat-cell *matCellDef="let teacher">{{ teacher.designation || '-' }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="total_records">
+                      <th mat-header-cell *matHeaderCellDef>Total Attendance Taken</th>
+                      <td mat-cell *matCellDef="let teacher">
+                        <span class="count-badge total-badge">{{ teacher.total_records || 0 }}</span>
+                      </td>
                     </ng-container>
 
                     <ng-container matColumnDef="present">
@@ -701,10 +674,10 @@
                     </ng-container>
 
                     <tr mat-header-row
-                      *matHeaderRowDef="['employee_id', 'teacher_name', 'department', 'designation', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']">
+                      *matHeaderRowDef="['teacher_name', 'phone', 'designation', 'total_records', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']">
                     </tr>
                     <tr mat-row
-                      *matRowDef="let row; columns: ['employee_id', 'teacher_name', 'department', 'designation', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']">
+                      *matRowDef="let row; columns: ['teacher_name', 'phone', 'designation', 'total_records', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']">
                     </tr>
                   </table>
                 </div>

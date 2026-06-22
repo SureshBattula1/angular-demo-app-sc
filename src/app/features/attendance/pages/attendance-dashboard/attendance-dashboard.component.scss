@@ -402,6 +402,11 @@
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
+
+  // Stack each card full-width, one per row
+  &--stacked {
+    grid-template-columns: 1fr;
+  }
 }
 
 .breakdown-card {

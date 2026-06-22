@@ -664,7 +664,7 @@ export class ExamListComponent implements OnInit, OnDestroy {
   loadExamTermsForFilter(branchId?: number | string): void {
     const params: Record<string, unknown> = { is_active: true };
     if (branchId !== undefined && branchId !== null && branchId !== '') {
-      params['branch_id'] = Number(branchId);
+      params['branch_id'] = branchId; // hashid string when HASHIDS_ENABLED; never Number() it (→ NaN)
     }
     this.examTermService.getExamTerms(params).subscribe({
       next: (response: any) => {
@@ -693,7 +693,7 @@ export class ExamListComponent implements OnInit, OnDestroy {
   loadExamsForScheduleFilter(branchId?: number | string): void {
     const params: Record<string, unknown> = { is_active: true };
     if (branchId !== undefined && branchId !== null && branchId !== '') {
-      params['branch_id'] = Number(branchId);
+      params['branch_id'] = branchId; // hashid string when HASHIDS_ENABLED; never Number() it (→ NaN)
     }
     this.examService.getExams(params).subscribe({
       next: (response: any) => {
@@ -715,7 +715,7 @@ export class ExamListComponent implements OnInit, OnDestroy {
   loadGradesForScheduleFilter(branchId?: number | string): void {
     const params: Record<string, unknown> = {};
     if (branchId !== undefined && branchId !== null && branchId !== '') {
-      params['branch_id'] = Number(branchId);
+      params['branch_id'] = branchId; // hashid string when HASHIDS_ENABLED; never Number() it (→ NaN)
     }
     this.gradeService.getGrades(params).subscribe({
       next: (response: any) => {
@@ -791,7 +791,7 @@ export class ExamListComponent implements OnInit, OnDestroy {
       return;
     }
     this.sectionService.getSections({
-      branch_id: Number(branchId),
+      branch_id: branchId,
       grade_level: gradeLevel,
       is_active: true,
       per_page: 500

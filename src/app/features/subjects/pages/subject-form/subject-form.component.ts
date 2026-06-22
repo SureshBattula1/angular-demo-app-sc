@@ -39,7 +39,7 @@ export class SubjectFormComponent implements OnInit {
   loadingTeachers = false;
   loadingGrades = false;
   
-  private selectedBranchId: number | null = null;
+  private selectedBranchId: string | number | null = null;
 
   subjectTypes = [
     { value: 'Core', label: 'Core', icon: 'star' },
@@ -106,7 +106,8 @@ export class SubjectFormComponent implements OnInit {
           // Patch without triggering branch change handlers; hydrate dropdowns first.
           this.subjectForm.patchValue(response.data, { emitEvent: false });
 
-          const branchId = Number((response.data as any).branch_id || 0) || null;
+          // branch_id is an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+          const branchId = (response.data as any).branch_id ?? null;
           this.selectedBranchId = branchId;
           if (branchId) {
             this.loadDepartmentsForBranch(branchId, () => {
@@ -156,8 +157,9 @@ export class SubjectFormComponent implements OnInit {
   }
 
   private setupBranchDependentDropdowns(): void {
-    this.subjectForm.get('branch_id')?.valueChanges.subscribe((branchId: number | null) => {
-      this.selectedBranchId = branchId ? Number(branchId) : null;
+    this.subjectForm.get('branch_id')?.valueChanges.subscribe((branchId: string | number | null) => {
+      // branchId is an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+      this.selectedBranchId = branchId ?? null;
 
       // Clear dependent fields + options
       this.departments = [];
@@ -177,7 +179,7 @@ export class SubjectFormComponent implements OnInit {
     });
   }
 
-  private loadDepartmentsForBranch(branchId: number, done?: () => void): void {
+  private loadDepartmentsForBranch(branchId: string | number, done?: () => void): void {
     this.loadingDepartments = true;
     this.departmentService.getDepartments({ is_active: true, branch_id: branchId }).subscribe({
       next: (response: any) => {
@@ -193,7 +195,7 @@ export class SubjectFormComponent implements OnInit {
     });
   }
 
-  private loadGradesForBranch(branchId: number, done?: () => void): void {
+  private loadGradesForBranch(branchId: string | number, done?: () => void): void {
     this.loadingGrades = true;
     this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response: any) => {
@@ -217,7 +219,7 @@ export class SubjectFormComponent implements OnInit {
     this.loadingTeachers = false;
   }
 
-  private loadTeachersForBranch(branchId: number, done?: () => void): void {
+  private loadTeachersForBranch(branchId: string | number, done?: () => void): void {
     this.loadingTeachers = true;
     this.teacherService.getTeachers({ is_active: true, branch_id: branchId, per_page: 1000 }).subscribe({
       next: (response: any) => {

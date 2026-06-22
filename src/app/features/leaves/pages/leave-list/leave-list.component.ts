@@ -626,7 +626,7 @@ export class LeaveListComponent implements OnInit, OnDestroy {
     // Filter by branch if selected
     if (selectedBranch) {
       filteredSections = filteredSections.filter(
-        section => Number(section.branch_id) === Number(selectedBranch)
+        section => String(section.branch_id) === String(selectedBranch)
       );
     }
     
@@ -666,7 +666,8 @@ export class LeaveListComponent implements OnInit, OnDestroy {
 
   /** Load grades for the selected branch and set advanced search grade options */
   loadGradesForBranch(branchId: string | number): void {
-    const id = branchId === null || branchId === undefined ? undefined : Number(branchId);
+    // branchId may be an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+    const id = branchId === null || branchId === undefined ? undefined : branchId;
     this.gradeService.getGrades(id != null ? { branch_id: id } : undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
@@ -694,7 +695,7 @@ export class LeaveListComponent implements OnInit, OnDestroy {
       return;
     }
     this.sectionService.getSections({
-      branch_id: Number(branchId),
+      branch_id: branchId,
       grade_level: grade,
       per_page: 1000,
       is_active: true

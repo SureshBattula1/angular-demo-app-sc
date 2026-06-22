@@ -367,7 +367,7 @@
             </div>
 
             <!-- Breakdown Section -->
-            <div class="breakdown-section">
+            <div class="breakdown-section breakdown-section--stacked">
                 <!-- Attendance Status Breakdown -->
                 <mat-card class="breakdown-card"
                     *ngIf="studentAttendanceDashboard.by_status && studentAttendanceDashboard.by_status.length > 0">
@@ -411,7 +411,7 @@
                                 <div class="category-info">
                                     <span class="category-name">{{ getGradeLabel(item.grade) }}</span>
                                     <span class="category-meta">
-                                        {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                                        {{ item.present }} present • {{ item.absent }} absent • {{ item.late }} late • {{ item.sick_leave }} sick leave • {{ item.leave }} leave • {{ item.total }} total
                                     </span>
                                 </div>
                                 <div class="amount-group">
@@ -443,7 +443,7 @@
                                     <span class="category-name">{{ getGradeLabel(item.grade) }} - Section {{
                                         item.section }}</span>
                                     <span class="category-meta">
-                                        {{ item.present }} present • {{ item.absent }} absent • {{ item.total }} total
+                                        {{ item.present }} present • {{ item.absent }} absent • {{ item.late }} late • {{ item.sick_leave }} sick leave • {{ item.leave }} leave • {{ item.total }} total
                                     </span>
                                 </div>
                                 <span class="category-amount">{{ item.attendance_percentage || 0 }}%</span>
@@ -537,17 +537,17 @@
 
                             <div class="attendance-table" *ngIf="getStudentClassRows().length > 0">
                                 <table mat-table [dataSource]="getStudentClassRows()" class="mat-elevation-z2">
-                                    <ng-container matColumnDef="roll_number">
-                                        <th mat-header-cell *matHeaderCellDef>Roll No.</th>
-                                        <td mat-cell *matCellDef="let s">{{ s.roll_number || '-' }}</td>
-                                    </ng-container>
                                     <ng-container matColumnDef="student_name">
                                         <th mat-header-cell *matHeaderCellDef>Student Name</th>
                                         <td mat-cell *matCellDef="let s">{{ s.first_name }} {{ s.last_name }}</td>
                                     </ng-container>
-                                    <ng-container matColumnDef="admission_number">
-                                        <th mat-header-cell *matHeaderCellDef>Admission No.</th>
-                                        <td mat-cell *matCellDef="let s">{{ s.admission_number || '-' }}</td>
+                                    <ng-container matColumnDef="phone">
+                                        <th mat-header-cell *matHeaderCellDef>Phone</th>
+                                        <td mat-cell *matCellDef="let s">{{ s.phone || '-' }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="total_records">
+                                        <th mat-header-cell *matHeaderCellDef>Total Attendance Taken</th>
+                                        <td mat-cell *matCellDef="let s"><span class="count-badge total-badge">{{ s.total_records || 0 }}</span></td>
                                     </ng-container>
                                     <ng-container matColumnDef="present">
                                         <th mat-header-cell *matHeaderCellDef>Present</th>
@@ -590,8 +590,8 @@
                                             </span>
                                         </td>
                                     </ng-container>
-                                    <tr mat-header-row *matHeaderRowDef="['roll_number', 'student_name', 'admission_number', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
-                                    <tr mat-row *matRowDef="let row; columns: ['roll_number', 'student_name', 'admission_number', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
+                                    <tr mat-header-row *matHeaderRowDef="['student_name', 'phone', 'total_records', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: ['student_name', 'phone', 'total_records', 'present', 'absent', 'late', 'sick_leave', 'leave', 'attendance_percentage', 'latest_status']"></tr>
                                 </table>
                             </div>
 

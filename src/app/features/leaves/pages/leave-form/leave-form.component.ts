@@ -439,8 +439,8 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
           if (!section.is_active) return false;
           // Type-safe comparison: convert both to strings for grade_level
           const matchesGrade = String(section.grade_level) === String(this.selectedGrade);
-          // Type-safe comparison: convert both to numbers for branch_id
-          const matchesBranch = Number(section.branch_id) === Number(this.selectedBranch);
+          // Compare as strings: ids are opaque hashid strings when HASHIDS_ENABLED is on (Number() → NaN).
+          const matchesBranch = String(section.branch_id) === String(this.selectedBranch);
           return matchesGrade && matchesBranch;
         }
       );
@@ -452,7 +452,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
     } else if (this.selectedBranch) {
       // Filter by branch only (grade not selected)
       this.sections = this.allSections.filter(
-        section => section.is_active && Number(section.branch_id) === Number(this.selectedBranch)
+        section => section.is_active && String(section.branch_id) === String(this.selectedBranch)
       );
     } else {
       // No filters selected - show all active sections

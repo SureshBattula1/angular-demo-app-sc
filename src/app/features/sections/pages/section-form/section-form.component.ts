@@ -47,7 +47,8 @@ export class SectionFormComponent implements OnInit {
     // Load grades based on selected branch
     this.sectionForm.get('branch_id')?.valueChanges.subscribe((branchId) => {
       if (branchId) {
-        this.loadGradesForBranch(Number(branchId));
+        // branchId is an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+        this.loadGradesForBranch(branchId);
         this.sectionForm.get('grade_level')?.enable({ emitEvent: false });
       } else {
         this.grades = [];
@@ -88,7 +89,7 @@ export class SectionFormComponent implements OnInit {
           this.sectionForm.patchValue(response.data);
           // Ensure grades are loaded for this section's branch (edit mode)
           if (response.data.branch_id) {
-            this.loadGradesForBranch(Number(response.data.branch_id));
+            this.loadGradesForBranch(response.data.branch_id);
             this.sectionForm.get('grade_level')?.enable({ emitEvent: false });
           }
           // Branch is immutable once a section exists (backend ignores branch_id on update).
@@ -119,9 +120,9 @@ export class SectionFormComponent implements OnInit {
   /**
    * Load grades from API
    */
-  private loadGradesForBranch(branchId: number): void {
+  private loadGradesForBranch(branchId: string | number): void {
     this.loadingGrades = true;
-    
+
     this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {

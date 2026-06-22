@@ -41,7 +41,9 @@ export class AttendanceFormComponent implements OnInit {
   students: AttendanceStudent[] = [];
   teachers: any[] = [];
   
-  selectedBranch: number | null = null;
+  // IDs are opaque hashid strings once HASHIDS_ENABLED is on (API returns string ids).
+  // Keep number for backwards-compatibility when encryption is off.
+  selectedBranch: string | number | null = null;
   selectedGrade: string | null = null;
   selectedSection: string | null = null;
   /** Local calendar date for mat-datepicker; API uses {@link formatDateForApi}. */
@@ -112,7 +114,7 @@ export class AttendanceFormComponent implements OnInit {
   /**
    * Load grades for a branch (branch-wise)
    */
-  private loadGradesForBranch(branchId: number): void {
+  private loadGradesForBranch(branchId: string | number): void {
     this.loadingGrades = true;
     this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response: any) => {

@@ -103,7 +103,7 @@ export class AttendanceListComponent implements OnInit {
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'student_attendance.view' },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'student_attendance.edit' },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'student_attendance.delete' },
+      // Delete intentionally omitted: the backend disallows attendance deletion (re-mark/edit instead).
       { icon: 'assessment', label: 'Student Report', color: 'accent', action: (row) => this.viewStudentReport(row), permission: 'student_attendance.report' }
     ],
     selectable: true,
@@ -124,7 +124,7 @@ export class AttendanceListComponent implements OnInit {
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewAttendance(row), permission: 'teacher_attendance.view' },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editAttendance(row), permission: 'teacher_attendance.edit' },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteAttendance(row), permission: 'teacher_attendance.delete' },
+      // Delete intentionally omitted: the backend disallows attendance deletion (re-mark/edit instead).
       { icon: 'assessment', label: 'Teacher Report', color: 'accent', action: (row) => this.viewTeacherReport(row), permission: 'teacher_attendance.report' }
     ],
     selectable: true,
@@ -773,7 +773,8 @@ export class AttendanceListComponent implements OnInit {
    */
   private loadGradesForBranch(branchId: string | number): void {
     this.setStudentGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
-    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
+    // branchId may be an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           const gradeOptions = response.data
@@ -795,7 +796,7 @@ export class AttendanceListComponent implements OnInit {
    */
   private loadSectionsForBranchAndGrade(branchId: string | number, grade: string): void {
     this.setStudentSectionOptions([{ value: '', label: 'Loading sections...', disabled: true }]);
-    this.sectionService.getSections({ branch_id: Number(branchId), grade_level: grade, per_page: 1000, is_active: true }).subscribe({
+    this.sectionService.getSections({ branch_id: branchId, grade_level: grade, per_page: 1000, is_active: true }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           const sectionOptions = response.data

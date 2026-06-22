@@ -426,11 +426,20 @@ app-data-table {
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
+
+  // Stack each card full-width, one per row
+  &--stacked {
+    grid-template-columns: 1fr;
+  }
 }
 
 .breakdown-card {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
+
+  &--full {
+    grid-column: 1 / -1;
+  }
   
   mat-card-header {
     padding: var(--spacing-lg);
@@ -717,6 +726,11 @@ app-data-table {
       &.leave-badge {
         background: rgba(var(--info-rgb), 0.1);
         color: var(--info-color);
+      }
+
+      &.total-badge {
+        background: rgba(var(--primary-rgb, 63, 81, 181), 0.1);
+        color: var(--primary-color, #3f51b5);
       }
     }
     

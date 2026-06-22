@@ -274,7 +274,8 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   private loadGradesForBranch(branchId: string | number): void {
     this.loadingGrades = true;
     this.setGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
-    this.gradeService.getGrades({ branch_id: Number(branchId) }).subscribe({
+    // branchId may be an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
       next: (response) => {
         this.loadingGrades = false;
         const options = (response.success && response.data)
@@ -292,7 +293,7 @@ export class StudentListComponent implements OnInit, OnDestroy, AfterViewInit {
   private loadSectionsForBranchAndGrade(branchId: string | number, grade: string): void {
     this.loadingSections = true;
     this.setSectionOptions([{ value: '', label: 'Loading sections...', disabled: true }]);
-    this.sectionService.getSections({ branch_id: Number(branchId), grade_level: grade, per_page: 1000, is_active: true }).subscribe({
+    this.sectionService.getSections({ branch_id: branchId, grade_level: grade, per_page: 1000, is_active: true }).subscribe({
       next: (response) => {
         this.loadingSections = false;
         const options = (response.success && response.data)

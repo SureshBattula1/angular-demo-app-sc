@@ -219,7 +219,7 @@ export class AssignedSubjectsListComponent implements OnInit {
 
   private loadSectionsForBranch(branchId: string | number): void {
     this.setSectionOptions([{ value: '', label: 'Loading sections...', disabled: true }]);
-    this.sectionService.getSections({ branch_id: Number(branchId), is_active: true, per_page: 1000 }).subscribe({
+    this.sectionService.getSections({ branch_id: branchId, is_active: true, per_page: 1000 }).subscribe({
       next: (response) => {
         const options = (response.success && response.data)
           ? response.data.map((section: any) => ({
