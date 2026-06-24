@@ -3,10 +3,11 @@ import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 
 export interface ExamTerm {
-  id: number;
+  // IDs are opaque hashid strings when HASHIDS_ENABLED is on — never Number() them.
+  id: string;
   name: string;
   code: string;
-  branch_id: number;
+  branch_id: string;
   academic_year: string;
   start_date: string;
   end_date: string;

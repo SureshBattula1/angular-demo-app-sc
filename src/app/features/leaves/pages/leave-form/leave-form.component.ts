@@ -43,7 +43,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
   academicYears: AcademicYear[] = [];
 
   // Form data
-  selectedBranch: number | null = null;
+  selectedBranch: number | string | null = null;
   selectedGrade: string | null = null;
   selectedSection: string | null = null;
   selectedUser: string | null = null; // student_id or teacher_id
@@ -165,7 +165,8 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
           const newLeaveType = (leave.leave_for || this.leaveType || 'student') as 'student' | 'teacher';
           // Always set leaveType to ensure toggle button reflects the correct value
           this.leaveType = newLeaveType;
-          this.selectedBranch = leave.branch_id ? +leave.branch_id : null;
+          // branch_id is an opaque hashid string when HASHIDS_ENABLED is on — never +/Number() it (→ NaN).
+          this.selectedBranch = leave.branch_id ?? null;
           this.selectedAcademicYearId = leave.academic_year_id ?? null;
           this.fromDate = leave.from_date ? new Date(leave.from_date) : null;
           this.toDate = leave.to_date ? new Date(leave.to_date) : null;
@@ -250,7 +251,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
     });
   }
 
-  loadGrades(branchId?: number | null): void {
+  loadGrades(branchId?: number | string | null): void {
     const params: any = {};
     if (branchId !== null && branchId !== undefined) {
       params.branch_id = branchId;
@@ -282,7 +283,7 @@ export class LeaveFormComponent implements OnInit, AfterViewInit {
   /**
    * Load classes from API when branch is selected
    */
-  loadClasses(branchId: number | null): void {
+  loadClasses(branchId: number | string | null): void {
     if (!branchId) {
       this.classes = [];
       return;

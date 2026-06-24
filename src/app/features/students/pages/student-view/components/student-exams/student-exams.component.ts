@@ -460,50 +460,55 @@ export class StudentExamsComponent implements OnInit, OnChanges {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(19, 78, 74);
-      doc.text('Subject', 18, y + 1);
-      doc.text('Marks', 60, y + 1);
-      doc.text('Grade', 95, y + 1);
-      doc.text('Status', 125, y + 1);
-      doc.text('Date', 155, y + 1);
+      doc.text('Subject', 16, y + 1);
+      doc.text('Marks', 50, y + 1);
+      doc.text('Grade', 82, y + 1);
+      doc.text('Status', 100, y + 1);
+      doc.text('Date', 120, y + 1);
+      doc.text('Comment', 150, y + 1);
       y += 12;
 
       doc.setFont('helvetica', 'normal');
+      const commentX = 150;
+      const commentW = pageW - 14 - commentX;
       let rowAlt = false;
       for (const r of group.results) {
-        if (rowAlt) { doc.setFillColor(240, 253, 250); doc.rect(14, y - 5, pageW - 28, 9, 'F'); }
+        const dateStr = r.exam_date ? new Date(r.exam_date).toLocaleDateString() : '';
+        // Wrap the comment to the column width; the row grows to fit all lines.
+        doc.setFontSize(9);
+        const commentLines = doc.splitTextToSize(r.remarks ? String(r.remarks) : '-', commentW) as string[];
+        const rowH = Math.max(8, commentLines.length * 4 + 3);
+        if (y + rowH > 285) { doc.addPage(); y = 20; }
+
+        if (rowAlt) { doc.setFillColor(240, 253, 250); doc.rect(14, y - 5, pageW - 28, rowH, 'F'); }
         doc.setTextColor(31, 41, 55);
         doc.setFontSize(10);
-        const dateStr = r.exam_date ? new Date(r.exam_date).toLocaleDateString() : '';
-        doc.text(r.subject_name, 18, y + 1);
+        doc.text(String(r.subject_name ?? ''), 16, y + 1);
         if (r.is_absent) {
-          doc.text('Absent', 60, y + 1);
+          doc.text('Absent', 50, y + 1);
           doc.setFont('helvetica', 'bold');
-          doc.text('—', 95, y + 1);
+          doc.text('—', 82, y + 1);
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(100, 116, 139);
-          doc.text('Absent', 125, y + 1);
+          doc.text('Absent', 100, y + 1);
         } else {
           const pct = this.getPercentage(r.marks_obtained, r.total_marks);
           const status = r.is_pass ? 'Pass' : 'Fail';
-          doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 60, y + 1);
+          doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 50, y + 1);
           doc.setFont('helvetica', 'bold');
-          doc.text(String(r.grade ?? ''), 95, y + 1);
+          doc.text(String(r.grade ?? ''), 82, y + 1);
           doc.setFont('helvetica', 'normal');
           if (r.is_pass) { doc.setTextColor(34, 197, 94); } else { doc.setTextColor(239, 68, 68); }
-          doc.text(status, 125, y + 1);
+          doc.text(status, 100, y + 1);
         }
         doc.setTextColor(107, 114, 128);
-        doc.text(dateStr, 155, y + 1);
+        doc.text(dateStr, 120, y + 1);
+        // Comment column — same row as the subject; wraps to multiple lines when long.
+        doc.setFontSize(9);
+        doc.setTextColor(113, 63, 18);
+        doc.text(commentLines, commentX, y + 1);
         doc.setTextColor(31, 41, 55);
-        y += 8;
-        if (r.remarks) {
-          doc.setFontSize(9);
-          doc.setFillColor(254, 252, 232);
-          doc.rect(18, y - 2, pageW - 36, 8, 'F');
-          doc.setTextColor(113, 63, 18);
-          doc.text(`Comment: ${String(r.remarks).substring(0, 95)}${String(r.remarks).length > 95 ? '...' : ''}`, 22, y + 3);
-          y += 12;
-        }
+        y += rowH;
         rowAlt = !rowAlt;
       }
 
@@ -570,51 +575,55 @@ export class StudentExamsComponent implements OnInit, OnChanges {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(19, 78, 74);
-        doc.text('Subject', 18, y + 1);
-        doc.text('Marks', 60, y + 1);
-        doc.text('Grade', 95, y + 1);
-        doc.text('Status', 125, y + 1);
-        doc.text('Date', 155, y + 1);
+        doc.text('Subject', 16, y + 1);
+        doc.text('Marks', 50, y + 1);
+        doc.text('Grade', 82, y + 1);
+        doc.text('Status', 100, y + 1);
+        doc.text('Date', 120, y + 1);
+        doc.text('Comment', 150, y + 1);
         y += 12;
 
         doc.setFont('helvetica', 'normal');
+        const commentX = 150;
+        const commentW = pageW - 14 - commentX;
         let rowAlt = false;
         for (const r of group.results) {
-          if (y > 268) { doc.addPage(); y = 20; }
-          if (rowAlt) { doc.setFillColor(240, 253, 250); doc.rect(14, y - 5, pageW - 28, 9, 'F'); }
+          const dateStr = r.exam_date ? new Date(r.exam_date).toLocaleDateString() : '';
+          // Wrap the comment to the column width; the row grows to fit all lines.
+          doc.setFontSize(9);
+          const commentLines = doc.splitTextToSize(r.remarks ? String(r.remarks) : '-', commentW) as string[];
+          const rowH = Math.max(8, commentLines.length * 4 + 3);
+          if (y + rowH > 285) { doc.addPage(); y = 20; }
+
+          if (rowAlt) { doc.setFillColor(240, 253, 250); doc.rect(14, y - 5, pageW - 28, rowH, 'F'); }
           doc.setTextColor(31, 41, 55);
           doc.setFontSize(10);
-          const dateStr = r.exam_date ? new Date(r.exam_date).toLocaleDateString() : '';
-          doc.text(r.subject_name, 18, y + 1);
+          doc.text(String(r.subject_name ?? ''), 16, y + 1);
           if (r.is_absent) {
-            doc.text('Absent', 60, y + 1);
+            doc.text('Absent', 50, y + 1);
             doc.setFont('helvetica', 'bold');
-            doc.text('—', 95, y + 1);
+            doc.text('—', 82, y + 1);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 116, 139);
-            doc.text('Absent', 125, y + 1);
+            doc.text('Absent', 100, y + 1);
           } else {
             const pct = this.getPercentage(r.marks_obtained, r.total_marks);
             const status = r.is_pass ? 'Pass' : 'Fail';
-            doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 60, y + 1);
+            doc.text(`${r.marks_obtained}/${r.total_marks} (${pct}%)`, 50, y + 1);
             doc.setFont('helvetica', 'bold');
-            doc.text(String(r.grade ?? ''), 95, y + 1);
+            doc.text(String(r.grade ?? ''), 82, y + 1);
             doc.setFont('helvetica', 'normal');
             if (r.is_pass) { doc.setTextColor(34, 197, 94); } else { doc.setTextColor(239, 68, 68); }
-            doc.text(status, 125, y + 1);
+            doc.text(status, 100, y + 1);
           }
           doc.setTextColor(107, 114, 128);
-          doc.text(dateStr, 155, y + 1);
+          doc.text(dateStr, 120, y + 1);
+          // Comment column — same row as the subject; wraps to multiple lines when long.
+          doc.setFontSize(9);
+          doc.setTextColor(113, 63, 18);
+          doc.text(commentLines, commentX, y + 1);
           doc.setTextColor(31, 41, 55);
-          y += 8;
-          if (r.remarks) {
-            doc.setFontSize(9);
-            doc.setFillColor(254, 252, 232);
-            doc.rect(18, y - 2, pageW - 36, 8, 'F');
-            doc.setTextColor(113, 63, 18);
-            doc.text(`Comment: ${String(r.remarks).substring(0, 95)}${String(r.remarks).length > 95 ? '...' : ''}`, 22, y + 3);
-            y += 12;
-          }
+          y += rowH;
           rowAlt = !rowAlt;
         }
         y += 10;

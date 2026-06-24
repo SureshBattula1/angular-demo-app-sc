@@ -151,8 +151,8 @@ export class ExamTermFormComponent implements OnInit {
     }
   }
 
-  getBranchName(branchId: number): string {
-    const branch = this.branches.find(b => b.id === branchId);
+  getBranchName(branchId: number | string): string {
+    const branch = this.branches.find(b => String(b.id) === String(branchId));
     return branch ? branch.name : '';
   }
 }

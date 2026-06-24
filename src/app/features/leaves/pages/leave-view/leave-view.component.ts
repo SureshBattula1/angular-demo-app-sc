@@ -77,7 +77,9 @@ export class LeaveViewComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             this.errorHandler.showSuccess('Leave approved successfully');
-            this.loadLeave();
+            // Reload with the correct type — omitting it defaults to 'student' and would
+            // reload the wrong table for a teacher leave.
+            this.loadLeave(type);
           }
         },
         error: (error) => this.errorHandler.showError(error)
@@ -94,7 +96,8 @@ export class LeaveViewComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             this.errorHandler.showSuccess('Leave rejected successfully');
-            this.loadLeave();
+            // Reload with the correct type (see approveLeave).
+            this.loadLeave(type);
           }
         },
         error: (error) => this.errorHandler.showError(error)

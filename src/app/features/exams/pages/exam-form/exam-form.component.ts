@@ -205,13 +205,14 @@ export class ExamFormComponent implements OnInit {
     }
   }
 
-  getBranchName(branchId: number): string {
-    const branch = this.branches.find(b => b.id === branchId);
+  getBranchName(branchId: number | string): string {
+    // IDs are hashid strings — compare as strings.
+    const branch = this.branches.find(b => String(b.id) === String(branchId));
     return branch ? branch.name : '';
   }
 
-  getTermName(termId: number): string {
-    const term = this.examTerms.find(t => t.id === termId);
+  getTermName(termId: number | string): string {
+    const term = this.examTerms.find(t => String(t.id) === String(termId));
     return term ? term.name : '';
   }
 }

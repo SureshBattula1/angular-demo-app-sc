@@ -365,8 +365,10 @@ export class ExamScheduleFormComponent implements OnInit {
   }
 
   loadExamDetails(examId: number | string, examFromApi?: any): void {
-    const id = typeof examId === 'string' ? +examId : examId;
-    let selectedExam = examFromApi || this.exams.find((exam: any) => exam.id === id || exam.id === examId);
+    // examId is an opaque hashid string when HASHIDS_ENABLED is on — never +/Number() it (→ NaN).
+    // Compare as strings so hashid and numeric ids both match.
+    const idStr = examId != null ? String(examId) : '';
+    let selectedExam = examFromApi || this.exams.find((exam: any) => String(exam.id) === idStr);
     if (selectedExam?.branch_id) {
       this.applyExamSelection(selectedExam);
       return;
@@ -414,8 +416,8 @@ export class ExamScheduleFormComponent implements OnInit {
     });
   }
 
-  getBranchName(branchId: number): string {
-    const b = this.branches.find((x: any) => x.id === branchId);
+  getBranchName(branchId: number | string): string {
+    const b = this.branches.find((x: any) => String(x.id) === String(branchId));
     return b ? b.name : '';
   }
 
