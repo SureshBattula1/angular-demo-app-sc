@@ -12,6 +12,7 @@ import { FeeService } from '../../services/fee.service';
 import { FeeTypeService } from '../../services/fee-type.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 import { AcademicYearService } from '../../../settings/services/academic-year.service';
@@ -72,6 +73,17 @@ export class FeeListComponent implements OnInit, OnDestroy {
   grades: any[] = [];
   sections: any[] = [];
   selectedBranch: string | number | null = null;
+
+  // Grade & Section — Student Fee Details (dashboard section)
+  sfBranch: string | number | null = null;
+  sfGrade: string | null = null;
+  sfSection: string | null = null;
+  sfGrades: any[] = [];
+  sfSections: any[] = [];
+  studentFeeRows: any[] = [];
+  sfSummary: { student_count: number; total_fee: number; total_paid: number; total_due: number } | null = null;
+  sfLoading = false;
+  studentFeeColumns: string[] = ['student_name', 'phone', 'paid_amount', 'due_amount', 'status'];
   
   // Date range filters (similar to dashboard)
   selectedPeriod = new FormControl('today');
@@ -333,6 +345,7 @@ export class FeeListComponent implements OnInit, OnDestroy {
     private feeTypeService: FeeTypeService,
     private branchService: BranchService,
     private gradeService: GradeService,
+    private sectionService: SectionService,
     private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
@@ -786,6 +799,77 @@ export class FeeListComponent implements OnInit, OnDestroy {
     if (todaySectionField) {
       todaySectionField.options = sectionOptions;
     }
+  }
+
+  // ---- Grade & Section — Student Fee Details ----
+  onSfBranchChange(): void {
+    this.sfGrade = null;
+    this.sfSection = null;
+    this.sfGrades = [];
+    this.sfSections = [];
+    this.studentFeeRows = [];
+    this.sfSummary = null;
+    if (!this.sfBranch) { return; }
+    this.gradeService.getGrades({ branch_id: this.sfBranch }).subscribe({
+      next: (res: any) => {
+        this.sfGrades = (res.success && res.data) ? res.data.filter((g: any) => g.is_active) : [];
+      },
+      error: () => { this.sfGrades = []; }
+    });
+  }
+
+  onSfGradeChange(): void {
+    this.sfSection = null;
+    this.sfSections = [];
+    this.studentFeeRows = [];
+    this.sfSummary = null;
+    if (!this.sfBranch || !this.sfGrade) { return; }
+    this.sectionService.getSections({ branch_id: this.sfBranch, grade_level: this.sfGrade, per_page: 1000, is_active: true }).subscribe({
+      next: (res: any) => { this.sfSections = (res.success && res.data) ? res.data : []; },
+      error: () => { this.sfSections = []; }
+    });
+  }
+
+  onSfSectionChange(): void {
+    this.loadStudentFeesByClass();
+  }
+
+  loadStudentFeesByClass(): void {
+    if (!this.sfBranch || !this.sfGrade || !this.sfSection) { return; }
+    this.sfLoading = true;
+    const params: Record<string, any> = {
+      branch_id: this.sfBranch,
+      grade: this.sfGrade,
+      section: this.sfSection
+    };
+    const ayId = this.academicYearContext.selectedYearId;
+    if (ayId != null) { params['academic_year_id'] = ayId; }
+
+    this.feeService.getStudentFeesByClass(params).subscribe({
+      next: (res: any) => {
+        this.studentFeeRows = (res.success && res.data) ? res.data : [];
+        this.sfSummary = res.summary ?? null;
+        this.sfLoading = false;
+      },
+      error: (err) => {
+        this.errorHandler.showError(err);
+        this.studentFeeRows = [];
+        this.sfSummary = null;
+        this.sfLoading = false;
+      }
+    });
+  }
+
+  getSfStatusClass(status: string): string {
+    if (status === 'Paid') { return 'status-success'; }
+    if (status === 'Partial') { return 'status-warning'; }
+    return 'status-default';
+  }
+
+  getSfGradeLabel(value: string | null): string {
+    if (value == null) { return ''; }
+    const g = this.sfGrades.find((x: any) => String(x.value) === String(value));
+    return g?.label ?? `Grade ${value}`;
   }
 
   /**

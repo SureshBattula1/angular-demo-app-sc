@@ -120,6 +120,21 @@ export class FeeService {
     );
   }
 
+  // Per-student fee details for a Grade & Section
+  getStudentFeesByClass(params: Record<string, any>): Observable<ApiResponse<any[]>> {
+    let httpParams = new HttpParams();
+    Object.keys(params || {}).forEach(key => {
+      const value = params[key];
+      if (value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, String(value));
+      }
+    });
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/fee-payments/by-class`,
+      { params: httpParams }
+    );
+  }
+
   downloadFeePaymentReceipt(id: string | number): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/fee-payments/${id}/receipt`,

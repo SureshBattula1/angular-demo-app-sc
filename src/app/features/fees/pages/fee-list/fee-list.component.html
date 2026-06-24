@@ -161,33 +161,8 @@
         </mat-card>
       </div>
 
-      <!-- Breakdown Section -->
-      <div class="breakdown-section">
-        <!-- Payment Status Breakdown -->
-        <mat-card class="breakdown-card" *ngIf="todayPaymentsDashboard.by_status && todayPaymentsDashboard.by_status.length > 0">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon class="status-icon">payment</mat-icon>
-              Payments by Status
-            </mat-card-title>
-          </mat-card-header>
-          <mat-divider></mat-divider>
-          <mat-card-content>
-            <div class="category-list">
-              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_status">
-                <div class="category-info">
-                  <span class="category-name" [class.status-completed]="item.payment_status === 'Completed'" 
-                        [class.status-partial]="item.payment_status === 'Partial'">
-                    {{ item.payment_status === 'Completed' ? '✓ Completed' : '◐ Partial' }}
-                  </span>
-                  <span class="category-meta">{{ item.payment_count }} payments</span>
-                </div>
-                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
+      <!-- Breakdown Section (full-width stacked: Class/Grade then Section) -->
+      <div class="breakdown-section breakdown-section--stacked">
         <!-- Class/Grade Wise Breakdown -->
         <mat-card class="breakdown-card">
           <mat-card-header>
@@ -206,9 +181,6 @@
                     {{ item.student_count }} students • {{ item.payment_count }} payments
                     <span *ngIf="item.total_discount > 0" class="discount-badge">• Discount: ₹{{ item.total_discount | indianCurrency }}</span>
                     <span *ngIf="item.total_late_fee > 0" class="latefee-badge">• Late Fee: ₹{{ item.total_late_fee | indianCurrency }}</span>
-                    <span *ngIf="item.pending_amount > 0" class="pending-badge">
-                      • Pending: ₹{{ item.pending_amount | indianCurrency }}
-                    </span>
                   </span>
                 </div>
                 <div class="amount-group">
@@ -299,6 +271,96 @@
                 <mat-icon>info</mat-icon>
                 <p>No payment method data available</p>
               </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Grade & Section — Student Fee Details -->
+      <div class="breakdown-section breakdown-section--stacked">
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="grade-icon">view_list</mat-icon>
+              Grade &amp; Section — Student Fee Details
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="sf-filters">
+              <mat-form-field appearance="outline" class="sf-field">
+                <mat-label>Branch</mat-label>
+                <mat-select [(value)]="sfBranch" (selectionChange)="onSfBranchChange()">
+                  <mat-option [value]="null">Select branch</mat-option>
+                  <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>business</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="sf-field" *ngIf="sfBranch">
+                <mat-label>Class / Grade</mat-label>
+                <mat-select [(value)]="sfGrade" (selectionChange)="onSfGradeChange()">
+                  <mat-option [value]="null">Select grade</mat-option>
+                  <mat-option *ngFor="let g of sfGrades" [value]="g.value">{{ g.label }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>school</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="sf-field" *ngIf="sfBranch && sfGrade">
+                <mat-label>Section</mat-label>
+                <mat-select [(value)]="sfSection" (selectionChange)="onSfSectionChange()">
+                  <mat-option [value]="null">Select section</mat-option>
+                  <mat-option *ngFor="let s of sfSections" [value]="s.name">{{ s.name }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>class</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div *ngIf="sfBranch && sfGrade && sfSection" class="sf-results">
+              <div class="sf-summary" *ngIf="sfSummary">
+                <h3>{{ getSfGradeLabel(sfGrade) }} — Section {{ sfSection }}</h3>
+                <div class="sf-summary-items">
+                  <span class="summary-item"><mat-icon>people</mat-icon> Students: {{ sfSummary.student_count }}</span>
+                  <span class="summary-item"><mat-icon>account_balance_wallet</mat-icon> Fee: ₹{{ sfSummary.total_fee | indianCurrency }}</span>
+                  <span class="summary-item paid"><mat-icon>check_circle</mat-icon> Paid: ₹{{ sfSummary.total_paid | indianCurrency }}</span>
+                  <span class="summary-item due"><mat-icon>error_outline</mat-icon> Due: ₹{{ sfSummary.total_due | indianCurrency }}</span>
+                </div>
+              </div>
+
+              <div class="sf-table" *ngIf="studentFeeRows.length > 0; else sfEmpty">
+                <table mat-table [dataSource]="studentFeeRows" class="mat-elevation-z1">
+                  <ng-container matColumnDef="student_name">
+                    <th mat-header-cell *matHeaderCellDef>Student Name</th>
+                    <td mat-cell *matCellDef="let s">{{ s.student_name }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="phone">
+                    <th mat-header-cell *matHeaderCellDef>Phone Number</th>
+                    <td mat-cell *matCellDef="let s">{{ s.phone || '-' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="paid_amount">
+                    <th mat-header-cell *matHeaderCellDef class="num">Paid Amount</th>
+                    <td mat-cell *matCellDef="let s" class="num">₹{{ s.paid_amount | indianCurrency }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="due_amount">
+                    <th mat-header-cell *matHeaderCellDef class="num">Due Amount</th>
+                    <td mat-cell *matCellDef="let s" class="num">₹{{ s.due_amount | indianCurrency }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef class="center">Status</th>
+                    <td mat-cell *matCellDef="let s" class="center">
+                      <span class="status-badge" [ngClass]="getSfStatusClass(s.status)">{{ s.status }}</span>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="studentFeeColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: studentFeeColumns"></tr>
+                </table>
+              </div>
+              <ng-template #sfEmpty>
+                <div class="empty-state" *ngIf="!sfLoading">
+                  <mat-icon>info</mat-icon>
+                  <p>No students found for this grade &amp; section</p>
+                </div>
+              </ng-template>
             </div>
           </mat-card-content>
         </mat-card>
