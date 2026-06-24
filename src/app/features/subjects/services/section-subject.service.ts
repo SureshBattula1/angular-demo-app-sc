@@ -3,12 +3,13 @@ import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 
 export interface SectionSubjectAssignment {
-  id: number;
-  section_id: number;
-  subject_id: number;
-  teacher_id: number | null;
-  branch_id: number;
-  academic_year_id?: number | null;
+  // IDs are opaque hashid strings when HASHIDS_ENABLED is on — never Number() them.
+  id: string;
+  section_id: string;
+  subject_id: string;
+  teacher_id: string | null;
+  branch_id: string;
+  academic_year_id?: string | null;
   academic_year: string;
   is_active: boolean;
   section?: any;
@@ -30,9 +31,9 @@ export interface BulkAssignmentRequest {
 }
 
 export interface CopySubjectsRequest {
-  from_section_id: number;
-  to_section_ids: number[];
-  academic_year_id: number;
+  from_section_id: number | string;
+  to_section_ids: (number | string)[];
+  academic_year_id: number | string;
   academic_year: string;
   copy_teachers: boolean;
 }
