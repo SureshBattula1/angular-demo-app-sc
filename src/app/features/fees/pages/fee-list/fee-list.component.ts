@@ -20,6 +20,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { IndianCurrencyPipe } from '../../../../shared/pipes/indian-currency.pipe';
+import { jsPDF } from 'jspdf';
 
 @Component({
   selector: 'app-fee-list',
@@ -101,7 +102,8 @@ export class FeeListComponent implements OnInit, OnDestroy {
     columns: this.getPaymentColumns(),
     actions: [
       { icon: 'visibility', label: 'View Receipt', action: (row) => this.viewPayment(row) },
-      { icon: 'print', label: 'Print', color: 'primary', action: (row) => this.printReceipt(row) }
+      { icon: 'print', label: 'Print', color: 'primary', action: (row) => this.printReceipt(row) },
+      { icon: 'receipt_long', label: 'Student Receipt', action: (row) => this.studentReceipt(row) }
     ],
     selectable: true,
     pagination: true,
@@ -539,16 +541,23 @@ export class FeeListComponent implements OnInit, OnDestroy {
               : 'N/A';
             const feeTypeName = payment.fee_structure?.fee_type || 'N/A';
             const branchName = payment.branch_name ?? payment.fee_structure?.branch?.name ?? null;
-            const amountFormatted = `₹${payment.amount_paid?.toLocaleString('en-IN', { 
-              minimumFractionDigits: 2, 
-              maximumFractionDigits: 2 
+            const amountFormatted = `₹${payment.amount_paid?.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
             }) || '0.00'}`;
+            const dueFormatted = `₹${(Number(payment.remaining_amount) || 0).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}`;
             return {
               ...payment,
               student_name: studentName,
               fee_type_name: feeTypeName,
               branch_name: branchName,
-              amount_formatted: amountFormatted
+              amount_formatted: amountFormatted,
+              due_formatted: dueFormatted,
+              // fee_status comes from the API (derived from the fee's settlement)
+              fee_status: payment.fee_status ?? payment.payment_status
             };
           });
           
@@ -656,8 +665,11 @@ export class FeeListComponent implements OnInit, OnDestroy {
       { key: 'student_name', header: 'Student', sortable: true, searchable: true, width: '200px' },
       { key: 'fee_type_name', header: 'Fee Type', sortable: true, width: '150px' },
       { key: 'amount_formatted', header: 'Amount', sortable: true, width: '120px', align: 'right' },
+      { key: 'due_formatted', header: 'Due', width: '120px', align: 'right' },
       { key: 'payment_method', header: 'Method', sortable: true, width: '100px' },
-      { key: 'payment_status', header: 'Status', type: 'badge', width: '120px', align: 'center' }
+      // fee_status reflects the whole fee's settlement (Partial when a balance remains),
+      // so it can't contradict the Due column the way the per-transaction payment_status did.
+      { key: 'fee_status', header: 'Status', type: 'badge', width: '120px', align: 'center' }
     ];
   }
 
@@ -853,42 +865,21 @@ export class FeeListComponent implements OnInit, OnDestroy {
     }
   }
   
-  // Structure tab actions
+  // Structure tab actions.
+  // NOTE: row actions (View/Edit/Delete) already run via their inline `action:` callbacks
+  // in the table config — the data-table invokes action.action(row) AND emits actionClicked,
+  // so handling them here too would fire each action twice. Only the toolbar 'add' button
+  // (which has no inline callback) needs handling here.
   onStructureAction(event: { action: string; row: any }): void {
-    const structure = event.row as FeeStructure;
-    
-    switch (event.action) {
-      case 'View':
-        this.viewStructure(structure);
-        break;
-      case 'Edit':
-        this.editStructure(structure);
-        break;
-      case 'Delete':
-        this.deleteStructure(structure);
-        break;
-      case 'add':
-        this.addFeeStructure();
-        break;
-      default:
+    if (event.action === 'add') {
+      this.addFeeStructure();
     }
   }
 
-  // Payment tab actions
+  // Payment tab actions — see note on onStructureAction (avoids double dispatch / double download).
   onPaymentAction(event: { action: string; row: any }): void {
-    const payment = event.row as FeePayment;
-    
-    switch (event.action) {
-      case 'View Receipt':
-        this.viewPayment(payment);
-        break;
-      case 'Print':
-        this.printReceipt(payment);
-        break;
-      case 'add':
-        this.recordPayment();
-        break;
-      default:
+    if (event.action === 'add') {
+      this.recordPayment();
     }
   }
   
@@ -960,7 +951,87 @@ export class FeeListComponent implements OnInit, OnDestroy {
       error: (err) => this.errorHandler.showError(err),
     });
   }
-  
+
+  /**
+   * Simplified student receipt (client-side PDF): student name, grade, section,
+   * amount paid (total for this fee) and due amount. Fetches payment details so
+   * grade/section and the full paid/due totals are accurate.
+   */
+  studentReceipt(payment: FeePayment): void {
+    if (!payment?.id) {
+      this.errorHandler.showWarning('Payment information is not available.');
+      return;
+    }
+    this.errorHandler.showInfo('Preparing student receipt...');
+    this.feeService.getFeePaymentById(payment.id).subscribe({
+      next: (response: any) => {
+        const d = response?.data ?? payment;
+        const num = (v: any) => Number(v) || 0;
+
+        const studentName = d.student
+          ? `${d.student.first_name ?? ''} ${d.student.last_name ?? ''}`.trim()
+          : 'Student';
+        // Laravel serializes the relation as snake_case `fee_structure`.
+        const structure = d.fee_structure ?? d.feeStructure ?? {};
+        const grade = d.student_grade_label
+          || (structure.grade ? `Grade ${structure.grade}` : '-');
+        const section = d.student_section || '-';
+
+        const txns: any[] = Array.isArray(d.past_transactions) ? d.past_transactions : [];
+        const totalFee = num(structure.amount);
+        const amountPaid = txns.length
+          ? txns.reduce((s, t) => s + num(t.amount_paid), 0)
+          : num(d.amount_paid);
+        const totalDiscount = txns.reduce((s, t) => s + num(t.discount_amount), 0);
+        const dueAmount = Math.max(0, totalFee - amountPaid - totalDiscount);
+        const money = (v: number) => `INR ${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        const doc = new jsPDF();
+        const pageW = 210;
+
+        // Header
+        doc.setFillColor(20, 184, 166);
+        doc.rect(0, 0, pageW, 26, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Student Fee Receipt', 14, 16);
+
+        // Rows
+        const rows: [string, string][] = [
+          ['Student Name', studentName],
+          ['Grade', String(grade)],
+          ['Section', String(section)],
+          ['Amount Paid', money(amountPaid)],
+          ['Due Amount', money(dueAmount)],
+        ];
+
+        let y = 44;
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(12);
+        let alt = false;
+        for (const [label, value] of rows) {
+          if (alt) { doc.setFillColor(240, 253, 250); doc.rect(14, y - 6, pageW - 28, 11, 'F'); }
+          doc.setFont('helvetica', 'bold');
+          doc.text(label, 18, y + 1);
+          doc.setFont('helvetica', 'normal');
+          doc.text(value, 90, y + 1);
+          y += 11;
+          alt = !alt;
+        }
+
+        // Outer border around the detail block
+        doc.setDrawColor(153, 246, 228);
+        doc.rect(14, 38, pageW - 28, y - 38);
+
+        const safe = studentName.replace(/[^a-zA-Z0-9]+/g, '-') || 'student';
+        doc.save(`student-receipt-${safe}.pdf`);
+        this.errorHandler.showSuccess('Student receipt downloaded.');
+      },
+      error: (err) => this.errorHandler.showError(err),
+    });
+  }
+
   onRowClick(row: FeeStructure | FeePayment | FeeType): void {
     if (this.activeTab === 'today') {
       this.viewPayment(row as FeePayment);
@@ -1117,23 +1188,10 @@ export class FeeListComponent implements OnInit, OnDestroy {
   }
 
   // Fee Type Actions
+  // Fee type tab actions — see note on onStructureAction (row actions fire via inline callbacks).
   onFeeTypeAction(event: { action: string; row: any }): void {
-    const feeType = event.row as FeeType;
-    
-    switch (event.action) {
-      case 'View':
-        this.viewFeeType(feeType);
-        break;
-      case 'Edit':
-        this.editFeeType(feeType);
-        break;
-      case 'Delete':
-        this.deleteFeeType(feeType);
-        break;
-      case 'add':
-        this.addFeeType();
-        break;
-      default:
+    if (event.action === 'add') {
+      this.addFeeType();
     }
   }
 

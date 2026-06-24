@@ -101,11 +101,34 @@ export class FeePaymentViewComponent implements OnInit {
   getPaymentStatusClass(status: string): string {
     const statusMap: Record<string, string> = {
       'Completed': 'status-success',
+      'Paid': 'status-success',
+      'Partial': 'status-warning',
       'Pending': 'status-warning',
       'Failed': 'status-danger',
       'Refunded': 'status-info'
     };
     return statusMap[status] || 'status-default';
+  }
+
+  /**
+   * Settlement status of the WHOLE fee (what the receipt's figures describe), derived from
+   * the amounts so it can't contradict the remaining balance. A single transaction may be
+   * "Completed", but if money is still due on the fee the receipt should read "Partial".
+   * Terminal transaction states (Failed/Refunded) are preserved as-is.
+   */
+  getFeeStatusLabel(): string {
+    const txnStatus = this.feePayment?.payment_status;
+    if (txnStatus === 'Failed' || txnStatus === 'Refunded') {
+      return txnStatus;
+    }
+    const totalPaid = this.getTotalAmountPaid();
+    const remaining = this.getRemainingAmount();
+    if (totalPaid <= 0) return 'Pending';
+    return remaining > 0 ? 'Partial' : 'Completed';
+  }
+
+  getFeeStatusClass(): string {
+    return this.getPaymentStatusClass(this.getFeeStatusLabel());
   }
   
   /** Total discount from all past transactions */
