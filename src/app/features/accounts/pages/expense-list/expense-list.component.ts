@@ -229,7 +229,8 @@ export class ExpenseListComponent implements OnInit {
   }
   
   viewTransaction(transaction: Transaction): void {
-    this.router.navigate(['/accounts/transactions/view', transaction.id]);
+    // No dedicated view page; the transaction form (edit route) displays all details.
+    this.router.navigate(['/accounts/transactions/edit', transaction.id]);
   }
   
   editTransaction(transaction: Transaction): void {

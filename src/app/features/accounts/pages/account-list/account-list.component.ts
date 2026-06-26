@@ -644,15 +644,8 @@ export class AccountListComponent implements OnInit, OnDestroy {
   
   // Transaction actions
   viewTransaction(transaction: Transaction): void {
-    // Create a simple view dialog or navigate to detail view
-    const tab = transaction.type === 'Income' ? 'income' : 'expenses';
-    this.snackBar.open(
-      `Transaction: ${transaction.transaction_number} | Amount: ${transaction.amount} | Status: ${transaction.status}`,
-      'Close',
-      { duration: 5000 }
-    );
-    // Alternative: Navigate to a dedicated view page when created
-    // this.router.navigate(['/accounts/transactions', transaction.id]);
+    // No dedicated view page; the transaction form (edit route) displays all details.
+    this.router.navigate(['/accounts/transactions/edit', transaction.id]);
   }
   
   editTransaction(transaction: Transaction): void {
