@@ -305,6 +305,9 @@ export class StudentPromotionComponent implements OnInit {
       section: fromSection,
       is_active: true,
       student_status: 'Active',
+      // Show all students in the selected class regardless of which academic year their
+      // record carries, so the class list isn't hidden by the toolbar year selection.
+      all_academic_years: true,
       per_page: 1000
     };
     if (fromYearId != null) {
