@@ -76,11 +76,45 @@ export class StudentImportComponent implements OnInit {
   previewData: ImportRecord[] = [];
   previewSummary: any = null;
   currentPage = 1;
-  pageSize = 25;
+  pageSize = 1000; // show all rows of the batch in one scrollable view
   totalRecords = 0;
   selectedTab = 0; // 0: All, 1: Valid, 2: Invalid
 
-  displayedColumns: string[] = ['row_number', 'first_name', 'last_name', 'email', 'admission_number', 'grade', 'section', 'status', 'errors'];
+  // All review columns with required flag (required mirrors the API/Excel validation).
+  // Rendered dynamically so the review shows every field; required headers get a red *.
+  previewColumns: { key: string; label: string; required?: boolean }[] = [
+    { key: 'row_number', label: '#' },
+    { key: 'first_name', label: 'First Name', required: true },
+    { key: 'last_name', label: 'Last Name', required: true },
+    { key: 'email', label: 'Email', required: true },
+    { key: 'phone', label: 'Phone' },
+    { key: 'admission_number', label: 'Admission No.', required: true },
+    { key: 'admission_date', label: 'Admission Date', required: true },
+    { key: 'roll_number', label: 'Roll No.' },
+    { key: 'grade', label: 'Grade', required: true },
+    { key: 'section', label: 'Section' },
+    { key: 'date_of_birth', label: 'Date of Birth', required: true },
+    { key: 'gender', label: 'Gender', required: true },
+    { key: 'blood_group', label: 'Blood Group' },
+    { key: 'category', label: 'Category' },
+    { key: 'current_address', label: 'Address', required: true },
+    { key: 'city', label: 'City', required: true },
+    { key: 'state', label: 'State', required: true },
+    { key: 'pincode', label: 'Pincode', required: true },
+    { key: 'father_name', label: 'Father Name', required: true },
+    { key: 'father_phone', label: 'Father Phone', required: true },
+    { key: 'father_qualification', label: 'Father Qualification' },
+    { key: 'mother_name', label: 'Mother Name', required: true },
+    { key: 'mother_phone', label: 'Mother Phone' },
+    { key: 'mother_qualification', label: 'Mother Qualification' },
+    { key: 'guardian_name', label: 'Guardian Name' },
+    { key: 'emergency_contact_name', label: 'Emergency Name', required: true },
+    { key: 'emergency_contact_phone', label: 'Emergency Phone', required: true },
+    { key: 'status', label: 'Status' },
+    { key: 'errors', label: 'Errors' },
+  ];
+
+  displayedColumns: string[] = this.previewColumns.map(c => c.key);
 
   constructor(
     private fb: FormBuilder,

@@ -226,71 +226,33 @@
               <mat-tab label="Invalid Only ({{ previewSummary?.invalid || 0 }})"></mat-tab>
             </mat-tab-group>
 
-            <!-- Shared table for all tabs -->
+            <!-- Shared table for all tabs (all columns; horizontal + vertical scroll) -->
             <div class="table-wrapper" *ngIf="previewData && previewData.length > 0">
               <table mat-table [dataSource]="previewData" class="preview-table">
-                <ng-container matColumnDef="row_number">
-                  <th mat-header-cell *matHeaderCellDef>#</th>
-                  <td mat-cell *matCellDef="let record">{{ record.row_number }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="first_name">
-                  <th mat-header-cell *matHeaderCellDef>First Name</th>
-                  <td mat-cell *matCellDef="let record">{{ record.first_name }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="last_name">
-                  <th mat-header-cell *matHeaderCellDef>Last Name</th>
-                  <td mat-cell *matCellDef="let record">{{ record.last_name }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="email">
-                  <th mat-header-cell *matHeaderCellDef>Email</th>
-                  <td mat-cell *matCellDef="let record">{{ record.email }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="admission_number">
-                  <th mat-header-cell *matHeaderCellDef>Admission No.</th>
-                  <td mat-cell *matCellDef="let record">{{ record.admission_number }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="grade">
-                  <th mat-header-cell *matHeaderCellDef>Grade</th>
-                  <td mat-cell *matCellDef="let record">{{ record.grade }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="section">
-                  <th mat-header-cell *matHeaderCellDef>Section</th>
-                  <td mat-cell *matCellDef="let record">{{ record.section || '-' }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let record">
-                    <mat-chip [class]="record.validation_status" class="status-chip">
+                <ng-container *ngFor="let col of previewColumns" [matColumnDef]="col.key">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ col.label }}<span *ngIf="col.required" class="req-asterisk" title="Required">*</span>
+                  </th>
+                  <td mat-cell *matCellDef="let record" [ngSwitch]="col.key">
+                    <mat-chip *ngSwitchCase="'status'" [class]="record.validation_status" class="status-chip">
                       {{ record.validation_status }}
                     </mat-chip>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="errors">
-                  <th mat-header-cell *matHeaderCellDef>Errors</th>
-                  <td mat-cell *matCellDef="let record">
-                    <div *ngIf="record.validation_errors" class="errors-list">
+                    <div *ngSwitchCase="'errors'" class="errors-list">
                       <mat-chip *ngFor="let error of record.validation_errors" class="error-chip">
                         <mat-icon>error_outline</mat-icon>
                         {{ error }}
                       </mat-chip>
                     </div>
+                    <span *ngSwitchDefault>{{ $any(record)[col.key] !== null && $any(record)[col.key] !== undefined && $any(record)[col.key] !== '' ? $any(record)[col.key] : '-' }}</span>
                   </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
               </table>
-
-              <mat-paginator [length]="totalRecords" [pageSize]="pageSize" [pageSizeOptions]="[25, 50, 100]" (page)="onPageChange($event)"></mat-paginator>
             </div>
+
+            <mat-paginator *ngIf="totalRecords > pageSize" [length]="totalRecords" [pageSize]="pageSize" [pageSizeOptions]="[pageSize]" (page)="onPageChange($event)"></mat-paginator>
 
             <!-- Empty state -->
             <div class="empty-state" *ngIf="!previewData || previewData.length === 0">

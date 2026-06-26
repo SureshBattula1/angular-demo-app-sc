@@ -160,13 +160,28 @@
 
     .table-container {
       margin: 24px 0;
+      overflow-x: auto;        // horizontal scroll when columns overflow the width
+      overflow-y: auto;        // vertical scroll so all rows are reachable
+      max-height: 60vh;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 8px;
 
       .preview-table {
         width: 100%;
+        white-space: nowrap;   // keep cells single-line so the table overflows & scrolls
+
+        .req-asterisk {
+          color: #d32f2f;      // required field marker (red *)
+          font-weight: 700;
+          margin-left: 2px;
+        }
 
         th {
           font-weight: 600;
           background-color: rgba(0, 0, 0, 0.02);
+          position: sticky;    // keep headers visible while scrolling vertically
+          top: 0;
+          z-index: 2;
         }
 
         mat-chip {
@@ -291,3 +306,8 @@
   }
 }
 
+
+/* Make required-field markers (asterisk) red on the import context form */
+:host ::ng-deep .mat-mdc-form-field-required-marker {
+  color: #d32f2f;
+}

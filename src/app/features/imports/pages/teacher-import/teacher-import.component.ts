@@ -65,11 +65,34 @@ export class TeacherImportComponent implements OnInit {
   previewData: ImportRecord[] = [];
   previewSummary: any = null;
   currentPage = 1;
-  pageSize = 25;
+  pageSize = 1000; // show all rows of the batch in one scrollable view
   totalRecords = 0;
   selectedTab = 0;
 
-  displayedColumns: string[] = ['row_number', 'first_name', 'last_name', 'email', 'employee_id', 'designation', 'status', 'errors'];
+  // All review columns with required flag (required mirrors the API/Excel validation).
+  // Rendered dynamically so the review shows every field; required headers get a red *.
+  previewColumns: { key: string; label: string; required?: boolean }[] = [
+    { key: 'row_number', label: '#' },
+    { key: 'first_name', label: 'First Name', required: true },
+    { key: 'last_name', label: 'Last Name', required: true },
+    { key: 'email', label: 'Email', required: true },
+    { key: 'phone', label: 'Phone' },
+    { key: 'employee_id', label: 'Employee ID', required: true },
+    { key: 'joining_date', label: 'Joining Date', required: true },
+    { key: 'designation', label: 'Designation', required: true },
+    { key: 'employee_type', label: 'Employee Type', required: true },
+    { key: 'qualification', label: 'Qualification' },
+    { key: 'specialization', label: 'Specialization' },
+    { key: 'subjects', label: 'Subjects' },
+    { key: 'date_of_birth', label: 'Date of Birth', required: true },
+    { key: 'gender', label: 'Gender', required: true },
+    { key: 'current_address', label: 'Address', required: true },
+    { key: 'basic_salary', label: 'Basic Salary', required: true },
+    { key: 'status', label: 'Status' },
+    { key: 'errors', label: 'Errors' },
+  ];
+
+  displayedColumns: string[] = this.previewColumns.map(c => c.key);
 
   constructor(
     private fb: FormBuilder,
@@ -122,7 +145,7 @@ export class TeacherImportComponent implements OnInit {
   downloadTemplate(): void {
     this.importService.downloadTemplate('teacher').subscribe({
       next: (blob) => {
-        this.importService.downloadBlob(blob, `teacher_import_template_${new Date().toISOString().split('T')[0]}.csv`);
+        this.importService.downloadBlob(blob, `teacher_import_template_${new Date().toISOString().split('T')[0]}.xlsx`);
         this.showSuccess('Template downloaded successfully');
       },
       error: (err) => {
