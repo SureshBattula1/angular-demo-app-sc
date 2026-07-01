@@ -53,6 +53,17 @@ How it's wired: [Dockerfile](Dockerfile) is a multi-stage build — `npm ci` +
 **reverse-proxies `/api` → the `api` container** (same origin, so no CORS). The image
 bakes in the built app, so **rebuild (`up --build`) after UI code changes**.
 
+## CI & pre-commit automation
+
+- **CI** (`.github/workflows/ci.yml`): on every push/PR, runs `npm run lint` (ESLint),
+  `npm run lint:css` (Stylelint), `ng test --watch=false --browsers=ChromeHeadless`, and
+  `npm run build`, on Node 22 (matching the Docker image).
+- **Pre-commit hook** (Husky + lint-staged, `.husky/pre-commit`): runs ESLint `--fix` on
+  staged `*.ts` and Stylelint `--fix` on staged `*.scss` before each commit. Activates
+  automatically on `npm install`/`npm ci` via the `prepare` script — nothing to run
+  manually. It's wrapped in `|| true` so it never breaks an install in an environment
+  without `.git` (e.g. the Docker build).
+
 ## Architecture & conventions
 
 **Folder layout:**
@@ -146,6 +157,14 @@ Follow the shape already established by `features/students`, `features/admission
   lazy-loaded so the initial bundle stays small.
 - Test coverage is currently near-zero (only `app.component.spec.ts`). Add specs for new
   services/components — services are the easiest high-value place to start.
-- `npm run lint:css` (Stylelint 17) **requires Node ≥20** — it fails with an `ERR_REQUIRE_ESM`/
-  yargs-parser error on Node 18. Upgrade the local/CI Node version to run it; it's not wired
-  into `npm run lint` or CI yet, so its absence won't block other commands on Node 18.
+- **Stylelint and lint-staged are pinned to Node-18-compatible majors on purpose**
+  (`stylelint@16.15.0`, `lint-staged@15.5.2`, `stylelint-config-standard-scss@13.1.0`, all
+  exact versions, not `^`-ranges). Newer majors of both (Stylelint 17, lint-staged 17) require
+  Node ≥20 — lint-staged 17 in particular crashes on **every** commit on Node 18 (a `listr2`
+  dependency imports a Node 20+-only `node:util` API), not just when touching `.scss`. Don't
+  `npm update` these past their current majors without confirming the team's Node version, or
+  the pre-commit hook will start hard-failing every commit again.
+- ESLint (and therefore the pre-commit hook's `*.ts` step) is slow on this machine — a
+  single-file `eslint` run took ~2.5 minutes in testing. That's WSL2's cross-filesystem
+  overhead for a project on the Windows-mounted `/mnt/c/...` path, not a config problem;
+  moving the repo to the native WSL2 filesystem (e.g. `~/projects/...`) would fix it.
