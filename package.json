@@ -13,7 +13,8 @@
     "build:prod": "ng build --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "lint:css": "stylelint \"src/**/*.scss\""
   },
   "private": true,
   "dependencies": {
@@ -46,6 +47,8 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "stylelint": "^17.14.0",
+    "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "~5.9.0",
     "typescript-eslint": "8.46.0"
   }

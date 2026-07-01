@@ -88,6 +88,56 @@ bakes in the built app, so **rebuild (`up --build`) after UI code changes**.
   don't call `HttpClient` directly from components.
 - Strongly type API payloads with interfaces in `core/models/`.
 
+## Design system
+
+Colors are **runtime CSS custom properties**, not fixed SCSS values — `ThemeService`
+(`core/services/theme.service.ts`) writes them onto `:root` from one of the 60+ presets in
+`shared/config/theme.config.ts` whenever the user picks a theme. **Never hardcode a hex color
+in component SCSS** — use the variable so the component repaints correctly under every theme:
+
+| Use for | Variable |
+|---|---|
+| Primary brand color / shades | `var(--primary-color)`, `var(--primary-light)`, `var(--primary-dark)` |
+| Accent color / shades | `var(--accent-color)`, `var(--accent-light)`, `var(--accent-dark)` |
+| Muted text / borders | `var(--neutral-color)` |
+| Page/card backgrounds | `var(--surface-color)`, `var(--soft-surface-color)`, `var(--card-background)` |
+| Status colors | `var(--success-color)`, `var(--warning-color)`, `var(--error-color)`, `var(--info-color)` |
+
+This is enforced by `npm run lint:css` (Stylelint, config in `.stylelintrc.json`) — currently
+**warning-level**, because ~35 legacy component files still hardcode hex colors. Don't add to
+that count in new code; feel free to fix a legacy one opportunistically while you're already
+editing that file.
+
+**Reuse shared building blocks before writing new ones** (`src/app/shared/components/`):
+- `data-table` — server-side paginated/sortable/searchable list table; every feature list page
+  uses this instead of a hand-rolled `<table>`.
+- `advanced-search-sidebar` — the filter panel pattern used alongside `data-table`.
+- `export-button` (+ `shared/export.service.ts`) — Excel/PDF/CSV export with permission checks.
+- `file-upload`, `universal-attachments` — file/document upload and attachment management.
+- `charts/*` — Chart.js wrappers (bar/doughnut/line) for dashboards.
+
+**Global CSS** already covers the common HTML patterns — check `src/styles/` (`buttons.css`,
+`cards.css`, `forms.css`, `modals.css`, `tables.css`, `tabs.css`, `view-pages.css`) before writing
+bespoke SCSS for a button/card/modal/table look. Material's theme/palette lives in
+`src/styles/theme.scss` and `material-theme.scss` — don't redefine a Material palette inside a
+feature component.
+
+## New feature checklist
+
+Follow the shape already established by `features/students`, `features/admissions`, and
+`features/promotions`:
+
+1. `features/<name>/<name>.routes.ts`, lazy-loaded from `app.routes.ts`, each route carrying
+   `data: { permissions: [...], permissionMode }` that matches the API's permission slug exactly.
+2. A facade service (`<name>.service.ts`) built on `core/services/api.service.ts` — never call
+   `HttpClient` directly from a component.
+3. List page = `data-table` + `advanced-search-sidebar` + `export-button`, not a custom table.
+4. Gate buttons/actions with `*hasPermission`, mirroring the route's permission slug (defaults to
+   hidden, so a missing slug fails safe rather than leaking a button).
+5. Style with the theme CSS variables above; run `npm run lint:css` before committing.
+6. Add strongly-typed model interfaces to `core/models/`.
+7. Keep it lazy-loaded and check `npm run build` doesn't blow the bundle budget (see Gotchas).
+
 ## Gotchas
 
 - Permission slugs must stay in sync with the API's `permissions` table — a typo silently
@@ -96,3 +146,6 @@ bakes in the built app, so **rebuild (`up --build`) after UI code changes**.
   lazy-loaded so the initial bundle stays small.
 - Test coverage is currently near-zero (only `app.component.spec.ts`). Add specs for new
   services/components — services are the easiest high-value place to start.
+- `npm run lint:css` (Stylelint 17) **requires Node ≥20** — it fails with an `ERR_REQUIRE_ESM`/
+  yargs-parser error on Node 18. Upgrade the local/CI Node version to run it; it's not wired
+  into `npm run lint` or CI yet, so its absence won't block other commands on Node 18.
