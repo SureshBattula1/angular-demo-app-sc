@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { RouterModule, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../shared/modules/material/material.module';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable, Subscription } from 'rxjs';
@@ -48,7 +48,9 @@ export class MainShellComponent implements OnInit, OnDestroy {
   selectedAcademicYearId: string | number | null = null;
   selectedAcademicYearName: string = '';
   isPastAcademicYear = false;
-  
+  /** When the active route sets data.hideSidebar, render full-width (e.g. global search). */
+  hideSidebar = false;
+
   // Subscriptions for cleanup
   private routerSubscription?: Subscription;
   private breakpointSubscription?: Subscription;
@@ -87,6 +89,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     private router: Router,
+    private activatedRoute: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
     public permissionService: PermissionService,
     private userPreferenceService: UserPreferenceService,
@@ -124,12 +127,14 @@ export class MainShellComponent implements OnInit, OnDestroy {
     ).subscribe((event: NavigationEnd) => {
       // Update current route for active state checking
       this.currentRoute = event.urlAfterRedirects || event.url;
+      this.hideSidebar = this.readHideSidebar();
       // Force change detection to update active states
       this.cdr.detectChanges();
     });
-    
+
     // Set initial route
     this.currentRoute = this.router.url;
+    this.hideSidebar = this.readHideSidebar();
     
     // Ensure permissions are loaded
     const currentUser = this.authService.currentUser();
@@ -158,6 +163,33 @@ export class MainShellComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  /**
+   * Navigate to the full-width global search results page.
+   * Triggered from the header search box (Enter or the search icon).
+   */
+  onGlobalSearch(term: string): void {
+    const q = (term || '').trim();
+    if (q.length < 2) {
+      return;
+    }
+    this.router.navigate(['/search'], { queryParams: { q } });
+  }
+
+  /**
+   * Walk to the deepest activated route and read its data.hideSidebar flag.
+   */
+  private readHideSidebar(): boolean {
+    let route = this.activatedRoute.firstChild;
+    let value = false;
+    while (route) {
+      if (route.snapshot.data && 'hideSidebar' in route.snapshot.data) {
+        value = !!route.snapshot.data['hideSidebar'];
+      }
+      route = route.firstChild;
+    }
+    return value;
   }
 
   onAcademicYearChange(yearId: string | number): void {

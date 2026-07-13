@@ -58,6 +58,8 @@
   align-items: center;
   gap: var(--spacing-md);
   flex-shrink: 0;
+  /* Keep actions right-aligned even when there is no search box on the left. */
+  margin-left: auto;
 }
 
 .filter-info {

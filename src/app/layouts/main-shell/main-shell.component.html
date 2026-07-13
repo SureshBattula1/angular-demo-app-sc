@@ -20,13 +20,29 @@
   <mat-toolbar class="app-header" color="primary">
     <!-- Toggle Button -->
     <button mat-icon-button
+            *ngIf="!hideSidebar"
             (click)="toggleSidebar()"
             class="sidebar-toggle"
             aria-label="Toggle sidebar">
       <mat-icon>{{ isSidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
     </button>
-    
+
     <span class="app-title">School Management System</span>
+
+    <!-- Global people search (students + teachers/accountants/staff) -->
+    <div class="global-search" *hasPermission="'search.global'">
+      <mat-form-field appearance="outline" class="global-search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput
+               #globalSearchInput
+               type="search"
+               autocomplete="off"
+               placeholder="Search students, teachers, staff..."
+               aria-label="Global search"
+               (keyup.enter)="onGlobalSearch(globalSearchInput.value)">
+      </mat-form-field>
+    </div>
+
     <span class="spacer"></span>
 
     <!-- Academic Year Selector -->
@@ -61,9 +77,10 @@
   </mat-toolbar>
 
   <!-- Sidenav Container -->
-  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed" [class.hide-sidebar]="hideSidebar">
     <!-- Sidenav -->
     <mat-sidenav
+      *ngIf="!hideSidebar"
       #drawer
       [mode]="isMobileOrTablet() ? 'over' : 'side'"
       [opened]="isMobileOrTablet() ? !isSidebarCollapsed : true"

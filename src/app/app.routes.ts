@@ -169,6 +169,13 @@ export const routes: Routes = [
         loadChildren: () => import('./features/branch-transfers/branch-transfers.routes').then(m => m.BRANCH_TRANSFERS_ROUTES),
         canActivate: [permissionGuard],
         data: { permissions: ['branch_transfers.view', 'branch_transfers.create'], permissionMode: 'any' }
+      },
+      {
+        // Full-width global people search (hideSidebar keeps the header but drops the sidebar)
+        path: 'search',
+        loadChildren: () => import('./features/global-search/global-search.routes').then(m => m.GLOBAL_SEARCH_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: 'search.global', hideSidebar: true }
       }
     ]
   },

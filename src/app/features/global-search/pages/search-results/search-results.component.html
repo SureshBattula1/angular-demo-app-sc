@@ -1,0 +1,20 @@
+<app-data-table
+  [data]="results"
+  [config]="tableConfig"
+  [advancedSearchConfig]="advancedSearchConfig"
+  [title]="'Search Results'"
+  [loading]="loading"
+  (paginationChanged)="onPaginationChange($event)"
+  (advancedSearchChanged)="onAdvancedSearchChange($event)"
+  (searchResetEvent)="onSearchReset()"
+  (exportClicked)="onExport($event)">
+</app-data-table>
+
+<!-- Clickable name -> profile view (student or teacher/accountant/staff) -->
+<ng-template #nameCell let-row>
+  <a class="result-name-link" tabindex="0"
+     (click)="openProfile(row)"
+     (keyup.enter)="openProfile(row)">
+    {{ row.name }}
+  </a>
+</ng-template>
