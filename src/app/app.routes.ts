@@ -144,7 +144,7 @@ export const routes: Routes = [
         path: 'transport',
         loadChildren: () => import('./features/transport/transport.routes').then(m => m.TRANSPORT_ROUTES),
         canActivate: [permissionGuard],
-        data: { permissions: ['transport.view', 'transport.manage'], permissionMode: 'any' }
+        data: { permissions: ['transport.view', 'transport.create'], permissionMode: 'any' }
       },
       {
         path: 'timetable',

@@ -1,98 +1,37 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
+import { Vehicle, TransportDriver, TransportRoute, RouteStop, StudentTransport } from '../../../core/models/transport.model';
 
-export interface TransportRoute {
-  id: number;
-  branch_id: number;
-  route_name: string;
-  route_number?: string;
-  start_location: string;
-  end_location: string;
-  distance_km?: number;
-  estimated_time?: string;
-  fare_amount?: number;
-  vehicle_id?: number;
-  driver_id?: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  vehicle?: Vehicle;
-  driver?: any;
-  branch?: any;
-  students?: any[];
-}
-
-export interface Vehicle {
-  id: number;
-  branch_id: number;
-  vehicle_number: string;
-  vehicle_type: string;
-  make?: string;
-  model?: string;
-  year?: number;
-  capacity: number;
-  driver_id?: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  driver?: any;
-  branch?: any;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TransportService {
-  private readonly ROUTES_ENDPOINT = '/transport-routes';
-  private readonly VEHICLES_ENDPOINT = '/vehicles';
+  constructor(private api: ApiService) {}
 
-  constructor(private apiService: ApiService) {}
+  // Vehicles
+  getVehicles(params?: Record<string, unknown>): Observable<ApiResponse<Vehicle[]>> { return this.api.get<Vehicle[]>('/vehicles', params); }
+  getVehicle(id: string | number): Observable<ApiResponse<Vehicle>> { return this.api.get<Vehicle>(`/vehicles/${id}`); }
+  createVehicle(data: Partial<Vehicle>): Observable<ApiResponse<Vehicle>> { return this.api.post<Vehicle>('/vehicles', data); }
+  updateVehicle(id: string | number, data: Partial<Vehicle>): Observable<ApiResponse<Vehicle>> { return this.api.put<Vehicle>(`/vehicles/${id}`, data); }
+  deleteVehicle(id: string | number): Observable<ApiResponse> { return this.api.delete(`/vehicles/${id}`); }
 
-  // Transport Routes Methods
-  getRoutes(params?: Record<string, unknown>): Observable<ApiResponse<TransportRoute[]>> {
-    return this.apiService.get<TransportRoute[]>(this.ROUTES_ENDPOINT, params);
-  }
+  // Drivers
+  getDrivers(params?: Record<string, unknown>): Observable<ApiResponse<TransportDriver[]>> { return this.api.get<TransportDriver[]>('/transport-drivers', params); }
+  getDriver(id: string | number): Observable<ApiResponse<TransportDriver>> { return this.api.get<TransportDriver>(`/transport-drivers/${id}`); }
+  createDriver(data: Partial<TransportDriver>): Observable<ApiResponse<TransportDriver>> { return this.api.post<TransportDriver>('/transport-drivers', data); }
+  updateDriver(id: string | number, data: Partial<TransportDriver>): Observable<ApiResponse<TransportDriver>> { return this.api.put<TransportDriver>(`/transport-drivers/${id}`, data); }
+  deleteDriver(id: string | number): Observable<ApiResponse> { return this.api.delete(`/transport-drivers/${id}`); }
 
-  getRoute(id: number): Observable<ApiResponse<TransportRoute>> {
-    return this.apiService.get<TransportRoute>(`${this.ROUTES_ENDPOINT}/${id}`);
-  }
+  // Routes (+ stops)
+  getRoutes(params?: Record<string, unknown>): Observable<ApiResponse<TransportRoute[]>> { return this.api.get<TransportRoute[]>('/transport-routes', params); }
+  getRoute(id: string | number): Observable<ApiResponse<TransportRoute & { stops?: RouteStop[] }>> { return this.api.get(`/transport-routes/${id}`); }
+  createRoute(data: Partial<TransportRoute> & { stops?: RouteStop[] }): Observable<ApiResponse<TransportRoute>> { return this.api.post<TransportRoute>('/transport-routes', data); }
+  updateRoute(id: string | number, data: Partial<TransportRoute> & { stops?: RouteStop[] }): Observable<ApiResponse<TransportRoute>> { return this.api.put<TransportRoute>(`/transport-routes/${id}`, data); }
+  deleteRoute(id: string | number): Observable<ApiResponse> { return this.api.delete(`/transport-routes/${id}`); }
+  getRouteStops(id: string | number): Observable<ApiResponse<RouteStop[]>> { return this.api.get<RouteStop[]>(`/transport-routes/${id}/stops`); }
+  getRouteStudents(id: string | number): Observable<ApiResponse<StudentTransport[]>> { return this.api.get<StudentTransport[]>(`/transport-routes/${id}/students`); }
 
-  createRoute(routeData: Partial<TransportRoute>): Observable<ApiResponse<TransportRoute>> {
-    return this.apiService.post<TransportRoute>(this.ROUTES_ENDPOINT, routeData);
-  }
-
-  updateRoute(id: number, routeData: Partial<TransportRoute>): Observable<ApiResponse<TransportRoute>> {
-    return this.apiService.put<TransportRoute>(`${this.ROUTES_ENDPOINT}/${id}`, routeData);
-  }
-
-  deleteRoute(id: number): Observable<ApiResponse> {
-    return this.apiService.delete(`${this.ROUTES_ENDPOINT}/${id}`);
-  }
-
-  getRouteStudents(routeId: number): Observable<ApiResponse<any[]>> {
-    return this.apiService.get<any[]>(`${this.ROUTES_ENDPOINT}/${routeId}/students`);
-  }
-
-  // Vehicle Methods
-  getVehicles(params?: Record<string, unknown>): Observable<ApiResponse<Vehicle[]>> {
-    return this.apiService.get<Vehicle[]>(this.VEHICLES_ENDPOINT, params);
-  }
-
-  getVehicle(id: number): Observable<ApiResponse<Vehicle>> {
-    return this.apiService.get<Vehicle>(`${this.VEHICLES_ENDPOINT}/${id}`);
-  }
-
-  createVehicle(vehicleData: Partial<Vehicle>): Observable<ApiResponse<Vehicle>> {
-    return this.apiService.post<Vehicle>(this.VEHICLES_ENDPOINT, vehicleData);
-  }
-
-  updateVehicle(id: number, vehicleData: Partial<Vehicle>): Observable<ApiResponse<Vehicle>> {
-    return this.apiService.put<Vehicle>(`${this.VEHICLES_ENDPOINT}/${id}`, vehicleData);
-  }
-
-  deleteVehicle(id: number): Observable<ApiResponse> {
-    return this.apiService.delete(`${this.VEHICLES_ENDPOINT}/${id}`);
-  }
+  // Student assignments
+  assignStudent(data: Partial<StudentTransport>): Observable<ApiResponse<StudentTransport>> { return this.api.post<StudentTransport>('/student-transport', data); }
+  updateAssignment(id: string | number, data: Partial<StudentTransport>): Observable<ApiResponse<StudentTransport>> { return this.api.put<StudentTransport>(`/student-transport/${id}`, data); }
+  removeAssignment(id: string | number): Observable<ApiResponse> { return this.api.delete(`/student-transport/${id}`); }
 }
-
