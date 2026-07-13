@@ -1,0 +1,23 @@
+<div class="issues-page">
+  <mat-tab-group>
+    <mat-tab label="Active Issues">
+      <app-data-table
+        [data]="activeIssues"
+        [config]="activeConfig"
+        [title]="'Active Issues'"
+        [loading]="activeLoading"
+        (paginationChanged)="onActivePage($event)">
+      </app-data-table>
+    </mat-tab>
+
+    <mat-tab label="Overdue">
+      <app-data-table
+        [data]="overdueIssues"
+        [config]="overdueConfig"
+        [title]="'Overdue Issues'"
+        [loading]="overdueLoading"
+        (paginationChanged)="onOverduePage($event)">
+      </app-data-table>
+    </mat-tab>
+  </mat-tab-group>
+</div>

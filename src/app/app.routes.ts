@@ -138,7 +138,7 @@ export const routes: Routes = [
         path: 'library',
         loadChildren: () => import('./features/library/library.routes').then(m => m.LIBRARY_ROUTES),
         canActivate: [permissionGuard],
-        data: { permissions: ['library.view', 'library.manage'], permissionMode: 'any' }
+        data: { permissions: ['library.view', 'library.create'], permissionMode: 'any' }
       },
       {
         path: 'transport',
