@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, PaginationEvent, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
@@ -12,15 +12,22 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { ExportService } from '../../../../shared/services/export.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
-interface SearchRow extends GlobalSearchResult {
+/** A result row enriched with display-ready fields for the table. */
+type SearchRow = GlobalSearchResult & {
   branchName: string;
   categoryLabel: string;
-}
+};
+
+/** Advanced-search filters merged into every request. */
+type SearchFilters = {
+  filter_branch_id?: string;
+  category?: GlobalSearchResult['category'];
+};
 
 @Component({
   selector: 'app-search-results',
   standalone: true,
-  imports: [CommonModule, DataTableComponent],
+  imports: [CommonModule, RouterLink, DataTableComponent],
   templateUrl: './search-results.component.html',
   styleUrls: ['./search-results.component.scss']
 })
@@ -34,7 +41,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy, AfterViewInit 
   private page = 1;
   private perPage = 25;
   /** Advanced-search filters (branch/category) merged into every request. */
-  private filters: Record<string, unknown> = {};
+  private filters: SearchFilters = {};
   private queryParamSub?: Subscription;
 
   tableConfig: TableConfig = {
@@ -95,7 +102,6 @@ export class SearchResultsComponent implements OnInit, OnDestroy, AfterViewInit 
     private branchService: BranchService,
     private exportService: ExportService,
     private route: ActivatedRoute,
-    private router: Router,
     private errorHandler: ErrorHandlerService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -173,7 +179,7 @@ export class SearchResultsComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   onAdvancedSearchChange(event: SearchEvent): void {
-    this.filters = { ...(event.filters || {}) };
+    this.filters = { ...(event.filters || {}) } as SearchFilters;
     if (event.query) {
       this.query = event.query.trim();
     }
@@ -196,11 +202,12 @@ export class SearchResultsComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   /**
-   * Deep-link to the matching profile. Pass the hashid id verbatim.
+   * routerLink target for the matching profile. The hashid id is passed
+   * verbatim (never Number()'d).
    */
-  openProfile(row: SearchRow): void {
-    const path = row.type === 'student' ? '/students/view' : '/teachers/view';
-    this.router.navigate([path, row.id]);
+  profileLink(row: SearchRow): string[] {
+    const base = row.type === 'student' ? '/students/view' : '/teachers/view';
+    return [base, row.id];
   }
 
   private categoryLabel(category: GlobalSearchResult['category']): string {

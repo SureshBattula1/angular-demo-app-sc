@@ -12,9 +12,7 @@
 
 <!-- Clickable name -> profile view (student or teacher/accountant/staff) -->
 <ng-template #nameCell let-row>
-  <a class="result-name-link" tabindex="0"
-     (click)="openProfile(row)"
-     (keyup.enter)="openProfile(row)">
+  <a class="result-name-link" [routerLink]="profileLink(row)">
     {{ row.name }}
   </a>
 </ng-template>
