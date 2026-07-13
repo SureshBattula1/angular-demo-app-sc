@@ -6,7 +6,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { AccountService } from '../../services/account.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { Transaction, AccountCategory } from '../../../../core/models/account.model';
+import { Transaction, AccountCategory, TransactionFormData } from '../../../../core/models/account.model';
 
 @Component({
   selector: 'app-transaction-form',
@@ -19,7 +19,7 @@ export class TransactionFormComponent implements OnInit {
   transactionForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  transactionId?: number;
+  transactionId?: string;
   currentTransaction?: Transaction;
   
   branches: any[] = [];
@@ -53,35 +53,36 @@ export class TransactionFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadBranches();
-    this.loadCategories();
     this.setupTypeChangeListener();
-    
+    this.setupBranchChangeListener();
+    this.loadBranches();
+
     // Check if type is passed via query params
     this.route.queryParams.subscribe(params => {
       if (params['type']) {
         this.transactionForm.patchValue({ type: params['type'] });
       }
     });
-    
+
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.transactionId = +params['id'];
+        this.transactionId = params['id'];
         this.isEditMode = true;
-        this.loadTransaction(this.transactionId);
+        this.loadTransaction(this.transactionId!);
+      } else {
+        // Create mode: load categories for all accessible branches (no branch filter yet)
+        this.loadCategories();
       }
     });
   }
 
   private initForm(): void {
-    const today = new Date().toISOString().split('T')[0];
-
     this.transactionForm = this.fb.group({
       branch_id: [null, Validators.required],
       type: ['Income', Validators.required],
       category_id: [null, Validators.required],
-      transaction_date: [today, Validators.required],
+      transaction_date: [new Date(), Validators.required],
       amount: [0, [Validators.required, Validators.min(0)]],
       party_name: [''],
       party_type: [''],
@@ -101,14 +102,35 @@ export class TransactionFormComponent implements OnInit {
     });
   }
 
-  private loadTransaction(id: number): void {
+  /** When branch changes, reload categories for that branch so dropdown is correct (and in edit mode includes current category) */
+  private setupBranchChangeListener(): void {
+    this.transactionForm.get('branch_id')?.valueChanges.subscribe(branchId => {
+      if (branchId != null) {
+        this.loadCategories(branchId);
+      } else {
+        this.loadCategories();
+      }
+    });
+  }
+
+  private loadTransaction(id: string): void {
     this.isLoading = true;
-    
+
     this.accountService.getTransaction(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.currentTransaction = response.data;
-          this.transactionForm.patchValue(response.data);
+          const d = response.data;
+          this.currentTransaction = d;
+          // Convert transaction_date to Date for mat-datepicker
+          this.transactionForm.patchValue(
+            {
+              ...d,
+              transaction_date: d.transaction_date ? new Date(d.transaction_date) : new Date()
+            },
+            { emitEvent: false }
+          );
+          // Load categories for this transaction's branch so dropdown populates (including current category)
+          this.loadCategories(d.branch_id ?? undefined);
         }
         this.isLoading = false;
       },
@@ -128,24 +150,30 @@ export class TransactionFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
 
-  private loadCategories(): void {
+  /** Load categories, optionally filtered by branch_id (so edit mode and branch change get the right list) */
+  private loadCategories(branchId?: string | number): void {
     this.loadingCategories = true;
-    
-    this.accountService.getCategories({ is_active: true }).subscribe({
+    const params: Record<string, unknown> = { is_active: true };
+    if (branchId != null) {
+      params['branch_id'] = branchId;
+    }
+    this.accountService.getCategories(params).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.categories = response.data;
-          this.filterCategoriesByType(this.transactionForm.get('type')?.value);
+          const currentType = this.transactionForm.get('type')?.value;
+          this.filterCategoriesByType(currentType);
+        } else {
+          this.errorHandler.showWarning('No categories found. Please create categories first.');
         }
         this.loadingCategories = false;
       },
       error: (error) => {
-        console.error('Error loading categories:', error);
+        this.errorHandler.handleError(error);
         this.loadingCategories = false;
       }
     });
@@ -172,7 +200,15 @@ export class TransactionFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.transactionForm.value;
+    const raw = this.transactionForm.value;
+    const transactionDateStr =
+      raw.transaction_date instanceof Date
+        ? raw.transaction_date.toISOString().split('T')[0]
+        : String(raw.transaction_date ?? '');
+    const formData: TransactionFormData = {
+      ...(raw as TransactionFormData),
+      transaction_date: transactionDateStr
+    };
 
     const request = this.isEditMode && this.transactionId
       ? this.accountService.updateTransaction(this.transactionId, formData)

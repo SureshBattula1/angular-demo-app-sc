@@ -19,6 +19,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   hidePassword = true;
   returnUrl = '/dashboard';
+  currentYear = new Date().getFullYear();
 
   constructor(
     private fb: FormBuilder,
@@ -58,6 +59,8 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         if (response.success) {
           this.errorHandler.showSuccess('Login successful! Welcome back.');
+
+          // All roles (including Students) land on the role-based dashboard
           this.router.navigate([this.returnUrl]);
         } else {
           this.errorHandler.showError(response.message || 'Login failed');

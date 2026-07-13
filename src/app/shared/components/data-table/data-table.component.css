@@ -58,6 +58,8 @@
   align-items: center;
   gap: var(--spacing-md);
   flex-shrink: 0;
+  /* Keep actions right-aligned even when there is no search box on the left. */
+  margin-left: auto;
 }
 
 .filter-info {
@@ -93,29 +95,51 @@
 .reset-btn {
   color: var(--primary-color);
   transition: all var(--transition-fast);
-  
-  &:hover:not([disabled]) {
-    background-color: rgba(255, 152, 0, 0.1);
-    transform: rotate(180deg);
-  }
-  
-  &[disabled] {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-  
-  mat-icon {
-    transition: transform var(--transition-normal);
-  }
+}
+
+.reset-btn:hover:not([disabled]) {
+  background-color: rgba(var(--warning-rgb), 0.1);
+  transform: rotate(180deg);
+}
+
+.reset-btn[disabled] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.reset-btn mat-icon {
+  transition: transform var(--transition-normal);
 }
 
 /* Advanced Search Button */
 .advanced-search-btn {
   color: var(--primary-color);
-  
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-  }
+  position: relative;
+}
+
+.advanced-search-btn:hover {
+  background-color: rgba(var(--primary-rgb), 0.04);
+}
+
+/* Filter Count Badge Styling */
+::ng-deep .advanced-search-btn .mat-badge-content {
+  font-weight: 600;
+  font-size: 10px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  border-radius: 9px;
+  padding: 0 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+::ng-deep .advanced-search-btn .mat-badge-small .mat-badge-content {
+  font-size: 9px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  border-radius: 8px;
+  padding: 0 3px;
 }
 
 .action-buttons {
@@ -128,10 +152,10 @@
 /* Export Icon Button */
 .export-btn-icon {
   color: var(--accent-color);
-  
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-  }
+}
+
+.export-btn-icon:hover {
+  background-color: rgba(var(--primary-rgb), 0.04);
 }
 
 .export-btn {
@@ -241,33 +265,6 @@
   margin-left: var(--spacing-xs);
 }
 
-/* Override Material form field styles for compact search */
-::ng-deep .search-field.mat-mdc-form-field {
-  margin: 0;
-  font-size: 14px;
-}
-
-::ng-deep .search-field .mat-mdc-text-field-wrapper {
-  padding: 0;
-}
-
-::ng-deep .search-field .mat-mdc-form-field-infix {
-  min-height: 40px;
-  padding: 6px 0;
-}
-
-::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
-
-::ng-deep .search-field .mat-mdc-form-field-label {
-  font-size: 14px;
-}
-
-::ng-deep .search-field input {
-  font-size: 14px;
-  padding: 8px 0;
-}
 
 /* ========================================
    TABLE WRAPPER
@@ -301,7 +298,7 @@
   font-size: 14px;
   white-space: nowrap;
   background: transparent;
-  padding: var(--spacing-md);
+  /* padding: var(--spacing-md); */
 }
 
 .header-content {
@@ -322,7 +319,7 @@
 }
 
 .data-table td {
-  padding: var(--spacing-md);
+  /* padding: var(--spacing-md); */
   vertical-align: middle;
   border-bottom: 1px solid var(--divider-color);
   max-width: 200px;
@@ -354,6 +351,87 @@
 .action-buttons button {
   width: 32px;
   height: 32px;
+  position: relative;
+}
+
+/* Tooltip positioning fix for action buttons */
+::ng-deep .action-buttons button .mat-mdc-tooltip {
+  margin-bottom: 8px !important;
+}
+
+::ng-deep .mat-mdc-tooltip {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dynamic theme colors for action buttons - Use data-color attribute */
+
+/* Primary Color (Teal) - View Button */
+.action-buttons button[data-color="primary"],
+.action-buttons button[data-color="primary"] mat-icon,
+.action-buttons button[data-color="primary"] .mat-icon {
+  color: var(--primary-color) !important;
+}
+
+.action-buttons button[data-color="primary"]:hover {
+  background-color: rgba(var(--primary-rgb), 0.08) !important;
+}
+
+/* Info Color (Blue) - Edit Button */
+.action-buttons button[data-color="info"],
+.action-buttons button[data-color="info"] mat-icon,
+.action-buttons button[data-color="info"] .mat-icon {
+  color: var(--info-color) !important;
+}
+
+.action-buttons button[data-color="info"]:hover {
+  background-color: rgba(var(--info-rgb), 0.08) !important;
+}
+
+/* Accent Color (Green) - Permissions Button */
+.action-buttons button[data-color="accent"],
+.action-buttons button[data-color="accent"] mat-icon,
+.action-buttons button[data-color="accent"] .mat-icon {
+  color: var(--accent-color) !important;
+}
+
+.action-buttons button[data-color="accent"]:hover {
+  background-color: rgba(var(--accent-rgb), 0.08) !important;
+}
+
+/* Warn Color (Red) - Delete Button */
+.action-buttons button[data-color="warn"],
+.action-buttons button[data-color="warn"] mat-icon,
+.action-buttons button[data-color="warn"] .mat-icon {
+  color: var(--error-color) !important;
+}
+
+.action-buttons button[data-color="warn"]:hover {
+  background-color: rgba(var(--error-rgb), 0.08) !important;
+}
+
+/* Success Color (Green) */
+.action-buttons button[data-color="success"],
+.action-buttons button[data-color="success"] mat-icon,
+.action-buttons button[data-color="success"] .mat-icon {
+  color: var(--success-color) !important;
+}
+
+.action-buttons button[data-color="success"]:hover {
+  background-color: rgba(var(--success-rgb), 0.08) !important;
+}
+
+/* Warning Color (Orange) */
+.action-buttons button[data-color="warning"],
+.action-buttons button[data-color="warning"] mat-icon,
+.action-buttons button[data-color="warning"] .mat-icon {
+  color: var(--warning-color) !important;
+}
+
+.action-buttons button[data-color="warning"]:hover {
+  background-color: rgba(var(--warning-rgb), 0.08) !important;
 }
 
 /* Cell Types */
@@ -367,6 +445,20 @@
   font-weight: 500;
 }
 
+/* Badge color variants (apply on td via column.cellClass) */
+.badge-danger .badge {
+  background-color: var(--danger-color);
+}
+
+.badge-warning .badge {
+  background-color: var(--warning-color, #f57c00);
+  color: var(--white);
+}
+
+.badge-success .badge {
+  background-color: var(--success-color);
+}
+
 .avatar {
   width: 40px;
   height: 40px;
@@ -375,31 +467,75 @@
   border: 2px solid var(--border-color);
 }
 
+.cell-image {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(var(--shadow-rgb), 0.1);
+  transition: transform var(--transition-fast);
+}
+
+.cell-image:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(var(--shadow-rgb), 0.2);
+}
+
+.branch-logo-cell {
+  padding: var(--spacing-xs) !important;
+}
+
 /* ========================================
-   CARD VIEW (MOBILE)
+   CARD VIEW (MOBILE) - Stunning Design
    ======================================== */
 
 .card-view {
   padding: var(--spacing-md);
   display: grid;
   gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
 .data-card {
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  background: var(--card-background);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.data-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+  opacity: 0;
+  transition: opacity var(--transition-normal);
 }
 
 .data-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+
+.data-card:hover::before {
+  opacity: 1;
 }
 
 .card-field {
   display: flex;
   justify-content: space-between;
-  padding: var(--spacing-xs) 0;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
   border-bottom: 1px solid var(--divider-color);
+  gap: var(--spacing-md);
 }
 
 .card-field:last-child {
@@ -409,12 +545,92 @@
 .field-label {
   font-weight: 600;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+  min-width: 100px;
 }
 
 .field-value {
   color: var(--text-primary);
   font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Card Actions */
+::ng-deep .data-card .mat-mdc-card-content {
+  padding: var(--spacing-md);
+}
+
+::ng-deep .data-card .mat-mdc-card-actions {
+  border-top: 1px solid var(--divider-color);
+  background: linear-gradient(135deg, var(--gray-50), var(--white));
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+}
+
+::ng-deep .data-card .mat-mdc-card-actions button {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all var(--transition-fast);
+}
+
+::ng-deep .data-card .mat-mdc-card-actions button:hover {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+/* ========================================
+   NO DATA STATE
+   ======================================== */
+
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: var(--spacing-xl);
+}
+
+.no-data-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.no-data-icon {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+  color: var(--text-disabled);
+  margin: 0 auto var(--spacing-lg);
+  display: block;
+  opacity: 0.4;
+}
+
+.no-data-content h3 {
+  margin: 0 0 12px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.no-data-content p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.no-data-content button {
+  margin-top: 8px;
 }
 
 /* ========================================
@@ -436,11 +652,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(var(--card-background-rgb), 0.9);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  border-radius: var(--radius-lg);
 }
 
 /* ========================================
@@ -800,7 +1018,7 @@
     position: sticky;
     right: 0;
     background: var(--white);
-    box-shadow: -2px 0 4px rgba(0,0,0,0.05);
+    box-shadow: -2px 0 4px rgba(var(--shadow-rgb), 0.05);
   }
   
   .avatar {
@@ -812,6 +1030,38 @@
     width: 30px;
     height: 30px;
   }
+  
+  /* Responsive Card View on Mobile */
+  .card-view {
+    padding: var(--spacing-sm);
+    grid-template-columns: 1fr;
+  }
+  
+  .data-card {
+    border-radius: var(--radius-md);
+  }
+  
+  .field-label {
+    font-size: 11px;
+    min-width: 80px;
+  }
+  
+  .field-value {
+    font-size: 13px;
+  }
+  
+  ::ng-deep .data-card .mat-mdc-card-content {
+    padding: var(--spacing-sm);
+  }
+  
+  ::ng-deep .data-card .mat-mdc-card-actions {
+    flex-wrap: wrap;
+  }
+  
+  ::ng-deep .data-card .mat-mdc-card-actions button {
+    font-size: 11px;
+    flex: 1;
+    min-width: 80px;
+  }
 }
-
 

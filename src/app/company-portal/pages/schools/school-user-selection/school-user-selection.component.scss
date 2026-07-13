@@ -1,0 +1,333 @@
+// Using CSS variables from styles.css
+
+.user-selection-dialog {
+  min-width: 800px;
+  max-width: 1000px;
+  width: 90vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  
+  @media (max-width: 960px) {
+    min-width: 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+// Override Material Dialog default padding to ensure header starts at top
+::ng-deep .mat-mdc-dialog-container {
+  padding: 0 !important;
+  
+  .mdc-dialog__surface {
+    padding: 0 !important;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+  
+  .mdc-dialog__content {
+    padding: 0 !important;
+  }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: var(--white);
+  margin: 0;
+  border-radius: 0;
+  flex-shrink: 0;
+  
+  .header-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--white);
+  }
+  
+  .header-content {
+    flex: 1;
+    
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--white);
+    }
+    
+    .school-name {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+.dialog-content {
+  padding: var(--spacing-lg)!important;
+  max-height: 70vh;
+  overflow-y: auto;
+  flex: 1;
+  margin: 0;
+  
+  .filters-section {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--gray-200);
+    
+    .filters-row {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: flex-start;
+      
+      .search-field {
+        flex: 2;
+        min-width: 0;
+        
+        ::ng-deep .mat-mdc-form-field {
+          width: 100%;
+        }
+      }
+      
+      .role-filter-field {
+        flex: 1;
+        min-width: 200px;
+        
+        ::ng-deep .mat-mdc-form-field {
+          width: 100%;
+        }
+      }
+      
+      @media (max-width: 600px) {
+        flex-direction: column;
+        
+        .search-field,
+        .role-filter-field {
+          width: 100%;
+        }
+      }
+    }
+    
+    .results-count {
+      margin-top: var(--spacing-sm);
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+  }
+  
+  .loading-container,
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl);
+    text-align: center;
+    
+    p {
+      margin-top: var(--spacing-md);
+      color: var(--text-secondary);
+    }
+    
+    button {
+      margin-top: var(--spacing-md);
+    }
+  }
+  
+  .empty-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--gray-400);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .list-description {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  
+  .users-list {
+      .user-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--spacing-md);
+        
+        @media (max-width: 960px) {
+          grid-template-columns: 1fr;
+        }
+      }
+    
+    .user-card {
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      
+      &:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+      }
+      
+      &.branch-admin {
+        border-color: var(--primary-light);
+        background: linear-gradient(to right, var(--primary-light), transparent);
+      }
+      
+      &.selected {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+      }
+      
+      &.impersonating {
+        opacity: 0.7;
+        pointer-events: none;
+      }
+      
+      mat-card-content {
+        padding: var(--spacing-md);
+      }
+      
+      .user-info {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        
+        .user-avatar {
+          width: 56px;
+          height: 56px;
+          border-radius: var(--radius-full);
+          background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          
+          .role-icon {
+            font-size: 28px;
+            width: 28px;
+            height: 28px;
+            color: var(--white);
+          }
+        }
+        
+        .user-details {
+          flex: 1;
+          min-width: 0;
+          
+          .user-name {
+            margin: 0 0 4px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+          }
+          
+          .user-email {
+            margin: 0 0 var(--spacing-sm);
+            font-size: 14px;
+            color: var(--text-secondary);
+          }
+          
+          .user-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            align-items: center;
+            
+            .role-badge {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              padding: 4px 10px;
+              border-radius: var(--radius-full);
+              font-size: 12px;
+              font-weight: 500;
+              background: var(--gray-100);
+              color: var(--text-primary);
+              
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+              
+              &.role-branchadmin {
+                background: var(--primary-light);
+                color: var(--primary-color);
+              }
+              
+              &.role-superadmin {
+                background: var(--accent-light);
+                color: var(--accent-color);
+              }
+            }
+            
+            .branch-info {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              font-size: 12px;
+              color: var(--text-secondary);
+              
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+            }
+          }
+        }
+      }
+      
+      .user-actions {
+        display: flex;
+        justify-content: flex-end;
+        
+        button {
+          .spinner-inline {
+            display: inline-block;
+            margin-right: var(--spacing-xs);
+            vertical-align: middle;
+            
+            ::ng-deep circle {
+              stroke: var(--white) !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.dialog-actions {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--gray-50);
+  margin: 0;
+  border-radius: 0;
+  flex-shrink: 0;
+  
+  button {
+    mat-icon {
+      margin-right: var(--spacing-xs);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .dialog-content {
+    max-height: 50vh;
+  }
+  
+  .user-card {
+    .user-info {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+}
+

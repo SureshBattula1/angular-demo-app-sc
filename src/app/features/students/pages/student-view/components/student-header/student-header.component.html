@@ -1,0 +1,212 @@
+<mat-card class="view-header-card">
+  <div class="view-header">
+    <div class="view-avatar">
+      <!-- Show profile picture if exists, otherwise show icon -->
+      <img *ngIf="showProfilePicture" 
+           [src]="profilePictureUrl" 
+           [alt]="getFullName()"
+           class="student-profile-avatar"
+           (load)="onImageLoad()"
+           (error)="onImageError()">
+      <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
+    </div>
+    <div class="view-info">
+      <h1 class="view-name">{{ getFullName() }}</h1>
+      <div class="view-meta">
+        <span>
+          <mat-icon>badge</mat-icon>
+          {{ student.admission_number }}
+        </span>
+        <span>
+          <mat-icon>school</mat-icon>
+          {{ getGradeLabel() }} ({{ student.grade }}) {{ student.section ? '- ' + student.section : '' }}
+        </span>
+        <span *ngIf="student.roll_number">
+          <mat-icon>numbers</mat-icon>
+          Roll: {{ student.roll_number }}
+        </span>
+        <span class="status-badge" [ngClass]="getStatusColor(student.student_status)">
+          <mat-icon>circle</mat-icon>
+          {{ student.student_status }}
+        </span>
+      </div>
+    </div>
+
+    <div class="academic-overview" *ngIf="!overviewLoading">
+      <div
+        class="overview-ring-block clickable"
+        [matMenuTriggerFor]="yearsMenu"
+        matTooltip="Click to see marks % by academic year"
+        [attr.aria-label]="'Overall marks ' + overallRing.percentage + ' percent. Click for breakdown by year.'">
+        <div class="overview-ring">
+          <svg class="progress-ring" width="56" height="56" viewBox="0 0 56 56">
+            <circle class="progress-ring-circle-bg" cx="28" cy="28" [attr.r]="ringRadius"></circle>
+            <circle
+              class="progress-ring-circle"
+              cx="28"
+              cy="28"
+              [attr.r]="ringRadius"
+              [style.stroke]="getRingColor(overallRing.percentage)"
+              [style.strokeDashoffset]="calculateStrokeDashoffset(overallRing.percentage)">
+            </circle>
+          </svg>
+          <span class="ring-value">{{ overallRing.percentage }}%</span>
+        </div>
+        <span class="ring-label">Overall</span>
+        <span class="ring-sublabel">{{ overallRing.label }}</span>
+      </div>
+
+      <mat-menu #yearsMenu="matMenu" class="years-breakdown-menu" xPosition="before">
+        <div class="years-menu-title" mat-menu-item disabled>
+          <mat-icon>calendar_today</mat-icon>
+          <span>Marks by academic year</span>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="years-menu-empty" mat-menu-item disabled *ngIf="yearBreakdown.length === 0">
+          No exam marks recorded yet
+        </div>
+        <button
+          mat-menu-item
+          disabled
+          class="years-menu-row"
+          *ngFor="let year of yearBreakdown">
+          <span class="year-name">{{ year.academic_year_name }}</span>
+          <span class="year-pct" [style.color]="getRingColor(year.percentage)">{{ year.percentage }}%</span>
+        </button>
+        <mat-divider *ngIf="yearBreakdown.length > 0"></mat-divider>
+        <div class="years-menu-footer" mat-menu-item disabled *ngIf="yearBreakdown.length > 0">
+          Overall: <strong>{{ overallRing.percentage }}%</strong>
+        </div>
+      </mat-menu>
+
+      <div
+        class="overview-ring-block"
+        matTooltip="Current academic year exam marks %"
+        [attr.aria-label]="'Current year marks ' + currentYearMarksRing.percentage + ' percent'">
+        <div class="overview-ring">
+          <svg class="progress-ring" width="56" height="56" viewBox="0 0 56 56">
+            <circle class="progress-ring-circle-bg" cx="28" cy="28" [attr.r]="ringRadius"></circle>
+            <circle
+              class="progress-ring-circle"
+              cx="28"
+              cy="28"
+              [attr.r]="ringRadius"
+              [style.stroke]="getRingColor(currentYearMarksRing.percentage)"
+              [style.strokeDashoffset]="calculateStrokeDashoffset(currentYearMarksRing.percentage)">
+            </circle>
+          </svg>
+          <span class="ring-value">{{ currentYearMarksRing.percentage }}%</span>
+        </div>
+        <span class="ring-label">Exam</span>
+        <span class="ring-sublabel">{{ currentYearMarksRing.label }}</span>
+      </div>
+
+      <div
+        class="overview-ring-block clickable"
+        [matMenuTriggerFor]="monthsMenu"
+        matTooltip="Click to see absent days by month (current year)"
+        [attr.aria-label]="'Attendance ' + attendanceRing.percentage + ' percent. Click for month-wise absent count.'">
+        <div class="overview-ring">
+          <svg class="progress-ring" width="56" height="56" viewBox="0 0 56 56">
+            <circle class="progress-ring-circle-bg" cx="28" cy="28" [attr.r]="ringRadius"></circle>
+            <circle
+              class="progress-ring-circle"
+              cx="28"
+              cy="28"
+              [attr.r]="ringRadius"
+              [style.stroke]="getRingColor(attendanceRing.percentage)"
+              [style.strokeDashoffset]="calculateStrokeDashoffset(attendanceRing.percentage)">
+            </circle>
+          </svg>
+          <span class="ring-value">{{ attendanceRing.percentage }}%</span>
+        </div>
+        <span class="ring-label">Attendance</span>
+        <span class="ring-sublabel">{{ attendanceRing.label }}</span>
+      </div>
+
+      <mat-menu #monthsMenu="matMenu" class="months-breakdown-menu" xPosition="before">
+        <div class="years-menu-title" mat-menu-item disabled>
+          <mat-icon>event_busy</mat-icon>
+          <span>Absent by month</span>
+        </div>
+        <div class="years-menu-subtitle" mat-menu-item disabled *ngIf="attendanceRing.label">
+          {{ attendanceRing.label }}
+        </div>
+        <mat-divider></mat-divider>
+        <div class="years-menu-empty" mat-menu-item disabled *ngIf="monthBreakdown.length === 0">
+          No attendance recorded this year
+        </div>
+        <button
+          mat-menu-item
+          disabled
+          class="years-menu-row"
+          *ngFor="let month of monthBreakdown">
+          <span class="year-name">{{ month.month_label }}</span>
+          <span class="year-pct" [style.color]="getAbsentCountColor(month.absent)">{{ month.absent }}</span>
+        </button>
+        <mat-divider *ngIf="monthBreakdown.length > 0"></mat-divider>
+        <div class="years-menu-footer" mat-menu-item disabled *ngIf="monthBreakdown.length > 0">
+          Total absent: <strong [style.color]="getAbsentCountColor(attendanceRing.absent)">{{ attendanceRing.absent }}</strong>
+          · Attendance: <strong>{{ attendanceRing.percentage }}%</strong>
+        </div>
+      </mat-menu>
+    </div>
+
+    <div class="academic-overview loading" *ngIf="overviewLoading">
+      <mat-spinner diameter="28"></mat-spinner>
+    </div>
+  </div>
+  
+  <!-- Toolbar Navigation -->
+  <mat-toolbar class="student-toolbar">
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'info'"
+      (click)="onMenuClick('info')">
+      <mat-icon>person</mat-icon>
+      <span>Student Info</span>
+    </button>
+    <button
+      mat-button
+      class="toolbar-menu-item"
+      [class.active]="activeMenu === 'attendance'"
+      (click)="onMenuClick('attendance')">
+      <mat-icon>analytics</mat-icon>
+      <span>Attendance</span>
+    </button>
+    <button
+      mat-button
+      class="toolbar-menu-item"
+      [class.active]="activeMenu === 'leaves'"
+      (click)="onMenuClick('leaves')">
+      <mat-icon>event_busy</mat-icon>
+      <span>Leaves</span>
+    </button>
+    <button
+      mat-button
+      class="toolbar-menu-item"
+      [class.active]="activeMenu === 'exams'"
+      (click)="onMenuClick('exams')">
+      <mat-icon>assessment</mat-icon>
+      <span>Exams</span>
+    </button>
+    <button
+      mat-button
+      class="toolbar-menu-item"
+      [class.active]="activeMenu === 'fees'"
+      (click)="onMenuClick('fees')">
+      <mat-icon>payments</mat-icon>
+      <span>Fees</span>
+    </button>
+    <button
+      mat-button
+      class="toolbar-menu-item"
+      [class.active]="activeMenu === 'library'"
+      (click)="onMenuClick('library')">
+      <mat-icon>menu_book</mat-icon>
+      <span>Library</span>
+    </button>
+  </mat-toolbar>
+</mat-card>
+

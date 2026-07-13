@@ -43,12 +43,12 @@ export class InvoiceViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.loadInvoice(+params['id']);
+        this.loadInvoice(params['id']);
       }
     });
   }
 
-  loadInvoice(id: number): void {
+  loadInvoice(id: string | number): void {
     this.loading = true;
     this.invoiceService.getInvoice(id).subscribe({
       next: (response) => {

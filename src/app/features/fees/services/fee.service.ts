@@ -81,6 +81,12 @@ export class FeeService {
     );
   }
 
+  getFeePaymentById(id: string | number): Observable<ApiResponse<FeePayment>> {
+    return this.http.get<ApiResponse<FeePayment>>(
+      `${this.apiUrl}/fee-payments/${id}`
+    );
+  }
+
   recordPayment(payment: Partial<FeePayment>): Observable<ApiResponse<FeePayment>> {
     return this.http.post<ApiResponse<FeePayment>>(
       `${this.apiUrl}/fee-payments`,
@@ -92,6 +98,49 @@ export class FeeService {
   getStudentFees(studentId: string | number): Observable<ApiResponse<StudentFees>> {
     return this.http.get<ApiResponse<StudentFees>>(
       `${this.apiUrl}/students/${studentId}/fees`
+    );
+  }
+
+  // Today's Payments
+  getTodayPayments(filters?: FeeFilters): Observable<ApiResponse<FeePayment[]>> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const value = filters[key as keyof FeeFilters];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+
+    return this.http.get<ApiResponse<FeePayment[]>>(
+      `${this.apiUrl}/fee-payments/today`,
+      { params }
+    );
+  }
+
+  // Per-student fee details for a Grade & Section
+  getStudentFeesByClass(params: Record<string, any>): Observable<ApiResponse<any[]>> {
+    let httpParams = new HttpParams();
+    Object.keys(params || {}).forEach(key => {
+      const value = params[key];
+      if (value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, String(value));
+      }
+    });
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/fee-payments/by-class`,
+      { params: httpParams }
+    );
+  }
+
+  downloadFeePaymentReceipt(id: string | number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/fee-payments/${id}/receipt`,
+      {
+        responseType: 'blob'
+      }
     );
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -7,10 +7,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
+import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
+import { TableConfig } from '../../../../shared/components/data-table/data-table.interface';
 import { HolidayService } from '../../services/holiday.service';
 import { Holiday, CalendarDay } from '../../../../core/models/holiday.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 
 @Component({
   selector: 'app-holiday-calendar',
@@ -22,19 +26,23 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
     MatIconModule,
     MatTooltipModule,
     MatChipsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatMenuModule,
+    DataTableComponent
   ],
   templateUrl: './holiday-calendar.component.html',
   styleUrls: ['./holiday-calendar.component.scss']
 })
 export class HolidayCalendarComponent implements OnInit {
+  @ViewChild(DataTableComponent) dataTable!: DataTableComponent;
+  
   currentYear: number = new Date().getFullYear();
   currentMonth: number = new Date().getMonth();
   calendarDays: CalendarDay[] = [];
   holidays: Holiday[] = [];
-  upcomingHolidays: Holiday[] = [];
+  allHolidays: Holiday[] = [];
   loading = false;
-  loadingUpcoming = false;
+  loadingList = false;
 
   weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   monthNames = [
@@ -43,24 +51,77 @@ export class HolidayCalendarComponent implements OnInit {
   ];
 
   holidayTypes = [
-    { type: 'National', color: '#FF5733', label: 'National' },
-    { type: 'State', color: '#FFA500', label: 'State' },
-    { type: 'School', color: '#3498DB', label: 'School' },
-    { type: 'Optional', color: '#9B59B6', label: 'Optional' },
-    { type: 'Restricted', color: '#95A5A6', label: 'Restricted' }
+    { type: 'National', color: '#FF5733', icon: 'flag', label: 'National' },
+    { type: 'State', color: '#FFA500', icon: 'location_city', label: 'State' },
+    { type: 'Local', color: '#3498DB', icon: 'place', label: 'Local' },
+    { type: 'Festival', color: '#E91E63', icon: 'celebration', label: 'Festival' },
+    { type: 'Optional', color: '#9B59B6', icon: 'event_available', label: 'Optional' }
   ];
+
+  // Table configuration
+  tableConfig: TableConfig = {
+
+    columns: [
+      { key: 'branch', header: 'Branch', sortable: true,  },
+      { key: 'title', header: 'Holiday Name', sortable: true, searchable: true },
+      { key: 'type', header: 'Type', type: 'badge', sortable: true },
+      { key: 'start_date', header: 'Start Date', type: 'date', sortable: true },
+      { key: 'end_date', header: 'End Date', type: 'date', sortable: true},
+      { key: 'duration', header: 'Days', sortable: true },
+     
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        sortable: true,
+        cellClass: (row: any) => this.toBoolean(row?.is_active) ? 'badge-success' : 'badge-danger'
+      }
+    ],
+    actions: [
+      {
+        icon: 'visibility',
+        label: 'View Details',
+        action: (row: Holiday) => this.viewHoliday(row)
+      },
+      {
+        icon: 'edit',
+        label: 'Edit Holiday',
+        color: 'primary',
+        action: (row: Holiday) => this.editHoliday(row),
+        show: (row: Holiday) => this.canEdit(row)
+      },
+      {
+        icon: 'delete',
+        label: 'Delete Holiday',
+        color: 'warn',
+        action: (row: Holiday) => this.deleteHoliday(row),
+        show: (row: Holiday) => this.canDelete()
+      }
+    ],
+    pagination: true,
+    searchable: true,
+    exportable: true,
+    responsive: true,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25
+  };
 
   constructor(
     private holidayService: HolidayService,
     private authService: AuthService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
 
+  toBoolean(value: any): boolean {
+    if (value === true || value === 'true' || value === 1 || value === '1') return true;
+    return false;
+  }
+
   ngOnInit(): void {
-    console.log('Holiday Calendar initialized');
     this.loadCalendarData();
-    this.loadUpcomingHolidays();
+    this.loadAllHolidays();
   }
 
   /**
@@ -73,18 +134,14 @@ export class HolidayCalendarComponent implements OnInit {
 
     this.holidayService.getCalendarData(year, month).subscribe({
       next: (response) => {
-        console.log('Calendar API response:', response);
         if (response.success && response.data) {
           this.holidays = response.data;
-          console.log(`Loaded ${this.holidays.length} holidays for ${this.monthNames[this.currentMonth]} ${this.currentYear}`);
           this.generateCalendar();
         } else {
-          console.warn('No holidays data in response');
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading calendar:', error);
         this.errorHandler.showError('Failed to load calendar data');
         this.loading = false;
       }
@@ -92,20 +149,23 @@ export class HolidayCalendarComponent implements OnInit {
   }
 
   /**
-   * Load upcoming holidays
+   * Load all holidays for the list view
    */
-  loadUpcomingHolidays(): void {
-    this.loadingUpcoming = true;
-    this.holidayService.getUpcoming(5).subscribe({
+  loadAllHolidays(): void {
+    this.loadingList = true;
+    this.holidayService.getHolidays().subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.upcomingHolidays = response.data;
+          this.allHolidays = (response.data as Holiday[]).map(h => ({
+            ...h,
+            is_active_display: this.toBoolean(h.is_active) ? 'Active' : 'Deactive'
+          }));
         }
-        this.loadingUpcoming = false;
+        this.loadingList = false;
       },
       error: (error) => {
-        console.error('Error loading upcoming holidays:', error);
-        this.loadingUpcoming = false;
+        this.errorHandler.showError('Failed to load holidays');
+        this.loadingList = false;
       }
     });
   }
@@ -142,7 +202,6 @@ export class HolidayCalendarComponent implements OnInit {
     }
     
     this.calendarDays = days;
-    console.log(`Generated ${days.length} calendar days, ${days.filter(d => d.holidays.length > 0).length} days have holidays`);
   }
 
   /**
@@ -205,7 +264,6 @@ export class HolidayCalendarComponent implements OnInit {
     this.currentYear = today.getFullYear();
     this.currentMonth = today.getMonth();
     this.loadCalendarData();
-    this.loadUpcomingHolidays();
   }
 
   /**
@@ -256,10 +314,32 @@ export class HolidayCalendarComponent implements OnInit {
   }
 
   /**
-   * View all holidays as list
+   * Handle table actions
    */
-  viewList(): void {
-    this.router.navigate(['/holidays/list']);
+  onAction(event: { action: string, row: Holiday | null }): void {
+    if (event.action === 'add') {
+      this.addHoliday();
+    }
+  }
+
+  /**
+   * Delete holiday
+   */
+  deleteHoliday(holiday: Holiday): void {
+    if (confirm(`Are you sure you want to delete "${holiday.title}"?`)) {
+      this.holidayService.deleteHoliday(holiday.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess('Holiday deleted successfully');
+            this.loadCalendarData();
+            this.loadAllHolidays();
+          }
+        },
+        error: (error) => {
+          this.errorHandler.showError('Failed to delete holiday');
+        }
+      });
+    }
   }
 
   /**
@@ -283,11 +363,27 @@ export class HolidayCalendarComponent implements OnInit {
   }
 
   /**
+   * Check if user can delete
+   */
+  canDelete(): boolean {
+    const user = this.authService.currentUser();
+    return user?.role === 'SuperAdmin';
+  }
+
+  /**
    * Get badge color for holiday type
    */
   getTypeColor(type: string): string {
     const found = this.holidayTypes.find(t => t.type === type);
     return found?.color || '#3498DB';
+  }
+
+  /**
+   * Get icon for holiday type
+   */
+  getTypeIcon(type: string): string {
+    const found = this.holidayTypes.find(t => t.type === type);
+    return found?.icon || 'event';
   }
 
   /**
@@ -302,6 +398,24 @@ export class HolidayCalendarComponent implements OnInit {
     }
     
     return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  }
+
+  /**
+   * Export holidays
+   */
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    this.errorHandler.showInfo(`Exporting holidays as ${format.toUpperCase()}...`);
+    
+    this.exportService.export(
+      {
+        endpoint: '/holidays/export',
+        filename: 'holidays'
+      },
+      {
+        format: format,
+        filters: {}
+      }
+    );
   }
 }
 

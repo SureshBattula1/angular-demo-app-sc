@@ -28,7 +28,7 @@ export class InvoiceService {
   /**
    * Get single invoice
    */
-  getInvoice(id: number): Observable<ApiResponse<Invoice>> {
+  getInvoice(id: string | number): Observable<ApiResponse<Invoice>> {
     return this.apiService.get<Invoice>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -42,14 +42,14 @@ export class InvoiceService {
   /**
    * Update invoice
    */
-  updateInvoice(id: number, data: Partial<InvoiceFormData>): Observable<ApiResponse<Invoice>> {
+  updateInvoice(id: string | number, data: Partial<InvoiceFormData>): Observable<ApiResponse<Invoice>> {
     return this.apiService.put<Invoice>(`${this.ENDPOINT}/${id}`, data);
   }
 
   /**
    * Delete invoice
    */
-  deleteInvoice(id: number): Observable<ApiResponse> {
+  deleteInvoice(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
@@ -70,14 +70,14 @@ export class InvoiceService {
   /**
    * Record payment
    */
-  recordPayment(id: number, data: PaymentData): Observable<ApiResponse<Invoice>> {
+  recordPayment(id: string | number, data: PaymentData): Observable<ApiResponse<Invoice>> {
     return this.apiService.post<Invoice>(`${this.ENDPOINT}/${id}/payment`, data);
   }
 
   /**
    * Send invoice
    */
-  sendInvoice(id: number): Observable<ApiResponse> {
+  sendInvoice(id: string | number): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/${id}/send`, {});
   }
 

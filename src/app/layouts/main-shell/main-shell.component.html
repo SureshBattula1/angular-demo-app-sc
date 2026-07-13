@@ -1,83 +1,67 @@
-<div class="app-container">
+<!-- Impersonation Banner - at top of app, above app-container -->
+<div *ngIf="isImpersonating" class="impersonation-banner">
+  <div class="banner-content">
+    <mat-icon class="banner-icon">info</mat-icon>
+    <span class="banner-text">You are logged in virtually</span>
+    <button mat-button color="primary" (click)="exitImpersonation()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+  </div>
+</div>
+
+<div class="app-container" [class.with-impersonation-banner]="isImpersonating">
+  <!-- Past academic year notice -->
+  <div *ngIf="isPastAcademicYear && !isStudentRole()" class="past-year-banner">
+    <mat-icon>info</mat-icon>
+    <span>You are viewing a past academic year ({{ selectedAcademicYearName }}). Some actions may be restricted.</span>
+  </div>
   <!-- Header Toolbar -->
   <mat-toolbar class="app-header" color="primary">
-    <!-- Toggle Button - Always visible on desktop -->
-    <button mat-icon-button 
-            (click)="toggleSidebar()" 
+    <!-- Toggle Button -->
+    <button mat-icon-button
+            *ngIf="!hideSidebar"
+            (click)="toggleSidebar()"
             class="sidebar-toggle"
             aria-label="Toggle sidebar">
       <mat-icon>{{ isSidebarCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
     </button>
-    
+
     <span class="app-title">School Management System</span>
+
+    <!-- Global people search (students + teachers/accountants/staff) -->
+    <div class="global-search" *hasPermission="'search.global'">
+      <mat-form-field appearance="outline" class="global-search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput
+               #globalSearchInput
+               type="search"
+               autocomplete="off"
+               placeholder="Search students, teachers, staff..."
+               aria-label="Global search"
+               (keyup.enter)="onGlobalSearch(globalSearchInput.value)">
+      </mat-form-field>
+    </div>
+
     <span class="spacer"></span>
+
+    <!-- Academic Year Selector -->
+    <mat-form-field appearance="outline" class="academic-year-selector" *ngIf="!isStudentRole()">
+      <mat-label>Academic Year</mat-label>
+      <mat-select [value]="selectedAcademicYearId" (selectionChange)="onAcademicYearChange($event.value)">
+        <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>
+      </mat-select>
+      <mat-icon matPrefix>calendar_today</mat-icon>
+    </mat-form-field>
     
     <!-- Header Actions -->
     <!-- Theme Selector -->
     <mat-form-field appearance="outline" class="theme-selector">
       <mat-label>Theme</mat-label>
       <mat-select [(value)]="selectedTheme" (selectionChange)="onThemeChange($event.value)">
-        <mat-option value="ocean-blue"><mat-icon>palette</mat-icon> Ocean Blue</mat-option>
-<mat-option value="corporate-blue-gray"><mat-icon>palette</mat-icon> Corporate Blue & Gray</mat-option>
-<mat-option value="sunset-orange"><mat-icon>palette</mat-icon> Sunset Orange</mat-option>
-<mat-option value="forest-green"><mat-icon>palette</mat-icon> Forest Green</mat-option>
-<mat-option value="royal-purple"><mat-icon>palette</mat-icon> Royal Purple</mat-option>
-<mat-option value="ruby-red"><mat-icon>palette</mat-icon> Ruby Red</mat-option>
-<mat-option value="teal-mint"><mat-icon>palette</mat-icon> Teal Mint</mat-option>
-<mat-option value="amber-gold"><mat-icon>palette</mat-icon> Amber Gold</mat-option>
-<mat-option value="slate-gray"><mat-icon>palette</mat-icon> Slate Gray</mat-option>
-<mat-option value="midnight-blue"><mat-icon>palette</mat-icon> Midnight Blue</mat-option>
-<mat-option value="lavender-dream"><mat-icon>palette</mat-icon> Lavender Dream</mat-option>
-<mat-option value="coral-reef"><mat-icon>palette</mat-icon> Coral Reef</mat-option>
-<mat-option value="emerald-city"><mat-icon>palette</mat-icon> Emerald City</mat-option>
-<mat-option value="graphite"><mat-icon>palette</mat-icon> Graphite</mat-option>
-<mat-option value="cobalt-sky"><mat-icon>palette</mat-icon> Cobalt Sky</mat-option>
-<mat-option value="flamingo"><mat-icon>palette</mat-icon> Flamingo</mat-option>
-<mat-option value="coffee-cream"><mat-icon>palette</mat-icon> Coffee & Cream</mat-option>
-<mat-option value="moss"><mat-icon>palette</mat-icon> Moss</mat-option>
-<mat-option value="indigo-night"><mat-icon>palette</mat-icon> Indigo Night</mat-option>
-<mat-option value="arctic-ice"><mat-icon>palette</mat-icon> Arctic Ice</mat-option>
-<mat-option value="desert-sand"><mat-icon>palette</mat-icon> Desert Sand</mat-option>
-<mat-option value="wine-berry"><mat-icon>palette</mat-icon> Wine Berry</mat-option>
-<mat-option value="aqua-splash"><mat-icon>palette</mat-icon> Aqua Splash</mat-option>
-<mat-option value="lime-zest"><mat-icon>palette</mat-icon> Lime Zest</mat-option>
-<mat-option value="plum"><mat-icon>palette</mat-icon> Plum</mat-option>
-<mat-option value="steel"><mat-icon>palette</mat-icon> Steel</mat-option>
-<mat-option value="peach-blush"><mat-icon>palette</mat-icon> Peach Blush</mat-option>
-<mat-option value="navy-copper"><mat-icon>palette</mat-icon> Navy & Copper</mat-option>
-<mat-option value="orchid"><mat-icon>palette</mat-icon> Orchid</mat-option>
-<mat-option value="sky-mist"><mat-icon>palette</mat-icon> Sky Mist</mat-option>
-<mat-option value="bronze"><mat-icon>palette</mat-icon> Bronze</mat-option>
-<mat-option value="pine"><mat-icon>palette</mat-icon> Pine</mat-option>
-<mat-option value="cherry"><mat-icon>palette</mat-icon> Cherry</mat-option>
-<mat-option value="ocean-deep"><mat-icon>palette</mat-icon> Ocean Deep</mat-option>
-<mat-option value="sunflower"><mat-icon>palette</mat-icon> Sunflower</mat-option>
-<mat-option value="charcoal"><mat-icon>palette</mat-icon> Charcoal</mat-option>
-<mat-option value="turquoise"><mat-icon>palette</mat-icon> Turquoise</mat-option>
-<mat-option value="maroon"><mat-icon>palette</mat-icon> Maroon</mat-option>
-<mat-option value="glacier"><mat-icon>palette</mat-icon> Glacier</mat-option>
-<mat-option value="saffron"><mat-icon>palette</mat-icon> Saffron</mat-option>
-<mat-option value="cyan"><mat-icon>palette</mat-icon> Cyan</mat-option>
-<mat-option value="olive"><mat-icon>palette</mat-icon> Olive</mat-option>
-<mat-option value="periwinkle"><mat-icon>palette</mat-icon> Periwinkle</mat-option>
-<mat-option value="graphite-blue"><mat-icon>palette</mat-icon> Graphite Blue</mat-option>
-<mat-option value="rose"><mat-icon>palette</mat-icon> Rose</mat-option>
-<mat-option value="mint-cream"><mat-icon>palette</mat-icon> Mint Cream</mat-option>
-<mat-option value="onyx"><mat-icon>palette</mat-icon> Onyx</mat-option>
-<mat-option value="aurora"><mat-icon>palette</mat-icon> Aurora</mat-option>
-<mat-option value="denim"><mat-icon>palette</mat-icon> Denim</mat-option>
-<mat-option value="blush"><mat-icon>palette</mat-icon> Blush</mat-option>
-<mat-option value="citrus"><mat-icon>palette</mat-icon> Citrus</mat-option>
-<mat-option value="clay"><mat-icon>palette</mat-icon> Clay</mat-option>
-<mat-option value="mulberry"><mat-icon>palette</mat-icon> Mulberry</mat-option>
-<mat-option value="seaweed"><mat-icon>palette</mat-icon> Seaweed</mat-option>
-<mat-option value="ink"><mat-icon>palette</mat-icon> Ink</mat-option>
-<mat-option value="honey"><mat-icon>palette</mat-icon> Honey</mat-option>
-<mat-option value="wave"><mat-icon>palette</mat-icon> Wave</mat-option>
-<mat-option value="terra"><mat-icon>palette</mat-icon> Terra</mat-option>
-<mat-option value="ice-lilac"><mat-icon>palette</mat-icon> Ice Lilac</mat-option>
-<mat-option value="petrol"><mat-icon>palette</mat-icon> Petrol</mat-option>
-
+        <mat-option *ngFor="let theme of themeOptions" [value]="theme.value">
+          <mat-icon class="theme-color-icon" [style.--icon-color]="theme.color">palette</mat-icon> {{ theme.label }}
+        </mat-option>
       </mat-select>
     </mat-form-field>
     
@@ -85,15 +69,18 @@
       <mat-icon matBadge="3" matBadgeColor="warn">notifications</mat-icon>
     </button>
     
-    <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu">
-      <mat-icon>account_circle</mat-icon>
+    <button mat-button [matMenuTriggerFor]="userMenu" aria-label="User menu" class="user-avatar-btn">
+      <div class="header-user-avatar">
+        {{ getUserInitials() }}
+      </div>
     </button>
   </mat-toolbar>
 
   <!-- Sidenav Container -->
-  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <mat-sidenav-container class="app-sidenav-container" [class.sidebar-collapsed]="isSidebarCollapsed" [class.hide-sidebar]="hideSidebar">
     <!-- Sidenav -->
     <mat-sidenav
+      *ngIf="!hideSidebar"
       #drawer
       [mode]="isMobileOrTablet() ? 'over' : 'side'"
       [opened]="isMobileOrTablet() ? !isSidebarCollapsed : true"
@@ -102,188 +89,35 @@
       class="app-sidenav">
       
       <mat-nav-list>
-        <!-- Dashboard -->
-        <a mat-list-item 
-           routerLink="/dashboard" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Dashboard' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>dashboard</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Dashboard</span>
-        </a>
-
-        <!-- Branches -->
-        <a mat-list-item 
-           routerLink="/branches" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Branches' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>business</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Branches</span>
-        </a>
-
-         <!-- Grades -->
-         <a mat-list-item 
-         routerLink="/grades" 
-         routerLinkActive="active"
-         (click)="onMenuItemClick()"
-         [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? ' Classes( Grades)' : null"
-         [matTooltipPosition]="'right'"
-         [matTooltipDisabled]="isMobileOrTablet()">
-        <mat-icon matListItemIcon>grade</mat-icon>
-        <span matListItemTitle [class.hidden]="isSidebarCollapsed">Classes (Grades)</span>
-      </a>
-
-       <!-- Sections -->
-       <a mat-list-item 
-       routerLink="/sections" 
-       routerLinkActive="active"
-       (click)="onMenuItemClick()"
-       [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Sections' : null"
-       [matTooltipPosition]="'right'"
-       [matTooltipDisabled]="isMobileOrTablet()">
-      <mat-icon matListItemIcon>view_module</mat-icon>
-      <span matListItemTitle [class.hidden]="isSidebarCollapsed">Sections</span>
-    </a>
-
-       
-        <!-- Groups -->
-        <a mat-list-item 
-           routerLink="/groups" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Groups' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>groups</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Groups</span>
-        </a>
-
-       
-
-        <!-- Students -->
-        <a mat-list-item 
-           routerLink="/students" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Students' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>school</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Students</span>
-        </a>
-
-        <!-- Subjects -->
-        <a mat-list-item 
-           routerLink="/subjects" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Subjects' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>subject</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
-        </a>
-
-        <!-- Teachers -->
-        <a mat-list-item 
-           routerLink="/teachers" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Teachers' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>person</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Teachers</span>
-        </a>
-
-        <!-- Departments -->
-        <a mat-list-item 
-           routerLink="/departments" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Departments' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>business</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Departments</span>
-        </a>
-
-        <!-- Subjects -->
-        <a mat-list-item 
-           routerLink="/subjects" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Subjects' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>subject</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Subjects</span>
-        </a>
-
-        <!-- Attendance -->
-        <a mat-list-item 
-           routerLink="/attendance" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Attendance' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>fact_check</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Attendance</span>
-        </a>
-
-        <!-- Fees Management -->
-        <a mat-list-item 
-           routerLink="/fees" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Fee Management' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>payments</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Fee Management</span>
-        </a>
-
-        <!-- Accounts -->
-        <a mat-list-item 
-           routerLink="/accounts" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Accounts' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>account_balance</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Accounts</span>
-        </a>
-
-        <!-- Invoices -->
-        <a mat-list-item 
-           routerLink="/invoices" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Invoices' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>receipt</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Invoices</span>
-        </a>
-
-        <!-- Holidays -->
-        <a mat-list-item 
-           routerLink="/holidays" 
-           routerLinkActive="active"
-           (click)="onMenuItemClick()"
-           [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? 'Holidays' : null"
-           [matTooltipPosition]="'right'"
-           [matTooltipDisabled]="isMobileOrTablet()">
-          <mat-icon matListItemIcon>event</mat-icon>
-          <span matListItemTitle [class.hidden]="isSidebarCollapsed">Holidays</span>
-        </a>
+        <!-- Dynamic Menu Items -->
+        <ng-container *ngFor="let item of menuItems">
+          <a mat-list-item
+             *ngIf="item.public"
+             [routerLink]="item.route"
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+             (click)="onMenuItemClick()"
+             [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? (item.tooltip || item.label) : null"
+             [matTooltipPosition]="'right'"
+             [matTooltipDisabled]="isMobileOrTablet()">
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle [class.hidden]="isSidebarCollapsed">{{ item.label }}</span>
+          </a>
+          <ng-container *ngIf="!item.public">
+            <a mat-list-item
+               *hasPermission="item.permission!; hasPermissionMode: item.permissionMode || 'all'"
+               [routerLink]="item.route"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+               (click)="onMenuItemClick()"
+               [matTooltip]="isSidebarCollapsed && !isMobileOrTablet() ? (item.tooltip || item.label) : null"
+               [matTooltipPosition]="'right'"
+               [matTooltipDisabled]="isMobileOrTablet()">
+              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+              <span matListItemTitle [class.hidden]="isSidebarCollapsed">{{ item.label }}</span>
+            </a>
+          </ng-container>
+        </ng-container>
       </mat-nav-list>
     </mat-sidenav>
 
@@ -297,16 +131,18 @@
 <!-- User Menu -->
 <mat-menu #userMenu="matMenu" class="user-menu">
   <!-- User Info Header -->
-  <div class="user-menu-header" mat-menu-item disabled>
-    <div class="user-avatar">
-      <mat-icon>account_circle</mat-icon>
-    </div>
-    <div class="user-details">
-      <div class="user-name">{{ getUserDisplayName() }}</div>
-      <div class="user-email">{{ getUserEmail() }}</div>
-      <div class="user-role">
-        <mat-icon class="role-icon">badge</mat-icon>
-        {{ getUserRole() }}
+  <div  mat-menu-item disabled>
+    <div class="user-menu-header">
+      <div class="user-avatar">
+        <div class="user-initials">{{ getUserInitials() }}</div>
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ getUserDisplayName() }}</div>
+        <div class="user-email">{{ getUserEmail() }}</div>
+        <div class="user-role">
+          <mat-icon class="role-icon">badge</mat-icon>
+          {{ getUserRole() }}
+        </div>
       </div>
     </div>
   </div>

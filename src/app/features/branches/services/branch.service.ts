@@ -14,8 +14,31 @@ export class BranchService {
 
   /**
    * Get all branches with filters
+   * Now uses /branches/accessible to respect branch-level access control
    */
   getBranches(params?: Record<string, unknown>): Observable<BranchListResponse> {
+    // 🔥 CHANGED: Use /accessible endpoint to filter by user's branch access
+    return this.apiService.get<Branch[]>(`${this.ENDPOINT}/accessible`, params).pipe(
+      map((response: any) => {
+        // The accessible endpoint returns data directly as an array
+        const branches = Array.isArray(response.data) ? response.data : [];
+        return {
+          success: response.success || true,
+          data: branches,
+          count: branches.length,
+          total: branches.length,
+          message: response.message,
+          can_view_all_branches: !!response.can_view_all_branches
+        };
+      })
+    );
+  }
+
+  /**
+   * Get ALL branches (SuperAdmin only - for branch management module)
+   * Use this ONLY in branch management pages where admins manage branches
+   */
+  getAllBranches(params?: Record<string, unknown>): Observable<BranchListResponse> {
     return this.apiService.get<Branch[]>(this.ENDPOINT, params).pipe(
       map(response => ({
         success: response.success,
@@ -29,7 +52,7 @@ export class BranchService {
   /**
    * Get branch by ID
    */
-  getBranch(id: number): Observable<ApiResponse<Branch>> {
+  getBranch(id: string | number): Observable<ApiResponse<Branch>> {
     return this.apiService.get<Branch>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -43,21 +66,21 @@ export class BranchService {
   /**
    * Update branch
    */
-  updateBranch(id: number, branchData: Partial<BranchFormData>): Observable<ApiResponse<Branch>> {
+  updateBranch(id: string | number, branchData: Partial<BranchFormData>): Observable<ApiResponse<Branch>> {
     return this.apiService.put<Branch>(`${this.ENDPOINT}/${id}`, branchData);
   }
 
   /**
    * Delete branch (soft delete)
    */
-  deleteBranch(id: number): Observable<ApiResponse<Branch>> {
+  deleteBranch(id: string | number): Observable<ApiResponse<Branch>> {
     return this.apiService.delete<Branch>(`${this.ENDPOINT}/${id}`);
   }
 
   /**
    * Restore deleted branch
    */
-  restoreBranch(id: number): Observable<ApiResponse<Branch>> {
+  restoreBranch(id: string | number): Observable<ApiResponse<Branch>> {
     return this.apiService.post<Branch>(`${this.ENDPOINT}/${id}/restore`, {});
   }
 
@@ -77,7 +100,7 @@ export class BranchService {
   /**
    * Bulk delete branches
    */
-  bulkDelete(branchIds: number[]): Observable<ApiResponse> {
+  bulkDelete(branchIds: (string | number)[]): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/bulk-delete`, { branch_ids: branchIds });
   }
 
@@ -91,28 +114,28 @@ export class BranchService {
   /**
    * Get branch statistics
    */
-  getBranchStats(id: number): Observable<ApiResponse<BranchStats>> {
+  getBranchStats(id: string | number): Observable<ApiResponse<BranchStats>> {
     return this.apiService.get<BranchStats>(`${this.ENDPOINT}/${id}/stats`);
   }
 
   /**
    * Toggle branch status
    */
-  toggleStatus(id: number): Observable<ApiResponse> {
+  toggleStatus(id: string | number): Observable<ApiResponse> {
     return this.apiService.put(`${this.ENDPOINT}/${id}/toggle-status`, {});
   }
 
   /**
    * Update branch capacity
    */
-  updateCapacity(id: number, totalCapacity: number): Observable<ApiResponse> {
+  updateCapacity(id: string | number, totalCapacity: number): Observable<ApiResponse> {
     return this.apiService.put(`${this.ENDPOINT}/${id}/capacity`, { total_capacity: totalCapacity });
   }
 
   /**
    * Get branch hierarchy
    */
-  getHierarchy(id?: number): Observable<ApiResponse<Branch[]>> {
+  getHierarchy(id?: string | number): Observable<ApiResponse<Branch[]>> {
     const endpoint = id ? `${this.ENDPOINT}/hierarchy/${id}` : `${this.ENDPOINT}/hierarchy`;
     return this.apiService.get<Branch[]>(endpoint);
   }
@@ -134,14 +157,14 @@ export class BranchService {
   /**
    * Get branch settings
    */
-  getBranchSettings(id: number): Observable<ApiResponse> {
+  getBranchSettings(id: string | number): Observable<ApiResponse> {
     return this.apiService.get(`${this.ENDPOINT}/${id}/settings`);
   }
 
   /**
    * Update branch settings
    */
-  updateBranchSettings(id: number, settings: Record<string, unknown>): Observable<ApiResponse> {
+  updateBranchSettings(id: string | number, settings: Record<string, unknown>): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/${id}/settings`, settings);
   }
 }

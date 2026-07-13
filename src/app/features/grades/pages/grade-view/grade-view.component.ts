@@ -9,6 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { GradeService } from '../../services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Grade, GradeStats } from '../../../../core/models/grade.model';
 
 @Component({
@@ -31,15 +32,26 @@ export class GradeViewComponent implements OnInit {
   gradeValue?: string;
   grade?: Grade;
   stats?: GradeStats;
+  branchId?: number;
+  
+  // Permission checks
+  hasEditPermission = false;
   
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private gradeService: GradeService,
-    private errorHandler: ErrorHandlerService
-  ) {}
+    private errorHandler: ErrorHandlerService,
+    private permissionService: PermissionService
+  ) {
+    this.hasEditPermission = this.permissionService.hasPermission('grades.edit');
+  }
   
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(qp => {
+      const raw = qp.get('branch_id');
+      this.branchId = raw ? Number(raw) : undefined;
+    });
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.gradeValue = params['id'];
@@ -52,12 +64,11 @@ export class GradeViewComponent implements OnInit {
     if (!this.gradeValue) return;
     
     this.loading = true;
-    
-    // Load grade basic info from grades list
-    this.gradeService.getGrades().subscribe({
+
+    this.gradeService.getGrade(this.gradeValue, this.branchId ? { branch_id: this.branchId } : undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.grade = response.data.find(g => g.value === this.gradeValue);
+          this.grade = response.data;
           this.loadStats();
         }
         this.loading = false;
@@ -80,7 +91,6 @@ export class GradeViewComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading stats:', error);
       }
     });
   }
@@ -90,8 +100,14 @@ export class GradeViewComponent implements OnInit {
   }
   
   onEdit(): void {
+    if (!this.hasEditPermission) {
+      this.errorHandler.showError('You do not have permission to edit grades');
+      return;
+    }
     if (this.gradeValue) {
-      this.router.navigate(['/grades/edit', this.gradeValue]);
+      this.router.navigate(['/grades/edit', this.gradeValue], {
+        queryParams: { branch_id: this.branchId ?? null }
+      });
     }
   }
   

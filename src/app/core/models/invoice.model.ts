@@ -1,8 +1,8 @@
 export interface Invoice {
-  id: number;
+  id: string;
   invoice_number: string;
-  branch_id: number;
-  student_id?: number | null;
+  branch_id: number | string;
+  student_id?: number | string | null;
   customer_name: string;
   customer_email?: string;
   customer_phone?: string;
@@ -26,22 +26,22 @@ export interface Invoice {
   notes?: string;
   terms_conditions?: string;
   academic_year: string;
-  created_by?: number;
+  created_by?: number | string;
   sent_at?: string;
   is_overdue?: boolean;
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   student?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     admission_number: string;
   };
   createdBy?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
   };
@@ -52,9 +52,9 @@ export interface Invoice {
 }
 
 export interface InvoiceItem {
-  id?: number;
-  invoice_id?: number;
-  transaction_id?: number | null;
+  id?: string;
+  invoice_id?: number | string;
+  transaction_id?: number | string | null;
   item_type?: string;
   description: string;
   quantity: number;
@@ -65,8 +65,8 @@ export interface InvoiceItem {
 }
 
 export interface InvoiceFormData {
-  branch_id: number;
-  student_id?: number | null;
+  branch_id: number | string;
+  student_id?: number | string | null;
   customer_name: string;
   customer_email?: string;
   customer_phone?: string;
@@ -84,15 +84,15 @@ export interface InvoiceFormData {
 }
 
 export interface TransactionSearchParams {
-  branch_id?: number;
+  branch_id?: number | string;
   party_name?: string;
-  category_id?: number;
+  category_id?: number | string;
   from_date?: string;
   to_date?: string;
 }
 
 export interface GenerateInvoiceRequest {
-  transaction_ids: number[];
+  transaction_ids: (number | string)[];
   customer_name: string;
   customer_email?: string;
   customer_phone?: string;

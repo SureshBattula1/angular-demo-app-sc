@@ -40,7 +40,7 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Section Name *</mat-label>
-              <input matInput formControlName="name" placeholder="e.g., A, B, C" [readonly]="isEditMode">
+              <input matInput formControlName="name" placeholder="e.g., A, B, C">
               <mat-icon matPrefix>class</mat-icon>
               <mat-error *ngIf="sectionForm.get('name')?.invalid && sectionForm.get('name')?.touched">
                 {{ getErrorMessage('name') }}
@@ -51,7 +51,7 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Section Code *</mat-label>
-              <input matInput formControlName="code" placeholder="e.g., SEC-A" [readonly]="isEditMode">
+              <input matInput formControlName="code" placeholder="e.g., SEC-A">
               <mat-icon matPrefix>qr_code</mat-icon>
               <mat-error *ngIf="sectionForm.get('code')?.invalid && sectionForm.get('code')?.touched">
                 {{ getErrorMessage('code') }}
@@ -60,8 +60,11 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Grade Level (Optional)</mat-label>
-              <mat-select formControlName="grade_level" [disabled]="loadingGrades">
+              <mat-select formControlName="grade_level" [disabled]="!sectionForm.get('branch_id')?.value">
                 <mat-option [value]="null">All Grades</mat-option>
+                <mat-option *ngIf="!sectionForm.get('branch_id')?.value" disabled>
+                  Select Branch first
+                </mat-option>
                 <mat-option *ngIf="loadingGrades" disabled>
                   <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
                   Loading grades...
@@ -71,6 +74,7 @@
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>school</mat-icon>
+              <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18" style="margin-right: 8px;"></mat-spinner>
               <mat-hint>Select a specific grade or leave as "All Grades"</mat-hint>
             </mat-form-field>
           </div>

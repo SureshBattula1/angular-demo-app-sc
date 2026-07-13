@@ -1,0 +1,8 @@
+# Skip gracefully when node/npx isn't on PATH (e.g. GitHub Desktop launched
+# without the nvm shell PATH). CI still runs lint on push/PR as the backstop.
+if ! command -v npx >/dev/null 2>&1; then
+  echo "husky: npx/node not found in PATH - skipping lint-staged (run 'npm run lint' manually)"
+  exit 0
+fi
+
+npx lint-staged

@@ -2,10 +2,16 @@ export interface Grade {
   value: string;
   label: string;
   description?: string;
+  order?: number;
+  category?: 'Pre-Primary' | 'Primary' | 'Middle' | 'Secondary' | 'Senior-Secondary';
   students_count?: number;
   sections?: string[];
   classes_count?: number;
+  branch_id?: number | string | null;
+  branch_name?: string | null;
   is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface GradeStats {
@@ -22,6 +28,15 @@ export interface GradeListResponse {
   count?: number;
   total?: number;
   message?: string;
+  meta?: {
+    current_page?: number;
+    per_page?: number;
+    total?: number;
+    last_page?: number;
+    from?: number | null;
+    to?: number | null;
+    has_more_pages?: boolean;
+  };
 }
 
 export interface GradeOption {
@@ -33,6 +48,8 @@ export interface GradeFormData {
   value: string;
   label: string;
   description?: string;
+  order?: number;
+  category?: 'Pre-Primary' | 'Primary' | 'Middle' | 'Secondary' | 'Senior-Secondary';
   is_active?: boolean;
 }
 

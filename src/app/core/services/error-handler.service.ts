@@ -55,9 +55,13 @@ export class ErrorHandlerService {
         // Validation errors
         const errors = error.error?.errors;
         const messages = this.extractValidationErrors(errors);
+        const backendMessage = error.error?.message;
+        const hasValidationErrors =
+          !!errors && typeof errors === 'object' && Object.keys(errors as Record<string, unknown>).length > 0;
         errorMessage = {
           title: 'Validation Error',
-          message: messages.join(', '),
+          // Prefer backend message for "business rule" 422 responses (not only validation dict).
+          message: backendMessage && !hasValidationErrors ? backendMessage : messages.join(', '),
           type: 'warning'
         };
       } else if (error.status === 429) {
@@ -174,7 +178,6 @@ export class ErrorHandlerService {
    * Log error to console in development
    */
   logError(error: unknown): void {
-    console.error('Error occurred:', error);
   }
 }
 

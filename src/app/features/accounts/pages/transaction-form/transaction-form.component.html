@@ -53,31 +53,42 @@
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Category *</mat-label>
               <mat-select formControlName="category_id" [disabled]="loadingCategories">
-                <mat-option *ngIf="loadingCategories" disabled>Loading...</mat-option>
+                <mat-option *ngIf="loadingCategories" disabled>
+                  Loading categories...
+                </mat-option>
+                <mat-option *ngIf="!loadingCategories && currentCategories.length === 0" disabled>
+                  No {{ transactionForm.get('type')?.value }} categories found
+                </mat-option>
                 <mat-option *ngFor="let category of currentCategories" [value]="category.id">
-                  {{ category.name }}
+                  {{ category.name }} ({{ category.code }})
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>category</mat-icon>
-              <mat-hint>Select transaction type first</mat-hint>
+              <mat-hint *ngIf="currentCategories.length > 0">{{ currentCategories.length }} categories available</mat-hint>
+              <mat-hint *ngIf="currentCategories.length === 0 && !loadingCategories">Please create categories first</mat-hint>
               <mat-error *ngIf="transactionForm.get('category_id')?.invalid">{{ getErrorMessage('category_id') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Transaction Date *</mat-label>
-              <input matInput type="date" formControlName="transaction_date">
+              <input matInput [matDatepicker]="transactionDatePicker" formControlName="transaction_date" placeholder="Choose date">
+              <mat-datepicker-toggle matIconSuffix [for]="transactionDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #transactionDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
               <mat-error *ngIf="transactionForm.get('transaction_date')?.invalid">{{ getErrorMessage('transaction_date') }}</mat-error>
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="w-100">
-            <mat-label>Amount *</mat-label>
-            <input matInput type="number" formControlName="amount" placeholder="0.00" min="0" step="0.01">
-            <span matPrefix>₹&nbsp;</span>
-            <mat-icon matSuffix>account_balance_wallet</mat-icon>
-            <mat-error *ngIf="transactionForm.get('amount')?.invalid">{{ getErrorMessage('amount') }}</mat-error>
-          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Amount *</mat-label>
+              <input matInput type="number" formControlName="amount" placeholder="0.00" min="0" step="0.01">
+              <span matPrefix>₹&nbsp;</span>
+              <mat-icon matSuffix>account_balance_wallet</mat-icon>
+              <mat-error *ngIf="transactionForm.get('amount')?.invalid">{{ getErrorMessage('amount') }}</mat-error>
+            </mat-form-field>
+            <div class="form-field-half"></div>
+          </div>
         </div>
 
         <!-- Payment Details -->

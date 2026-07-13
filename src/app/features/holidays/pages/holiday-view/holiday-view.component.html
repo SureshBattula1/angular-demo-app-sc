@@ -1,0 +1,185 @@
+<div class="view-container" *ngIf="!loading && holiday">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" *ngIf="canEdit()" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" *ngIf="canDelete()" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar" [style.background-color]="holiday.color || null">
+          <mat-icon class="avatar-icon">event</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ holiday.title }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>label</mat-icon>
+              {{ holiday.type }}
+            </span>
+            <span>
+              <mat-icon>calendar_today</mat-icon>
+              {{ holiday.start_date | date: 'mediumDate' }} - {{ holiday.end_date | date: 'mediumDate' }}
+            </span>
+            <span *ngIf="holiday.duration">
+              <mat-icon>schedule</mat-icon>
+              {{ holiday.duration }} day{{ holiday.duration !== 1 ? 's' : '' }}
+            </span>
+            <span *ngIf="holiday.branch">
+              <mat-icon>business</mat-icon>
+              {{ holiday.branch.name }}
+            </span>
+            <span *ngIf="holiday.academic_year">
+              <mat-icon>date_range</mat-icon>
+              {{ holiday.academic_year }}
+            </span>
+            <span class="status-badge" [ngClass]="{'status-active': holiday.is_active, 'status-inactive': !holiday.is_active}">
+              <mat-icon>circle</mat-icon>
+              {{ holiday.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Holiday Details Cards -->
+  <div class="details-grid">
+    <!-- Date Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event</mat-icon>
+          Date Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>play_arrow</mat-icon>
+              <span>Start Date</span>
+            </div>
+            <div class="detail-value">{{ holiday.start_date | date: 'fullDate' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>stop</mat-icon>
+              <span>End Date</span>
+            </div>
+            <div class="detail-value">{{ holiday.end_date | date: 'fullDate' }}</div>
+          </div>
+          <div class="detail-item" *ngIf="holiday.duration">
+            <div class="detail-label">
+              <mat-icon>schedule</mat-icon>
+              <span>Duration</span>
+            </div>
+            <div class="detail-value">{{ holiday.duration }} {{ holiday.duration === 1 ? 'day' : 'days' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>autorenew</mat-icon>
+              <span>Recurring</span>
+            </div>
+            <div class="detail-value">{{ holiday.is_recurring ? 'Yes (Annual)' : 'No' }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Applicability -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>business</mat-icon>
+          Applicability
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>location_on</mat-icon>
+              <span>Branch</span>
+            </div>
+            <div class="detail-value">{{ holiday.branch?.name || 'All Branches' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>date_range</mat-icon>
+              <span>Academic Year</span>
+            </div>
+            <div class="detail-value">{{ holiday.academic_year || 'Not specified' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>label</mat-icon>
+              <span>Type</span>
+            </div>
+            <div class="detail-value">{{ holiday.type }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Created By -->
+    <mat-card class="details-card" *ngIf="holiday.createdBy">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Created By
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>badge</mat-icon>
+              <span>Name</span>
+            </div>
+            <div class="detail-value">{{ holiday.createdBy.first_name }} {{ holiday.createdBy.last_name }}</div>
+          </div>
+          <div class="detail-item" *ngIf="holiday.created_at">
+            <div class="detail-label">
+              <mat-icon>schedule</mat-icon>
+              <span>Created At</span>
+            </div>
+            <div class="detail-value">{{ holiday.created_at | date: 'medium' }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Description -->
+  <mat-card class="details-card" *ngIf="holiday.description">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>description</mat-icon>
+        Description
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="description-text">{{ holiday.description }}</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>

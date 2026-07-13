@@ -2,10 +2,13 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { SubjectService } from '../../services/subject.service';
+import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Subject } from '../../../../core/models/subject.model';
 
 @Component({
@@ -18,13 +21,17 @@ import { Subject } from '../../../../core/models/subject.model';
       [data]="subjects"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Subject Management'"
+      [title]="'Subjects'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
+      (searchFieldChanged)="onSearchFieldChanged($event)"
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -36,21 +43,40 @@ export class SubjectListComponent implements OnInit {
   subjects: Subject[] = [];
   selectedSubjects: Subject[] = [];
   currentFilters: Record<string, unknown> = {};
+  private selectedBranchId: string | number | null = null;
+  
+  customActions = [
+    {
+      label: 'Assign Subjects',
+      icon: 'assignment',
+      color: 'accent' as const,
+      action: () => this.router.navigate(['/subjects/assign'])
+    }
+  ];
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
       { key: 'code', header: 'Code', sortable: true, searchable: true, width: '120px' },
       { key: 'name', header: 'Subject Name', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true },
       { key: 'type', header: 'Type', sortable: true, type: 'badge', width: '110px', align: 'center' },
-      { key: 'grade_level', header: 'Grade', sortable: true, width: '100px', align: 'center' },
+      { key: 'grade_label', header: 'Grade', sortable: true, width: '120px', align: 'center' },
       { key: 'credits', header: 'Credits', type: 'number', align: 'center', width: '100px' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'status_label',
+        header: 'Status',
+        type: 'badge',
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
+      }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewSubject(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editSubject(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteSubject(row) }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewSubject(row), permission: 'subjects.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editSubject(row), permission: 'subjects.edit' },
+      { icon: 'assignment', label: 'Assign to Sections', color: 'accent', action: (row) => this.assignToSections(row), permission: 'subjects.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteSubject(row), permission: 'subjects.delete' }
     ],
     selectable: true,
     pagination: true,
@@ -58,10 +84,11 @@ export class SubjectListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25,
+    addButtonPermission: 'subjects.create'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -71,12 +98,21 @@ export class SubjectListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        // group: 'Basic'
+      },
+      {
         key: 'code',
         label: 'Subject Code',
         type: 'text',
         placeholder: 'Enter subject code',
         icon: 'qr_code',
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'type',
@@ -90,37 +126,89 @@ export class SubjectListComponent implements OnInit {
           { value: 'Lab', label: 'Lab' },
           { value: 'Activity', label: 'Activity' }
         ],
-        group: 'Type'
+        // group: 'Type'
       },
       {
         key: 'grade_level',
         label: 'Grade Level',
         type: 'select',
         icon: 'school',
-        options: Array.from({length: 12}, (_, i) => ({
-          value: `${i + 1}`,
-          label: `Grade ${i + 1}`
-        })),
-        group: 'Grade'
+        options: [], // Will be populated dynamically
+        // group: 'Grade'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
   
   constructor(
     private subjectService: SubjectService,
+    private branchService: BranchService,
+    private gradeService: GradeService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
+    this.setGradeOptions([]);
     this.loadSubjects();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+      }
+    });
+  }
+  
+  private setGradeOptions(options: Array<{ value: any; label: string; disabled?: boolean }>): void {
+    const gradeField = this.advancedSearchConfig.fields.find(f => f.key === 'grade_level');
+    if (gradeField) gradeField.options = options;
+  }
+
+  private loadGradesForBranch(branchId: string | number): void {
+    this.setGradeOptions([{ value: '', label: 'Loading grades...', disabled: true }]);
+    // branchId may be an opaque hashid string when HASHIDS_ENABLED is on; never Number() it (→ NaN).
+    this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+      next: (response) => {
+        const options = (response.success && response.data)
+          ? response.data.filter((g: any) => g.is_active).map((g: any) => ({ value: g.value, label: g.label }))
+          : [];
+        this.setGradeOptions(options);
+      },
+      error: () => this.setGradeOptions([])
+    });
+  }
+
+  onSearchFieldChanged(event: { field: string; value: any }): void {
+    if (event.field === 'branch_id') {
+      this.selectedBranchId = event.value || null;
+      // Clear grade when branch changes (avoid stale grade filter)
+      this.setGradeOptions([]);
+      if (this.selectedBranchId) {
+        this.loadGradesForBranch(this.selectedBranchId);
+      }
+    }
   }
   
   loadSubjects(): void {
@@ -128,9 +216,14 @@ export class SubjectListComponent implements OnInit {
     
     this.subjectService.getSubjects(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.subjects = response.data;
-          this.tableConfig.totalCount = response.data.length;
+        if (response.success) {
+          this.subjects = (response.data || []).map((s: any) => ({
+            ...s,
+            status_label: s?.is_active ? 'Active' : 'Deactive'
+          }));
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          }
           this.loading = false;
         }
       },
@@ -141,11 +234,55 @@ export class SubjectListComponent implements OnInit {
     });
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1,
+      per_page: event.pageSize
+    };
+    this.loadSubjects();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    const columnMapping: Record<string, string> = {
+      'code': 'code',
+      'name': 'name',
+      'branch.name': 'branch_id',
+      'type': 'type',
+      'grade_label': 'grade_level',
+      'credits': 'credits',
+      'is_active': 'is_active'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadSubjects();
+  }
+  
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
+    this.loadSubjects();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
+    this.selectedBranchId = null;
+    this.setGradeOptions([]);
     this.loadSubjects();
   }
   
@@ -164,11 +301,15 @@ export class SubjectListComponent implements OnInit {
   }
   
   viewSubject(subject: Subject): void {
-    this.router.navigate(['/subjects/view', subject.id]);
+    this.router.navigate(['/subjects/view', subject.id], {
+      queryParams: { returnTab: 'subjects' }
+    });
   }
   
   editSubject(subject: Subject): void {
-    this.router.navigate(['/subjects/edit', subject.id]);
+    this.router.navigate(['/subjects/edit', subject.id], {
+      queryParams: { returnTab: 'subjects' }
+    });
   }
   
   deleteSubject(subject: Subject): void {
@@ -185,6 +326,11 @@ export class SubjectListComponent implements OnInit {
         }
       });
     }
+  }
+  
+  assignToSections(subject: Subject): void {
+    // Navigate to assignment page
+    this.router.navigate(['/subjects/assign']);
   }
   
   onExport(format: string): void {

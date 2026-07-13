@@ -1,66 +1,12 @@
-<div class="page-container">
-  <mat-card class="edit-card" *ngIf="attendance">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>edit</mat-icon>
-        Edit Attendance
-      </mat-card-title>
-      <mat-card-subtitle>Update attendance record</mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-divider></mat-divider>
-
-    <mat-card-content>
-      <!-- Student Info (Read-only) -->
-      <div class="info-section">
-        <h3>Student Information</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Student Name:</label>
-            <span>{{ attendance.first_name }} {{ attendance.last_name }}</span>
-          </div>
-          <div class="info-item">
-            <label>Admission No:</label>
-            <span>{{ attendance.admission_number }}</span>
-          </div>
-          <div class="info-item">
-            <label>Grade & Section:</label>
-            <span>Grade {{ attendance.grade }} - Section {{ attendance.section }}</span>
-          </div>
-          <div class="info-item">
-            <label>Date:</label>
-            <span>{{ attendance.date | date:'mediumDate' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Editable Form -->
-      <form [formGroup]="attendanceForm" (ngSubmit)="onSubmit()" class="edit-form">
-        <div class="form-section">
-          <h3>Update Attendance</h3>
-          
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Status *</mat-label>
-            <mat-select formControlName="status">
-              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
-                <mat-icon>{{ option.icon }}</mat-icon>
-                {{ option.label }}
-              </mat-option>
-            </mat-select>
-            <mat-icon matPrefix>info</mat-icon>
-            <mat-error *ngIf="attendanceForm.get('status')?.invalid">Status is required</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Remarks</mat-label>
-            <textarea matInput formControlName="remarks" rows="3" placeholder="Enter optional remarks"></textarea>
-            <mat-icon matPrefix>comment</mat-icon>
-          </mat-form-field>
-        </div>
-      </form>
-    </mat-card-content>
-
-    <mat-card-actions align="end">
+<div class="view-container" *ngIf="!isLoading || attendance">
+  
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-icon-button (click)="onCancel()" matTooltip="Back to List">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    
+    <div class="action-buttons">
       <button mat-button (click)="onCancel()" [disabled]="isLoading">
         <mat-icon>cancel</mat-icon>
         Cancel
@@ -71,19 +17,152 @@
         (click)="onSubmit()"
         [disabled]="isLoading || attendanceForm.invalid"
       >
-        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
         <mat-icon *ngIf="!isLoading">save</mat-icon>
-        <span>{{ isLoading ? 'Saving...' : 'Update Attendance' }}</span>
+        {{ isLoading ? 'Saving...' : 'Update Attendance' }}
       </button>
-    </mat-card-actions>
-  </mat-card>
+    </div>
+  </div>
 
-  <!-- Loading State -->
-  <mat-card *ngIf="isLoading && !attendance" class="loading-card">
+  <!-- Student Info Header -->
+  <mat-card class="view-header-card" *ngIf="attendance">
     <mat-card-content>
-      <mat-spinner></mat-spinner>
-      <p>Loading attendance data...</p>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">person</mat-icon>
+        </div>
+        
+        <div class="view-info">
+          <h1 class="view-name">{{ attendance.first_name }} {{ attendance.last_name }}</h1>
+          
+          <div class="view-meta">
+            <span class="meta-item">
+              <mat-icon>badge</mat-icon>
+              {{ attendance.admission_number }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>school</mat-icon>
+              {{ attendance.grade_label || 'Grade ' + attendance.grade }} - {{ attendance.section }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>event</mat-icon>
+              {{ attendance.date | date:'mediumDate' }}
+            </span>
+            <span class="meta-item" *ngIf="attendance.email">
+              <mat-icon>email</mat-icon>
+              {{ attendance.email }}
+            </span>
+          </div>
+        </div>
+      </div>
     </mat-card-content>
   </mat-card>
+
+  <!-- Edit Form -->
+  <form [formGroup]="attendanceForm" (ngSubmit)="onSubmit()">
+    
+    <!-- Current Status Display -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Current Status
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="current-status-display">
+          <div class="status-info">
+            <span class="label">Current Status:</span>
+            <mat-chip [ngClass]="'status-chip status-' + getStatusColor(attendance?.status || '')">
+              <mat-icon class="chip-icon">{{ getStatusIcon(attendance?.status || '') }}</mat-icon>
+              {{ attendance?.status }}
+            </mat-chip>
+          </div>
+          <div class="status-info" *ngIf="attendance?.remarks">
+            <span class="label">Current Remarks:</span>
+            <span class="value">{{ attendance?.remarks }}</span>
+          </div>
+          <div class="status-info" *ngIf="!attendance?.remarks">
+            <span class="label">Current Remarks:</span>
+            <span class="value text-muted">No remarks</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Update Form -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>edit</mat-icon>
+          Update Attendance
+        </mat-card-title>
+        <mat-card-subtitle>
+          Modify the attendance status and remarks
+        </mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="form-fields">
+          
+          <!-- Status Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Status *</mat-label>
+            <mat-select formControlName="status">
+              <mat-select-trigger>
+                <div class="selected-status">
+                  <mat-icon class="trigger-icon">{{ getSelectedStatusIcon() }}</mat-icon>
+                  <span>{{ getSelectedStatusLabel() }}</span>
+                </div>
+              </mat-select-trigger>
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                <div class="status-option">
+                  <mat-icon [ngClass]="'status-icon-' + option.value.toLowerCase().replace(' ', '-')">{{ option.icon }}</mat-icon>
+                  <span>{{ option.label }}</span>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>info</mat-icon>
+            <mat-hint>Select the updated attendance status</mat-hint>
+            <mat-error *ngIf="attendanceForm.get('status')?.hasError('required')">
+              Status is required
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Remarks Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarks</mat-label>
+            <textarea 
+              matInput 
+              formControlName="remarks" 
+              rows="4" 
+              placeholder="Add optional remarks or reason for the status"
+              maxlength="500"
+            ></textarea>
+            <mat-icon matPrefix>comment</mat-icon>
+            <mat-hint align="end">{{ attendanceForm.get('remarks')?.value?.length || 0 }}/500</mat-hint>
+          </mat-form-field>
+
+          <!-- Info Alert -->
+          <div class="info-alert">
+            <mat-icon>info_outline</mat-icon>
+            <div class="alert-content">
+              <strong>Note:</strong> Updating this attendance record will change the student's attendance status for {{ attendance?.date | date:'mediumDate' }}.
+            </div>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </form>
+
+</div>
+
+<!-- Loading State -->
+<div class="view-loading-container" *ngIf="isLoading && !attendance">
+  <mat-spinner></mat-spinner>
+  <p>Loading attendance data...</p>
 </div>
 

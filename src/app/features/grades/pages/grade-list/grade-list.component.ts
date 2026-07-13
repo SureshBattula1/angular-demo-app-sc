@@ -6,7 +6,10 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { GradeService } from '../../services/grade.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Grade } from '../../../../core/models/grade.model';
 
 @Component({
@@ -19,7 +22,7 @@ import { Grade } from '../../../../core/models/grade.model';
       [data]="grades"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Grade'"
+      [title]="' Classes (Grades)'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -27,7 +30,8 @@ import { Grade } from '../../../../core/models/grade.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`
@@ -38,81 +42,105 @@ import { Grade } from '../../../../core/models/grade.model';
 })
 export class GradeListComponent implements OnInit {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
-  
+
   loading = false;
   grades: Grade[] = [];
   selectedGrades: Grade[] = [];
-  
+
   // Current request state
   currentFilters: Record<string, unknown> = {};
-  
+
+  private branchIdToName: Record<string, string> = {};
+
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
-      { 
-        key: 'value', 
-        header: 'Grade', 
-        sortable: true, 
+      // {
+      //   key: 'order',
+      //   header: 'Order',
+      //   sortable: true,
+      //   type: 'number',
+      //   align: 'center',
+      //   width: '80px'
+      // },
+      {
+        key: 'branch_name',
+        header: 'Branch',
+        sortable: false,
+        width: '180px',
+        searchable: false
+      },
+      {
+        key: 'value',
+        header: 'Grade',
+        sortable: true,
         width: '100px',
         searchable: true
       },
-      { 
-        key: 'label', 
-        header: 'Display Name', 
-        sortable: true, 
+    
+      {
+        key: 'label',
+        header: 'Name',
+        sortable: true,
         searchable: true,
-        width: '120px'
+        width: '180px'
       },
-      { 
-        key: 'students_count', 
-        header: 'Students', 
-        type: 'number',
-        align: 'center',
-        width: '120px'
-      },
-      { 
-        key: 'sections', 
-        header: 'Sections', 
+      {
+        key: 'category',
+        header: 'Category',
+        type: 'text',
+        sortable: true,
         width: '150px',
-        align: 'center'
+        searchable: true
       },
-      { 
-        key: 'classes_count', 
-        header: 'Classes', 
+      {
+        key: 'students_count',
+        header: 'Students',
         type: 'number',
         align: 'center',
         width: '100px'
       },
-      { 
-        key: 'is_active', 
-        header: 'Status', 
+      {
+        key: 'sections',
+        header: 'Sections',
+        width: '120px',
+        align: 'center'
+      },
+      {
+        key: 'status_label',
+        header: 'Status',
         type: 'badge',
         width: '100px',
-        align: 'center'
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
       }
     ],
     actions: [
       {
         icon: 'visibility',
         label: 'View Details',
-        action: (row) => this.viewGrade(row)
+        action: (row) => this.viewGrade(row),
+        permission: 'grades.view'
       },
       {
         icon: 'edit',
         label: 'Edit Grade',
         color: 'primary',
-        action: (row) => this.editGrade(row)
+        action: (row) => this.editGrade(row),
+        permission: 'grades.edit'
       },
       {
         icon: 'people',
         label: 'View Students',
         color: 'accent',
-        action: (row) => this.viewStudents(row)
+        action: (row) => this.viewStudents(row),
+        permission: 'students.view'
       },
       {
         icon: 'bar_chart',
         label: 'Statistics',
-        action: (row) => this.viewStats(row)
+        action: (row) => this.viewStats(row),
+        permission: 'grades.view'
       }
     ],
     selectable: true,
@@ -121,76 +149,132 @@ export class GradeListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [5, 10, 25, 50],
-    defaultPageSize: 12,
-    showAddButton: true  // Enable add button for creating new grades
+    defaultPageSize: 25,
+    showAddButton: true,
+    addButtonPermission: 'grades.create'
   };
-  
+
   // Advanced Search Configuration
   advancedSearchConfig: AdvancedSearchConfig = {
     title: 'Advanced Grade Search',
-    width: '400px',
+    width: '450px',
     showReset: true,
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+      },
+      {
         key: 'value',
-        label: 'Grade Number',
+        label: 'Grade Value',
         type: 'text',
-        placeholder: 'Enter grade (1-12)',
-        icon: 'filter_1',
-        group: 'Basic Information'
+        placeholder: 'e.g., LKG, UKG, 1, 2...',
+        icon: 'tag',
       },
       {
         key: 'label',
-        label: 'Grade Label',
+        label: 'Grade Name',
         type: 'text',
         placeholder: 'Search by label',
         icon: 'label',
-        group: 'Basic Information'
       },
       {
-        key: 'is_active',
-        label: 'Active Only',
-        type: 'checkbox',
-        icon: 'check_circle',
-        group: 'Filters'
+        key: 'category',
+        label: 'Category',
+        type: 'select',
+        placeholder: 'Select category',
+        icon: 'category',
+        options: [
+          { value: 'Pre-Primary', label: 'Pre-Primary' },
+          { value: 'Primary', label: 'Primary' },
+          { value: 'Middle', label: 'Middle' },
+          { value: 'Secondary', label: 'Secondary' },
+          { value: 'Senior-Secondary', label: 'Senior-Secondary' }
+        ],
       },
-      {
-        key: 'min_students',
-        label: 'Minimum Students',
-        type: 'number',
-        placeholder: 'Min students count',
-        icon: 'people',
-        group: 'Statistics'
-      }
+      // {
+      //   key: 'is_active',
+      //   label: 'Active Only',
+      //   type: 'checkbox',
+      //   icon: 'check_circle',
+      //   group: 'Status'
+      // }
     ]
   };
-  
+
   constructor(
     private gradeService: GradeService,
+    private branchService: BranchService,
     private router: Router,
     private dialog: MatDialog,
-    private errorHandler: ErrorHandlerService
-  ) {}
-  
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService,
+    private permissionService: PermissionService
+  ) { }
+
   ngOnInit(): void {
+    this.loadBranches();
     this.loadGrades();
   }
-  
+
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.branchIdToName = response.data.reduce((acc, b) => {
+            acc[String(b.id)] = b.name;
+            return acc;
+          }, {} as Record<string, string>);
+
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+      }
+    });
+  }
+
   /**
    * Load grades from server
    */
   loadGrades(): void {
     this.loading = true;
-    
+
     this.gradeService.getGrades(this.currentFilters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.grades = response.data;
-          this.tableConfig.totalCount = response.count;
+          const branchId = this.currentFilters['branch_id']?.toString?.() ?? (this.currentFilters['branch_id'] as any);
+
+          // Ensure branch name is present for display (prefer API, fallback to lookup when filtered).
+          const branchNameFallback = branchId ? (this.branchIdToName[String(branchId)] ?? '') : '';
+
+          this.grades = (response.data || []).map(g => ({
+            ...g,
+            ...(g.branch_name ? {} : { branch_name: branchNameFallback }),
+            status_label: g.is_active ? 'Active' : 'Deactive'
+          }) as any);
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          } else if (response.count) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.count };
+          }
           this.loading = false;
         }
       },
@@ -200,7 +284,7 @@ export class GradeListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Handle pagination changes
    */
@@ -212,7 +296,7 @@ export class GradeListComponent implements OnInit {
     };
     this.loadGrades();
   }
-  
+
   /**
    * Handle sort changes
    */
@@ -224,59 +308,67 @@ export class GradeListComponent implements OnInit {
     };
     this.loadGrades();
   }
-  
+
   /**
    * Handle advanced search changes
    */
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
     this.loadGrades();
   }
-  
+
+  onSearchReset(): void {
+    this.currentFilters = {};
+    this.loadGrades();
+  }
+
   onAction(event: { action: string, row: Grade | null }): void {
-    console.log('Action triggered:', event);
-    
+
     // Handle add action
     if (event.action === 'add') {
       this.router.navigate(['/grades/create']);
     }
   }
-  
+
   onRowClick(row: Grade): void {
     this.viewGrade(row);
   }
-  
+
   onSelectionChange(selected: Grade[]): void {
     this.selectedGrades = selected;
-    console.log('Selected grades:', selected);
   }
-  
+
   /**
    * View grade details
    */
   viewGrade(grade: Grade): void {
-    this.router.navigate(['/grades/view', grade.value]);
+    this.router.navigate(['/grades/view', grade.value], {
+      queryParams: { branch_id: (grade as any).branch_id ?? null }
+    });
   }
-  
+
   /**
    * Edit grade
    */
   editGrade(grade: Grade): void {
-    this.router.navigate(['/grades/edit', grade.value]);
+    this.router.navigate(['/grades/edit', grade.value], {
+      queryParams: { branch_id: (grade as any).branch_id ?? null }
+    });
   }
-  
+
   /**
    * View students in grade
    */
   viewStudents(grade: Grade): void {
-    this.router.navigate(['/students'], { 
+    this.router.navigate(['/students'], {
       queryParams: { grade: grade.value }
     });
   }
-  
+
   /**
    * View grade statistics
    */
@@ -294,12 +386,25 @@ export class GradeListComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Export grades
    */
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading message
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+
+    // Call export service (grades don't have complex filters, so pass empty object)
+    this.exportService.export(
+      {
+        endpoint: '/grades/export',
+        filename: 'grades'
+      },
+      {
+        format: format,
+        filters: {}
+      }
+    );
   }
 }
 

@@ -1,0 +1,442 @@
+/* ========================================
+   VIEW PAGES - GLOBAL STYLES
+   Common styles for view pages (Student, Teacher, Department, etc.)
+   ======================================== */
+
+/* View Container */
+.view-container {
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Action Bar */
+.view-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.view-action-bar .action-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.view-action-bar .action-buttons button mat-icon {
+  margin-right: var(--spacing-xs);
+}
+
+/* Header Card */
+.view-header-card {
+  margin-bottom: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: var(--white);
+}
+
+.view-header-card mat-card-content {
+  padding: var(--spacing-lg) !important;
+}
+
+/* Header Layout */
+.view-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.view-avatar {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-avatar .avatar-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--white);
+}
+
+.view-info {
+  flex: 1;
+  min-width: 0; /* Allow text truncation */
+}
+
+.view-name {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.view-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.view-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--white);
+}
+
+.view-meta span mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.view-meta .status-badge {
+  background: rgba(255, 255, 255, 0.25);
+  font-weight: 500;
+}
+
+.view-meta .status-badge.active {
+  background: var(--success-color);
+}
+
+.view-meta .status-badge mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+/* Details Grid */
+.view-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.view-details-grid .detail-card mat-card-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.view-details-grid .detail-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--primary-color);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.view-details-grid .detail-card mat-card-title mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Detail Rows */
+.view-details-grid .detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--gray-200);
+  gap: var(--spacing-md);
+}
+
+.view-details-grid .detail-row:last-child {
+  border-bottom: none;
+}
+
+.view-details-grid .detail-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.view-details-grid .detail-value {
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Parent Section Style (used in student view) */
+.view-details-grid .parent-section {
+  margin-bottom: var(--spacing-md);
+}
+
+.view-details-grid .parent-section:last-child {
+  margin-bottom: 0;
+}
+
+.view-details-grid .parent-section strong {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.view-details-grid .parent-section .detail-row {
+  margin-top: var(--spacing-xs);
+}
+
+/* Stats Grid */
+.view-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.view-stats-grid .stat-card mat-card-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) !important;
+}
+
+.view-stats-grid .stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.view-stats-grid .stat-icon mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: var(--white);
+}
+
+.view-stats-grid .stat-icon.students {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+}
+
+.view-stats-grid .stat-icon.teachers {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-dark));
+}
+
+.view-stats-grid .stat-icon.subjects {
+  background: linear-gradient(135deg, var(--info-color), var(--info-dark));
+}
+
+.view-stats-grid .stat-icon.sections {
+  background: linear-gradient(135deg, var(--warning-color), var(--warning-dark));
+}
+
+.view-stats-grid .stat-details {
+  flex: 1;
+}
+
+.view-stats-grid .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.view-stats-grid .stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Loading Container */
+.view-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.view-loading-container p {
+  margin-top: var(--spacing-md);
+  color: var(--text-secondary);
+}
+
+/* Utility Classes */
+.view-full-width {
+  grid-column: 1 / -1;
+}
+
+.view-my-3 {
+  margin-top: var(--spacing-md) !important;
+  margin-bottom: var(--spacing-md) !important;
+}
+
+.view-text-muted {
+  color: var(--text-secondary);
+}
+
+.view-text-success {
+  color: var(--success-color) !important;
+  font-weight: 500;
+}
+
+.view-no-info {
+  padding: var(--spacing-md) 0;
+  text-align: center;
+}
+
+.view-no-info p {
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ========================================
+   RESPONSIVE STYLES
+   ======================================== */
+
+/* Tablet (768px and below) */
+@media (max-width: 768px) {
+  .view-container {
+    padding: var(--spacing-md);
+  }
+  
+  .view-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .view-action-bar .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .view-action-bar .action-buttons button {
+    flex: 1;
+  }
+  
+  .view-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .view-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .view-avatar .avatar-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .view-name {
+    font-size: 24px;
+  }
+  
+  .view-meta {
+    justify-content: center;
+  }
+  
+  .view-details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .view-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .view-details-grid .detail-row {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .view-details-grid .detail-label {
+    min-width: auto;
+  }
+  
+  .view-details-grid .detail-value {
+    text-align: left;
+  }
+}
+
+/* Mobile (480px and below) */
+@media (max-width: 480px) {
+  .view-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .view-action-bar .action-buttons {
+    flex-direction: column;
+  }
+  
+  .view-action-bar .action-buttons button {
+    width: 100%;
+  }
+  
+  .view-avatar {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .view-avatar .avatar-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+  
+  .view-name {
+    font-size: 20px;
+  }
+  
+  .view-meta {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .view-meta span {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .view-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .view-stats-grid .stat-card mat-card-content {
+    padding: var(--spacing-sm) !important;
+  }
+  
+  .view-stats-grid .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .view-stats-grid .stat-icon mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+  
+  .view-stats-grid .stat-value {
+    font-size: 24px;
+  }
+  
+  .view-stats-grid .stat-label {
+    font-size: 12px;
+  }
+}
+

@@ -1,9 +1,10 @@
 export interface Branch {
-  id: number;
+  id: string;
   name: string;
   code: string;
   branch_type: 'HeadOffice' | 'RegionalOffice' | 'School' | 'Campus' | 'SubBranch';
-  parent_branch_id?: number;
+  parent_branch_id?: number | string;
+  school_id?: number | string;
   
   // Location
   address: string;
@@ -29,7 +30,7 @@ export interface Branch {
   principal_email?: string;
   
   // Dates
-  established_date?: string;
+  established_date?: string | Date;
   opening_date?: string;
   closing_date?: string;
   
@@ -99,18 +100,27 @@ export interface BranchStats {
 export interface BranchListResponse {
   success: boolean;
   data: Branch[];
-  count: number;
+  count?: number;
   total?: number;
-  current_page?: number;
-  last_page?: number;
-  per_page?: number;
+  /** From GET /branches/accessible — SuperAdmin / cross-branch viewers */
+  can_view_all_branches?: boolean;
+  meta?: {
+    current_page?: number;
+    per_page?: number;
+    total?: number;
+    last_page?: number;
+    from?: number | null;
+    to?: number | null;
+    has_more_pages?: boolean;
+  };
 }
 
 export interface BranchFormData {
   name: string;
   code: string;
   branch_type: string;
-  parent_branch_id?: number | null;
+  parent_branch_id?: number | string | null;
+  school_id?: number | string | null;
   address: string;
   city: string;
   state: string;
@@ -123,6 +133,7 @@ export interface BranchFormData {
   principal_name?: string;
   principal_contact?: string;
   principal_email?: string;
+  branch_admin_password?: string;
   established_date?: string;
   board?: string;
   affiliation_number?: string;

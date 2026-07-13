@@ -1,25 +1,38 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
+import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload.component';
+import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { FileUploadService } from '../../../../core/services/file-upload.service';
+import { SchoolService } from '../../../../core/services/school.service';
 import { Branch } from '../../../../core/models/branch.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-branch-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, FileUploadComponent, UniversalAttachmentsComponent],
   templateUrl: './branch-form.component.html',
   styleUrls: ['./branch-form.component.scss']
 })
 export class BranchFormComponent implements OnInit {
+  @ViewChild(UniversalAttachmentsComponent) attachmentsComponent!: UniversalAttachmentsComponent;
   branchForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  branchId?: number;
+  branchId?: string;
   currentBranch?: Branch;
+  logoUrl?: string;
+  currentLogoUrl?: string;
+  
+  // For attachments - will be set after branch is created/updated
+  attachmentModuleId: string | number | null = null;
+
+  hideBranchAdminPassword = true;
   
   // Dropdown options
   branchTypes = [
@@ -44,7 +57,9 @@ export class BranchFormComponent implements OnInit {
     private branchService: BranchService,
     private router: Router,
     private route: ActivatedRoute,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private fileUploadService: FileUploadService,
+    private schoolService: SchoolService
   ) {}
 
   ngOnInit(): void {
@@ -54,21 +69,23 @@ export class BranchFormComponent implements OnInit {
     // Check if edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.branchId = +params['id'];
+        this.branchId = params['id'];
         this.isEditMode = true;
-        this.loadBranch(this.branchId);
+        this.loadBranch(this.branchId!);
       }
     });
   }
 
   private initForm(): void {
+    const currentSchoolId = this.schoolService.currentSchoolId();
     this.branchForm = this.fb.group({
       // Basic Information
       name: ['', [Validators.required, Validators.maxLength(255)]],
       code: ['', [Validators.required, Validators.maxLength(50)]],
       branch_type: ['School', Validators.required],
       parent_branch_id: [null],
-      
+      school_id: [currentSchoolId ?? null],
+
       // Location
       address: ['', [Validators.required, Validators.maxLength(500)]],
       city: ['', [Validators.required, Validators.maxLength(100)]],
@@ -87,10 +104,12 @@ export class BranchFormComponent implements OnInit {
       emergency_contact: [''],
       
       // Principal
-      principal_name: [''],
-      principal_contact: [''],
-      principal_email: ['', Validators.email],
-      
+      principal_name: ['', [Validators.required, Validators.maxLength(255)]],
+      principal_contact: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s()]+$/), Validators.maxLength(20)]],
+      principal_email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
+      // Branch Admin: when creating branch, optional password to create Branch Admin user with principal name/email
+      branch_admin_password: ['', [Validators.minLength(8)]],
+
       // Academic
       board: [''],
       affiliation_number: [''],
@@ -111,18 +130,38 @@ export class BranchFormComponent implements OnInit {
       
       // Status
       status: ['Active'],
-      is_active: [true]
+      is_active: [true],
+      
+      // Logo
+      logo: ['']
     });
   }
 
-  private loadBranch(id: number): void {
+  private loadBranch(id: string | number): void {
     this.isLoading = true;
     
     this.branchService.getBranch(id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.currentBranch = response.data;
-          this.branchForm.patchValue(response.data);
+          const data = { ...response.data };
+          // Convert established_date to Date for mat-datepicker
+          if (data.established_date) {
+            const str = String(data.established_date).trim();
+            const dateOnly = str.includes('T') ? str.split('T')[0] : str;
+            data.established_date = new Date(dateOnly);
+          }
+          this.branchForm.patchValue(data);
+          this.logoUrl = response.data.logo; // Set logo URL if exists
+          
+          // Set full logo URL for preview
+          if (response.data.logo) {
+            this.currentLogoUrl = this.getFullLogoUrl(response.data.logo);
+          } else {
+            this.currentLogoUrl = undefined;
+          }
+          
+          this.attachmentModuleId = id; // Set module ID for attachments
           this.isLoading = false;
         }
       },
@@ -134,17 +173,68 @@ export class BranchFormComponent implements OnInit {
     });
   }
 
+  onLogoUploaded(event: any): void {
+    this.logoUrl = event.file_path;
+    this.branchForm.patchValue({ logo: event.file_path });
+    // Update current logo preview
+    this.currentLogoUrl = this.getFullLogoUrl(event.file_path);
+    this.errorHandler.showSuccess('Logo uploaded successfully');
+  }
+
+  onLogoUploadError(error: string): void {
+    this.errorHandler.showError(error);
+  }
+
+  /**
+   * Get full URL for logo display
+   */
+  getFullLogoUrl(logoPath: string): string {
+    if (!logoPath) {
+      return '';
+    }
+    
+    // If already a full URL, return as is
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+    
+    // Construct full URL - remove /api from base URL
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const fullUrl = `${baseUrl}/storage/${logoPath}`;
+    
+    return fullUrl;
+  }
+
+  /**
+   * Remove current logo
+   */
+  removeLogo(): void {
+    if (confirm('Are you sure you want to remove the current logo?')) {
+      this.currentLogoUrl = undefined;
+      this.logoUrl = undefined;
+      this.branchForm.patchValue({ logo: null });
+      this.errorHandler.showSuccess('Logo will be removed when you save');
+    }
+  }
+
+  /**
+   * Handle logo preview error
+   */
+  onLogoPreviewError(): void {
+    console.error('Failed to load logo preview');
+    this.currentLogoUrl = undefined;
+  }
+
   private loadParentBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response) => {
         if (response.success) {
           this.parentBranches = response.data.filter(b => 
-            !this.branchId || b.id !== this.branchId
+            !this.branchId || String(b.id) !== String(this.branchId)
           );
         }
       },
       error: (error) => {
-        console.error('Error loading parent branches:', error);
       }
     });
   }
@@ -157,7 +247,30 @@ export class BranchFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.branchForm.value;
+    const formData = { ...this.branchForm.value };
+
+    // Normalize Date to YYYY-MM-DD for backend
+    if (formData.established_date instanceof Date && !isNaN(formData.established_date.getTime())) {
+      const yyyy = formData.established_date.getFullYear();
+      const mm = String(formData.established_date.getMonth() + 1).padStart(2, '0');
+      const dd = String(formData.established_date.getDate()).padStart(2, '0');
+      formData.established_date = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Branch admin password: only send when creating and non-empty (backend creates Branch Admin user)
+    if (this.isEditMode || !formData.branch_admin_password || formData.branch_admin_password.length < 8) {
+      delete formData.branch_admin_password;
+    }
+
+    // Clean up logo field - logo is OPTIONAL, remove if not set
+    if (!formData.logo || formData.logo === '' || formData.logo === null || formData.logo === undefined) {
+      delete formData.logo; // Remove logo field completely if not provided
+    }
+    
+    // If logo was uploaded via file-upload component, use logoUrl
+    if (this.logoUrl) {
+      formData.logo = this.logoUrl;
+    }
 
     const request = this.isEditMode && this.branchId
       ? this.branchService.updateBranch(this.branchId, formData)
@@ -167,6 +280,18 @@ export class BranchFormComponent implements OnInit {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
+          // Set attachment module ID after branch is created/updated
+          if (!this.isEditMode && response.data?.id) {
+            this.attachmentModuleId = response.data.id;
+          } else if (this.branchId) {
+            this.attachmentModuleId = this.branchId;
+          }
+          
+          // Upload any pending attachments
+          setTimeout(() => {
+            this.attachmentsComponent?.uploadPendingAttachments();
+          }, 500);
+          
           this.errorHandler.showSuccess(
             this.isEditMode ? 'Branch updated successfully' : 'Branch created successfully'
           );
@@ -233,9 +358,12 @@ export class BranchFormComponent implements OnInit {
       pincode: 'Pincode',
       phone: 'Phone',
       email: 'Email',
+      principal_name: 'Principal Name',
+      principal_contact: 'Principal Contact',
       principal_email: 'Principal Email'
     };
     return labels[fieldName] || fieldName;
   }
+
 }
 

@@ -1,6 +1,6 @@
 export interface Holiday {
-  id: number;
-  branch_id: number | null;
+  id: string;
+  branch_id: number | string | null;
   title: string;
   description?: string;
   start_date: string;
@@ -9,16 +9,18 @@ export interface Holiday {
   color?: string;
   is_recurring: boolean;
   academic_year?: string;
+  academic_year_id?: number | string | null;
+  branch_name?: string;
   is_active: boolean;
-  created_by?: number;
+  created_by?: number | string;
   duration?: number;
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   createdBy?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
   };
@@ -28,7 +30,7 @@ export interface Holiday {
 }
 
 export interface HolidayFormData {
-  branch_id: number | null;
+  branch_id: number | string | null;
   title: string;
   description?: string;
   start_date: string;
@@ -36,7 +38,7 @@ export interface HolidayFormData {
   type: string;
   color?: string;
   is_recurring?: boolean;
-  academic_year?: string;
+  academic_year_id?: number | string | null;
   is_active?: boolean;
 }
 
@@ -50,7 +52,7 @@ export interface CalendarDay {
 }
 
 export interface CalendarEvent {
-  id: number;
+  id: string;
   title: string;
   start: Date;
   end: Date;

@@ -1,12 +1,16 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { GroupService } from '../../services/group.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { StudentGroup } from '../../../../core/models/class-section.model';
+import { BranchService, Branch } from '../../../../core/services/branch.service';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
 
 @Component({
   selector: 'app-group-list',
@@ -24,7 +28,10 @@ import { StudentGroup } from '../../../../core/models/class-section.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`
@@ -33,22 +40,29 @@ import { StudentGroup } from '../../../../core/models/class-section.model';
     }
   `]
 })
-export class GroupListComponent implements OnInit {
+export class GroupListComponent implements OnInit, OnDestroy {
   @ViewChild('dataTable') dataTable!: DataTableComponent;
   
   loading = false;
+  private academicYearSub?: Subscription;
   groups: StudentGroup[] = [];
   selectedGroups: StudentGroup[] = [];
   currentFilters: Record<string, unknown> = {};
+  branches: Branch[] = [];
   
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
       { 
-        key: 'id', 
-        header: 'ID', 
+        key: 'branch.name', 
+        header: 'Branch', 
+        sortable: false        
+      },     
+      { 
+        key: 'name', 
+        header: 'Group Name', 
         sortable: true, 
-        width: '80px'
+        searchable: true
       },
       { 
         key: 'code', 
@@ -56,12 +70,6 @@ export class GroupListComponent implements OnInit {
         sortable: true, 
         searchable: true,
         width: '120px'
-      },
-      { 
-        key: 'name', 
-        header: 'Group Name', 
-        sortable: true, 
-        searchable: true
       },
       { 
         key: 'type', 
@@ -86,9 +94,11 @@ export class GroupListComponent implements OnInit {
       },
       { 
         key: 'is_active', 
-        header: 'Active', 
+        header: 'Status', 
         type: 'badge',
-        width: '90px',
+        pipe: 'activeInactive',
+        cellClass: (row: StudentGroup) => row.is_active ? 'badge-success' : 'badge-danger',
+        width: '100px',
         align: 'center'
       }
     ],
@@ -123,10 +133,10 @@ export class GroupListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25
   };
   
   // Advanced Search Configuration
@@ -137,12 +147,21 @@ export class GroupListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: [],
+        placeholder: 'Select branch'
+        // group: 'Basic Information'
+      },
+      {
         key: 'code',
         label: 'Group Code',
         type: 'text',
         placeholder: 'Enter group code',
         icon: 'qr_code',
-        group: 'Basic Information'
+        // group: 'Basic Information'
       },
       {
         key: 'name',
@@ -150,8 +169,9 @@ export class GroupListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter group name',
         icon: 'groups',
-        group: 'Basic Information'
+        // group: 'Basic Information'
       },
+     
       {
         key: 'type',
         label: 'Group Type',
@@ -163,22 +183,22 @@ export class GroupListComponent implements OnInit {
           { value: 'Cultural', label: 'Cultural' },
           { value: 'Club', label: 'Club' }
         ],
-        group: 'Type'
+        // group: 'Type'
       },
-      {
-        key: 'academic_year',
-        label: 'Academic Year',
-        type: 'text',
-        placeholder: 'e.g., 2024-2025',
-        icon: 'event',
-        group: 'Academic'
-      },
+      // {
+      //   key: 'academic_year',
+      //   label: 'Academic Year',
+      //   type: 'text',
+      //   placeholder: 'e.g., 2024-2025',
+      //   icon: 'event',
+      //   // group: 'Academic'
+      // },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
@@ -186,21 +206,63 @@ export class GroupListComponent implements OnInit {
   constructor(
     private groupService: GroupService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private branchService: BranchService,
+    private academicYearContext: AcademicYearContextService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadGroups();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => {
+      this.currentFilters = { ...this.currentFilters, page: 1 };
+      this.loadGroups();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
+  }
+  
+  loadBranches(): void {
+    this.branchService.getAccessibleBranches().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.branches = response.data || [];
+          
+          // Update advanced search config with branch options
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = this.branches.map(branch => ({
+              value: branch.id,
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading branches:', error);
+      }
+    });
   }
   
   loadGroups(): void {
     this.loading = true;
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const params = {
+      ...this.currentFilters,
+      ...(academicYearId != null ? { academic_year_id: academicYearId } : {})
+    };
     
-    this.groupService.getGroups(this.currentFilters).subscribe({
+    this.groupService.getGroups(params).subscribe({
       next: (response) => {
         if (response.success) {
-          this.groups = response.data;
-          this.tableConfig.totalCount = response.count;
+          this.groups = response.data || [];
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          } else if (response.count) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.count };
+          }
           this.loading = false;
         }
       },
@@ -211,11 +273,54 @@ export class GroupListComponent implements OnInit {
     });
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1,
+      per_page: event.pageSize
+    };
+    this.loadGroups();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    const columnMapping: Record<string, string> = {
+      'id': 'id',
+      'code': 'code',
+      'name': 'name',
+      'type': 'type',
+      'academic_year': 'academic_year',
+      'member_count': 'member_count',
+      'is_active': 'is_active'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadGroups();
+  }
+  
   onAdvancedSearchChange(event: SearchEvent): void {
     this.currentFilters = {
+      ...this.currentFilters,
       ...event.filters,
-      search: event.query
+      search: event.query || undefined,
+      page: 1
     };
+    this.loadGroups();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = { page: 1, per_page: this.tableConfig.defaultPageSize ?? 25 };
     this.loadGroups();
   }
   

@@ -21,7 +21,7 @@ export class SectionService {
   /**
    * Get section by ID
    */
-  getSection(id: number): Observable<ApiResponse<Section>> {
+  getSection(id: string | number): Observable<ApiResponse<Section>> {
     return this.apiService.get<Section>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -35,21 +35,21 @@ export class SectionService {
   /**
    * Update section
    */
-  updateSection(id: number, sectionData: Partial<SectionFormData>): Observable<ApiResponse<Section>> {
+  updateSection(id: string | number, sectionData: Partial<SectionFormData>): Observable<ApiResponse<Section>> {
     return this.apiService.put<Section>(`${this.ENDPOINT}/${id}`, sectionData);
   }
 
   /**
    * Delete section
    */
-  deleteSection(id: number): Observable<ApiResponse> {
+  deleteSection(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
   /**
    * Toggle section status
    */
-  toggleStatus(id: number): Observable<ApiResponse<Section>> {
+  toggleStatus(id: string | number): Observable<ApiResponse<Section>> {
     return this.apiService.put<Section>(`${this.ENDPOINT}/${id}/toggle-status`, {});
   }
 }

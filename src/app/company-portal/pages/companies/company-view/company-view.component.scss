@@ -1,0 +1,110 @@
+/* Component-specific overrides - Main styles in global view-pages.css */
+
+/* Company-specific status color overrides */
+.status-badge.status-active {
+  background: var(--success-color) !important;
+}
+
+.status-badge.status-inactive {
+  background: var(--gray-500) !important;
+}
+
+.status-badge.status-suspended {
+  background: var(--error-color) !important;
+}
+
+/* Schools List Styling (same pattern as branches in school-view) */
+.schools-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+}
+
+.school-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  transition: all var(--transition-normal);
+  border: 1px solid var(--border-color);
+}
+
+.school-item:hover {
+  background: var(--gray-200);
+  border-color: var(--primary-light);
+  transform: translateX(4px);
+}
+
+.school-item mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: var(--primary-color);
+}
+
+.school-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.school-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.school-code {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Stat Icon - Schools */
+.stat-icon.schools {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+}
+
+.stat-sub-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* Settings Display */
+.settings-display {
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+
+  pre {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .schools-list {
+    gap: var(--spacing-sm);
+  }
+
+  .school-item {
+    padding: var(--spacing-sm);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .school-item mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}

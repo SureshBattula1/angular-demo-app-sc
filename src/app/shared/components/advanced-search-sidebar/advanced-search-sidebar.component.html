@@ -62,13 +62,15 @@
           <!-- Date Picker -->
           <mat-form-field appearance="outline" *ngIf="field.type === 'date'">
             <mat-label>{{ field.label }}</mat-label>
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
             <input matInput 
+              [id]="'date_' + field.key"
               [matDatepicker]="picker"
               [formControlName]="field.key"
-              [required]="field.required || false">
+              [required]="field.required || false"
+              [placeholder]="field.placeholder || 'MM/DD/YYYY'">
             <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
             <mat-datepicker #picker></mat-datepicker>
-            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
             <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
           </mat-form-field>
           
@@ -142,7 +144,7 @@
     <div class="footer-actions">
       <button mat-stroked-button 
         (click)="onReset()" 
-        *ngIf="config?.showReset !== false"
+        *ngIf="config.showReset !== false"
         class="reset-btn">
         <mat-icon>refresh</mat-icon>
         Reset

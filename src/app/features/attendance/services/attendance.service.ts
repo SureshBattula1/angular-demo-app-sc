@@ -41,9 +41,19 @@ export class AttendanceService {
   /**
    * Get attendance by ID
    */
-  getAttendanceById(id: number): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
+  getAttendanceById(id: string | number): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
     return this.http.get<ApiResponse<StudentAttendance | TeacherAttendance>>(
       `${this.apiUrl}/${id}`
+    );
+  }
+
+  /**
+   * Update attendance record
+   */
+  updateAttendance(id: string | number, data: Partial<StudentAttendance | TeacherAttendance>): Observable<ApiResponse<StudentAttendance | TeacherAttendance>> {
+    return this.http.put<ApiResponse<StudentAttendance | TeacherAttendance>>(
+      `${this.apiUrl}/${id}`,
+      data
     );
   }
 
@@ -73,10 +83,46 @@ export class AttendanceService {
     );
   }
 
+  getStudentAttendanceOverview(studentId: string | number): Observable<ApiResponse<{
+    current_year: {
+      percentage: number;
+      present: number;
+      absent: number;
+      total_days: number;
+      academic_year_id?: number | null;
+      academic_year_name?: string | null;
+    };
+    by_month: Array<{
+      month: string;
+      month_label: string;
+      absent: number;
+      present: number;
+      total_days: number;
+    }>;
+  }>> {
+    return this.http.get<ApiResponse<{
+      current_year: {
+        percentage: number;
+        present: number;
+        absent: number;
+        total_days: number;
+        academic_year_id?: number | null;
+        academic_year_name?: string | null;
+      };
+      by_month: Array<{
+        month: string;
+        month_label: string;
+        absent: number;
+        present: number;
+        total_days: number;
+      }>;
+    }>>(`${this.apiUrl}/student/${studentId}/overview`);
+  }
+
   /**
    * Get student attendance history
    */
-  getStudentAttendance(studentId: number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: StudentAttendance[]; summary: any }>> {
+  getStudentAttendance(studentId: string | number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: StudentAttendance[]; summary: any }>> {
     let params = new HttpParams();
     
     if (filters?.from_date) {
@@ -88,6 +134,25 @@ export class AttendanceService {
 
     return this.http.get<ApiResponse<{ data: StudentAttendance[]; summary: any }>>(
       `${this.apiUrl}/student/${studentId}`,
+      { params }
+    );
+  }
+
+  /**
+   * Get teacher attendance history
+   */
+  getTeacherAttendance(teacherId: string | number, filters?: { from_date?: string; to_date?: string }): Observable<ApiResponse<{ data: TeacherAttendance[]; summary: any }>> {
+    let params = new HttpParams();
+    
+    if (filters?.from_date) {
+      params = params.set('from_date', filters.from_date);
+    }
+    if (filters?.to_date) {
+      params = params.set('to_date', filters.to_date);
+    }
+
+    return this.http.get<ApiResponse<{ data: TeacherAttendance[]; summary: any }>>(
+      `${this.apiUrl}/teacher/${teacherId}`,
       { params }
     );
   }
@@ -117,5 +182,28 @@ export class AttendanceService {
       { params }
     );
   }
+
+  /**
+   * Get today's attendance dashboard data
+   * Similar to fee payments dashboard
+   */
+  getTodayAttendance(filters?: Record<string, any>): Observable<ApiResponse<any>> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        const value = filters[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/dashboard`,
+      { params }
+    );
+  }
 }
+
 

@@ -1,0 +1,292 @@
+<div class="school-form-container">
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add_business' }}</mat-icon>
+        {{ isEditMode ? 'Edit School' : 'Create New School' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update school information' : 'Add a new school to the system' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <!-- Form -->
+    <mat-card-content>
+      <form [formGroup]="schoolForm" (ngSubmit)="onSubmit()">
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Company</mat-label>
+              <mat-select formControlName="company_id">
+                <mat-option *ngIf="companiesLoading" disabled>
+                  Loading companies...
+                </mat-option>
+                <mat-option *ngFor="let company of companies" [value]="company.id">
+                  {{ company.name }} ({{ company.code }})
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="schoolForm.get('company_id')?.invalid && schoolForm.get('company_id')?.touched">
+                {{ getErrorMessage('company_id') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>School Name</mat-label>
+              <input matInput formControlName="name" placeholder="Enter school name">
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-error *ngIf="schoolForm.get('name')?.invalid && schoolForm.get('name')?.touched">
+                {{ getErrorMessage('name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>School Code</mat-label>
+              <input matInput formControlName="code" placeholder="e.g., SCH001" [readonly]="isEditMode">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-error *ngIf="schoolForm.get('code')?.invalid && schoolForm.get('code')?.touched">
+                {{ getErrorMessage('code') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+        </div>
+
+        <!-- Branch Information Section -->
+        <div class="form-section" [formGroup]="getBranchForm()">
+          <h3 class="section-title">
+            <mat-icon>business</mat-icon>
+            Main Branch Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Name</mat-label>
+              <input matInput formControlName="name" placeholder="Enter branch name">
+              <mat-icon matPrefix>account_tree</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('name')?.invalid && getBranchForm().get('name')?.touched">
+                {{ getErrorMessage('branch.name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Code</mat-label>
+              <input matInput formControlName="code" placeholder="e.g., BR001">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('code')?.invalid && getBranchForm().get('code')?.touched">
+                {{ getErrorMessage('branch.code') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Address</mat-label>
+              <textarea matInput formControlName="address" placeholder="Enter full address" rows="2"></textarea>
+              <mat-icon matPrefix>location_on</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('address')?.invalid && getBranchForm().get('address')?.touched">
+                {{ getErrorMessage('branch.address') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" placeholder="Enter city">
+              <mat-icon matPrefix>location_city</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('city')?.invalid && getBranchForm().get('city')?.touched">
+                {{ getErrorMessage('branch.city') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>State</mat-label>
+              <input matInput formControlName="state" placeholder="Enter state">
+              <mat-icon matPrefix>map</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('state')?.invalid && getBranchForm().get('state')?.touched">
+                {{ getErrorMessage('branch.state') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Country</mat-label>
+              <input matInput formControlName="country" placeholder="Enter country">
+              <mat-icon matPrefix>public</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('country')?.invalid && getBranchForm().get('country')?.touched">
+                {{ getErrorMessage('branch.country') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Pincode</mat-label>
+              <input matInput formControlName="pincode" placeholder="Enter pincode" maxlength="10">
+              <mat-icon matPrefix>markunread_mailbox</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('pincode')?.invalid && getBranchForm().get('pincode')?.touched">
+                {{ getErrorMessage('branch.pincode') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" placeholder="Enter phone number" type="tel">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('phone')?.invalid && getBranchForm().get('phone')?.touched">
+                {{ getErrorMessage('branch.phone') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" placeholder="Enter email" type="email">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('email')?.invalid && getBranchForm().get('email')?.touched">
+                {{ getErrorMessage('branch.email') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Website (Optional)</mat-label>
+              <input matInput formControlName="website" placeholder="https://example.com" type="url">
+              <mat-icon matPrefix>language</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('website')?.invalid && getBranchForm().get('website')?.touched">
+                {{ getErrorMessage('branch.website') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Admin User Information Section -->
+        <div class="form-section" [formGroup]="getAdminUserForm()">
+          <h3 class="section-title">
+            <mat-icon>admin_panel_settings</mat-icon>
+            Admin User Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="first_name" placeholder="Enter first name">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error
+                *ngIf="getAdminUserForm().get('first_name')?.invalid && getAdminUserForm().get('first_name')?.touched">
+                {{ getErrorMessage('admin_user.first_name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="last_name" placeholder="Enter last name">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error
+                *ngIf="getAdminUserForm().get('last_name')?.invalid && getAdminUserForm().get('last_name')?.touched">
+                {{ getErrorMessage('admin_user.last_name') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" placeholder="Enter email address" type="email">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="getAdminUserForm().get('email')?.invalid && getAdminUserForm().get('email')?.touched">
+                {{ getErrorMessage('admin_user.email') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Password</mat-label>
+              <input matInput formControlName="password"
+                [placeholder]="isEditMode ? 'Leave blank to keep current password' : 'Enter password'" type="password">
+              <mat-icon matPrefix>lock</mat-icon>
+              <mat-hint>{{ isEditMode ? 'Leave blank to keep current password' : 'Minimum 8 characters' }}</mat-hint>
+              <mat-error
+                *ngIf="getAdminUserForm().get('password')?.invalid && getAdminUserForm().get('password')?.touched">
+                {{ getErrorMessage('admin_user.password') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Phone (Optional)</mat-label>
+              <input matInput formControlName="phone" placeholder="Enter phone number" type="tel">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error *ngIf="getAdminUserForm().get('phone')?.invalid && getAdminUserForm().get('phone')?.touched">
+                {{ getErrorMessage('admin_user.phone') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Role</mat-label>
+              <mat-select formControlName="role">
+                <mat-option *ngFor="let role of adminRoleOptions" [value]="role.value">
+                  {{ role.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>badge</mat-icon>
+              <mat-error *ngIf="getAdminUserForm().get('role')?.invalid && getAdminUserForm().get('role')?.touched">
+                {{ getErrorMessage('admin_user.role') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>toggle_on</mat-icon>
+            Status
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                  {{ status.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>pending_actions</mat-icon>
+              <mat-error *ngIf="schoolForm.get('status')?.invalid && schoolForm.get('status')?.touched">
+                {{ getErrorMessage('status') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Action Buttons -->
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" type="submit" (click)="onSubmit()"
+        [disabled]="isLoading || schoolForm.invalid">
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update School' : 'Create School' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
