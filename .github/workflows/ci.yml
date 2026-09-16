@@ -23,18 +23,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-   #   - name: Lint (ESLint)
-   #     run: npm run lint
-
-    #  - name: Lint (Stylelint)
-  #      run: npm run lint:css
-
-  #    - name: Unit tests
-   #     run: npx ng test --watch=false --browsers=ChromeHeadless
+      # Optional lint/test steps
+      # - name: Lint (ESLint)
+      #   run: npm run lint
+      # - name: Lint (Stylelint)
+      #   run: npm run lint:css
+      # - name: Unit tests
+      #   run: npx ng test --watch=false --browsers=ChromeHeadless
 
       - name: Build
         run: npm run build
-        
+
       - name: Deploy to EC2
         env:
           PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -44,11 +43,11 @@ jobs:
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           # Backup current deployment
-          ssh -i private_key.pem $USER@$HOST "rm -rf /var/www/ui-app-backup && cp -r /var/www/ui-app /var/www/ui-app-backup || true"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "rm -rf /var/www/ui-app-backup && cp -r /var/www/ui-app /var/www/ui-app-backup || true"
           # Deploy new build
-          rsync -avz dist/your-app/ $USER@$HOST:/var/www/ui-app
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" dist/your-app/ $USER@$HOST:/var/www/ui-app
           # Restart Nginx
-          ssh -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
 
       - name: Rollback if failed
         if: failure()
@@ -59,5 +58,5 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-          rsync -avz /var/www/ui-app-backup/ $USER@$HOST:/var/www/ui-app
-          ssh -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" /var/www/ui-app-backup/ $USER@$HOST:/var/www/ui-app
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
