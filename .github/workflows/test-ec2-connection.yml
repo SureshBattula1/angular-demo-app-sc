@@ -1,7 +1,7 @@
 name: Test EC2 Connection
 
 on:
-  workflow_dispatch:   # allows manual trigger
+  workflow_dispatch:
 
 jobs:
   test-connection:
@@ -19,4 +19,4 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "echo '✅ Connected successfully to EC2!'"
+          ssh -vvv -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "hostname && whoami"
