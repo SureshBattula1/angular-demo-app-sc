@@ -34,3 +34,30 @@ jobs:
 
       - name: Build
         run: npm run build
+        
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          # Backup current deployment
+          ssh -i private_key.pem $USER@$HOST "rm -rf /var/www/ui-app-backup && cp -r /var/www/ui-app /var/www/ui-app-backup || true"
+          # Deploy new build
+          rsync -avz dist/your-app/ $USER@$HOST:/var/www/ui-app
+          # Restart Nginx
+          ssh -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
+
+      - name: Rollback if failed
+        if: failure()
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          rsync -avz /var/www/ui-app-backup/ $USER@$HOST:/var/www/ui-app
+          ssh -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
