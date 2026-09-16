@@ -44,8 +44,8 @@ jobs:
           chmod 600 private_key.pem
           # Backup current deployment (with sudo)
           ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "sudo rm -rf /var/www/ui-app-backup && sudo cp -r /var/www/ui-app /var/www/ui-app-backup || true"
-          # Deploy new build (fix dist folder name)
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" dist/angular-demo-app-sc/ $USER@$HOST:/var/www/ui-app
+          # Deploy new build (correct dist folder)
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no -i private_key.pem" dist/ui-app/ $USER@$HOST:/var/www/ui-app
           # Restart Nginx
           ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST "sudo systemctl restart nginx"
 
