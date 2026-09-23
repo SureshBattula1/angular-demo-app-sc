@@ -174,23 +174,101 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Sections Card -->
-    <mat-card class="detail-card" *ngIf="grade.sections && grade.sections.length > 0">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>class</mat-icon>
-          Available Sections
-        </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="sections-chips">
-          <mat-chip *ngFor="let section of grade.sections">
-            Section {{ section }}
-          </mat-chip>
-        </div>
-      </mat-card-content>
-    </mat-card>
   </div>
+
+  <mat-card class="view-detail-card sections-overview-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>class</mat-icon>
+        Sections
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ sectionSummaries.length }} section{{ sectionSummaries.length === 1 ? '' : 's' }} in this grade
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="section-summary-grid" *ngIf="sectionSummaries.length; else noSections">
+        <article class="section-summary-card" *ngFor="let section of sectionSummaries">
+          <div class="section-summary-header">
+            <div>
+              <h3>Section {{ section.name }}</h3>
+              <p class="section-meta">
+                <span *ngIf="section.room_number">Room {{ section.room_number }}</span>
+                <span *ngIf="section.capacity">Capacity {{ section.capacity }}</span>
+                <span *ngIf="section.code">{{ section.code }}</span>
+              </p>
+            </div>
+            <button
+              *ngIf="section.id"
+              mat-stroked-button
+              color="primary"
+              (click)="viewSection(section)">
+              View
+            </button>
+          </div>
+
+          <div class="gender-stats">
+            <div class="gender-stat total">
+              <span class="gender-value">{{ section.students.total }}</span>
+              <span class="gender-label">Students</span>
+            </div>
+            <div class="gender-stat male">
+              <span class="gender-value">{{ section.students.male }}</span>
+              <span class="gender-label">Male</span>
+            </div>
+            <div class="gender-stat female">
+              <span class="gender-value">{{ section.students.female }}</span>
+              <span class="gender-label">Female</span>
+            </div>
+            <div class="gender-stat other">
+              <span class="gender-value">{{ section.students.other }}</span>
+              <span class="gender-label">Other</span>
+            </div>
+          </div>
+
+          <div class="teacher-block" *ngIf="section.class_teacher; else noTeacher">
+            <mat-icon>person</mat-icon>
+            <div>
+              <div class="teacher-label">Class Teacher</div>
+              <div class="teacher-name">{{ teacherName(section) }}</div>
+              <div class="teacher-meta" *ngIf="section.class_teacher.designation || section.class_teacher.employee_id">
+                {{ section.class_teacher.designation }}
+                <span *ngIf="section.class_teacher.designation && section.class_teacher.employee_id"> · </span>
+                {{ section.class_teacher.employee_id }}
+              </div>
+              <div class="teacher-meta" *ngIf="section.class_teacher.email || section.class_teacher.phone">
+                {{ section.class_teacher.email }}
+                <span *ngIf="section.class_teacher.email && section.class_teacher.phone"> · </span>
+                {{ section.class_teacher.phone }}
+              </div>
+            </div>
+          </div>
+          <ng-template #noTeacher>
+            <div class="teacher-block empty">
+              <mat-icon>person_off</mat-icon>
+              <div>
+                <div class="teacher-label">Class Teacher</div>
+                <div class="teacher-name muted">Not assigned</div>
+              </div>
+            </div>
+          </ng-template>
+
+          <button
+            mat-button
+            color="primary"
+            class="section-students-link"
+            (click)="viewSectionStudents(section)">
+            View students
+          </button>
+        </article>
+      </div>
+      <ng-template #noSections>
+        <div class="view-no-info">
+          <p>No sections are set up for this grade yet.</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
 </div>
 
 <!-- Loading State -->

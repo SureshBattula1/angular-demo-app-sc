@@ -5,12 +5,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatChipsModule } from '@angular/material/chips';
 import { GradeService } from '../../services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { PermissionService } from '../../../../core/services/permission.service';
-import { Grade, GradeStats } from '../../../../core/models/grade.model';
+import { Grade, GradeSectionSummary, GradeStats } from '../../../../core/models/grade.model';
 
 @Component({
   selector: 'app-grade-view',
@@ -20,9 +18,7 @@ import { Grade, GradeStats } from '../../../../core/models/grade.model';
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    MatChipsModule
+    MatProgressSpinnerModule
   ],
   templateUrl: './grade-view.component.html',
   styleUrls: ['./grade-view.component.scss']
@@ -111,12 +107,40 @@ export class GradeViewComponent implements OnInit {
     }
   }
   
+  get sectionSummaries(): GradeSectionSummary[] {
+    return this.grade?.sections_summary ?? [];
+  }
+
+  teacherName(section: GradeSectionSummary): string {
+    const teacher = section.class_teacher;
+    if (!teacher) {
+      return '';
+    }
+    return `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim();
+  }
+
   viewStudents(): void {
     if (this.gradeValue) {
       this.router.navigate(['/students'], { 
         queryParams: { grade: this.gradeValue }
       });
     }
+  }
+
+  viewSectionStudents(section: GradeSectionSummary): void {
+    if (this.gradeValue) {
+      this.router.navigate(['/students'], {
+        queryParams: { grade: this.gradeValue, section: section.name }
+      });
+    }
+  }
+
+  viewSection(section: GradeSectionSummary): void {
+    if (section.id) {
+      this.router.navigate(['/sections/view', section.id]);
+      return;
+    }
+    this.viewSections();
   }
   
   viewSections(): void {

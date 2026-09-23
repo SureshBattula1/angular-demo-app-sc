@@ -1,3 +1,29 @@
+export interface GradeClassTeacher {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email?: string | null;
+  phone?: string | null;
+  designation?: string | null;
+  employee_id?: string | null;
+}
+
+export interface GradeSectionSummary {
+  id?: number | null;
+  name: string;
+  code?: string | null;
+  capacity?: number;
+  room_number?: string | null;
+  is_active?: boolean;
+  students: {
+    male: number;
+    female: number;
+    other: number;
+    total: number;
+  };
+  class_teacher?: GradeClassTeacher | null;
+}
+
 export interface Grade {
   value: string;
   label: string;
@@ -6,6 +32,7 @@ export interface Grade {
   category?: 'Pre-Primary' | 'Primary' | 'Middle' | 'Secondary' | 'Senior-Secondary';
   students_count?: number;
   sections?: string[];
+  sections_summary?: GradeSectionSummary[];
   classes_count?: number;
   branch_id?: number | string | null;
   branch_name?: string | null;
