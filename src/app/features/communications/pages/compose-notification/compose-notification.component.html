@@ -1,0 +1,70 @@
+<div class="compose-page">
+  <header class="compose-hero">
+    <button mat-icon-button type="button" (click)="cancel()" aria-label="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div>
+      <h1>Compose notification</h1>
+      <p>Send a class message to students (same API as the mobile app)</p>
+    </div>
+  </header>
+
+  <form class="compose-card" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" maxlength="255" placeholder="e.g. Homework reminder" />
+      <mat-error *ngIf="form.controls.title.hasError('required')">Title is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Message</mat-label>
+      <textarea
+        matInput
+        rows="5"
+        formControlName="description"
+        placeholder="Write a clear message for students"></textarea>
+      <mat-error *ngIf="form.controls.description.hasError('required')">Message is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Optional note</mat-label>
+      <textarea matInput rows="2" formControlName="optional_description"></textarea>
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Class</mat-label>
+        <mat-select formControlName="grade">
+          <mat-option *ngFor="let g of grades" [value]="g.value">{{ g.label }}</mat-option>
+        </mat-select>
+        <mat-hint *ngIf="loadingGrades">Loading classes…</mat-hint>
+        <mat-error *ngIf="form.controls.grade.hasError('required')">Class is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Section</mat-label>
+        <mat-select formControlName="section" [disabled]="!form.controls.grade.value">
+          <mat-option *ngFor="let s of sections" [value]="s.value">{{ s.label }}</mat-option>
+        </mat-select>
+        <mat-hint *ngIf="loadingSections">Loading sections…</mat-hint>
+        <mat-error *ngIf="form.controls.section.hasError('required')">Section is required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="audience">
+      <label class="audience__label">Audience</label>
+      <mat-radio-group formControlName="audience_mode">
+        <mat-radio-button value="all">All students in class</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <footer class="compose-actions">
+      <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting">Cancel</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="submitting || form.invalid">
+        <mat-spinner *ngIf="submitting" diameter="18"></mat-spinner>
+        <span *ngIf="!submitting">Send notification</span>
+        <span *ngIf="submitting">Sending…</span>
+      </button>
+    </footer>
+  </form>
+</div>

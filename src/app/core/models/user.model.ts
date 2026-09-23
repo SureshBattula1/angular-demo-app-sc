@@ -10,6 +10,7 @@ export interface User {
   branch?: any;
   permissions?: string[];
   is_active?: boolean;
+  is_deactivated?: boolean;
   email_verified_at?: string;
   created_at?: string;
   updated_at?: string;

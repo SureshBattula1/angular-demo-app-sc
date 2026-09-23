@@ -61,6 +61,16 @@
   }
 }
 
+.section-hint {
+  margin: calc(var(--spacing-sm) * -1) 0 var(--spacing-md);
+  color: var(--neutral-color);
+  font-size: 13px;
+}
+
+.subsection-title {
+  margin-top: var(--spacing-xl);
+}
+
 .form-section {
   margin-bottom: var(--spacing-2xl);
   

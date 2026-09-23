@@ -28,6 +28,9 @@ export interface School {
     phone?: string;
     email?: string;
     website?: string;
+    principal_name?: string;
+    principal_contact?: string;
+    principal_email?: string;
   };
   branches?: Array<{
     id: string;
@@ -35,6 +38,14 @@ export interface School {
     code: string;
   }>;
   admin_user?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    role: string;
+  };
+  branch_admin?: {
     id: string;
     first_name: string;
     last_name: string;

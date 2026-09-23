@@ -80,8 +80,25 @@ export class AuthService {
     private router: Router,
     private injector: Injector
   ) {
-    // Defer loading user from storage to avoid circular dependency
+    // Hydrate the user synchronously so route guards see the impersonated SuperAdmin
+    // immediately. Permission/branch API calls stay deferred to avoid circular DI.
+    this.hydrateUserFromStorage();
     setTimeout(() => this.loadUserFromStorage(), 0);
+  }
+
+  private hydrateUserFromStorage(): void {
+    const token = this.getToken();
+    const userStr = localStorage.getItem(this.USER_KEY);
+    if (!token || !userStr) {
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr) as User;
+      this.updateCurrentUser(user);
+      this.isAuthenticated.set(true);
+    } catch {
+      // Invalid JSON is handled when loadUserFromStorage runs.
+    }
   }
 
   /**

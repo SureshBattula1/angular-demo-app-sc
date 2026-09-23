@@ -187,7 +187,8 @@ export class UserListComponent implements OnInit {
               'Teacher': 'Teacher',
               'Student': 'Student',
               'Parent': 'Parent',
-              'Staff': 'Staff'
+              'Staff': 'Staff',
+              'Accountant': 'Accountant'
             };
             
             roleField.options = this.roles.map(r => ({

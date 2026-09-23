@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { CompanySchoolService } from '../../../services/school.service';
@@ -33,10 +33,7 @@ export class SchoolFormComponent implements OnInit {
     { value: 'UnderConstruction', label: 'Under Construction' }
   ];
 
-  adminRoleOptions = [
-    { value: 'BranchAdmin', label: 'Branch Admin' },
-    { value: 'SuperAdmin', label: 'Super Admin' }
-  ];
+  hideBranchAdminPassword = true;
 
   constructor(
     private fb: FormBuilder,
@@ -59,20 +56,13 @@ export class SchoolFormComponent implements OnInit {
         this.schoolId = params['id'];
         this.isEditMode = this.router.url.includes('/edit');
         if (this.isEditMode) {
-          // In edit mode, make password optional (user can leave blank to keep current password)
-          this.schoolForm.get('admin_user.password')?.clearValidators();
-          this.schoolForm.get('admin_user.password')?.setValidators([Validators.minLength(8)]);
-          this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
+          this.setPasswordValidators(false);
           this.loadSchool(this.schoolId!);
         } else {
-          // In create mode, password is required
-          this.schoolForm.get('admin_user.password')?.setValidators([Validators.required, Validators.minLength(8)]);
-          this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
+          this.setPasswordValidators(true);
         }
       } else {
-        // Create mode - password is required
-        this.schoolForm.get('admin_user.password')?.setValidators([Validators.required, Validators.minLength(8)]);
-        this.schoolForm.get('admin_user.password')?.updateValueAndValidity();
+        this.setPasswordValidators(true);
       }
     });
   }
@@ -98,20 +88,46 @@ export class SchoolFormComponent implements OnInit {
         pincode: ['', [Validators.required, Validators.maxLength(10)]],
         phone: ['', [Validators.required, Validators.maxLength(20)]],
         email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
-        website: ['', [Validators.maxLength(255)]]
+        website: ['', [Validators.maxLength(255)]],
+        principal_name: ['', [Validators.required, Validators.maxLength(255)]],
+        principal_contact: ['', [Validators.required, Validators.maxLength(20)]],
+        principal_email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
+        branch_admin_password: ['', [Validators.minLength(8)]]
       }),
 
-      // Admin User Information (required for new schools)
+      // Super Admin login (required for new schools)
       admin_user: this.fb.group({
         first_name: ['', [Validators.required, Validators.maxLength(255)]],
         last_name: ['', [Validators.required, Validators.maxLength(255)]],
         email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
-        password: ['', [Validators.minLength(8)]], // Required only for new schools, optional for edit
+        password: ['', [Validators.minLength(8)]],
         phone: ['', [Validators.maxLength(20)]],
-        role: ['SuperAdmin', [Validators.required]]  // Company portal creates school admin as Super Admin
+        role: [{ value: 'SuperAdmin', disabled: true }]
       })
-    });
+    }, { validators: this.distinctAdminEmails });
   }
+
+  private setPasswordValidators(required: boolean): void {
+    const adminPassword = this.schoolForm.get('admin_user.password');
+    const branchPassword = this.schoolForm.get('branch.branch_admin_password');
+    const rules = required
+      ? [Validators.required, Validators.minLength(8)]
+      : [Validators.minLength(8)];
+
+    adminPassword?.setValidators(rules);
+    branchPassword?.setValidators(rules);
+    adminPassword?.updateValueAndValidity();
+    branchPassword?.updateValueAndValidity();
+  }
+
+  private distinctAdminEmails = (group: AbstractControl): ValidationErrors | null => {
+    const adminEmail = group.get('admin_user.email')?.value?.toString().trim().toLowerCase();
+    const principalEmail = group.get('branch.principal_email')?.value?.toString().trim().toLowerCase();
+    if (adminEmail && principalEmail && adminEmail === principalEmail) {
+      return { emailsMatch: true };
+    }
+    return null;
+  };
 
   private loadCompanies(): void {
     this.companiesLoading = true;
@@ -159,9 +175,8 @@ export class SchoolFormComponent implements OnInit {
             this.schoolForm.get('company_id')?.disable({ emitEvent: false });
           }
 
-          // Patch branch info if mainBranch exists
-          if (school.main_branch) {
-            const branch = school.main_branch;
+          const branch = school.main_branch ?? (school as School & { mainBranch?: School['main_branch'] }).mainBranch;
+          if (branch) {
             this.schoolForm.get('branch')?.patchValue({
               name: branch.name || '',
               code: branch.code || '',
@@ -172,11 +187,13 @@ export class SchoolFormComponent implements OnInit {
               pincode: branch.pincode || '',
               phone: branch.phone || '',
               email: branch.email || '',
-              website: branch.website || ''
+              website: branch.website || '',
+              principal_name: branch.principal_name || '',
+              principal_contact: branch.principal_contact || '',
+              principal_email: branch.principal_email || school.branch_admin?.email || ''
             });
           }
 
-          // Patch admin user info if admin_user exists
           if (school.admin_user) {
             const adminUser = school.admin_user;
             this.schoolForm.get('admin_user')?.patchValue({
@@ -184,8 +201,7 @@ export class SchoolFormComponent implements OnInit {
               last_name: adminUser.last_name || '',
               email: adminUser.email || '',
               phone: adminUser.phone || '',
-              role: adminUser.role || 'BranchAdmin'
-              // Don't patch password - leave it empty for user to change if needed
+              role: 'SuperAdmin'
             });
           }
 
@@ -211,9 +227,16 @@ export class SchoolFormComponent implements OnInit {
     // Use getRawValue so disabled controls (like company_id in edit mode) are included
     const formData = this.schoolForm.getRawValue();
 
-    // For edit mode, remove password if it's empty (user doesn't want to change it)
-    if (this.isEditMode && formData.admin_user && !formData.admin_user.password) {
-      delete formData.admin_user.password;
+    if (formData.admin_user) {
+      formData.admin_user.role = 'SuperAdmin';
+    }
+    if (this.isEditMode) {
+      if (formData.admin_user && !formData.admin_user.password) {
+        delete formData.admin_user.password;
+      }
+      if (formData.branch && !formData.branch.branch_admin_password) {
+        delete formData.branch.branch_admin_password;
+      }
     }
 
     const request = this.isEditMode && this.schoolId
@@ -226,7 +249,7 @@ export class SchoolFormComponent implements OnInit {
         if (response.success) {
           const message = this.isEditMode
             ? 'School updated successfully'
-            : 'School created successfully with main branch and admin user';
+            : 'School created successfully with Super Admin and Branch Admin';
           this.errorHandler.showSuccess(message);
           this.router.navigate(['/company-portal/schools']);
         }
@@ -290,6 +313,10 @@ export class SchoolFormComponent implements OnInit {
       return control.getError('serverError');
     }
 
+    if (this.schoolForm.hasError('emailsMatch') && (fieldName === 'branch.principal_email' || fieldName === 'admin_user.email')) {
+      return 'Branch Admin email must be different from Super Admin email';
+    }
+
     return '';
   }
 
@@ -306,13 +333,17 @@ export class SchoolFormComponent implements OnInit {
       'branch.state': 'State',
       'branch.country': 'Country',
       'branch.pincode': 'Pincode',
-      'branch.phone': 'Phone',
-      'branch.email': 'Email',
+      'branch.phone': 'Branch Phone',
+      'branch.email': 'Branch Office Email',
       'branch.website': 'Website',
+      'branch.principal_name': 'Principal Name',
+      'branch.principal_contact': 'Principal Contact',
+      'branch.principal_email': 'Branch Admin Email',
+      'branch.branch_admin_password': 'Branch Admin Password',
       'admin_user.first_name': 'First Name',
       'admin_user.last_name': 'Last Name',
-      'admin_user.email': 'Email',
-      'admin_user.password': 'Password',
+      'admin_user.email': 'Super Admin Email',
+      'admin_user.password': 'Super Admin Password',
       'admin_user.phone': 'Phone',
       'admin_user.role': 'Role'
     };

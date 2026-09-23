@@ -2,44 +2,79 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 
-export interface Notification {
-  id: number;
-  user_id: number;
+export interface NotificationAttachment {
+  id?: string | number;
+  name?: string;
+  url?: string;
+  mime?: string;
+  size?: number;
+}
+
+export interface AppNotification {
+  id: number | string;
+  user_id?: number;
   title: string;
   message: string;
-  type: string;
-  is_read: boolean;
-  read_at?: string;
+  description?: string;
+  optional_description?: string;
+  type?: string;
+  priority?: string;
+  is_read?: boolean;
+  read_at?: string | null;
   created_at?: string;
+  date?: string;
+  sent_at?: string;
+  source?: string;
+  event?: string;
+  group_key?: string;
+  assignment_id?: number | string | null;
+  action_url?: string | null;
+  can_view_receipts?: boolean;
+  grade?: string | null;
+  section?: string | null;
+  audience?: string | null;
+  student_count?: number | null;
+  status?: string | null;
+  attachments?: NotificationAttachment[];
 }
 
-export interface Announcement {
-  id: number;
-  branch_id?: number;
-  title: string;
-  content: string;
-  target_audience: string;
-  priority: 'Low' | 'Medium' | 'High';
-  start_date: string;
-  end_date?: string;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
+export interface NotificationViewer {
+  user_id: number | string;
+  name: string;
+  role?: string | null;
+  audience?: string | null;
+  viewed: boolean;
+  viewed_at?: string | null;
 }
 
-export interface Circular {
-  id: number;
-  branch_id?: number;
+export interface NotificationReceipts {
+  group_key?: string | null;
+  total: number;
+  viewed: number;
+  pending: number;
+  percent: number;
+  viewers: NotificationViewer[];
+}
+
+export interface BroadcastNotificationBody {
   title: string;
-  content: string;
-  target_audience: string;
-  circular_number?: string;
-  issue_date: string;
-  expiry_date?: string;
-  requires_acknowledgment: boolean;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
+  description: string;
+  optional_description?: string | null;
+  grade: string;
+  section: string;
+  audience_mode: 'all' | 'custom';
+  student_ids?: number[];
+  attachments?: NotificationAttachment[];
+  branch_id?: number | null;
+}
+
+export interface BroadcastNotificationResult {
+  group_key?: string;
+  grade?: string;
+  section?: string;
+  class_name?: string;
+  student_count?: number;
+  sent_at?: string;
 }
 
 @Injectable({
@@ -50,63 +85,57 @@ export class CommunicationService {
 
   constructor(private apiService: ApiService) {}
 
-  // Notification Methods
-  getNotifications(params?: Record<string, unknown>): Observable<ApiResponse<Notification[]>> {
-    return this.apiService.get<Notification[]>(`${this.BASE_ENDPOINT}/notifications`, params);
+  /** Inbox — same as mobile app */
+  getNotifications(params?: Record<string, unknown>): Observable<ApiResponse<AppNotification[]>> {
+    return this.apiService.get<AppNotification[]>(`${this.BASE_ENDPOINT}/notifications`, params);
   }
 
-  createNotification(notificationData: Partial<Notification>): Observable<ApiResponse<Notification>> {
-    return this.apiService.post<Notification>(`${this.BASE_ENDPOINT}/notifications`, notificationData);
+  markNotificationAsRead(notificationId: number | string): Observable<ApiResponse<AppNotification>> {
+    return this.apiService.post<AppNotification>(
+      `${this.BASE_ENDPOINT}/notifications/${notificationId}/read`,
+      {}
+    );
   }
 
-  markNotificationAsRead(notificationId: number): Observable<ApiResponse<Notification>> {
-    return this.apiService.post<Notification>(`${this.BASE_ENDPOINT}/notifications/${notificationId}/read`, {});
+  markAllAsRead(): Observable<ApiResponse> {
+    return this.apiService.post(`${this.BASE_ENDPOINT}/notifications/read-all`, {});
   }
 
-  // Announcement Methods
-  getAnnouncements(params?: Record<string, unknown>): Observable<ApiResponse<Announcement[]>> {
-    return this.apiService.get<Announcement[]>(`${this.BASE_ENDPOINT}/announcements`, params);
+  /** Teacher/admin compose — fan-out to students */
+  broadcastNotification(
+    body: BroadcastNotificationBody
+  ): Observable<ApiResponse<BroadcastNotificationResult>> {
+    return this.apiService.post<BroadcastNotificationResult>(
+      `${this.BASE_ENDPOINT}/notifications/broadcast`,
+      body
+    );
   }
 
-  getAnnouncement(id: number): Observable<ApiResponse<Announcement>> {
-    return this.apiService.get<Announcement>(`${this.BASE_ENDPOINT}/announcements/${id}`);
+  getSentNotifications(): Observable<ApiResponse<AppNotification[]>> {
+    return this.apiService.get<AppNotification[]>(`${this.BASE_ENDPOINT}/notifications/sent`);
   }
 
-  createAnnouncement(announcementData: Partial<Announcement>): Observable<ApiResponse<Announcement>> {
-    return this.apiService.post<Announcement>(`${this.BASE_ENDPOINT}/announcements`, announcementData);
+  getNotificationReceipts(groupKey: string): Observable<ApiResponse<NotificationReceipts>> {
+    return this.apiService.get<NotificationReceipts>(
+      `${this.BASE_ENDPOINT}/notifications/receipts`,
+      { group_key: groupKey }
+    );
   }
 
-  updateAnnouncement(id: number, announcementData: Partial<Announcement>): Observable<ApiResponse<Announcement>> {
-    return this.apiService.put<Announcement>(`${this.BASE_ENDPOINT}/announcements/${id}`, announcementData);
+  // Legacy single create (kept for compatibility)
+  createNotification(notificationData: Partial<AppNotification>): Observable<ApiResponse<AppNotification>> {
+    return this.apiService.post<AppNotification>(
+      `${this.BASE_ENDPOINT}/notifications`,
+      notificationData
+    );
   }
 
-  deleteAnnouncement(id: number): Observable<ApiResponse> {
-    return this.apiService.delete(`${this.BASE_ENDPOINT}/announcements/${id}`);
+  // Announcements / circulars (existing)
+  getAnnouncements(params?: Record<string, unknown>): Observable<ApiResponse> {
+    return this.apiService.get(`${this.BASE_ENDPOINT}/announcements`, params);
   }
 
-  // Circular Methods
-  getCirculars(params?: Record<string, unknown>): Observable<ApiResponse<Circular[]>> {
-    return this.apiService.get<Circular[]>(`${this.BASE_ENDPOINT}/circulars`, params);
-  }
-
-  getCircular(id: number): Observable<ApiResponse<Circular>> {
-    return this.apiService.get<Circular>(`${this.BASE_ENDPOINT}/circulars/${id}`);
-  }
-
-  createCircular(circularData: Partial<Circular>): Observable<ApiResponse<Circular>> {
-    return this.apiService.post<Circular>(`${this.BASE_ENDPOINT}/circulars`, circularData);
-  }
-
-  updateCircular(id: number, circularData: Partial<Circular>): Observable<ApiResponse<Circular>> {
-    return this.apiService.put<Circular>(`${this.BASE_ENDPOINT}/circulars/${id}`, circularData);
-  }
-
-  deleteCircular(id: number): Observable<ApiResponse> {
-    return this.apiService.delete(`${this.BASE_ENDPOINT}/circulars/${id}`);
-  }
-
-  acknowledgeCircular(circularId: number): Observable<ApiResponse<Circular>> {
-    return this.apiService.post<Circular>(`${this.BASE_ENDPOINT}/circulars/${circularId}/acknowledge`, {});
+  getCirculars(params?: Record<string, unknown>): Observable<ApiResponse> {
+    return this.apiService.get(`${this.BASE_ENDPOINT}/circulars`, params);
   }
 }
-
