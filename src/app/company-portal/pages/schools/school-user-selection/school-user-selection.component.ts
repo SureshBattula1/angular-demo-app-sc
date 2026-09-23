@@ -171,6 +171,10 @@ export class SchoolUserSelectionComponent implements OnInit {
               localStorage.setItem('company_portal_token_backup', companyPortalToken);
             }
 
+            // Drop the previous school session so SuperAdmin does not inherit
+            // stale company-portal or other-role permissions (blank dashboard).
+            this.clearSchoolAppSession();
+
             // Store impersonation token
             localStorage.setItem('impersonation_token', impersonationToken);
 
@@ -180,53 +184,35 @@ export class SchoolUserSelectionComponent implements OnInit {
             // Switch to school auth context - set token first
             localStorage.setItem('auth_token', impersonationToken);
 
-            // If we have user data from response, use it; otherwise fetch it
-            if (impersonatedUserData) {
-              // Map the impersonated user data to User interface
-              const impersonatedUser: User = {
-                id: impersonatedUserData.id,
-                first_name: impersonatedUserData.first_name,
-                last_name: impersonatedUserData.last_name,
-                email: impersonatedUserData.email,
-                role: impersonatedUserData.role as any,
-                branch_id: impersonatedUserData.branch_id || user.branch_id,
-                branch: impersonatedUserData.branch || user.branch,
-                is_active: impersonatedUserData.is_active !== undefined ? impersonatedUserData.is_active : true,
-                full_name: impersonatedUserData.full_name || `${impersonatedUserData.first_name} ${impersonatedUserData.last_name}`
-              };
+            const fallbackUser: User = {
+              id: impersonatedUserData?.id ?? user.id,
+              first_name: impersonatedUserData?.first_name ?? user.first_name,
+              last_name: impersonatedUserData?.last_name ?? user.last_name,
+              email: impersonatedUserData?.email ?? user.email,
+              role: (impersonatedUserData?.role ?? user.role) as User['role'],
+              branch_id: impersonatedUserData?.branch_id || user.branch_id,
+              branch: impersonatedUserData?.branch || user.branch,
+              is_active: impersonatedUserData?.is_active !== undefined ? impersonatedUserData.is_active : true,
+              full_name: impersonatedUserData?.full_name || `${impersonatedUserData?.first_name || user.first_name} ${impersonatedUserData?.last_name || user.last_name}`
+            };
 
-              // Store the impersonated user data
-              localStorage.setItem('current_user', JSON.stringify(impersonatedUser));
+            this.storeImpersonatedUser(fallbackUser);
+            localStorage.removeItem('company_portal_user');
 
-              // Clear any company portal user data to avoid conflicts
-              localStorage.removeItem('company_portal_user');
-
-              // Immediately force full page reload to switch to school app
-              // Don't wait for dialog to close - page reload will destroy it
-              window.location.replace('/dashboard');
-            } else {
-              // Fetch the impersonated user's data using the new token
-              this.apiService.get<User>('/me').subscribe({
-                next: (userResponse) => {
-                  if (userResponse.success && userResponse.data) {
-                    // Store the impersonated user data
-                    const impersonatedUser = userResponse.data;
-                    localStorage.setItem('current_user', JSON.stringify(impersonatedUser));
-
-                    // Immediately redirect - page reload will close dialog
-                    window.location.replace('/dashboard');
-                  } else {
-                    // If user fetch fails, still try to redirect (user might be loaded on reload)
-                    window.location.replace('/dashboard');
-                  }
-                },
-                error: (userError) => {
-                  // Even if user fetch fails, redirect and let the page reload handle it
-                  console.error('Failed to fetch impersonated user:', userError);
-                  window.location.replace('/dashboard');
+            // Always refresh /me with the impersonation token so SuperAdmin
+            // permissions and user_type are present before the school app boots.
+            this.apiService.get<User>('/me').subscribe({
+              next: (userResponse) => {
+                if (userResponse.success && userResponse.data) {
+                  this.storeImpersonatedUser(userResponse.data);
                 }
-              });
-            }
+                window.location.replace('/dashboard');
+              },
+              error: (userError) => {
+                console.error('Failed to fetch impersonated user:', userError);
+                window.location.replace('/dashboard');
+              }
+            });
           } else {
             this.errorHandler.showError('Failed to get impersonation token');
             this.impersonating = false;
@@ -296,6 +282,21 @@ export class SchoolUserSelectionComponent implements OnInit {
       return true;
     }
     return false;
+  }
+
+  private clearSchoolAppSession(): void {
+    localStorage.removeItem('user_permissions');
+    localStorage.removeItem('user_modules');
+    localStorage.removeItem('accessible_branches');
+    localStorage.removeItem('current_user');
+  }
+
+  private storeImpersonatedUser(user: User): void {
+    localStorage.setItem('current_user', JSON.stringify(user));
+    const slugs = Array.isArray((user as any).permissions) ? (user as any).permissions : [];
+    if (slugs.length && slugs.every((item: unknown) => typeof item === 'string')) {
+      localStorage.setItem('user_permissions', JSON.stringify(slugs));
+    }
   }
 
   clearFilters(): void {

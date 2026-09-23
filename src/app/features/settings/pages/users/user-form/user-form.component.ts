@@ -143,7 +143,8 @@ export class UserFormComponent implements OnInit {
               'Teacher': 'Teacher',
               'Student': 'Student',
               'Parent': 'Parent',
-              'Staff': 'Staff'
+              'Staff': 'Staff',
+              'Accountant': 'Accountant'
             };
             
             const roleName = enumToRoleMapping[user.role] || user.role;

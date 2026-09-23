@@ -40,13 +40,17 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
 
   // Get current user permissions
   const userPermissions = permissionService.userPermissions();
-  
-  // If permissions are still loading (empty array but user is logged in),
-  // allow access temporarily so page can load. Permissions will be enforced once loaded.
-  if (user && userPermissions.length === 0) {
-    // Logged in but no permissions loaded yet - allow access temporarily
-    // The directive will hide menu items and buttons if user doesn't have permissions
-    console.warn('Permissions not loaded yet, allowing temporary access');
+  const hasToken = authService.isLoggedIn();
+  const storedRole = user?.role || readStoredUserRole();
+
+  // Hard reload (Access School / impersonation) hydrates the user on the next tick.
+  // Allow the shell to render until permissions arrive instead of leaving a blank outlet.
+  if (hasToken && (!user || userPermissions.length === 0)) {
+    return true;
+  }
+
+  // School SuperAdmin always has dashboard; other modules still use assigned slugs.
+  if (storedRole === 'SuperAdmin' && permissions.includes('dashboard.view')) {
     return true;
   }
 
@@ -69,4 +73,16 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
 
   return true;
 };
+
+function readStoredUserRole(): string | null {
+  const raw = localStorage.getItem('current_user');
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw)?.role ?? null;
+  } catch {
+    return null;
+  }
+}
 
