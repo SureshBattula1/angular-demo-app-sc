@@ -151,9 +151,10 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="email" placeholder="Enter email" type="email">
+              <mat-label>Office Email</mat-label>
+              <input matInput formControlName="email" placeholder="Office contact email" type="email">
               <mat-icon matPrefix>email</mat-icon>
+              <mat-hint>Branch contact only — not a login</mat-hint>
               <mat-error *ngIf="getBranchForm().get('email')?.invalid && getBranchForm().get('email')?.touched">
                 {{ getErrorMessage('branch.email') }}
               </mat-error>
@@ -170,14 +171,69 @@
               </mat-error>
             </mat-form-field>
           </div>
+
+          <h3 class="section-title subsection-title">
+            <mat-icon>badge</mat-icon>
+            Branch Admin Login
+          </h3>
+          <p class="section-hint">Principal email and this password are the Branch Admin login for the school app.</p>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Principal Name</mat-label>
+              <input matInput formControlName="principal_name" placeholder="Enter principal full name">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('principal_name')?.invalid && getBranchForm().get('principal_name')?.touched">
+                {{ getErrorMessage('branch.principal_name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Principal Contact</mat-label>
+              <input matInput formControlName="principal_contact" placeholder="Enter principal phone" type="tel">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error *ngIf="getBranchForm().get('principal_contact')?.invalid && getBranchForm().get('principal_contact')?.touched">
+                {{ getErrorMessage('branch.principal_contact') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Admin Email</mat-label>
+              <input matInput formControlName="principal_email" placeholder="Principal email used for login" type="email">
+              <mat-icon matPrefix>alternate_email</mat-icon>
+              <mat-hint>This email is the Branch Admin login</mat-hint>
+              <mat-error *ngIf="(getBranchForm().get('principal_email')?.invalid && getBranchForm().get('principal_email')?.touched) || (schoolForm.hasError('emailsMatch') && getBranchForm().get('principal_email')?.touched)">
+                {{ getErrorMessage('branch.principal_email') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Admin Password</mat-label>
+              <input matInput formControlName="branch_admin_password"
+                [placeholder]="isEditMode ? 'Leave blank to keep current password' : 'Enter Branch Admin password'"
+                [type]="hideBranchAdminPassword ? 'password' : 'text'">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="hideBranchAdminPassword = !hideBranchAdminPassword"
+                [attr.aria-label]="hideBranchAdminPassword ? 'Show password' : 'Hide password'">
+                <mat-icon>{{ hideBranchAdminPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint>{{ isEditMode ? 'Leave blank to keep current password' : 'Minimum 8 characters' }}</mat-hint>
+              <mat-error *ngIf="getBranchForm().get('branch_admin_password')?.invalid && getBranchForm().get('branch_admin_password')?.touched">
+                {{ getErrorMessage('branch.branch_admin_password') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
         </div>
 
-        <!-- Admin User Information Section -->
+        <!-- Super Admin Information Section -->
         <div class="form-section" [formGroup]="getAdminUserForm()">
           <h3 class="section-title">
             <mat-icon>admin_panel_settings</mat-icon>
-            Admin User Information
+            Super Admin Login
           </h3>
+          <p class="section-hint">This account is the school Super Admin. Email must differ from the Branch Admin email.</p>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
@@ -203,16 +259,16 @@
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Email</mat-label>
-              <input matInput formControlName="email" placeholder="Enter email address" type="email">
+              <mat-label>Super Admin Email</mat-label>
+              <input matInput formControlName="email" placeholder="Enter Super Admin email" type="email">
               <mat-icon matPrefix>email</mat-icon>
-              <mat-error *ngIf="getAdminUserForm().get('email')?.invalid && getAdminUserForm().get('email')?.touched">
+              <mat-error *ngIf="(getAdminUserForm().get('email')?.invalid && getAdminUserForm().get('email')?.touched) || (schoolForm.hasError('emailsMatch') && getAdminUserForm().get('email')?.touched)">
                 {{ getErrorMessage('admin_user.email') }}
               </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Password</mat-label>
+              <mat-label>Super Admin Password</mat-label>
               <input matInput formControlName="password"
                 [placeholder]="isEditMode ? 'Leave blank to keep current password' : 'Enter password'" type="password">
               <mat-icon matPrefix>lock</mat-icon>
@@ -236,15 +292,9 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Role</mat-label>
-              <mat-select formControlName="role">
-                <mat-option *ngFor="let role of adminRoleOptions" [value]="role.value">
-                  {{ role.label }}
-                </mat-option>
-              </mat-select>
+              <input matInput value="Super Admin" readonly>
               <mat-icon matPrefix>badge</mat-icon>
-              <mat-error *ngIf="getAdminUserForm().get('role')?.invalid && getAdminUserForm().get('role')?.touched">
-                {{ getErrorMessage('admin_user.role') }}
-              </mat-error>
+              <mat-hint>Always Super Admin when creating a school</mat-hint>
             </mat-form-field>
           </div>
         </div>
