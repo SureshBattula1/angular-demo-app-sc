@@ -1,0 +1,125 @@
+<div class="notif-page">
+  <header class="notif-hero">
+    <div class="notif-hero__text">
+      <h1>Notifications</h1>
+      <p>Inbox and sent messages — same as the mobile app</p>
+    </div>
+    <div class="notif-hero__actions">
+      <button
+        *ngIf="activeTab === 'inbox' && unreadCount > 0"
+        mat-stroked-button
+        type="button"
+        (click)="markAllRead()">
+        <mat-icon>done_all</mat-icon>
+        Mark all read
+      </button>
+      <button
+        *ngIf="canCompose"
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="openCompose()">
+        <mat-icon>edit_square</mat-icon>
+        Compose
+      </button>
+    </div>
+  </header>
+
+  <div class="notif-tabs" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="notif-tab"
+      [class.active]="activeTab === 'inbox'"
+      (click)="setTab('inbox')">
+      Inbox
+      <span class="notif-tab__badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+    </button>
+    <button
+      *ngIf="canCompose"
+      type="button"
+      role="tab"
+      class="notif-tab"
+      [class.active]="activeTab === 'sent'"
+      (click)="setTab('sent')">
+      Sent
+    </button>
+  </div>
+
+  <div class="notif-toolbar" *ngIf="activeTab === 'inbox'">
+    <mat-form-field appearance="outline" class="status-field">
+      <mat-label>Status</mat-label>
+      <mat-select [(ngModel)]="statusFilter" (selectionChange)="onStatusChange()">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="unread">Unread</mat-option>
+        <mat-option value="read">Read</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="notif-body">
+    <div class="notif-loading" *ngIf="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading notifications…</span>
+    </div>
+
+    <ng-container *ngIf="!loading && activeTab === 'inbox'">
+      <div class="notif-empty" *ngIf="inbox.length === 0">
+        <mat-icon>notifications_none</mat-icon>
+        <h3>No notifications</h3>
+        <p>You’re all caught up.</p>
+      </div>
+
+      <article
+        class="notif-card"
+        *ngFor="let item of inbox; trackBy: trackById"
+        [class.unread]="!item.is_read && !item.read_at"
+        (click)="openItem(item)">
+        <div class="notif-card__dot" *ngIf="!item.is_read && !item.read_at"></div>
+        <div class="notif-card__main">
+          <div class="notif-card__meta">
+            <span class="chip">{{ sourceLabel(item) }}</span>
+            <span class="time">{{ displayDate(item) | date: 'medium' }}</span>
+          </div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description || item.message }}</p>
+          <div class="notif-card__tags" *ngIf="item.audience || item.priority">
+            <span class="tag" *ngIf="item.audience">{{ item.audience }}</span>
+            <span class="tag" *ngIf="item.priority">{{ item.priority }}</span>
+          </div>
+        </div>
+        <mat-icon class="chevron">chevron_right</mat-icon>
+      </article>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && activeTab === 'sent'">
+      <div class="notif-empty" *ngIf="sent.length === 0">
+        <mat-icon>outgoing_mail</mat-icon>
+        <h3>No sent messages</h3>
+        <p>Compose a class notification to get started.</p>
+        <button mat-flat-button color="primary" type="button" (click)="openCompose()">
+          Compose
+        </button>
+      </div>
+
+      <article
+        class="notif-card sent"
+        *ngFor="let item of sent; trackBy: trackById"
+        (click)="openItem(item, true)">
+        <div class="notif-card__main">
+          <div class="notif-card__meta">
+            <span class="chip sent-chip">Sent</span>
+            <span class="time">{{ displayDate(item) | date: 'medium' }}</span>
+          </div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description || item.message }}</p>
+          <div class="notif-card__tags">
+            <span class="tag" *ngIf="item.audience">{{ item.audience }}</span>
+            <span class="tag" *ngIf="item.student_count != null">{{ item.student_count }} students</span>
+          </div>
+        </div>
+        <mat-icon class="chevron">chevron_right</mat-icon>
+      </article>
+    </ng-container>
+  </div>
+</div>
