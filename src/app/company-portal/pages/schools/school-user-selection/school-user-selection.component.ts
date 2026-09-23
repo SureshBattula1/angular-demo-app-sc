@@ -35,6 +35,14 @@ export class SchoolUserSelectionComponent implements OnInit {
   // Search and filter controls
   searchControl = new FormControl('');
   roleFilterControl = new FormControl('');
+  statusFilterControl = new FormControl('');
+  schoolStatus = '';
+
+  statusFilterOptions = [
+    { value: '', label: 'All statuses' },
+    { value: 'active', label: 'Active' },
+    { value: 'deactivated', label: 'Deactivated' }
+  ];
 
   // Available roles
   availableRoles: Array<{ value: string; label: string }> = [
@@ -74,6 +82,10 @@ export class SchoolUserSelectionComponent implements OnInit {
     this.roleFilterControl.valueChanges.subscribe(() => {
       this.applyFilters();
     });
+
+    this.statusFilterControl.valueChanges.subscribe(() => {
+      this.applyFilters();
+    });
   }
 
   applyFilters(): void {
@@ -83,6 +95,13 @@ export class SchoolUserSelectionComponent implements OnInit {
     const selectedRole = this.roleFilterControl.value;
     if (selectedRole) {
       filtered = filtered.filter(user => user.role === selectedRole);
+    }
+
+    const statusFilter = this.statusFilterControl.value;
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(user => !this.isDeactivated(user));
+    } else if (statusFilter === 'deactivated') {
+      filtered = filtered.filter(user => this.isDeactivated(user));
     }
 
     // Apply search filter
@@ -109,6 +128,7 @@ export class SchoolUserSelectionComponent implements OnInit {
     this.schoolService.getSchoolUsers(this.data.schoolId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          this.schoolStatus = (response as { school_status?: string }).school_status || '';
           this.allUsers = response.data;
           this.filteredUsers = response.data;
           this.users = response.data; // Keep for backward compatibility
@@ -258,12 +278,30 @@ export class SchoolUserSelectionComponent implements OnInit {
   }
 
   isBranchAdmin(user: User): boolean {
-    return user.role === 'Admin';
+    return user.role === 'Admin' || user.role === 'BranchAdmin';
+  }
+
+  isDeactivated(user: User): boolean {
+    if (user.is_deactivated) {
+      return true;
+    }
+    if (user.is_active === false) {
+      return true;
+    }
+    if (['Inactive', 'Suspended'].includes(this.schoolStatus)) {
+      return true;
+    }
+    const branch = user.branch;
+    if (branch && (branch.is_active === false || ['Inactive', 'Closed'].includes(branch.status))) {
+      return true;
+    }
+    return false;
   }
 
   clearFilters(): void {
     this.searchControl.setValue('');
     this.roleFilterControl.setValue('');
+    this.statusFilterControl.setValue('');
     this.applyFilters();
   }
 }
