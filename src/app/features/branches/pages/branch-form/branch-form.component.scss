@@ -2,7 +2,6 @@
 
 .branch-form-container {
   padding: var(--spacing-lg);
-  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -150,6 +149,84 @@
   
   ::ng-deep circle {
     stroke: var(--white) !important;
+  }
+}
+
+// Logo Preview Section
+.current-logo-preview {
+  margin-bottom: var(--spacing-lg);
+  
+  .preview-card {
+    background: var(--white);
+    border: 2px solid var(--primary-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md);
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: var(--white);
+      
+      .preview-label {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-weight: 500;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+      
+      button {
+        color: var(--white);
+      }
+    }
+    
+    .preview-image-container {
+      padding: var(--spacing-lg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--gray-50);
+      min-height: 200px;
+      
+      .preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        object-fit: contain;
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-md);
+      }
+    }
+  }
+}
+
+.logo-upload-section {
+  background: var(--gray-50);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  
+  .help-text {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin: var(--spacing-md) 0 0 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--primary-color);
+    }
   }
 }
 

@@ -1,0 +1,255 @@
+<div class="marks-container">
+  <!-- Header -->
+  <div class="marks-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>assessment</mat-icon>
+        Enter Marks
+      </h1>
+      <p class="subtitle">{{ schedule?.exam?.name || 'Exam Schedule' }} - {{ schedule?.subject?.name || 'Subject' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="onBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button mat-raised-button color="primary" [disabled]="saving" (click)="onSubmit()">
+        <mat-icon>save</mat-icon>
+        {{ saving ? 'Saving...' : 'Submit Marks' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+  </div>
+
+  <!-- Schedule Info Card -->
+  <mat-card class="info-card" *ngIf="schedule && !loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>info</mat-icon>
+        Exam Schedule Details
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label"><mat-icon>assignment</mat-icon>Exam:</span>
+          <span class="info-value">{{ schedule.exam?.name }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>book</mat-icon>Subject:</span>
+          <span class="info-value">{{ schedule.subject?.name }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>school</mat-icon>Grade:</span>
+          <span class="info-value">Grade {{ schedule.grade }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>view_module</mat-icon>Section:</span>
+          <span class="info-value">{{ schedule.section || 'All' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>event</mat-icon>Date:</span>
+          <span class="info-value">{{ schedule.exam_date | date: 'mediumDate' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>schedule</mat-icon>Time:</span>
+          <span class="info-value">{{ schedule.start_time }} - {{ schedule.end_time }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>assessment</mat-icon>Total Marks:</span>
+          <span class="info-value">{{ schedule.total_marks }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label"><mat-icon>check_circle</mat-icon>Passing Marks:</span>
+          <span class="info-value">{{ schedule.passing_marks || 'Not set' }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Card -->
+  <mat-card class="stats-card" *ngIf="!loading">
+    <mat-card-content>
+      <div class="stats-grid">
+        <div class="stat-item stat-primary">
+          <mat-icon>people</mat-icon>
+          <div class="stat-details">
+            <span class="stat-label">Total Students</span>
+            <span class="stat-value">{{ totalStudents }}</span>
+          </div>
+        </div>
+        <div class="stat-item stat-success">
+          <mat-icon>check_circle</mat-icon>
+          <div class="stat-details">
+            <span class="stat-label">Passed</span>
+            <span class="stat-value">{{ passedStudents }}</span>
+          </div>
+        </div>
+        <div class="stat-item stat-danger">
+          <mat-icon>cancel</mat-icon>
+          <div class="stat-details">
+            <span class="stat-label">Failed</span>
+            <span class="stat-value">{{ failedStudents }}</span>
+          </div>
+        </div>
+        <div class="stat-item stat-warn">
+          <mat-icon>event_busy</mat-icon>
+          <div class="stat-details">
+            <span class="stat-label">Absent</span>
+            <span class="stat-value">{{ absentStudents }}</span>
+          </div>
+        </div>
+        <div class="stat-item stat-info">
+          <mat-icon>trending_up</mat-icon>
+          <div class="stat-details">
+            <span class="stat-label">Average Marks</span>
+            <span class="stat-value">{{ averageMarks.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Marks Entry Form -->
+  <mat-card class="marks-card" *ngIf="!loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>edit</mat-icon>
+        Enter Marks
+      </mat-card-title>
+      <div class="quick-actions">
+        <button mat-stroked-button (click)="markAllAbsent()">
+          <mat-icon>event_busy</mat-icon>
+          Mark All Absent
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Desktop Table View -->
+      <div class="table-wrapper" *ngIf="marksForm">
+        <table class="marks-table">
+          <thead>
+            <tr>
+              <th class="col-roll">Roll No.</th>
+              <th class="col-adm">Admission No.</th>
+              <th class="col-name">Student Name</th>
+              <th class="col-marks">Marks Obtained</th>
+              <th class="col-max">Max Marks</th>
+              <th class="col-grade">Grade</th>
+              <th class="col-absent">Absent</th>
+              <th class="col-remarks">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let student of students; let i = index" 
+                [class.invalid]="marksForm.get('student_' + student.student_id)?.invalid && marksForm.get('student_' + student.student_id)?.touched">
+              <td class="col-roll">{{ student.roll_number }}</td>
+              <td class="col-adm">{{ student.admission_number }}</td>
+              <td class="col-name">{{ student.name }}</td>
+              <td class="col-marks">
+                <input 
+                  type="number" 
+                  class="marks-input"
+                  [value]="marksForm.get('student_' + student.student_id)?.get('marks_obtained')?.value"
+                  (input)="onMarksInput($event, student.student_id)"
+                  (blur)="onMarksBlur($event, student.student_id)"
+                  [disabled]="marksForm.get('student_' + student.student_id)?.get('is_absent')?.value"
+                  min="0"
+                  [max]="schedule?.total_marks || 100"
+                  step="0.01"
+                  placeholder="0 - {{schedule?.total_marks || 100}}">
+              </td>
+              <td class="col-max">{{ schedule?.total_marks || 100 }}</td>
+              <td class="col-grade">
+                <input 
+                  type="text" 
+                  class="grade-input"
+                  [value]="marksForm.get('student_' + student.student_id)?.get('grade')?.value"
+                  (input)="onGradeInput($event, student.student_id)"
+                  placeholder="A+">
+              </td>
+              <td class="col-absent">
+              <mat-checkbox 
+                [checked]="marksForm.get('student_' + student.student_id)?.get('is_absent')?.value"
+                (change)="onAbsentToggle($event, student.student_id)"
+                color="primary">
+              </mat-checkbox>
+              </td>
+              <td class="col-remarks">
+                <input 
+                  type="text" 
+                  class="remarks-input"
+                  [value]="marksForm.get('student_' + student.student_id)?.get('remarks')?.value"
+                  (input)="onRemarksInput($event, student.student_id)"
+                  placeholder="Remarks">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Card View -->
+      <div class="mobile-cards" *ngIf="marksForm">
+        <div class="student-card" *ngFor="let student of students; let i = index">
+          <div class="card-header">
+            <div>
+              <h3>{{ student.name }}</h3>
+              <p>Roll: {{ student.roll_number }} | Adm: {{ student.admission_number }}</p>
+            </div>
+            <mat-checkbox 
+              [checked]="marksForm.get('student_' + student.student_id)?.get('is_absent')?.value"
+              (change)="onAbsentToggle($event, student.student_id)"
+              color="primary">
+              Absent
+            </mat-checkbox>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Marks Obtained</mat-label>
+                <input 
+                  matInput 
+                  type="number" 
+                  [value]="marksForm.get('student_' + student.student_id)?.get('marks_obtained')?.value"
+                  (input)="onMarksInput($event, student.student_id)"
+                  [disabled]="marksForm.get('student_' + student.student_id)?.get('is_absent')?.value"
+                  min="0"
+                  [max]="schedule?.total_marks || 100"
+                  step="0.01">
+                <mat-hint>Max: {{ schedule?.total_marks || 100 }}</mat-hint>
+              </mat-form-field>
+            </div>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Grade</mat-label>
+                <input 
+                  matInput 
+                  type="text" 
+                  [value]="marksForm.get('student_' + student.student_id)?.get('grade')?.value"
+                  (input)="onGradeInput($event, student.student_id)" 
+                  placeholder="A+">
+              </mat-form-field>
+            </div>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Remarks</mat-label>
+                <input 
+                  matInput 
+                  type="text" 
+                  [value]="marksForm.get('student_' + student.student_id)?.get('remarks')?.value"
+                  (input)="onRemarksInput($event, student.student_id)"
+                  placeholder="Remarks">
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+

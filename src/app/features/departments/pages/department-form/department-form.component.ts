@@ -19,7 +19,7 @@ export class DepartmentFormComponent implements OnInit {
   departmentForm!: FormGroup;
   isEditMode = false;
   isLoading = false;
-  departmentId?: number;
+  departmentId?: string;
   currentDepartment?: Department;
   
   branches: any[] = [];
@@ -53,9 +53,9 @@ export class DepartmentFormComponent implements OnInit {
     
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.departmentId = +params['id'];
+        this.departmentId = params['id'];
         this.isEditMode = true;
-        this.loadDepartment(this.departmentId);
+        this.loadDepartment(this.departmentId!);
       }
     });
   }
@@ -66,7 +66,7 @@ export class DepartmentFormComponent implements OnInit {
       head: ['', [Validators.required, Validators.maxLength(255)]],
       head_id: [null],
       branch_id: [null, Validators.required],
-      established_date: ['', Validators.required],
+      established_date: [null, Validators.required],
       students_count: [0],
       teachers_count: [0],
       description: [''],
@@ -74,14 +74,23 @@ export class DepartmentFormComponent implements OnInit {
     });
   }
 
-  private loadDepartment(id: number): void {
+  private loadDepartment(id: string | number): void {
     this.isLoading = true;
     
     this.departmentService.getDepartment(id).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.currentDepartment = response.data;
-          this.departmentForm.patchValue(response.data);
+          const data = { ...response.data };
+          // Convert established_date to Date for mat-datepicker
+          if (data.established_date) {
+            const str = String(data.established_date).trim();
+            const dateOnly = str.includes('T') ? str.split('T')[0] : str;
+            data.established_date = new Date(dateOnly);
+          }
+          this.departmentForm.patchValue(data);
+          // Branch is immutable once a department exists (backend ignores branch_id on update).
+          this.departmentForm.get('branch_id')?.disable({ emitEvent: false });
           this.isLoading = false;
         }
       },
@@ -97,11 +106,14 @@ export class DepartmentFormComponent implements OnInit {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.branches = response.data;
+          this.branches = response.data || [];
+          console.log('Branches loaded in department form:', this.branches.length);
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
+        console.error('Error loading branches in department form:', error);
+        this.errorHandler.showError('Failed to load branches');
+        this.branches = [];
       }
     });
   }
@@ -114,7 +126,15 @@ export class DepartmentFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const formData = this.departmentForm.value;
+    const formData = { ...this.departmentForm.value };
+
+    // Normalize Date to YYYY-MM-DD for backend
+    if (formData.established_date instanceof Date && !isNaN(formData.established_date.getTime())) {
+      const yyyy = formData.established_date.getFullYear();
+      const mm = String(formData.established_date.getMonth() + 1).padStart(2, '0');
+      const dd = String(formData.established_date.getDate()).padStart(2, '0');
+      formData.established_date = `${yyyy}-${mm}-${dd}`;
+    }
 
     const request = this.isEditMode && this.departmentId
       ? this.departmentService.updateDepartment(this.departmentId, formData)

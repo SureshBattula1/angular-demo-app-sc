@@ -1,0 +1,12 @@
+:host { display: block; }
+
+/* Layout/cards/stats come from global view-pages.css. Only route-specific bits here. */
+
+.amount-column { text-align: right; font-weight: 600; white-space: nowrap; }
+
+.route-students-card {
+  margin-top: 24px;
+
+  mat-card-header { align-items: center; }
+  .spacer { flex: 1 1 auto; }
+}

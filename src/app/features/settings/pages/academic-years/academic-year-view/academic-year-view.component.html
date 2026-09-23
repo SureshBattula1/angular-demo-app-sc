@@ -1,0 +1,106 @@
+<div class="academic-year-view-container">
+  <mat-card class="view-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">calendar_today</mat-icon>
+        <div>
+          Academic Year Details
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>
+        View academic year information
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-overlay">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading academic year details...</p>
+      </div>
+
+      <div *ngIf="!loading && academicYear">
+        <div class="view-section">
+          <h3 class="section-title">
+            <mat-icon>event</mat-icon>
+            Academic Year Information
+          </h3>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>label</mat-icon>
+                Name
+              </div>
+              <div class="info-value">{{ academicYear.name }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>event_available</mat-icon>
+                Start Date
+              </div>
+              <div class="info-value">{{ academicYear.start_date | date:'mediumDate' }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>event_busy</mat-icon>
+                End Date
+              </div>
+              <div class="info-value">{{ academicYear.end_date | date:'mediumDate' }}</div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>today</mat-icon>
+                Current Year
+              </div>
+              <div class="info-value">
+                <mat-chip [style.background-color]="academicYear.is_current ? 'var(--success-color)' : 'var(--gray-400)'" [style.color]="'white'">
+                  <mat-icon>{{ academicYear.is_current ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ academicYear.is_current ? 'Yes' : 'No' }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="info-label">
+                <mat-icon>toggle_on</mat-icon>
+                Status
+              </div>
+              <div class="info-value">
+                <mat-chip [style.background-color]="academicYear.is_active ? 'var(--success-color)' : 'var(--error-color)'" [style.color]="'white'">
+                  <mat-icon>{{ academicYear.is_active ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ academicYear.is_active ? 'Active' : 'Inactive' }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="info-card full-width" *ngIf="academicYear.description">
+              <div class="info-label">
+                <mat-icon>notes</mat-icon>
+                Description
+              </div>
+              <div class="info-value">{{ academicYear.description }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions *ngIf="!loading && academicYear">
+      <button mat-stroked-button (click)="onBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to List
+      </button>
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit Academic Year
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

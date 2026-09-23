@@ -1,317 +1,989 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, TableColumn, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { FeeService } from '../../services/fee.service';
+import { FeeTypeService } from '../../services/fee-type.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { GradeService } from '../../../grades/services/grade.service';
+import { SectionService } from '../../../sections/services/section.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { FeeStructure, FeePayment } from '../../../../core/models/fee.model';
+import { AcademicYearContextService } from '../../../../core/services/academic-year-context.service';
+import { AcademicYearService } from '../../../settings/services/academic-year.service';
+import { FeeStructure, FeePayment, FeeType } from '../../../../core/models/fee.model';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { IndianCurrencyPipe } from '../../../../shared/pipes/indian-currency.pipe';
+import { jsPDF } from 'jspdf';
 
 @Component({
   selector: 'app-fee-list',
   standalone: true,
-  imports: [CommonModule, MaterialModule, DataTableComponent],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule,
+    MaterialModule, 
+    DataTableComponent,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatButtonToggleModule,
+    IndianCurrencyPipe
+  ],
   templateUrl: './fee-list.component.html',
   styleUrls: ['./fee-list.component.scss']
 })
-export class FeeListComponent implements OnInit {
+export class FeeListComponent implements OnInit, OnDestroy {
   @ViewChild('structuresTable') structuresTable!: DataTableComponent;
   @ViewChild('paymentsTable') paymentsTable!: DataTableComponent;
+  @ViewChild('feeTypesTable') feeTypesTable!: DataTableComponent;
   
-  selectedTab = 0; // 0 = Structures, 1 = Payments
   loading = false;
+  activeTab: 'today' | 'structures' | 'payments' | 'types' = 'today'; // Default to today's payments
   
-  // Fee Structures
+  // Track which tabs have been loaded for lazy loading
+  private loadedTabs = new Set<string>();
+  private academicYearSub?: Subscription;
+  
+  // Separate data arrays for each tab
+  todayPaymentsDashboard: any = null;
   feeStructures: FeeStructure[] = [];
-  structuresTableConfig!: TableConfig;
-  structuresSearchConfig!: AdvancedSearchConfig;
-  
-  // Fee Payments
   feePayments: FeePayment[] = [];
-  paymentsTableConfig!: TableConfig;
-  paymentsSearchConfig!: AdvancedSearchConfig;
+  feeTypes: FeeType[] = [];
+  selectedRecords: (FeeStructure | FeePayment | FeeType)[] = [];
   
+  // Counts for tab badges
+  todayPaymentCount = 0;
+  structureCount = 0;
+  paymentCount = 0;
+  feeTypeCount = 0;
+  
+  // Current filters for each tab
+  todayPaymentFilters: Record<string, unknown> = {};
+  structureFilters: Record<string, unknown> = {};
+  paymentFilters: Record<string, unknown> = {};
+  feeTypeFilters: Record<string, unknown> = {};
   branches: any[] = [];
+  grades: any[] = [];
+  sections: any[] = [];
+  selectedBranch: string | number | null = null;
+
+  // Grade & Section — Student Fee Details (dashboard section)
+  sfBranch: string | number | null = null;
+  sfGrade: string | null = null;
+  sfSection: string | null = null;
+  sfGrades: any[] = [];
+  sfSections: any[] = [];
+  studentFeeRows: any[] = [];
+  sfSummary: { student_count: number; total_fee: number; total_paid: number; total_due: number } | null = null;
+  sfLoading = false;
+  studentFeeColumns: string[] = ['student_name', 'phone', 'paid_amount', 'due_amount', 'status'];
+  
+  // Date range filters (similar to dashboard)
+  selectedPeriod = new FormControl('today');
+  customFromDate = new FormControl();
+  customToDate = new FormControl();
+  
+  // Separate table configurations
+  structuresTableConfig: TableConfig = {
+    columns: this.getStructureColumns(),
+    actions: [
+      { icon: 'visibility', label: 'View', action: (row) => this.viewStructure(row) },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editStructure(row) },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteStructure(row) }
+    ],
+    selectable: true,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    exportable: true,
+    responsive: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25
+  };
+  
+  paymentsTableConfig: TableConfig = {
+    columns: this.getPaymentColumns(),
+    actions: [
+      { icon: 'visibility', label: 'View Receipt', action: (row) => this.viewPayment(row) },
+      { icon: 'print', label: 'Print', color: 'primary', action: (row) => this.printReceipt(row) },
+      { icon: 'receipt_long', label: 'Student Receipt', action: (row) => this.studentReceipt(row) }
+    ],
+    selectable: true,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    exportable: true,
+    responsive: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25
+  };
+  
+  // Separate search configurations
+  structuresSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Fee Structure Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'grade',
+        label: 'Grade',
+        type: 'select',
+        icon: 'school',
+        options: [],
+        dependsOn: 'branch_id'
+      },
+      {
+        key: 'fee_type',
+        label: 'Fee Type',
+        type: 'select',
+        icon: 'category',
+        options: [],
+        dependsOn: 'branch_id'
+      },
+      {
+        key: 'academic_year_id',
+        label: 'Academic Year',
+        type: 'select',
+        icon: 'event',
+        options: []
+      },
+      {
+        key: 'is_active',
+        label: 'Status',
+        type: 'select',
+        icon: 'check_circle',
+        options: [
+          { value: 'true', label: 'Active' },
+          { value: 'false', label: 'Inactive' }
+        ]
+      }
+    ]
+  };
+  
+  todayPaymentsSearchConfig: AdvancedSearchConfig = {
+    title: 'Filter Today\'s Payments',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'grade',
+        label: 'Class/Grade',
+        type: 'select',
+        icon: 'school',
+        options: []
+      },
+      {
+        key: 'section',
+        label: 'Section',
+        type: 'select',
+        icon: 'class',
+        options: []
+      },
+      {
+        key: 'payment_method',
+        label: 'Payment Method',
+        type: 'select',
+        icon: 'payment',
+        options: [
+          { value: 'Cash', label: 'Cash' },
+          { value: 'Card', label: 'Card' },
+          { value: 'Online', label: 'Online' },
+          { value: 'Cheque', label: 'Cheque' },
+          { value: 'Other', label: 'Other' }
+        ]
+      }
+    ]
+  };
+  
+  paymentsSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Payment Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'payment_status',
+        label: 'Payment Status',
+        type: 'select',
+        icon: 'info',
+        options: [
+          { value: 'Pending', label: 'Pending' },
+          { value: 'Completed', label: 'Completed' },
+          { value: 'Failed', label: 'Failed' },
+          { value: 'Refunded', label: 'Refunded' }
+        ]
+      },
+      {
+        key: 'payment_method',
+        label: 'Payment Method',
+        type: 'select',
+        icon: 'payment',
+        options: [
+          { value: 'Cash', label: 'Cash' },
+          { value: 'Card', label: 'Card' },
+          { value: 'Online', label: 'Online' },
+          { value: 'Cheque', label: 'Cheque' },
+          { value: 'Other', label: 'Other' }
+        ]
+      },
+      {
+        key: 'from_date',
+        label: 'From Date',
+        type: 'date',
+        icon: 'event'
+      },
+      {
+        key: 'to_date',
+        label: 'To Date',
+        type: 'date',
+        icon: 'event'
+      }
+    ]
+  };
+
+  feeTypesTableConfig: TableConfig = {
+    columns: this.getFeeTypeColumns(),
+    actions: [
+      { icon: 'visibility', label: 'View', action: (row) => this.viewFeeType(row) },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editFeeType(row) },
+      // { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteFeeType(row) } // We can enable this only when ever the user want to delete the fee stracture , we have to do that part in the manuavaly 
+    ],
+    selectable: true,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    exportable: true,
+    responsive: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25
+  };
+
+  feeTypesSearchConfig: AdvancedSearchConfig = {
+    title: 'Advanced Fee Type Search',
+    width: '500px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: [
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'is_active',
+        label: 'Status',
+        type: 'select',
+        icon: 'check_circle',
+        options: [
+          { value: 'true', label: 'Active' },
+          { value: 'false', label: 'Inactive' }
+        ]
+      },
+      {
+        key: 'is_mandatory',
+        label: 'Type',
+        type: 'select',
+        icon: 'label',
+        options: [
+          { value: 'true', label: 'Mandatory' },
+          { value: 'false', label: 'Optional' }
+        ]
+      },
+      {
+        key: 'is_refundable',
+        label: 'Refundable',
+        type: 'select',
+        icon: 'currency_exchange',
+        options: [
+          { value: 'true', label: 'Yes' },
+          { value: 'false', label: 'No' }
+        ]
+      }
+    ]
+  };
   
   constructor(
     private feeService: FeeService,
+    private feeTypeService: FeeTypeService,
     private branchService: BranchService,
+    private gradeService: GradeService,
+    private sectionService: SectionService,
+    private academicYearService: AcademicYearService,
     private errorHandler: ErrorHandlerService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private academicYearContext: AcademicYearContextService
   ) {}
   
   ngOnInit(): void {
-    this.initializeStructuresTable();
-    this.initializePaymentsTable();
     this.loadBranches();
-    this.loadFeeStructures();
+    this.loadGrades();
+    this.loadSections();
+    this.loadFeeTypesForFilter();
+    this.loadAcademicYearsForFilter();
+    this.academicYearSub = this.academicYearContext.selectedYearId$.pipe(skip(1)).subscribe(() => this.loadActiveTabData());
+    
+    // Check query parameters to restore active tab
+    this.route.queryParams.subscribe(params => {
+      // Check for returnTab first (when coming back from view/edit), then tab
+      const targetTab = params['returnTab'] || params['tab'];
+      
+      if (targetTab === 'today') {
+        this.activeTab = 'today';
+      } else if (targetTab === 'payments') {
+        this.activeTab = 'payments';
+      } else if (targetTab === 'types') {
+        this.activeTab = 'types';
+      } else if (targetTab === 'structures') {
+        this.activeTab = 'structures';
+      } else {
+        this.activeTab = 'today'; // Default to today's payments
+      }
+      
+      // Mark the initial tab as loaded
+      this.loadedTabs.add(this.activeTab);
+    });
+    
+    // Load data for the active tab only (lazy loading)
+    this.loadActiveTabData();
+    
+    // Listen to period changes for today's payments tab
+    this.selectedPeriod.valueChanges.subscribe(() => {
+      if (this.activeTab === 'today') {
+        this.loadTodayPayments();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.academicYearSub?.unsubscribe();
   }
   
+  // Check if a tab has been loaded (for lazy loading)
+  isTabLoaded(tab: string): boolean {
+    return this.loadedTabs.has(tab);
+  }
+
+  // Tab switching method
+  switchTab(tab: 'today' | 'structures' | 'payments' | 'types'): void {
+    this.activeTab = tab;
+    
+    // Mark tab as loaded for lazy loading
+    this.loadedTabs.add(tab);
+    
+    // Update URL query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge'
+    });
+    
+    // Load data for the tab
+    this.loadActiveTabData();
+  }
+  
+  // Load data for active tab only
+  private loadActiveTabData(): void {
+    if (this.activeTab === 'today') {
+      this.loadTodayPayments();
+    } else if (this.activeTab === 'structures') {
+      this.loadFeeStructures();
+    } else if (this.activeTab === 'payments') {
+      this.loadFeePayments();
+    } else if (this.activeTab === 'types') {
+      this.loadFeeTypes();
+    }
+  }
+
+  // Load fee structures
+  loadFeeStructures(filters: Record<string, any> = {}): void {
+    this.loading = true;
+    this.structureFilters = { ...this.structureFilters, ...filters };
+    
+    this.feeService.getFeeStructures(this.structureFilters).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          // Transform data: use API grade_label (branch-specific) when present, else fallback
+          this.feeStructures = (response.data || []).map((structure: any) => {
+            const gradeLabel = structure.grade_label != null && structure.grade_label !== ''
+              ? structure.grade_label
+              : (this.grades.find((g: any) => g.value === structure.grade)?.label ?? `Grade ${structure.grade}`);
+            return {
+              ...structure,
+              grade_label: gradeLabel,
+              amount_formatted: `₹${structure.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`,
+              is_active_display: this.toBoolean(structure.is_active) ? 'Active' : 'Deactive'
+            };
+          });
+          
+          if (response.meta) {
+            this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: response.meta.total };
+            this.structureCount = response.meta.total;
+          } else {
+            this.structureCount = this.feeStructures.length;
+            this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: this.structureCount };
+          }
+        } else {
+          this.feeStructures = [];
+          this.structureCount = 0;
+          this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: 0 };
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.feeStructures = [];
+        this.structureCount = 0;
+        this.structuresTableConfig = { ...this.structuresTableConfig, totalCount: 0 };
+        this.loading = false;
+      }
+    });
+  }
+
+  // Load today's payments dashboard
+  loadTodayPayments(filters: Record<string, any> = {}): void {
+    this.loading = true;
+    
+    // Build filters with date range
+    const dateFilters: Record<string, any> = {
+      period: this.selectedPeriod.value || 'today'
+    };
+
+    // Apply academic year from top toolbar to keep dashboard (paid + pending) consistent
+    const selectedAcademicYear = this.academicYearContext.selectedYear;
+    if (selectedAcademicYear?.name) {
+      dateFilters['academic_year'] = selectedAcademicYear.name;
+    }
+    
+    // Add custom date range if selected
+    if (this.selectedPeriod.value === 'custom') {
+      if (this.customFromDate.value) {
+        dateFilters['from_date'] = this.formatDate(this.customFromDate.value);
+      }
+      if (this.customToDate.value) {
+        dateFilters['to_date'] = this.formatDate(this.customToDate.value);
+      }
+    }
+    
+    // Merge with existing filters
+    this.todayPaymentFilters = { ...this.todayPaymentFilters, ...filters, ...dateFilters };
+    
+    this.feeService.getTodayPayments(this.todayPaymentFilters).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          this.todayPaymentsDashboard = response.data;
+          this.todayPaymentCount = response.data.summary?.total_count || 0;
+        } else {
+          this.todayPaymentsDashboard = null;
+          this.todayPaymentCount = 0;
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.todayPaymentsDashboard = null;
+        this.todayPaymentCount = 0;
+        this.loading = false;
+      }
+    });
+  }
+
+  onBranchFilterChange(): void {
+    const filters: Record<string, any> = {};
+    if (this.selectedBranch) {
+      filters['branch_id'] = this.selectedBranch;
+    }
+    this.loadTodayPayments(filters);
+  }
+
+  // Load fee payments
+  loadFeePayments(filters: Record<string, any> = {}): void {
+    this.loading = true;
+    this.paymentFilters = { ...this.paymentFilters, ...filters };
+    // Apply academic year from toolbar (context) so list is filtered by selected year
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.paymentFilters, academic_year_id: academicYearId }
+      : this.paymentFilters;
+
+    this.feeService.getFeePayments(requestFilters).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+            // Transform data to add student_name, fee_type_name, amount_formatted, branch_name
+          this.feePayments = (response.data || []).map((payment: any) => {
+            const studentName = payment.student 
+              ? `${payment.student.first_name || ''} ${payment.student.last_name || ''}`.trim()
+              : 'N/A';
+            const feeTypeName = payment.fee_structure?.fee_type || 'N/A';
+            const branchName = payment.branch_name ?? payment.fee_structure?.branch?.name ?? null;
+            const amountFormatted = `₹${payment.amount_paid?.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }) || '0.00'}`;
+            const dueFormatted = `₹${(Number(payment.remaining_amount) || 0).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}`;
+            return {
+              ...payment,
+              student_name: studentName,
+              fee_type_name: feeTypeName,
+              branch_name: branchName,
+              amount_formatted: amountFormatted,
+              due_formatted: dueFormatted,
+              // fee_status comes from the API (derived from the fee's settlement)
+              fee_status: payment.fee_status ?? payment.payment_status
+            };
+          });
+          
+          if (response.meta) {
+            this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: response.meta.total };
+            this.paymentCount = response.meta.total;
+          } else {
+            this.paymentCount = this.feePayments.length;
+            this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: this.paymentCount };
+          }
+        } else {
+          this.feePayments = [];
+          this.paymentCount = 0;
+          this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: 0 };
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.feePayments = [];
+        this.paymentCount = 0;
+        this.paymentsTableConfig = { ...this.paymentsTableConfig, totalCount: 0 };
+        this.loading = false;
+      }
+    });
+  }
+
+  // Load fee types
+  loadFeeTypes(filters: Record<string, any> = {}): void {
+    this.loading = true;
+    this.feeTypeFilters = { ...this.feeTypeFilters, ...filters };
+    
+    // Apply academic year from top toolbar so the list is scoped by selection
+    const academicYearId = this.academicYearContext.selectedYearId;
+    const requestFilters = academicYearId != null
+      ? { ...this.feeTypeFilters, academic_year_id: academicYearId }
+      : this.feeTypeFilters;
+
+    this.feeTypeService.getFeeTypes(requestFilters).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          const raw = response.data || [];
+          this.feeTypes = raw.map((item: any) => ({
+            ...item,
+            is_mandatory: this.toBoolean(item.is_mandatory),
+            is_refundable: this.toBoolean(item.is_refundable),
+            is_active: this.toBoolean(item.is_active),
+            is_mandatory_display: this.toBoolean(item.is_mandatory) ? 'Yes' : 'No',
+            is_refundable_display: this.toBoolean(item.is_refundable) ? 'Yes' : 'No',
+            is_active_display: this.toBoolean(item.is_active) ? 'Active' : 'Deactive'
+            ,
+            // Flatten relationship for the table column
+            academic_year_name: item?.academicYear?.name ?? item?.academic_year?.name ?? null
+          }));
+          
+          if (response.meta) {
+            this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: response.meta.total };
+            this.feeTypeCount = response.meta.total;
+          } else {
+            this.feeTypeCount = this.feeTypes.length;
+            this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: this.feeTypeCount };
+          }
+        } else {
+          this.feeTypes = [];
+          this.feeTypeCount = 0;
+          this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: 0 };
+        }
+        this.loading = false;
+      },
+      error: (error: any) => {
+        this.errorHandler.showError(error);
+        this.feeTypes = [];
+        this.feeTypeCount = 0;
+        this.feeTypesTableConfig = { ...this.feeTypesTableConfig, totalCount: 0 };
+        this.loading = false;
+      }
+    });
+  }
+  
+  getStructureColumns(): TableColumn[] {
+    return [
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      { key: 'branch.name', header: 'Branch', sortable: true },
+      { key: 'grade_label', header: 'Grade', sortable: true, searchable: true, width: '120px' },
+      { key: 'fee_type', header: 'Fee Type', sortable: true, searchable: true, width: '150px' },
+      { key: 'amount_formatted', header: 'Amount', sortable: true, width: '120px', align: 'right' },
+      { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
+      { key: 'due_date', header: 'Due Date', type: 'date', sortable: true, width: '120px' },
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        width: '100px',
+        align: 'center',
+        cellClass: (row: any) => row?.is_active_display === 'Deactive' ? 'badge-danger' : 'badge-success'
+      }
+    ];
+  }
+  
+  getPaymentColumns(): TableColumn[] {
+    return [
+      { key: 'branch_name', header: 'Branch', sortable: true, width: '140px' },
+      { key: 'receipt_number', header: 'Receipt No.', sortable: true, searchable: true, width: '140px' },
+      { key: 'payment_date', header: 'Payment Date', type: 'date', sortable: true, width: '130px' },
+      { key: 'student_name', header: 'Student', sortable: true, searchable: true, width: '200px' },
+      { key: 'fee_type_name', header: 'Fee Type', sortable: true, width: '150px' },
+      { key: 'amount_formatted', header: 'Amount', sortable: true, width: '120px', align: 'right' },
+      { key: 'due_formatted', header: 'Due', width: '120px', align: 'right' },
+      { key: 'payment_method', header: 'Method', sortable: true, width: '100px' },
+      // fee_status reflects the whole fee's settlement (Partial when a balance remains),
+      // so it can't contradict the Due column the way the per-transaction payment_status did.
+      { key: 'fee_status', header: 'Status', type: 'badge', width: '120px', align: 'center' }
+    ];
+  }
+
+  getFeeTypeColumns(): TableColumn[] {
+    return [
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      { key: 'name', header: 'Fee Type Name', sortable: true, searchable: true },
+      { key: 'code', header: 'Code', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true },
+      { key: 'academic_year_name', header: 'Academic Year', sortable: false, width: '160px' },
+      { key: 'is_mandatory_display', header: 'Mandatory', type: 'badge', width: '110px', align: 'center' },
+      { key: 'is_refundable_display', header: 'Refundable', type: 'badge', width: '110px', align: 'center' },
+      {
+        key: 'is_active_display',
+        header: 'Status',
+        type: 'badge',
+        width: '100px',
+        align: 'center',
+        cellClass: (row: any) => row?.is_active_display === 'Deactive' ? 'badge-danger' : 'badge-success'
+      }
+    ];
+  }
+
+  /**
+   * Load branches dynamically
+   */
   loadBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           this.branches = response.data;
-          this.updateBranchFilters();
+          
+          const branchOptions = this.branches.map((b: any) => ({
+            value: b.id.toString(),
+            label: b.name
+          }));
+          
+          // Update structure search config with branches
+          const structureBranchField = this.structuresSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (structureBranchField) {
+            structureBranchField.options = branchOptions;
+          }
+          
+          // Update today's payments search config with branches
+          const todayBranchField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (todayBranchField) {
+            todayBranchField.options = branchOptions;
+          }
+          
+          // Update payment search config with branches
+          const paymentBranchField = this.paymentsSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (paymentBranchField) {
+            paymentBranchField.options = branchOptions;
+          }
+          
+          // Update fee type search config with branches
+          const feeTypeBranchField = this.feeTypesSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (feeTypeBranchField) {
+            feeTypeBranchField.options = branchOptions;
+          }
         }
       },
       error: (error: any) => {
-        console.error('Error loading branches:', error);
       }
     });
   }
-  
-  updateBranchFilters(): void {
-    const branchOptions = this.branches.map((b: any) => ({
-      value: b.id.toString(),
-      label: b.name
+
+  /**
+   * Load grades dynamically
+   */
+  loadGrades(): void {
+    this.gradeService.getGrades().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.grades = response.data;
+          const gradeOptions = response.data.map((grade: any) => ({
+            value: grade.value,
+            label: grade.label
+          }));
+          // Structure grade is loaded per-branch via onStructuresSearchFieldChanged
+          // Update today's payments search config only
+          const todayGradeField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'grade');
+          if (todayGradeField) {
+            todayGradeField.options = gradeOptions;
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  /**
+   * Load sections dynamically (for filtering)
+   */
+  loadSections(): void {
+    // Sections are typically loaded based on selected grade
+    // For now, we'll create a method that can be called when grade changes
+    // Common sections: A, B, C, D, etc.
+    this.sections = [
+      { value: 'A', label: 'Section A' },
+      { value: 'B', label: 'Section B' },
+      { value: 'C', label: 'Section C' },
+      { value: 'D', label: 'Section D' },
+      { value: 'E', label: 'Section E' }
+    ];
+    
+    const sectionOptions = this.sections.map(section => ({
+      value: section.value,
+      label: section.label
     }));
     
-    // Update structures search config
-    const structureBranchField = this.structuresSearchConfig.fields.find(f => f.key === 'branch_id');
-    if (structureBranchField) {
-      structureBranchField.options = branchOptions;
-    }
-    
-    // Update payments search config
-    const paymentBranchField = this.paymentsSearchConfig.fields.find(f => f.key === 'branch_id');
-    if (paymentBranchField) {
-      paymentBranchField.options = branchOptions;
+    // Update today's payments search config
+    const todaySectionField = this.todayPaymentsSearchConfig.fields.find(f => f.key === 'section');
+    if (todaySectionField) {
+      todaySectionField.options = sectionOptions;
     }
   }
-  
-  initializeStructuresTable(): void {
-    this.structuresTableConfig = {
-      columns: [
-        { key: 'id', header: 'ID', sortable: true, width: '120px' },
-        { key: 'grade', header: 'Grade', sortable: true, searchable: true, width: '100px' },
-        { key: 'fee_type', header: 'Fee Type', sortable: true, searchable: true, width: '130px' },
-        { key: 'amount', header: 'Amount', sortable: true, width: '120px', align: 'right' },
-        { key: 'academic_year', header: 'Academic Year', sortable: true, width: '130px' },
-        { key: 'due_date', header: 'Due Date', type: 'date', sortable: true, width: '120px' },
-        { key: 'is_active', header: 'Status', type: 'badge', width: '100px', align: 'center' }
-      ],
-      actions: [
-        { icon: 'visibility', label: 'View', action: (row) => this.viewStructure(row) },
-        { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editStructure(row) },
-        { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteStructure(row) }
-      ],
-      selectable: true,
-      pagination: true,
-      searchable: true,
-      advancedSearch: true,
-      exportable: true,
-      responsive: true,
-      serverSide: false,
-      totalCount: 0,
-      pageSizeOptions: [10, 25, 50, 100],
-      defaultPageSize: 25
-    };
-    
-    this.structuresSearchConfig = {
-      title: 'Advanced Fee Structure Search',
-      width: '500px',
-      showReset: true,
-      showSaveSearch: false,
-      fields: [
-        {
-          key: 'branch_id',
-          label: 'Branch',
-          type: 'select',
-          icon: 'business',
-          options: [],
-          group: 'Basic Filters'
-        },
-        {
-          key: 'grade',
-          label: 'Grade',
-          type: 'select',
-          icon: 'school',
-          options: Array.from({length: 12}, (_, i) => ({
-            value: String(i + 1),
-            label: `Grade ${i + 1}`
-          })),
-          group: 'Basic Filters'
-        },
-        {
-          key: 'fee_type',
-          label: 'Fee Type',
-          type: 'select',
-          icon: 'category',
-          options: [
-            { value: 'Tuition', label: 'Tuition' },
-            { value: 'Library', label: 'Library' },
-            { value: 'Laboratory', label: 'Laboratory' },
-            { value: 'Sports', label: 'Sports' },
-            { value: 'Transport', label: 'Transport' },
-            { value: 'Exam', label: 'Exam' },
-            { value: 'Other', label: 'Other' }
-          ],
-          group: 'Basic Filters'
-        },
-        {
-          key: 'academic_year',
-          label: 'Academic Year',
-          type: 'text',
-          icon: 'event',
-          placeholder: '2024-2025',
-          group: 'Basic Filters'
-        }
-      ]
-    };
-  }
-  
-  initializePaymentsTable(): void {
-    this.paymentsTableConfig = {
-      columns: [
-        { key: 'receipt_number', header: 'Receipt No.', sortable: true, searchable: true, width: '140px' },
-        { key: 'payment_date', header: 'Payment Date', type: 'date', sortable: true, width: '130px' },
-        { key: 'student_name', header: 'Student', sortable: true, searchable: true },
-        { key: 'fee_type', header: 'Fee Type', sortable: true, width: '120px' },
-        { key: 'amount_paid', header: 'Amount', sortable: true, width: '110px', align: 'right' },
-        { key: 'payment_method', header: 'Method', sortable: true, width: '100px' },
-        { key: 'payment_status', header: 'Status', type: 'badge', width: '120px', align: 'center' }
-      ],
-      actions: [
-        { icon: 'visibility', label: 'View Receipt', action: (row) => this.viewPayment(row) },
-        { icon: 'print', label: 'Print', color: 'primary', action: (row) => this.printReceipt(row) }
-      ],
-      selectable: true,
-      pagination: true,
-      searchable: true,
-      advancedSearch: true,
-      exportable: true,
-      responsive: true,
-      serverSide: false,
-      totalCount: 0,
-      pageSizeOptions: [10, 25, 50, 100],
-      defaultPageSize: 25
-    };
-    
-    this.paymentsSearchConfig = {
-      title: 'Advanced Payment Search',
-      width: '500px',
-      showReset: true,
-      showSaveSearch: false,
-      fields: [
-        {
-          key: 'payment_status',
-          label: 'Payment Status',
-          type: 'select',
-          icon: 'info',
-          options: [
-            { value: 'Pending', label: 'Pending' },
-            { value: 'Completed', label: 'Completed' },
-            { value: 'Failed', label: 'Failed' },
-            { value: 'Refunded', label: 'Refunded' }
-          ],
-          group: 'Status Filters'
-        },
-        {
-          key: 'payment_method',
-          label: 'Payment Method',
-          type: 'select',
-          icon: 'payment',
-          options: [
-            { value: 'Cash', label: 'Cash' },
-            { value: 'Card', label: 'Card' },
-            { value: 'Online', label: 'Online' },
-            { value: 'Cheque', label: 'Cheque' },
-            { value: 'Other', label: 'Other' }
-          ],
-          group: 'Payment Filters'
-        },
-        {
-          key: 'from_date',
-          label: 'From Date',
-          type: 'date',
-          icon: 'event',
-          group: 'Date Range'
-        },
-        {
-          key: 'to_date',
-          label: 'To Date',
-          type: 'date',
-          icon: 'event',
-          group: 'Date Range'
-        }
-      ]
-    };
-  }
-  
-  loadFeeStructures(filters?: any): void {
-    this.loading = true;
-    
-    this.feeService.getFeeStructures(filters).subscribe({
-      next: (response) => {
-        console.log('Fee Structures Response:', response);
-        if (response.success && response.data) {
-          this.feeStructures = response.data;
-          this.structuresTableConfig.totalCount = response.data.length;
-          console.log('Loaded fee structures:', this.feeStructures.length);
-        } else {
-          this.feeStructures = [];
-          this.structuresTableConfig.totalCount = 0;
-        }
-        this.loading = false;
+
+  // ---- Grade & Section — Student Fee Details ----
+  onSfBranchChange(): void {
+    this.sfGrade = null;
+    this.sfSection = null;
+    this.sfGrades = [];
+    this.sfSections = [];
+    this.studentFeeRows = [];
+    this.sfSummary = null;
+    if (!this.sfBranch) { return; }
+    this.gradeService.getGrades({ branch_id: this.sfBranch }).subscribe({
+      next: (res: any) => {
+        this.sfGrades = (res.success && res.data) ? res.data.filter((g: any) => g.is_active) : [];
       },
-      error: (error) => {
-        console.error('Error loading fee structures:', error);
-        this.errorHandler.showError(error);
-        this.loading = false;
-        this.feeStructures = [];
+      error: () => { this.sfGrades = []; }
+    });
+  }
+
+  onSfGradeChange(): void {
+    this.sfSection = null;
+    this.sfSections = [];
+    this.studentFeeRows = [];
+    this.sfSummary = null;
+    if (!this.sfBranch || !this.sfGrade) { return; }
+    this.sectionService.getSections({ branch_id: this.sfBranch, grade_level: this.sfGrade, per_page: 1000, is_active: true }).subscribe({
+      next: (res: any) => { this.sfSections = (res.success && res.data) ? res.data : []; },
+      error: () => { this.sfSections = []; }
+    });
+  }
+
+  onSfSectionChange(): void {
+    this.loadStudentFeesByClass();
+  }
+
+  loadStudentFeesByClass(): void {
+    if (!this.sfBranch || !this.sfGrade || !this.sfSection) { return; }
+    this.sfLoading = true;
+    const params: Record<string, any> = {
+      branch_id: this.sfBranch,
+      grade: this.sfGrade,
+      section: this.sfSection
+    };
+    const ayId = this.academicYearContext.selectedYearId;
+    if (ayId != null) { params['academic_year_id'] = ayId; }
+
+    this.feeService.getStudentFeesByClass(params).subscribe({
+      next: (res: any) => {
+        this.studentFeeRows = (res.success && res.data) ? res.data : [];
+        this.sfSummary = res.summary ?? null;
+        this.sfLoading = false;
+      },
+      error: (err) => {
+        this.errorHandler.showError(err);
+        this.studentFeeRows = [];
+        this.sfSummary = null;
+        this.sfLoading = false;
       }
     });
   }
-  
-  loadFeePayments(filters?: any): void {
-    this.loading = true;
-    
-    this.feeService.getFeePayments(filters).subscribe({
-      next: (response) => {
-        console.log('Fee Payments Response:', response);
+
+  getSfStatusClass(status: string): string {
+    if (status === 'Paid') { return 'status-success'; }
+    if (status === 'Partial') { return 'status-warning'; }
+    return 'status-default';
+  }
+
+  getSfGradeLabel(value: string | null): string {
+    if (value == null) { return ''; }
+    const g = this.sfGrades.find((x: any) => String(x.value) === String(value));
+    return g?.label ?? `Grade ${value}`;
+  }
+
+  /**
+   * Load fee types for advanced search filter (optionally by branch)
+   */
+  loadFeeTypesForFilter(branchId?: number | string | null): void {
+    const params: Record<string, unknown> = { is_active: true };
+    if (branchId) {
+      params['branch_id'] = branchId;
+    }
+    this.feeTypeService.getFeeTypes(params).subscribe({
+      next: (response: any) => {
         if (response.success && response.data) {
-          this.feePayments = response.data;
-          this.paymentsTableConfig.totalCount = response.data.length;
-          console.log('Loaded fee payments:', this.feePayments.length);
-        } else {
-          this.feePayments = [];
-          this.paymentsTableConfig.totalCount = 0;
+          const feeTypeOptions = response.data.map((feeType: any) => ({
+            value: feeType.name,
+            label: feeType.name
+          }));
+          
+          // Update structure search config with fee types
+          const structureFeeTypeField = this.structuresSearchConfig.fields.find(f => f.key === 'fee_type');
+          if (structureFeeTypeField) {
+            structureFeeTypeField.options = feeTypeOptions;
+          }
         }
-        this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading fee payments:', error);
-        this.errorHandler.showError(error);
-        this.loading = false;
-        this.feePayments = [];
       }
     });
   }
+
+  /**
+   * Load academic years for advanced search filter (Fee Structures)
+   */
+  loadAcademicYearsForFilter(): void {
+    this.academicYearService.getList({ include_past: 1, per_page: 100 }).subscribe({
+      next: (response: any) => {
+        if (response.success && response.data) {
+          const academicYearOptions = response.data.map((ay: any) => ({
+            value: ay.id.toString(),
+            label: ay.name
+          }));
+          
+          const structureAcademicYearField = this.structuresSearchConfig.fields.find(f => f.key === 'academic_year_id');
+          if (structureAcademicYearField) {
+            structureAcademicYearField.options = academicYearOptions;
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  /**
+   * When branch changes in structures advanced search, load grades and fee types for that branch
+   */
+  onStructuresSearchFieldChanged(event: { field: string; value: any }): void {
+    if (event.field === 'branch_id' && event.value) {
+      const branchId = Number(event.value);
+      // Load grades for selected branch
+      this.gradeService.getGrades({ branch_id: branchId }).subscribe({
+        next: (response: any) => {
+          if (response.success && response.data) {
+            const gradeOptions = response.data.map((g: any) => ({
+              value: g.value,
+              label: g.label
+            }));
+            const structureGradeField = this.structuresSearchConfig.fields.find(f => f.key === 'grade');
+            if (structureGradeField) {
+              structureGradeField.options = gradeOptions;
+            }
+          }
+        },
+        error: () => {}
+      });
+      // Load fee types for selected branch
+      this.loadFeeTypesForFilter(branchId);
+    }
+  }
   
-  onTabChange(index: number): void {
-    this.selectedTab = index;
-    if (index === 0) {
-      this.loadFeeStructures();
-    } else {
-      this.loadFeePayments();
+  // Structure tab actions.
+  // NOTE: row actions (View/Edit/Delete) already run via their inline `action:` callbacks
+  // in the table config — the data-table invokes action.action(row) AND emits actionClicked,
+  // so handling them here too would fire each action twice. Only the toolbar 'add' button
+  // (which has no inline callback) needs handling here.
+  onStructureAction(event: { action: string; row: any }): void {
+    if (event.action === 'add') {
+      this.addFeeStructure();
+    }
+  }
+
+  // Payment tab actions — see note on onStructureAction (avoids double dispatch / double download).
+  onPaymentAction(event: { action: string; row: any }): void {
+    if (event.action === 'add') {
+      this.recordPayment();
     }
   }
   
   // Structure Actions
   addFeeStructure(): void {
-    this.router.navigate(['/fees/structure/create']);
+    this.router.navigate(['/fees/structure/create'], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   viewStructure(structure: FeeStructure): void {
-    this.router.navigate(['/fees/structure/view', structure.id]);
+    this.router.navigate(['/fees/structure/view', structure.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   editStructure(structure: FeeStructure): void {
-    this.router.navigate(['/fees/structure/edit', structure.id]);
+    this.router.navigate(['/fees/structure/edit', structure.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   deleteStructure(structure: FeeStructure): void {
@@ -332,38 +1004,132 @@ export class FeeListComponent implements OnInit {
   
   // Payment Actions
   recordPayment(): void {
-    this.router.navigate(['/fees/payment/create']);
+    this.router.navigate(['/fees/payment/create'], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   viewPayment(payment: FeePayment): void {
-    this.router.navigate(['/fees/payment/view', payment.id]);
+    this.router.navigate(['/fees/payment/view', payment.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
   }
   
   printReceipt(payment: FeePayment): void {
-    this.errorHandler.showInfo('Opening receipt for printing...');
-    // Implement print logic
+    if (!payment?.id) {
+      this.errorHandler.showWarning('Payment information is not available.');
+      return;
+    }
+    this.errorHandler.showInfo('Preparing receipt PDF...');
+    this.feeService.downloadFeePaymentReceipt(payment.id).subscribe({
+      next: (blob: Blob) => {
+        const fileName = (payment.receipt_number ? `fee-receipt-${payment.receipt_number}` : `fee-receipt-${payment.id}`) + '.pdf';
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.errorHandler.showSuccess('Receipt downloaded.');
+      },
+      error: (err) => this.errorHandler.showError(err),
+    });
   }
-  
-  onAction(event: { action: string; row: any }): void {
-    if (this.selectedTab === 0) {
-      // Fee Structures actions
-      const structure = event.row as FeeStructure;
-      console.log('Structure action:', event.action, structure);
-      // Actions are already handled by individual methods
+
+  /**
+   * Simplified student receipt (client-side PDF): student name, grade, section,
+   * amount paid (total for this fee) and due amount. Fetches payment details so
+   * grade/section and the full paid/due totals are accurate.
+   */
+  studentReceipt(payment: FeePayment): void {
+    if (!payment?.id) {
+      this.errorHandler.showWarning('Payment information is not available.');
+      return;
+    }
+    this.errorHandler.showInfo('Preparing student receipt...');
+    this.feeService.getFeePaymentById(payment.id).subscribe({
+      next: (response: any) => {
+        const d = response?.data ?? payment;
+        const num = (v: any) => Number(v) || 0;
+
+        const studentName = d.student
+          ? `${d.student.first_name ?? ''} ${d.student.last_name ?? ''}`.trim()
+          : 'Student';
+        // Laravel serializes the relation as snake_case `fee_structure`.
+        const structure = d.fee_structure ?? d.feeStructure ?? {};
+        const grade = d.student_grade_label
+          || (structure.grade ? `Grade ${structure.grade}` : '-');
+        const section = d.student_section || '-';
+
+        const txns: any[] = Array.isArray(d.past_transactions) ? d.past_transactions : [];
+        const totalFee = num(structure.amount);
+        const amountPaid = txns.length
+          ? txns.reduce((s, t) => s + num(t.amount_paid), 0)
+          : num(d.amount_paid);
+        const totalDiscount = txns.reduce((s, t) => s + num(t.discount_amount), 0);
+        const dueAmount = Math.max(0, totalFee - amountPaid - totalDiscount);
+        const money = (v: number) => `INR ${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        const doc = new jsPDF();
+        const pageW = 210;
+
+        // Header
+        doc.setFillColor(20, 184, 166);
+        doc.rect(0, 0, pageW, 26, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Student Fee Receipt', 14, 16);
+
+        // Rows
+        const rows: [string, string][] = [
+          ['Student Name', studentName],
+          ['Grade', String(grade)],
+          ['Section', String(section)],
+          ['Amount Paid', money(amountPaid)],
+          ['Due Amount', money(dueAmount)],
+        ];
+
+        let y = 44;
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(12);
+        let alt = false;
+        for (const [label, value] of rows) {
+          if (alt) { doc.setFillColor(240, 253, 250); doc.rect(14, y - 6, pageW - 28, 11, 'F'); }
+          doc.setFont('helvetica', 'bold');
+          doc.text(label, 18, y + 1);
+          doc.setFont('helvetica', 'normal');
+          doc.text(value, 90, y + 1);
+          y += 11;
+          alt = !alt;
+        }
+
+        // Outer border around the detail block
+        doc.setDrawColor(153, 246, 228);
+        doc.rect(14, 38, pageW - 28, y - 38);
+
+        const safe = studentName.replace(/[^a-zA-Z0-9]+/g, '-') || 'student';
+        doc.save(`student-receipt-${safe}.pdf`);
+        this.errorHandler.showSuccess('Student receipt downloaded.');
+      },
+      error: (err) => this.errorHandler.showError(err),
+    });
+  }
+
+  onRowClick(row: FeeStructure | FeePayment | FeeType): void {
+    if (this.activeTab === 'today') {
+      this.viewPayment(row as FeePayment);
+    } else if (this.activeTab === 'structures') {
+      this.viewStructure(row as FeeStructure);
+    } else if (this.activeTab === 'payments') {
+      this.viewPayment(row as FeePayment);
     } else {
-      // Fee Payments actions
-      const payment = event.row as FeePayment;
-      console.log('Payment action:', event.action, payment);
-      // Actions are already handled by individual methods
+      this.viewFeeType(row as FeeType);
     }
   }
   
-  onStructuresSearch(event: SearchEvent): void {
-    this.loadFeeStructures(event.filters);
-  }
-  
-  onPaymentsSearch(event: SearchEvent): void {
-    this.loadFeePayments(event.filters);
+  onSelectionChange(selected: (FeeStructure | FeePayment | FeeType)[]): void {
+    this.selectedRecords = selected;
   }
   
   onStructureExport(format: string): void {
@@ -373,5 +1139,190 @@ export class FeeListComponent implements OnInit {
   onPaymentExport(format: string): void {
     this.errorHandler.showInfo(`Exporting fee payments as ${format.toUpperCase()}...`);
   }
-}
+  
+  onSearchChange(query: string): void {
+    // Handle basic search - load data for active tab
+    if (this.activeTab === 'structures') {
+      this.loadFeeStructures({ search: query });
+    } else if (this.activeTab === 'payments') {
+      this.loadFeePayments({ search: query });
+    } else {
+      this.loadFeeTypes({ search: query });
+    }
+  }
+  
+  onStructuresSearch(event: SearchEvent): void {
+    
+    const filters: Record<string, any> = {
+      ...event.filters,
+      search: event.query,
+      page: 1
+    };
+    
+    this.loadFeeStructures(filters);
+  }
+  
+  onPaymentsSearch(event: SearchEvent): void {
+    this.paymentFilters = {
+      ...(event.filters || {}),
+      search: event.query || undefined,
+      page: 1
+    };
+    this.loadFeePayments();
+  }
+  
+  onFeeTypesSearch(event: SearchEvent): void {
+    
+    const filters: Record<string, any> = {
+      ...event.filters,
+      search: event.query,
+      page: 1
+    };
+    
+    this.loadFeeTypes(filters);
+  }
+  
+  onSearchReset(): void {
+    // Load fresh data for active tab
+    if (this.activeTab === 'today') {
+      this.todayPaymentFilters = {};
+      this.selectedPeriod.setValue('today');
+      this.customFromDate.setValue(null);
+      this.customToDate.setValue(null);
+      this.loadTodayPayments();
+    } else if (this.activeTab === 'structures') {
+      this.structureFilters = {};
+      this.loadFeeStructures({ page: 1 });
+    } else if (this.activeTab === 'payments') {
+      this.paymentFilters = {};
+      this.loadFeePayments();
+    } else {
+      this.feeTypeFilters = {};
+      this.loadFeeTypes();
+    }
+  }
+  
+  /**
+   * Handle custom date range change
+   */
+  onCustomRangeChange(): void {
+    if (this.customFromDate.value && this.customToDate.value) {
+      this.loadTodayPayments();
+    }
+  }
+  
+  /**
+   * Format date to YYYY-MM-DD format
+   */
+  formatDate(date: Date | null): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = ('0' + (d.getMonth() + 1)).slice(-2);
+    const day = ('0' + d.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+  
+  // Pagination handlers
+  onStructurePaginationChange(event: PaginationEvent): void {
+    this.loadFeeStructures({
+      page: event.page + 1,
+      per_page: event.pageSize
+    });
+  }
+  
+  onPaymentPaginationChange(event: PaginationEvent): void {
+    this.loadFeePayments({
+      page: event.page + 1,
+      per_page: event.pageSize
+    });
+  }
+  
+  onFeeTypePaginationChange(event: PaginationEvent): void {
+    this.loadFeeTypes({
+      page: event.page + 1,
+      per_page: event.pageSize
+    });
+  }
+  
+  // Sort handlers
+  onStructureSortChange(event: SortEvent): void {
+    this.loadFeeStructures({
+      sort_by: event.field,
+      sort_direction: event.direction
+    });
+  }
+  
+  onPaymentSortChange(event: SortEvent): void {
+    this.loadFeePayments({
+      sort_by: event.field,
+      sort_direction: event.direction
+    });
+  }
+  
+  onFeeTypeSortChange(event: SortEvent): void {
+    this.loadFeeTypes({
+      sort_by: event.field,
+      sort_direction: event.direction
+    });
+  }
 
+  onFeeTypeExport(format: string): void {
+    this.errorHandler.showInfo(`Exporting fee types as ${format.toUpperCase()}...`);
+  }
+
+  // Fee Type Actions
+  // Fee type tab actions — see note on onStructureAction (row actions fire via inline callbacks).
+  onFeeTypeAction(event: { action: string; row: any }): void {
+    if (event.action === 'add') {
+      this.addFeeType();
+    }
+  }
+
+  addFeeType(): void {
+    this.router.navigate(['/fees/type/create'], {
+      queryParams: { returnTab: this.activeTab }
+    });
+  }
+  
+  viewFeeType(feeType: FeeType): void {
+    this.router.navigate(['/fees/type/view', feeType.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
+  }
+  
+  editFeeType(feeType: FeeType): void {
+    this.router.navigate(['/fees/type/edit', feeType.id], {
+      queryParams: { returnTab: this.activeTab }
+    });
+  }
+  
+  deleteFeeType(feeType: FeeType): void {
+    if (confirm(`Are you sure you want to delete the fee type "${feeType.name}"? This action cannot be undone.`)) {
+      this.feeTypeService.deleteFeeType(feeType.id!).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.errorHandler.showSuccess('Fee type deleted successfully');
+            this.loadFeeTypes();
+          } else {
+            this.errorHandler.showError(response.message || 'Failed to delete fee type');
+          }
+        },
+        error: (error) => {
+          this.errorHandler.showError(error);
+        }
+      });
+    }
+  }
+
+  /** Normalize API boolean-like values: true/1/'1'/'true' => true */
+  private toBoolean(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'active';
+    }
+    return false;
+  }
+}

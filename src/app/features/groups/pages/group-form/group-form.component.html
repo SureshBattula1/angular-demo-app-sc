@@ -70,20 +70,26 @@
             </mat-form-field>
           </div>
 
-          <mat-form-field appearance="outline" class="w-100">
-            <mat-label>Academic Year</mat-label>
-            <input matInput formControlName="academic_year" placeholder="e.g., 2024-2025">
-            <mat-icon matPrefix>event</mat-icon>
-            <mat-error *ngIf="groupForm.get('academic_year')?.invalid && groupForm.get('academic_year')?.touched">
-              {{ getErrorMessage('academic_year') }}
-            </mat-error>
-          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year</mat-label>
+              <mat-select formControlName="academic_year_id" placeholder="Select academic year">
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">
+                  {{ ay.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-error *ngIf="groupForm.get('academic_year_id')?.invalid && groupForm.get('academic_year_id')?.touched">
+                {{ getErrorMessage('academic_year_id') }}
+              </mat-error>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" class="w-100">
-            <mat-label>Description</mat-label>
-            <textarea matInput formControlName="description" rows="3" placeholder="Enter group description"></textarea>
-            <mat-icon matPrefix>description</mat-icon>
-          </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="3" placeholder="Enter group description"></textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+          </div>
 
           <div class="form-row">
             <mat-checkbox formControlName="is_active" color="primary" class="active-checkbox">

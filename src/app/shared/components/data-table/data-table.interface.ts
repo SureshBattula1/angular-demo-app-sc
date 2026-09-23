@@ -6,7 +6,7 @@ export interface TableColumn {
   header: string;                 // Display header text
   sortable?: boolean;             // Enable sorting
   searchable?: boolean;           // Enable search for this column
-  type?: 'text' | 'number' | 'date' | 'badge' | 'avatar' | 'actions' | 'custom';
+  type?: 'text' | 'number' | 'date' | 'badge' | 'avatar' | 'image' | 'actions' | 'custom';
   width?: string;                 // Column width (e.g., '150px', '20%')
   align?: 'left' | 'center' | 'right';
   pipe?: string;                  // Pipe to format data (e.g., 'date', 'currency')
@@ -17,10 +17,14 @@ export interface TableColumn {
 export interface TableAction {
   icon: string;                   // Material icon name
   label: string;                  // Tooltip text
-  color?: 'primary' | 'accent' | 'warn';
-  action: (row: any) => void;     // Action callback
+  color?: 'primary' | 'accent' | 'warn' | 'info' | 'success' | 'warning';
+  action: (row: any) => void;     // Action callback 
   show?: (row: any) => boolean;   // Conditional visibility
+  permission?: string | string[];  // Required permission to show this action
+  permissionMode?: 'any' | 'all'; // How to check multiple permissions
 }
+
+export type ExportFormat = 'excel' | 'pdf' | 'csv';
 
 export interface TableConfig {
   columns: TableColumn[];
@@ -34,10 +38,17 @@ export interface TableConfig {
   advancedSearch?: boolean;       // Enable advanced search
   filterable?: boolean;           // Enable filter functionality
   exportable?: boolean;           // Enable export functionality
+  exportButtonPermission?: string | string[]; // Permission required for export button
   responsive?: boolean;           // Mobile/tablet responsive
   serverSide?: boolean;           // Enable server-side operations
   totalCount?: number;            // Total count for server-side pagination
   showAddButton?: boolean;        // Show/hide the add button (default: true)
+  addButtonPermission?: string | string[]; // Permission required for add button
+  addButtonPermissionMode?: 'any' | 'all'; // How to check multiple permissions for add button
+  /** Overrides default label "ADD " + (title||'ITEM').toUpperCase() for the primary header button */
+  primaryButtonLabel?: string;
+  /** Material icon for the primary button (default: `add`) */
+  primaryButtonIcon?: string;
 }
 
 export interface SearchCriteria {

@@ -150,9 +150,13 @@
             <div class="member-info">
               <div class="member-name">{{ member.student?.first_name }} {{ member.student?.last_name }}</div>
               <div class="member-meta">
-                Grade: {{ member.student?.grade }} {{ member.student?.section }} | Role: {{ member.role }}
+                {{ getMemberGradeSection(member) }} | Role: {{ member.role }}
               </div>
             </div>
+            <button mat-icon-button color="warn" matTooltip="Remove from group" (click)="removeMember(member)" [disabled]="removingMemberId === (member.student_id || member.student?.id)">
+              <mat-spinner *ngIf="removingMemberId === (member.student_id || member.student?.id)" diameter="24"></mat-spinner>
+              <mat-icon *ngIf="removingMemberId !== (member.student_id || member.student?.id)">person_remove</mat-icon>
+            </button>
           </div>
         </div>
       </mat-card-content>

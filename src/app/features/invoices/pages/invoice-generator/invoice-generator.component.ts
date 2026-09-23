@@ -104,11 +104,9 @@ export class InvoiceGeneratorComponent implements OnInit {
       params.to_date = this.formatDate(this.searchForm.value.to_date);
     }
 
-    console.log('Searching transactions with params:', params);
 
     this.invoiceService.searchTransactions(params).subscribe({
       next: (response) => {
-        console.log('Search response:', response);
         if (response.success) {
           this.transactions = response.data || [];
           this.selection.clear();
@@ -122,7 +120,6 @@ export class InvoiceGeneratorComponent implements OnInit {
         this.searching = false;
       },
       error: (error) => {
-        console.error('Search error:', error);
         this.errorHandler.showError('Failed to search transactions');
         this.searching = false;
       }
@@ -198,11 +195,9 @@ export class InvoiceGeneratorComponent implements OnInit {
       notes: formValue.notes
     };
 
-    console.log('Generating invoice with data:', data);
 
     this.invoiceService.generateFromTransactions(data).subscribe({
       next: (response) => {
-        console.log('Generation response:', response);
         if (response.success) {
           this.errorHandler.showSuccess(`Invoice ${response.data?.invoice_number} generated successfully!`);
           this.router.navigate(['/invoices/view', response.data?.id]);
@@ -210,7 +205,6 @@ export class InvoiceGeneratorComponent implements OnInit {
         this.generating = false;
       },
       error: (error) => {
-        console.error('Generation error:', error);
         this.errorHandler.showError('Failed to generate invoice');
         this.generating = false;
       }

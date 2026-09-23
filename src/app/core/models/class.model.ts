@@ -1,23 +1,23 @@
 export interface Class {
-  id: number;
-  branch_id: number;
+  id: string;
+  branch_id: number | string;
   grade: string;
   section: string | null;
   class_name: string;
   academic_year: string;
-  class_teacher_id: number | null;
+  class_teacher_id: number | string | null;
   capacity: number;
   current_strength: number;
   room_number: string | null;
   description: string | null;
   is_active: boolean;
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   classTeacher?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
@@ -28,11 +28,11 @@ export interface Class {
 }
 
 export interface ClassFormData {
-  branch_id: number;
+  branch_id: number | string;
   grade: string;
   section: string | null;
   academic_year: string;
-  class_teacher_id?: number | null;
+  class_teacher_id?: number | string | null;
   capacity: number;
   room_number?: string | null;
   description?: string | null;

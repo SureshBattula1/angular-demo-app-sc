@@ -1,0 +1,136 @@
+<!-- Loading State -->
+<div class="fees-loading" *ngIf="isLoading">
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading fee information...</p>
+  </div>
+</div>
+
+<!-- Fees Content -->
+<div class="fees-content" *ngIf="!isLoading">
+  <!-- Summary Cards -->
+  <div class="fees-summary">
+    <div class="summary-card total-paid">
+      <div class="card-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="card-content">
+        <h4>Total Paid</h4>
+        <p class="summary-value">{{ totalPaid | currency:'INR':'symbol':'1.0-0' }}</p>
+      </div>
+    </div>
+    
+    <div class="summary-card pending">
+      <div class="card-icon">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="card-content">
+        <h4>Pending Fees</h4>
+        <p class="summary-value">{{ pendingCount }}</p>
+      </div>
+    </div>
+    
+    <div class="summary-card overdue" *ngIf="getOverdueCount() > 0">
+      <div class="card-icon">
+        <mat-icon>warning</mat-icon>
+      </div>
+      <div class="card-content">
+        <h4>Overdue</h4>
+        <p class="summary-value">{{ getOverdueCount() }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Fees Section -->
+  <div class="fees-section" *ngIf="pendingFees.length > 0">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>pending_actions</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Pending Fees</h3>
+        <p>Fees that need to be paid</p>
+      </div>
+    </div>
+
+    <div class="fees-list">
+      <div class="fee-card" *ngFor="let fee of pendingFees" [class.overdue]="isOverdue(fee)">
+        <div class="fee-header">
+          <div class="fee-info">
+            <h4>{{ fee.fee_type || 'Fee' }}</h4>
+            <span class="fee-grade">Grade {{ fee.grade || 'N/A' }}</span>
+          </div>
+          <div class="fee-amount">
+            <span class="amount">{{ fee.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+            <span class="overdue-badge" *ngIf="isOverdue(fee)">OVERDUE</span>
+          </div>
+        </div>
+        
+        <div class="fee-details">
+          <div class="detail-item" *ngIf="fee.academic_year">
+            <mat-icon>calendar_today</mat-icon>
+            <span>Academic Year: {{ fee.academic_year }}</span>
+          </div>
+          <div class="detail-item" *ngIf="fee.due_date">
+            <mat-icon>event</mat-icon>
+            <span>Due Date: {{ fee.due_date | date:'mediumDate' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment History Section -->
+  <div class="fees-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>history</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Payment History</h3>
+        <p>Your recent fee payments</p>
+      </div>
+    </div>
+
+    <div class="payments-list" *ngIf="feePayments.length > 0">
+      <div class="payment-card" *ngFor="let payment of feePayments">
+        <div class="payment-header">
+          <div class="payment-info">
+            <div class="payment-type">
+              <mat-icon>{{ getPaymentMethodIcon(payment.payment_method) }}</mat-icon>
+              <span>{{ payment.payment_method }}</span>
+            </div>
+            <p class="payment-date">{{ payment.payment_date | date:'mediumDate' }}</p>
+          </div>
+          <div class="payment-status" [style.background-color]="getFeeStatusColor(payment.payment_status)">
+            {{ payment.payment_status }}
+          </div>
+        </div>
+        
+        <div class="payment-details">
+          <div class="detail-row">
+            <span class="detail-label">Fee Type:</span>
+            <span class="detail-value">{{ payment.fee_structure?.fee_type || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Amount Paid:</span>
+            <span class="detail-value amount">{{ payment.total_amount | currency:'INR':'symbol':'1.0-0' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="payment.transaction_id">
+            <span class="detail-label">Transaction ID:</span>
+            <span class="detail-value">{{ payment.transaction_id }}</span>
+          </div>
+          <div class="detail-row" *ngIf="payment.remarks">
+            <span class="detail-label">Remarks:</span>
+            <span class="detail-value">{{ payment.remarks }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-payments" *ngIf="feePayments.length === 0">
+      <mat-icon>account_balance</mat-icon>
+      <p>No payment history available.</p>
+    </div>
+  </div>
+</div>

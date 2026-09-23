@@ -1,0 +1,282 @@
+<div class="sms-send-page">
+  <div class="sms-send-header">
+    <div class="sms-send-header__icon" aria-hidden="true">
+      <mat-icon>{{ messageChannel === 'whatsapp' ? 'chat' : 'sms' }}</mat-icon>
+    </div>
+    <div class="sms-send-header__text">
+      <h2 class="sms-send-header__title">
+        {{ messageChannel === 'whatsapp' ? 'Send WhatsApp' : 'Send SMS' }}
+      </h2>
+      <p class="sms-send-header__lead" *ngIf="messageChannel === 'sms'">
+        Queue messages for the selected branch. Configure SMS under
+        <strong>Account Management</strong> → <strong>SMS settings</strong>.
+      </p>
+      <p class="sms-send-header__lead" *ngIf="messageChannel === 'whatsapp'">
+        Queue WhatsApp messages (Twilio) for the selected branch. Use the same templates as SMS; ensure Twilio and
+        WhatsApp sender are configured under <strong>Account Management</strong> → <strong>SMS settings</strong>.
+      </p>
+    </div>
+  </div>
+
+  <div class="sms-send-loading" *ngIf="branchesLoading">
+    <mat-spinner diameter="28"></mat-spinner>
+    <span>Loading branches…</span>
+  </div>
+
+  <div class="sms-send-empty" *ngIf="!branchesLoading && branches.length === 0">
+    <mat-icon class="sms-send-empty__icon">domain_off</mat-icon>
+    <p>No branches available for your account.</p>
+  </div>
+
+  <ng-container *ngIf="!branchesLoading && branches.length > 0 && selectedBranchId !== null">
+    <div class="sms-send-branch">
+      <mat-form-field appearance="outline" class="sms-send-field sms-send-field--branch">
+        <mat-label>Branch</mat-label>
+        <mat-icon matPrefix class="sms-send-prefix-icon">business</mat-icon>
+        <mat-select
+          [(ngModel)]="selectedBranchId"
+          name="sendBranchId"
+          (selectionChange)="onBranchChange()">
+          <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-divider class="sms-send-divider"></mat-divider>
+
+    <div class="sms-send-loading sms-send-loading--inline" *ngIf="loading">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Loading templates & recipients…</span>
+    </div>
+
+    <div class="sms-send-body" *ngIf="!loading">
+      <!-- Message -->
+      <section class="sms-send-section" aria-labelledby="sms-send-msg-heading">
+        <h3 id="sms-send-msg-heading" class="sms-send-section__title">
+          <mat-icon>edit_note</mat-icon>
+          Message
+        </h3>
+        <div class="sms-send-section__content sms-send-section__content--tight">
+          
+
+          <div class="sms-send-custom-toggle">
+            <mat-slide-toggle
+              [(ngModel)]="sendUseCustomBody"
+              name="sendUseCustomBody"
+              [disabled]="!canEdit()"
+              color="primary">
+              Custom message (no template)
+            </mat-slide-toggle>
+          </div>
+
+          <mat-form-field appearance="outline" class="sms-send-field full-width" *ngIf="!sendUseCustomBody">
+            <mat-label>Template</mat-label>
+            <mat-select [(ngModel)]="sendTemplateId" name="sendTemplateId">
+              <mat-option [value]="">— Select —</mat-option>
+              <mat-option *ngFor="let t of selectableTemplates" [value]="t.id">{{ t.name }}</mat-option>
+            </mat-select>
+            <mat-hint *ngIf="selectableTemplates.length === 0">No matching templates for this audience.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="sms-send-field full-width" *ngIf="sendUseCustomBody">
+            <mat-label>Custom message</mat-label>
+            <textarea
+              matInput
+              rows="3"
+              [(ngModel)]="sendCustomBody"
+              name="sendCustomBody"
+              [disabled]="!canEdit()"></textarea>
+            <mat-hint align="end">{{ sendCustomBody.length }} characters</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider class="sms-send-divider"></mat-divider>
+
+      <!-- Recipients detail -->
+      <section class="sms-send-section" aria-labelledby="sms-send-rcpt-heading">
+        <h3 id="sms-send-rcpt-heading" class="sms-send-section__title">
+          <mat-icon>group</mat-icon>
+          Recipients
+        </h3>
+
+        <div class="sms-rcpt-audience mb-md">
+          <span class="sms-rcpt-audience__label">Audience</span>
+          <mat-button-toggle-group
+            class="sms-rcpt-audience__toggles"
+            [(ngModel)]="audience"
+            name="smsAudience"
+            (change)="onAudienceChange()"
+            [disabled]="!canEdit()">
+            <mat-button-toggle value="global">All</mat-button-toggle>
+            <mat-button-toggle value="teachers">Teachers</mat-button-toggle>
+            <mat-button-toggle value="students">Students</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <p class="sms-rcpt-hint mt-md" *ngIf="audience === 'global'">
+          Sends to every active teacher and every student in this branch. Use a template with audience
+          <strong>Both</strong>, or a custom message.
+        </p>
+        <div class="sms-send-section__content sms-send-section__content--tight mt-md">
+          <div class="sms-rcpt-summary" role="status">
+            <mat-icon class="sms-rcpt-summary__icon">summarize</mat-icon>
+            <div class="sms-rcpt-summary__text">
+              <span class="sms-rcpt-summary__line">{{ recipientSummary.line }}</span>
+              <span class="sms-rcpt-summary__total" *ngIf="recipientSummary.total > 0"
+                >≈ {{ recipientSummary.total }} total</span
+              >
+            </div>
+          </div>
+
+          <!-- Global -->
+          <ng-container *ngIf="audience === 'global'">
+            <p class="sms-rcpt-static">Includes all staff and students for this branch.</p>
+          </ng-container>
+
+          <!-- Teachers -->
+          <ng-container *ngIf="audience === 'teachers'">
+            <mat-radio-group
+              class="sms-rcpt-radio"
+              [(ngModel)]="teacherMode"
+              name="teacherMode"
+              (ngModelChange)="onTeacherModeChange()">
+              <mat-radio-button value="all">All teachers</mat-radio-button>
+              <mat-radio-button value="selected">Choose teachers</mat-radio-button>
+            </mat-radio-group>
+
+            <div class="sms-rcpt-teacher-panel" *ngIf="teacherMode === 'selected'">
+              <mat-form-field appearance="outline" class="sms-send-field full-width sms-rcpt-search">
+                <mat-label>Search</mat-label>
+                <input matInput [(ngModel)]="teacherFilter" name="teacherFilter" />
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+              <div class="sms-rcpt-teacher-list" role="group" aria-label="Teachers">
+                <label class="sms-rcpt-teacher-row" *ngFor="let t of filteredTeachers">
+                  <mat-checkbox
+                    [checked]="isTeacherSelected(t.id)"
+                    (change)="onTeacherCheck(t.id, $event.checked)"
+                    [disabled]="!canEdit()">
+                  </mat-checkbox>
+                  <span class="sms-rcpt-teacher-row__name">{{ t.name || '—' }}</span>
+                  <span class="sms-rcpt-teacher-row__id" *ngIf="t.employee_id">{{ t.employee_id }}</span>
+                </label>
+                <p class="sms-rcpt-empty" *ngIf="filteredTeachers.length === 0">No teachers match.</p>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Students -->
+          <ng-container *ngIf="audience === 'students'">
+            <mat-radio-group
+              class="sms-rcpt-radio"
+              [(ngModel)]="studentMode"
+              name="studentMode"
+              (ngModelChange)="onStudentModeChange()">
+              <mat-radio-button value="all">All students</mat-radio-button>
+              <mat-radio-button value="filtered">Grades &amp; sections</mat-radio-button>
+              <mat-radio-button value="selected">Choose student</mat-radio-button>
+            </mat-radio-group>
+
+            <div class="sms-rcpt-student-pick" *ngIf="studentMode === 'selected'">
+              <mat-form-field appearance="outline" class="sms-send-field full-width sms-rcpt-autocomplete">
+                <mat-label>Search by name or admission</mat-label>
+                <input
+                  matInput
+                  [formControl]="studentSearchCtrl"
+                  [matAutocomplete]="studentAuto"
+                  [disabled]="!canEdit()"
+                  autocomplete="off" />
+                <mat-icon matSuffix>person_search</mat-icon>
+                <mat-autocomplete
+                  #studentAuto="matAutocomplete"
+                  [displayWith]="displayStudentOption"
+                  (optionSelected)="onStudentPicked($event)">
+                  <mat-option *ngFor="let s of studentSearchResults" [value]="s">
+                    <span class="sms-student-opt">{{ s.name }}</span>
+                    <span class="sms-student-opt-meta" *ngIf="s.grade || s.section">
+                      · Gr {{ s.grade || '—'
+                      }}<ng-container *ngIf="s.section"> · Sec {{ s.section }}</ng-container>
+                    </span>
+                  </mat-option>
+                </mat-autocomplete>
+                <mat-hint>Type at least one character</mat-hint>
+              </mat-form-field>
+
+              <div class="sms-rcpt-chips" *ngIf="selectedStudents.length > 0">
+                <span class="sms-rcpt-chips__label">Selected</span>
+                <mat-chip-listbox class="sms-rcpt-chip-list">
+                  <mat-chip *ngFor="let s of selectedStudents" (removed)="removeSelectedStudent(s.id)">
+                    {{ s.name }}
+                    <button matChipRemove type="button" [disabled]="!canEdit()">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip>
+                </mat-chip-listbox>
+              </div>
+            </div>
+
+            <div class="sms-rcpt-grades" *ngIf="studentMode === 'filtered'">
+              <mat-accordion class="sms-rcpt-acc" multi="true">
+                <mat-expansion-panel *ngFor="let g of grades" class="sms-rcpt-grade-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      {{ g.label }}
+                      <span class="sms-rcpt-grade-meta">({{ g.student_count }})</span>
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div class="sms-rcpt-grade-body">
+                    <label class="sms-rcpt-row sms-rcpt-row--strong">
+                      <mat-checkbox
+                        [checked]="isGradeWhole(g.grade)"
+                        (change)="onGradeWholeChange(g.grade, $event.checked)"
+                        [disabled]="!canEdit()">
+                      </mat-checkbox>
+                      <span>Entire grade (all sections)</span>
+                    </label>
+
+                    <ng-container *ngIf="g.sections.length > 0">
+                      <span class="sms-rcpt-sub">Or pick sections:</span>
+                      <label class="sms-rcpt-row" *ngFor="let sec of g.sections">
+                        <mat-checkbox
+                          [checked]="isSectionSelected(g.grade, sec.section)"
+                          (change)="onSectionChange(g.grade, sec.section, $event.checked)"
+                          [disabled]="!canEdit() || isGradeWhole(g.grade)">
+                        </mat-checkbox>
+                        <span>Section {{ sec.section }}</span>
+                        <span class="sms-rcpt-sec-n">({{ sec.student_count }})</span>
+                      </label>
+                    </ng-container>
+
+                    <p class="sms-rcpt-note" *ngIf="g.sections.length === 0 && g.student_count > 0">
+                      No section breakdown — use “Entire grade” to include everyone in this grade.
+                    </p>
+                  </div>
+                </mat-expansion-panel>
+              </mat-accordion>
+              <p class="sms-rcpt-empty" *ngIf="grades.length === 0">No grade data for this branch.</p>
+            </div>
+          </ng-container>
+        </div>
+      </section>
+
+
+      <div class="sms-send-actions" *ngIf="canEdit()">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="sms-send-actions__primary"
+          (click)="onQueueSendClick()"
+          [disabled]="
+            sending || previewLoading || selectedBranchId === null || !canQueueSend()
+          ">
+          <mat-icon *ngIf="!previewLoading">send</mat-icon>
+          <mat-spinner *ngIf="previewLoading" diameter="20" class="sms-send-actions__spinner"></mat-spinner>
+          {{ previewLoading ? 'Preparing…' : 'Queue send' }}
+        </button>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -1,5 +1,5 @@
 export interface FeeStructure {
-  id?: string | number;
+  id?: string;
   branch_id: string | number;
   grade: string;
   fee_type: 'Tuition' | 'Library' | 'Laboratory' | 'Sports' | 'Transport' | 'Exam' | 'Other';
@@ -23,7 +23,7 @@ export interface FeeStructure {
 }
 
 export interface FeePayment {
-  id?: string | number;
+  id?: string;
   fee_structure_id: string | number;
   student_id: string | number;
   amount_paid: number;
@@ -34,7 +34,7 @@ export interface FeePayment {
   discount_amount?: number;
   late_fee?: number;
   total_amount?: number;
-  payment_status: 'Pending' | 'Completed' | 'Failed' | 'Refunded';
+  payment_status: 'Pending' | 'Partial' | 'Completed' | 'Failed' | 'Refunded';
   remarks?: string;
   created_by?: string;
   updated_by?: string;
@@ -44,6 +44,21 @@ export interface FeePayment {
   fee_structure?: FeeStructure;
   student?: any;
   creator?: any;
+  /** Grade display name from API (e.g. "International Grade 10") */
+  student_grade_label?: string;
+  /** Section name from API (e.g. "A") */
+  student_section?: string;
+  past_transactions?: Array<{
+    id: string;
+    receipt_number?: string;
+    payment_date: string;
+    payment_method?: string;
+    amount_paid: number;
+    discount_amount?: number;
+    late_fee?: number;
+    total_amount?: number;
+    payment_status?: string;
+  }>;
 }
 
 export interface StudentFees {
@@ -58,6 +73,7 @@ export interface FeeFilters {
   grade?: string;
   fee_type?: string;
   academic_year?: string;
+  academic_year_id?: number | string;
   student_id?: string;
   payment_status?: string;
   payment_method?: string;
@@ -74,5 +90,35 @@ export interface FeeStatistics {
   paid_students: number;
   pending_students: number;
   collection_percentage: number;
+}
+
+export interface FeeType {
+  id?: string;
+  name: string;
+  code: string;
+  description?: string;
+  branch_id: string | number;
+  academic_year_id?: number | string;
+  academicYear?: { name?: string } | null;
+  academic_year?: { name?: string } | null;
+  is_mandatory: boolean;
+  is_refundable: boolean;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  // Relationships
+  branch?: any;
+  fee_structures?: FeeStructure[];
+}
+
+export interface FeeTypeFormData {
+  name: string;
+  code: string;
+  description?: string;
+  branch_id: string | number;
+  academic_year_id: number | string;
+  is_mandatory?: boolean;
+  is_refundable?: boolean;
+  is_active?: boolean;
 }
 

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SharedModule } from '../../shared.module';
@@ -44,9 +44,11 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
   @Output() searchReset = new EventEmitter<void>();
   @Output() searchSaved = new EventEmitter<{ name: string, criteria: SearchCriteria }>();
   @Output() closed = new EventEmitter<void>();
+  @Output() fieldValueChanged = new EventEmitter<{ field: string, value: any }>();
   
   searchForm!: FormGroup;
   groupedFields: { [key: string]: SearchFieldConfig[] } = {};
+  private previousConfig?: AdvancedSearchConfig;
   
   constructor(private fb: FormBuilder) {}
   
@@ -54,13 +56,30 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
     if (this.config) {
       this.initializeForm();
       this.groupFields();
+      this.previousConfig = this.config;
     }
   }
   
-  ngOnChanges(): void {
-    if (this.searchForm && this.config) {
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only reinitialize if the config has actually changed, not when isOpen changes
+    if (changes['config'] && !changes['config'].firstChange) {
+      const currentConfig = changes['config'].currentValue;
+      const previousConfig = changes['config'].previousValue;
+      
+      // Check if the config has actually changed (not just reference)
+      if (JSON.stringify(currentConfig) !== JSON.stringify(previousConfig)) {
+        if (this.searchForm && this.config) {
+          this.initializeForm();
+          this.groupFields();
+          this.previousConfig = this.config;
+        }
+      }
+    }
+    // Initialize form if it doesn't exist yet and we have config
+    else if (!this.searchForm && this.config) {
       this.initializeForm();
       this.groupFields();
+      this.previousConfig = this.config;
     }
   }
   
@@ -80,6 +99,15 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
   
   setupDependencies(): void {
     this.config.fields.forEach(field => {
+      // Emit value changes for all fields
+      const control = this.searchForm.get(field.key);
+      if (control) {
+        control.valueChanges.subscribe(value => {
+          this.fieldValueChanged.emit({ field: field.key, value });
+        });
+      }
+      
+      // Handle field dependencies
       if (field.dependsOn) {
         const dependentControl = this.searchForm.get(field.dependsOn);
         const currentControl = this.searchForm.get(field.key);
@@ -121,7 +149,15 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
       
       // Only include fields with values
       Object.keys(this.searchForm.value).forEach(key => {
-        const value = this.searchForm.value[key];
+        let value = this.searchForm.value[key];
+        
+        // Check if this is a date field
+        const field = this.config.fields.find(f => f.key === key);
+        if (field && field.type === 'date' && value instanceof Date) {
+          // Format date as YYYY-MM-DD
+          value = this.formatDate(value);
+        }
+        
         if (value !== null && value !== undefined && value !== '') {
           criteria[key] = value;
         }
@@ -137,14 +173,30 @@ export class AdvancedSearchSidebarComponent implements OnInit, OnChanges {
     }
   }
   
+  /**
+   * Format date to YYYY-MM-DD string
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
   onReset(): void {
+    this.resetForm();
+    this.searchReset.emit();
+  }
+
+  /** Reset form to defaults (for external use, e.g. Clear All Filters button). Does not emit. */
+  resetForm(): void {
+    if (!this.searchForm) return;
     this.searchForm.reset();
-    this.config.fields.forEach(field => {
-      if (field.defaultValue) {
+    this.config?.fields?.forEach(field => {
+      if (field.defaultValue !== undefined && field.defaultValue !== null) {
         this.searchForm.get(field.key)?.setValue(field.defaultValue);
       }
     });
-    this.searchReset.emit();
   }
   
   onSaveSearch(): void {

@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>Assign Student — {{ data.route.route_name }}</h2>
+
+<mat-dialog-content class="assign-dialog">
+  <div class="search-row">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search student by name</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (keyup.enter)="searchStudents()" placeholder="Type at least 2 characters">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+    <button mat-stroked-button color="primary" (click)="searchStudents()" [disabled]="searchTerm.trim().length < 2 || searching">Search</button>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width" *ngIf="students.length">
+    <mat-label>Select student</mat-label>
+    <mat-select [(ngModel)]="selectedStudentId">
+      <mat-option *ngFor="let s of students" [value]="s.userId">{{ s.label }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <p class="no-results" *ngIf="!searching && searchTerm.trim().length >= 2 && !students.length">No students found.</p>
+
+  <div class="stop-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Pickup stop</mat-label>
+      <mat-select [(ngModel)]="pickupStopId">
+        <mat-option [value]="null">— None —</mat-option>
+        <mat-option *ngFor="let s of data.stops" [value]="s.id">{{ s.stop_name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Drop stop</mat-label>
+      <mat-select [(ngModel)]="dropStopId">
+        <mat-option [value]="null">— None —</mat-option>
+        <mat-option *ngFor="let s of data.stops" [value]="s.id">{{ s.stop_name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Monthly fee (₹)</mat-label>
+    <input matInput type="number" min="0" [(ngModel)]="monthlyFee">
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="submitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="assign()" [disabled]="!selectedStudentId || submitting">
+    <mat-icon>person_add</mat-icon> Assign
+  </button>
+</mat-dialog-actions>

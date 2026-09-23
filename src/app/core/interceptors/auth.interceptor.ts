@@ -12,7 +12,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                    req.url.includes('/forgot-password') ||
                    req.url.includes('/reset-password');
 
+  // 🔥 Check if request is FormData (file upload)
+  const isFormData = req.body instanceof FormData;
+
   if (token && !skipAuth) {
+    // 🔥 For FormData, DON'T set Content-Type (let browser handle it)
+    if (isFormData) {
+      const clonedReq = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`,
+          'Accept': 'application/json'
+          // Content-Type is intentionally NOT set for FormData
+        }
+      });
+      return next(clonedReq);
+    }
+    
+    // For regular JSON requests
     const clonedReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,
@@ -24,6 +40,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   // Add default headers for non-authenticated requests
+  if (isFormData) {
+    // For FormData, only set Accept header
+    const clonedReq = req.clone({
+      setHeaders: {
+        'Accept': 'application/json'
+      }
+    });
+    return next(clonedReq);
+  }
+  
   const clonedReq = req.clone({
     setHeaders: {
       'Content-Type': 'application/json',

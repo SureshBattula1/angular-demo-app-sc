@@ -133,8 +133,18 @@
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year</mat-label>
-              <input matInput formControlName="academic_year" placeholder="e.g., 2025-2026">
+              <mat-select formControlName="academic_year_id" placeholder="Select academic year">
+                <mat-option [value]="null">All Academic Years</mat-option>
+                <mat-option *ngIf="loadingAcademicYears" disabled>
+                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                  Loading...
+                </mat-option>
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">
+                  {{ ay.name }}
+                </mat-option>
+              </mat-select>
               <mat-icon matPrefix>school</mat-icon>
+              <mat-hint>Select academic year for this holiday</mat-hint>
             </mat-form-field>
           </div>
 

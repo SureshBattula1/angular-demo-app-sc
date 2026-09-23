@@ -1,0 +1,212 @@
+@use '../../../../../styles/assets/variables' as *;
+
+/* Align with sms-templates-page (data-table list) */
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 400px;
+}
+
+.sms-tab-page {
+  display: block;
+  min-height: 400px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+:host ::ng-deep app-data-table {
+  display: block;
+  min-height: 400px;
+}
+
+.sms-tab-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  margin: 1rem 0;
+
+  &--inline {
+    margin: 0.5rem 0 1rem;
+  }
+}
+
+.sms-tab-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: var(--spacing-xl);
+  box-sizing: border-box;
+
+  &__text {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+}
+
+.sms-tab-toolbar {
+  margin-bottom: var(--spacing-md);
+}
+
+.sms-tab-branch-field {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.sms-tab-prefix-icon {
+  margin-right: 0.35rem;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.sms-tab-recipients {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--divider-color, rgba(0, 0, 0, 0.08));
+}
+
+.sms-tab-recipients-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.sms-tab-recipients-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+.sms-tab-meta {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.sms-tab-meta-sep {
+  margin: 0 0.35rem;
+}
+
+.sms-tab-filters {
+  margin-bottom: 0.75rem;
+}
+
+.sms-tab-filter-field {
+  min-width: 160px;
+  max-width: 260px;
+}
+
+.sms-tab-table-wrap {
+  overflow: auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+}
+
+.sms-tab-table {
+  width: 100%;
+
+  th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+.sms-tab-cell-error {
+  max-width: 280px;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.sms-tab-hint {
+  margin-top: var(--spacing-lg);
+  text-align: center;
+  padding: 1.5rem;
+  color: rgba(0, 0, 0, 0.45);
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.sms-tab-status {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+
+  &--sent {
+    background: rgba(46, 125, 50, 0.12);
+    color: #2e7d32;
+  }
+
+  &--failed {
+    background: rgba(198, 40, 40, 0.12);
+    color: #c62828;
+  }
+
+  &--skipped {
+    background: rgba(245, 124, 0, 0.14);
+    color: #e65100;
+  }
+
+  &--pending {
+    background: rgba(25, 118, 210, 0.12);
+    color: #1565c0;
+  }
+}
+
+.sms-tab-batch-page {
+  display: block;
+  min-height: 400px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.sms-tab-batch-page__bar {
+  margin-bottom: var(--spacing-md);
+}
+
+.sms-tab-send {
+  display: block;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.sms-tab-send-bar {
+  margin-bottom: var(--spacing-md);
+}

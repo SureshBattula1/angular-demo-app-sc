@@ -1,0 +1,65 @@
+<div class="view-container">
+  <!-- Page Header -->
+  <div class="view-action-bar">
+    <div>
+      <h1 class="page-title">
+        <mat-icon class="page-icon">cloud_upload</mat-icon>
+        Data Import
+      </h1>
+      <p class="page-subtitle">Import student and teacher data from Excel files</p>
+    </div>
+    <div class="action-buttons">
+      <button mat-raised-button color="accent" (click)="viewHistory()">
+        <mat-icon>history</mat-icon>
+        View History
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading import modules...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadModules()">
+      <mat-icon>refresh</mat-icon>
+      Retry
+    </button>
+  </div>
+
+  <!-- Import Modules Grid -->
+  <div *ngIf="!loading && !error" class="modules-grid">
+    <mat-card *ngFor="let module of importModules" class="module-card" (click)="selectModule(module)">
+      <mat-card-content>
+        <div class="card-header">
+          <div class="icon-wrapper">
+            <mat-icon [fontIcon]="module.icon"></mat-icon>
+          </div>
+          <div class="card-badge" *ngIf="module.totalRecords > 0">
+            {{ module.totalRecords }} Records
+          </div>
+        </div>
+
+        <h2 class="card-title">{{ module.name }}</h2>
+        <p class="card-description">{{ module.description }}</p>
+
+        <div class="card-stats">
+          <div class="stat-item">
+            <mat-icon>event</mat-icon>
+            <span>Last Import: {{ formatDate(module.lastImport) }}</span>
+          </div>
+        </div>
+
+        <button mat-raised-button color="primary" class="import-button" (click)="selectModule(module); $event.stopPropagation()">
+          <mat-icon>upload_file</mat-icon>
+          Import {{ module.name }}
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

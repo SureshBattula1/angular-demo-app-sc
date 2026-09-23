@@ -21,6 +21,11 @@ export const GROUPS_ROUTES: Routes = [
     path: 'view/:id',
     loadComponent: () => import('./pages/group-view/group-view.component').then(m => m.GroupViewComponent),
     canActivate: [authGuard]
+  },
+  {
+    path: ':id/members',
+    loadComponent: () => import('./pages/manage-members').then(m => m.ManageMembersComponent),
+    canActivate: [authGuard]
   }
 ];
 

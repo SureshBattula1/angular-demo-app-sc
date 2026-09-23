@@ -1,0 +1,143 @@
+<div class="role-form-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+  </div>
+
+  <!-- Form Content -->
+  <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+    <!-- Basic Information Card -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'admin_panel_settings' }}</mat-icon>
+          <div>
+            {{ isEditMode ? 'Edit Role' : 'Create Role' }}
+          </div>
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ isEditMode ? 'Update role information and permissions' : 'Define a new role with specific permissions' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Role Name</mat-label>
+              <input 
+                matInput 
+                formControlName="name" 
+                placeholder="e.g., Administrator, Teacher, Student">
+              <mat-icon matPrefix>label</mat-icon>
+              <mat-error *ngIf="roleForm.get('name')?.hasError('required')">
+                Role name is required
+              </mat-error>
+              <mat-error *ngIf="roleForm.get('name')?.hasError('minlength')">
+                Role name must be at least 3 characters
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Description</mat-label>
+              <textarea 
+                matInput 
+                formControlName="description" 
+                rows="4" 
+                placeholder="Describe the purpose and responsibilities of this role...">
+              </textarea>
+              <mat-icon matPrefix>description</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Permissions Section -->
+        <div class="form-section permissions-section">
+          <h3 class="section-title">
+            <mat-icon>lock</mat-icon>
+            Permissions
+          </h3>
+
+          <div class="permissions-info">
+            <mat-icon>info</mat-icon>
+            <span>Select the permissions this role should have. You can select all permissions for a module or choose specific ones.</span>
+          </div>
+
+          <div class="permissions-container">
+            <div *ngFor="let moduleKey of getModules()" class="permission-module">
+              <div class="module-header">
+                <div class="module-title-wrapper">
+                  <mat-icon class="module-icon">{{ getModuleIcon(moduleKey) }}</mat-icon>
+                  <div class="module-info">
+                    <h4>{{ getModuleDisplayName(moduleKey) }}</h4>
+                    <span class="module-count">
+                      {{ getSelectedCountInModule(moduleKey) }} / {{ permissionsByModule[moduleKey].length }} selected
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  mat-stroked-button
+                  (click)="selectAllInModule(moduleKey)"
+                  color="primary"
+                  class="select-all-btn">
+                  <mat-icon>{{ areAllModulePermissionsSelected(moduleKey) ? 'deselect' : 'done_all' }}</mat-icon>
+                  {{ areAllModulePermissionsSelected(moduleKey) ? 'Deselect All' : 'Select All' }}
+                </button>
+              </div>
+
+              <div class="permission-grid">
+                <mat-checkbox
+                  *ngFor="let permission of permissionsByModule[moduleKey]"
+                  [checked]="isPermissionSelected(permission.id)"
+                  (change)="togglePermission(permission.id)"
+                  color="primary"
+                  class="permission-checkbox">
+                  <div class="permission-item">
+                    <span class="permission-name">{{ permission.display_name || permission.name }}</span>
+                    <span class="permission-description" *ngIf="permission.description">
+                      {{ permission.description }}
+                    </span>
+                  </div>
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <div *ngIf="getModules().length === 0" class="no-permissions">
+              <mat-icon>info</mat-icon>
+              <p>No permissions available</p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button 
+          type="button" 
+          mat-stroked-button 
+          (click)="onCancel()" 
+          [disabled]="isSubmitting">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          mat-raised-button 
+          color="primary" 
+          [disabled]="isSubmitting || roleForm.invalid">
+          <mat-spinner diameter="20" *ngIf="isSubmitting" class="button-spinner"></mat-spinner>
+          <mat-icon *ngIf="!isSubmitting">{{ isSubmitting ? 'hourglass_empty' : 'save' }}</mat-icon>
+          {{ isSubmitting ? 'Saving...' : (isEditMode ? 'Update Role' : 'Create Role') }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

@@ -1,68 +1,432 @@
 <div class="page-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1><mat-icon>payments</mat-icon> Fee Management</h1>
-      <p class="subtitle">Manage fee structures and payments</p>
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="fee-toolbar">
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'today'"
+        (click)="switchTab('today')">
+        <mat-icon>today</mat-icon>
+        <span>Today's Payments</span>
+        <span class="tab-badge" *ngIf="todayPaymentCount > 0">{{ todayPaymentCount }}</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'structures'"
+        (click)="switchTab('structures')">
+        <mat-icon>account_balance</mat-icon>
+        <span>Fee Structures</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'payments'"
+        (click)="switchTab('payments')">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Fee Payments</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'types'"
+        (click)="switchTab('types')">
+        <mat-icon>category</mat-icon>
+        <span>Fee Types</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Today's Payments Dashboard Tab - Lazy Loaded -->
+  <div *ngIf="activeTab === 'today' && isTabLoaded('today')" class="today-payments-dashboard">
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <mat-spinner></mat-spinner>
+      <p>Loading dashboard...</p>
     </div>
-    <div class="header-actions">
-      <button mat-raised-button color="primary" *ngIf="selectedTab === 0" (click)="addFeeStructure()">
-        <mat-icon>add</mat-icon>
-        Add Fee Structure
-      </button>
-      <button mat-raised-button color="accent" *ngIf="selectedTab === 1" (click)="recordPayment()">
-        <mat-icon>payment</mat-icon>
-        Record Payment
-      </button>
+
+    <!-- Dashboard Content -->
+    <div *ngIf="!loading && todayPaymentsDashboard">
+      
+      <!-- Filters Row: Branch + Date Range -->
+      <div class="filters-container">
+        <!-- Branch Filter -->
+        <mat-form-field appearance="outline" class="branch-filter">
+          <mat-label>
+            <mat-icon>business</mat-icon>
+            Branch
+          </mat-label>
+          <mat-select [(value)]="selectedBranch" (selectionChange)="onBranchFilterChange()">
+            <mat-option value="">All Branches</mat-option>
+            <mat-option *ngFor="let branch of branches" [value]="branch.id">
+              {{ branch.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Date Range Selector -->
+        <div class="date-range-selector">
+          <mat-button-toggle-group [formControl]="selectedPeriod" class="period-toggle">
+            <mat-button-toggle value="today">
+              <mat-icon>today</mat-icon>
+              <span class="toggle-label">Today</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="week">
+              <mat-icon>view_week</mat-icon>
+              <span class="toggle-label">Week</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="month">
+              <mat-icon>calendar_month</mat-icon>
+              <span class="toggle-label">Month</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="custom">
+              <mat-icon>date_range</mat-icon>
+              <span class="toggle-label">Custom</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </div>
+      
+      <!-- Custom Date Range (shown only when custom selected) -->
+      <div class="custom-range-row" *ngIf="selectedPeriod.value === 'custom'">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [formControl]="customFromDate" 
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="toPicker" [formControl]="customToDate"
+                 (dateChange)="onCustomRangeChange()">
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-section">
+        <mat-card class="summary-card total-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>account_balance_wallet</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Amount Paid</h3>
+              <p class="summary-value">₹{{ todayPaymentsDashboard.summary.total_amount | indianCurrency }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card count-card">
+          <mat-card-content>
+            <div class="summary-icon">
+              <mat-icon>receipt_long</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Payments</h3>
+              <p class="summary-value">{{ todayPaymentsDashboard.summary.total_count | number }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card discount-card" *ngIf="todayPaymentsDashboard.summary.total_discount > 0">
+          <mat-card-content>
+            <div class="summary-icon discount-icon">
+              <mat-icon>discount</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Discount</h3>
+              <p class="summary-value discount-value">-₹{{ todayPaymentsDashboard.summary.total_discount | indianCurrency }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="summary-card latefee-card" *ngIf="todayPaymentsDashboard.summary.total_late_fee > 0">
+          <mat-card-content>
+            <div class="summary-icon latefee-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="summary-details">
+              <h3 class="summary-label">Total Late Fee</h3>
+              <p class="summary-value latefee-value">+₹{{ todayPaymentsDashboard.summary.total_late_fee | indianCurrency }}</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Breakdown Section (full-width stacked: Class/Grade then Section) -->
+      <div class="breakdown-section breakdown-section--stacked">
+        <!-- Class/Grade Wise Breakdown -->
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="grade-icon">school</mat-icon>
+              Payments by Class/Grade
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_grade">
+                <div class="category-info">
+                  <span class="category-name">{{ item.grade_label }}</span>
+                  <span class="category-meta">
+                    {{ item.student_count }} students • {{ item.payment_count }} payments
+                    <span *ngIf="item.total_discount > 0" class="discount-badge">• Discount: ₹{{ item.total_discount | indianCurrency }}</span>
+                    <span *ngIf="item.total_late_fee > 0" class="latefee-badge">• Late Fee: ₹{{ item.total_late_fee | indianCurrency }}</span>
+                  </span>
+                </div>
+                <div class="amount-group">
+                  <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
+                  <span *ngIf="item.pending_amount > 0" class="pending-amount">
+                    Pending: ₹{{ item.pending_amount | indianCurrency }}
+                  </span>
+                </div>
+              </div>
+              <div *ngIf="todayPaymentsDashboard.by_grade.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No payments by class today</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Section Wise Breakdown -->
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="section-icon">class</mat-icon>
+              Payments by Section
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_section">
+                <div class="category-info">
+                  <span class="category-name">{{ item.grade_label }} - Section {{ item.section }}</span>
+                  <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
+              </div>
+              <div *ngIf="todayPaymentsDashboard.by_section.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No payments by section today</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Additional Breakdowns -->
+      <div class="breakdown-section">
+        <!-- Branch Wise Breakdown -->
+        <mat-card class="breakdown-card" *ngIf="todayPaymentsDashboard.by_branch.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="branch-icon">business</mat-icon>
+              Payments by Branch
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_branch">
+                <div class="category-info">
+                  <span class="category-name">{{ item.branch_name }}</span>
+                  <span class="category-meta">{{ item.student_count }} students • {{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Payment Method Breakdown -->
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="method-icon">payment</mat-icon>
+              Payments by Method
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="category-list">
+              <div class="category-item" *ngFor="let item of todayPaymentsDashboard.by_payment_method">
+                <div class="category-info">
+                  <span class="category-name">{{ item.payment_method }}</span>
+                  <span class="category-meta">{{ item.payment_count }} payments</span>
+                </div>
+                <span class="category-amount">₹{{ item.total_amount | indianCurrency }}</span>
+              </div>
+              <div *ngIf="todayPaymentsDashboard.by_payment_method.length === 0" class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>No payment method data available</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Grade & Section — Student Fee Details -->
+      <div class="breakdown-section breakdown-section--stacked">
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="grade-icon">view_list</mat-icon>
+              Grade &amp; Section — Student Fee Details
+            </mat-card-title>
+          </mat-card-header>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <div class="sf-filters">
+              <mat-form-field appearance="outline" class="sf-field">
+                <mat-label>Branch</mat-label>
+                <mat-select [(value)]="sfBranch" (selectionChange)="onSfBranchChange()">
+                  <mat-option [value]="null">Select branch</mat-option>
+                  <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>business</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="sf-field" *ngIf="sfBranch">
+                <mat-label>Class / Grade</mat-label>
+                <mat-select [(value)]="sfGrade" (selectionChange)="onSfGradeChange()">
+                  <mat-option [value]="null">Select grade</mat-option>
+                  <mat-option *ngFor="let g of sfGrades" [value]="g.value">{{ g.label }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>school</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="sf-field" *ngIf="sfBranch && sfGrade">
+                <mat-label>Section</mat-label>
+                <mat-select [(value)]="sfSection" (selectionChange)="onSfSectionChange()">
+                  <mat-option [value]="null">Select section</mat-option>
+                  <mat-option *ngFor="let s of sfSections" [value]="s.name">{{ s.name }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>class</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div *ngIf="sfBranch && sfGrade && sfSection" class="sf-results">
+              <div class="sf-summary" *ngIf="sfSummary">
+                <h3>{{ getSfGradeLabel(sfGrade) }} — Section {{ sfSection }}</h3>
+                <div class="sf-summary-items">
+                  <span class="summary-item"><mat-icon>people</mat-icon> Students: {{ sfSummary.student_count }}</span>
+                  <span class="summary-item"><mat-icon>account_balance_wallet</mat-icon> Fee: ₹{{ sfSummary.total_fee | indianCurrency }}</span>
+                  <span class="summary-item paid"><mat-icon>check_circle</mat-icon> Paid: ₹{{ sfSummary.total_paid | indianCurrency }}</span>
+                  <span class="summary-item due"><mat-icon>error_outline</mat-icon> Due: ₹{{ sfSummary.total_due | indianCurrency }}</span>
+                </div>
+              </div>
+
+              <div class="sf-table" *ngIf="studentFeeRows.length > 0; else sfEmpty">
+                <table mat-table [dataSource]="studentFeeRows" class="mat-elevation-z1">
+                  <ng-container matColumnDef="student_name">
+                    <th mat-header-cell *matHeaderCellDef>Student Name</th>
+                    <td mat-cell *matCellDef="let s">{{ s.student_name }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="phone">
+                    <th mat-header-cell *matHeaderCellDef>Phone Number</th>
+                    <td mat-cell *matCellDef="let s">{{ s.phone || '-' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="paid_amount">
+                    <th mat-header-cell *matHeaderCellDef class="num">Paid Amount</th>
+                    <td mat-cell *matCellDef="let s" class="num">₹{{ s.paid_amount | indianCurrency }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="due_amount">
+                    <th mat-header-cell *matHeaderCellDef class="num">Due Amount</th>
+                    <td mat-cell *matCellDef="let s" class="num">₹{{ s.due_amount | indianCurrency }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef class="center">Status</th>
+                    <td mat-cell *matCellDef="let s" class="center">
+                      <span class="status-badge" [ngClass]="getSfStatusClass(s.status)">{{ s.status }}</span>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="studentFeeColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: studentFeeColumns"></tr>
+                </table>
+              </div>
+              <ng-template #sfEmpty>
+                <div class="empty-state" *ngIf="!sfLoading">
+                  <mat-icon>info</mat-icon>
+                  <p>No students found for this grade &amp; section</p>
+                </div>
+              </ng-template>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
     </div>
   </div>
 
-  <!-- Tabs -->
-  <mat-card class="tabs-card">
-    <mat-tab-group [(selectedIndex)]="selectedTab" (selectedIndexChange)="onTabChange($event)">
-      <!-- Fee Structures Tab -->
-      <mat-tab label="Fee Structures">
-        <ng-template mat-tab-label>
-          <mat-icon>account_balance</mat-icon>
-          Fee Structures
-        </ng-template>
-        
-        <div class="tab-content">
-          <app-data-table
-            #structuresTable
-            [data]="feeStructures"
-            [config]="structuresTableConfig"
-            [advancedSearchConfig]="structuresSearchConfig"
-            [title]="''"
-            [loading]="loading"
-            (actionClicked)="onAction($event)"
-            (advancedSearchChanged)="onStructuresSearch($event)"
-            (exportClicked)="onStructureExport($event)">
-          </app-data-table>
-        </div>
-      </mat-tab>
+  <!-- Fee Structures Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'structures' && isTabLoaded('structures')"
+    #structuresTable
+    [data]="feeStructures"
+    [config]="structuresTableConfig"
+    [advancedSearchConfig]="structuresSearchConfig"
+    [title]="'Fee Structures'"
+    [loading]="loading"
+    (actionClicked)="onStructureAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onStructureExport($event)"
+    (searchChanged)="onSearchChange($event)"
+    (paginationChanged)="onStructurePaginationChange($event)"
+    (sortChanged)="onStructureSortChange($event)"
+    (advancedSearchChanged)="onStructuresSearch($event)"
+    (searchFieldChanged)="onStructuresSearchFieldChanged($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
 
-      <!-- Fee Payments Tab -->
-      <mat-tab label="Fee Payments">
-        <ng-template mat-tab-label>
-          <mat-icon>receipt_long</mat-icon>
-          Fee Payments
-        </ng-template>
-        
-        <div class="tab-content">
-          <app-data-table
-            #paymentsTable
-            [data]="feePayments"
-            [config]="paymentsTableConfig"
-            [advancedSearchConfig]="paymentsSearchConfig"
-            [title]="''"
-            [loading]="loading"
-            (actionClicked)="onAction($event)"
-            (advancedSearchChanged)="onPaymentsSearch($event)"
-            (exportClicked)="onPaymentExport($event)">
-          </app-data-table>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
-  </mat-card>
+  <!-- Fee Payments Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'payments' && isTabLoaded('payments')"
+    #paymentsTable
+    [data]="feePayments"
+    [config]="paymentsTableConfig"
+    [advancedSearchConfig]="paymentsSearchConfig"
+    [title]="'Fee Payments'"
+    [loading]="loading"
+    (actionClicked)="onPaymentAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onPaymentExport($event)"
+    (searchChanged)="onSearchChange($event)"
+    (paginationChanged)="onPaymentPaginationChange($event)"
+    (sortChanged)="onPaymentSortChange($event)"
+    (advancedSearchChanged)="onPaymentsSearch($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
+
+  <!-- Fee Types Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'types' && isTabLoaded('types')"
+    #feeTypesTable
+    [data]="feeTypes"
+    [config]="feeTypesTableConfig"
+    [advancedSearchConfig]="feeTypesSearchConfig"
+    [title]="'Fee Types'"
+    [loading]="loading"
+    (actionClicked)="onFeeTypeAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onFeeTypeExport($event)"
+    (searchChanged)="onSearchChange($event)"
+    (paginationChanged)="onFeeTypePaginationChange($event)"
+    (sortChanged)="onFeeTypeSortChange($event)"
+    (advancedSearchChanged)="onFeeTypesSearch($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
 </div>
 

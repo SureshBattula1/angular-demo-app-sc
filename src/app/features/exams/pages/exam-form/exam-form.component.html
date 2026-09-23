@@ -1,0 +1,197 @@
+<div class="exam-form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">assignment</mat-icon>
+        <div>
+          <span *ngIf="!examId">Create Exam</span>
+          <span *ngIf="examId && !isEditMode">View Exam</span>
+          <span *ngIf="examId && isEditMode">Edit Exam</span>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>
+        <span *ngIf="!examId">Add a new exam to the system</span>
+        <span *ngIf="examId && !isEditMode">View exam details</span>
+        <span *ngIf="examId && isEditMode">Update exam information</span>
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="examForm" (ngSubmit)="onSubmit()">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Exam Name</mat-label>
+              <input 
+                matInput 
+                formControlName="name" 
+                placeholder="e.g., Mid-Term Examination 2024"
+                [readonly]="!isEditMode && !!examId">
+              <mat-icon matPrefix>text_fields</mat-icon>
+              <mat-error *ngIf="examForm.get('name')?.hasError('required')">
+                Exam name is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <!-- Exam Term -->
+            <ng-container *ngIf="!isEditMode && examId">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Exam Term</mat-label>
+                <input matInput [value]="getTermName(examForm.get('exam_term_id')?.value)" [readonly]="true">
+                <mat-icon matPrefix>event_note</mat-icon>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="isEditMode || !examId">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Exam Term</mat-label>
+                <mat-select formControlName="exam_term_id">
+                  <mat-option [value]="null">-- None --</mat-option>
+                  <mat-option *ngFor="let term of examTerms" [value]="term.id">
+                    {{ term.name }} ({{ term.academic_year }})
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>event_note</mat-icon>
+                <mat-hint>Optional: Will lock branch & year to term's values</mat-hint>
+              </mat-form-field>
+            </ng-container>
+
+            <!-- Branch -->
+            <ng-container *ngIf="!isEditMode && examId">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Branch</mat-label>
+                <input matInput [value]="getBranchName(examForm.get('branch_id')?.value)" [readonly]="true">
+                <mat-icon matPrefix>business</mat-icon>
+                <mat-error *ngIf="examForm.get('branch_id')?.hasError('required')">
+                  Branch is required
+                </mat-error>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="isEditMode || !examId">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Branch</mat-label>
+                <mat-select formControlName="branch_id">
+                  <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                    {{ branch.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>business</mat-icon>
+                <mat-hint *ngIf="examForm.get('branch_id')?.disabled">
+                  Locked by exam term selection
+                </mat-hint>
+                <mat-error *ngIf="examForm.get('branch_id')?.hasError('required')">
+                  Branch is required
+                </mat-error>
+              </mat-form-field>
+            </ng-container>
+          </div>
+
+          <div class="form-row">
+            <ng-container *ngIf="!isEditMode && examId">
+              <mat-form-field appearance="outline" class="form-field-full">
+                <mat-label>Academic Year</mat-label>
+                <input matInput [value]="examForm.get('academic_year')?.value" [readonly]="true">
+                <mat-icon matPrefix>calendar_today</mat-icon>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngIf="isEditMode || !examId">
+              <mat-form-field appearance="outline" class="form-field-full">
+                <mat-label>Academic Year</mat-label>
+                <mat-select formControlName="academic_year">
+                  <mat-option *ngIf="loadingAcademicYears" disabled>Loading...</mat-option>
+                  <mat-option *ngFor="let year of academicYears" [value]="year.name">
+                    {{ year.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>calendar_today</mat-icon>
+                <mat-hint *ngIf="examForm.get('academic_year')?.disabled">
+                  Locked by exam term selection
+                </mat-hint>
+                <mat-error *ngIf="examForm.get('academic_year')?.hasError('required')">
+                  Academic year is required
+                </mat-error>
+              </mat-form-field>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Additional Details Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>description</mat-icon>
+            Additional Details
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Description</mat-label>
+              <textarea 
+                matInput 
+                formControlName="description" 
+                rows="4" 
+                placeholder="Optional description or notes about this exam"
+                [readonly]="!isEditMode && !!examId">
+              </textarea>
+              <mat-icon matPrefix>notes</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <div class="toggle-container">
+              <mat-slide-toggle 
+                formControlName="is_active" 
+                color="primary" 
+                [disabled]="!isEditMode && !!examId">
+                <span class="toggle-label">
+                  <mat-icon>{{ examForm.get('is_active')?.value ? 'check_circle' : 'cancel' }}</mat-icon>
+                  Active Status
+                </span>
+              </mat-slide-toggle>
+              <span class="toggle-hint">
+                {{ examForm.get('is_active')?.value ? 'Exam is currently active' : 'Exam is inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <!-- Edit/Create Mode Actions -->
+      <ng-container *ngIf="isEditMode || !examId">
+        <button mat-stroked-button type="button" (click)="onCancel()">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()" 
+          [disabled]="examForm.invalid || saving">
+          <mat-icon>{{ saving ? 'hourglass_empty' : 'save' }}</mat-icon>
+          {{ saving ? 'Saving...' : (examId ? 'Update Exam' : 'Create Exam') }}
+        </button>
+      </ng-container>
+
+      <!-- View Mode Actions -->
+      <ng-container *ngIf="!isEditMode && examId">
+        <button mat-stroked-button type="button" (click)="onCancel()">
+          <mat-icon>arrow_back</mat-icon>
+          Back to List
+        </button>
+        <button mat-raised-button color="primary" (click)="onEditMode()">
+          <mat-icon>edit</mat-icon>
+          Edit Exam
+        </button>
+      </ng-container>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

@@ -1,260 +1,432 @@
-// Using global CSS variables - no import needed
-:host {
-  --spacing-lg: 24px;
-  --spacing-md: 16px;
-  --spacing-xl: 32px;
-  --spacing-sm: 8px;
-  --spacing-xs: 4px;
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --border-radius-md: 8px;
-}
+// This component uses global view-pages.css for consistent styling
+// Only component-specific styles are defined here
 
-.page-container {
-  padding: var(--spacing-lg);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.view-card, .report-card, .loading-card {
-  box-shadow: var(--shadow-md);
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg) 0;
-}
-
-.detail-item {
-  display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius-md);
-  
-  mat-icon {
-    color: var(--primary-color);
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
+// Stat card color variants
+.stat-card {
+  &.stat-success {
+    .stat-icon {
+      background: linear-gradient(135deg, #4caf50, #388e3c) !important;
+    }
   }
   
-  div {
-    flex: 1;
+  &.stat-danger {
+    .stat-icon {
+      background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+    }
+  }
+  
+  &.stat-warning {
+    .stat-icon {
+      background: linear-gradient(135deg, #ff9800, #f57c00) !important;
+    }
+  }
+  
+  &.stat-info {
+    .stat-icon {
+      background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+    }
+  }
+}
+
+// Details section for single attendance view
+.details-section {
+  .detail-row {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    gap: 16px;
     
-    label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .detail-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: var(--text-secondary, #666);
+      min-width: 150px;
+      flex-shrink: 0;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--primary-color, #1976d2);
+      }
+    }
+    
+    .detail-value {
+      flex: 1;
+      text-align: right;
+      color: var(--text-primary, #333);
+      word-break: break-word;
+    }
+  }
+}
+
+// Attendance table styling
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  
+  .mat-mdc-header-cell {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary, #333);
+    padding: 16px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+  }
+  
+  .mat-mdc-cell {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  
+  .mat-mdc-row {
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+  }
+  
+  .table-cell-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .cell-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary, #666);
+      flex-shrink: 0;
     }
     
     span {
-      font-size: 14px;
-      color: var(--text-primary);
+      flex: 1;
     }
   }
 }
 
-.summary-section, .history-section {
-  margin: var(--spacing-xl) 0;
-  
-  h3 {
-    margin: 0 0 var(--spacing-md) 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--spacing-md);
-}
-
-.stat-card {
-  display: flex;
+// Status chip styling
+.status-chip {
+  display: inline-flex !important;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-left: 4px solid var(--primary-color);
-  
-  .stat-icon {
-    font-size: 40px;
-    width: 40px;
-    height: 40px;
-    color: var(--primary-color);
-  }
-  
-  .stat-content {
-    display: flex;
-    flex-direction: column;
-    
-    .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-    }
-  }
-  
-  &.success {
-    border-left-color: var(--success-color);
-    .stat-icon { color: var(--success-color); }
-  }
-  
-  &.danger {
-    border-left-color: var(--danger-color);
-    .stat-icon { color: var(--danger-color); }
-  }
-  
-  &.warning {
-    border-left-color: var(--warning-color);
-    .stat-icon { color: var(--warning-color); }
-  }
-  
-  &.info {
-    border-left-color: var(--info-color);
-    .stat-icon { color: var(--info-color); }
-  }
-}
-
-.table-container {
-  overflow-x: auto;
-  margin-top: 16px;
-}
-
-.history-table {
-  width: 100%;
-  box-shadow: var(--shadow-sm);
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px !important;
+  border-radius: 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  min-height: 32px;
   
   .chip-icon {
     font-size: 16px;
     width: 16px;
     height: 16px;
-    margin-right: 4px;
-    vertical-align: middle;
+    margin: 0;
   }
   
-  mat-chip {
-    &.status-success {
-      background-color: var(--success-color) !important;
-      color: white;
-    }
+  &.status-success {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+  
+  &.status-danger {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+  
+  &.status-warning {
+    background-color: #ff9800 !important;
+    color: white !important;
+  }
+  
+  &.status-info {
+    background-color: #2196f3 !important;
+    color: white !important;
+  }
+  
+  &.status-secondary {
+    background-color: #757575 !important;
+    color: white !important;
+  }
+}
+
+// Table responsive container
+.table-responsive {
+  overflow-x: auto;
+  margin-top: 16px;
+  border-radius: 8px;
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
     
-    &.status-danger {
-      background-color: var(--danger-color) !important;
-      color: white;
-    }
-    
-    &.status-warning {
-      background-color: var(--warning-color) !important;
-      color: white;
-    }
-    
-    &.status-info {
-      background-color: var(--info-color) !important;
-      color: white;
-    }
-    
-    &.status-secondary {
-      background-color: var(--text-secondary) !important;
-      color: white;
+    &:hover {
+      background: #555;
     }
   }
 }
 
-.summary-section {
-  h3 {
+// No data message styling
+.no-data-card {
+  mat-card-content {
+    padding: 0 !important;
+  }
+  
+  .no-data-message {
+    text-align: center;
+    padding: 64px 24px;
+    
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: var(--text-disabled, #bbb);
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-primary, #333);
+    }
+    
+    p {
+      margin: 0;
+      color: var(--text-secondary, #666);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Detail card header styling
+.detail-card {
+  mat-card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  
+  mat-card-title {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-color, #1976d2);
     
     mat-icon {
-      color: var(--primary-color);
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  mat-card-subtitle {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+  }
+  
+  mat-card-content {
+    padding: 24px;
+  }
+}
+
+// ========================================
+//   MOBILE RESPONSIVE STYLES
+// ========================================
+
+// Tablet (768px and below)
+@media (max-width: 768px) {
+  .details-section {
+    .detail-row {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px 0;
+      gap: 8px;
+      
+      .detail-label {
+        min-width: auto;
+      }
+      
+      .detail-value {
+        text-align: left;
+        padding-left: 28px;
+      }
+    }
+  }
+  
+  .detail-card {
+    mat-card-header {
+      padding: 16px;
+    }
+    
+    mat-card-content {
+      padding: 16px;
+    }
+  }
+  
+  .attendance-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 12px 8px;
+      font-size: 13px;
+      
+      &:first-child {
+        padding-left: 12px;
+      }
+      
+      &:last-child {
+        padding-right: 12px;
+      }
+    }
+    
+    .table-cell-content {
+      gap: 6px;
+      
+      .cell-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  .status-chip {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+    min-height: 28px;
+    
+    .chip-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+  
+  .no-data-card {
+    .no-data-message {
+      padding: 48px 16px;
+      
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+      }
+      
+      h3 {
+        font-size: 18px;
+      }
+      
+      p {
+        font-size: 13px;
+      }
+    }
+  }
+  
+  // Hide marked_by column on mobile
+  .mat-column-marked_by {
+    display: none;
+  }
+}
+
+// Mobile (480px and below)
+@media (max-width: 480px) {
+  // Hide remarks column on very small screens
+  .mat-column-remarks {
+    display: none;
+  }
+  
+  .attendance-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 10px 6px;
+      font-size: 12px;
+      
+      &:first-child {
+        padding-left: 8px;
+      }
+      
+      &:last-child {
+        padding-right: 8px;
+      }
+    }
+  }
+  
+  .details-section {
+    .detail-row {
+      padding: 10px 0;
+      
+      .detail-value {
+        padding-left: 0;
+        margin-top: 4px;
+      }
     }
   }
 }
 
-.history-section {
-  h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    mat-icon {
-      color: var(--primary-color);
-    }
-  }
-}
-
-.no-data {
-  text-align: center;
-  padding: var(--spacing-xl);
-  color: var(--text-secondary);
-  
-  mat-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    margin-bottom: var(--spacing-md);
-    color: var(--text-disabled);
-  }
-  
-  p {
-    margin: 0 0 8px 0;
-    font-size: 16px;
-    font-weight: 500;
-  }
-  
-  small {
-    font-size: 14px;
-    color: var(--text-disabled);
-  }
-}
-
-.loading-card {
-  text-align: center;
-  padding: var(--spacing-xl);
-  
-  mat-spinner {
-    margin: 0 auto var(--spacing-md);
-  }
-}
-
-@media (max-width: 960px) {
-  .page-container {
-    padding: var(--spacing-md);
-  }
-  
-  .details-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
+// ========================================
+//   PRINT STYLES
+// ========================================
 
 @media print {
-  .page-container {
-    padding: 0;
+  .view-action-bar {
+    display: none !important;
   }
   
-  mat-card-actions {
-    display: none !important;
+  .view-container {
+    padding: 0 !important;
+  }
+  
+  .detail-card {
+    box-shadow: none !important;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+    
+    mat-card-header,
+    mat-card-content {
+      padding: 16px !important;
+    }
+  }
+  
+  .status-chip {
+    border: 1px solid #333 !important;
+    color: #333 !important;
+    background-color: white !important;
+    
+    .chip-icon {
+      color: #333 !important;
+    }
+  }
+  
+  .attendance-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 8px;
+    }
+  }
+  
+  .view-stats-grid {
+    page-break-inside: avoid;
   }
 }
 

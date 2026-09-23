@@ -1,12 +1,12 @@
 @use '../../../../../styles/assets/variables' as *;
 
-// Reuse the same styles as group-form for consistency
-.class-form-container {
+// Container
+.teacher-form-container {
   padding: var(--spacing-lg);
-  max-width: 1000px;
   margin: 0 auto;
 }
 
+// Main Card
 .form-card {
   background: var(--card-background);
   border-radius: var(--radius-md);
@@ -63,8 +63,94 @@
   }
 }
 
+// Profile Completion - Hidden
+.profile-completion {
+  display: none;
+}
+
+// Profile Picture Section
+.profile-picture-section {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 2px dashed var(--gray-300);
+}
+
+.profile-picture-upload {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  
+  .profile-picture-preview {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    border: 3px solid var(--primary-color);
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-500);
+      
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: var(--gray-400);
+      }
+      
+      span {
+        font-size: 10px;
+        margin-top: 4px;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .profile-picture-actions {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    
+    button {
+      align-self: flex-start;
+      
+      mat-icon {
+        margin-right: var(--spacing-xs);
+      }
+    }
+    
+    .upload-hint {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+  }
+}
+
+// Form Sections
 .form-section {
   margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
   
   .section-title {
     display: flex;
@@ -83,6 +169,43 @@
   }
 }
 
+// Subsections
+.subsection {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  // ✅ Removed left border as per user request
+  
+  h4 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--primary-color);
+    }
+  }
+}
+
+// Simple Checkbox Wrapper
+.simple-checkbox-wrapper {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm);
+  
+  mat-checkbox {
+    font-size: 14px;
+  }
+}
+
+// Form Rows
 .form-row {
   display: flex;
   gap: var(--spacing-md);
@@ -93,7 +216,10 @@
   }
 }
 
-.form-field-half {
+// Form Field Sizes
+.form-field-half,
+.form-field-third,
+.form-field-quarter {
   flex: 1;
   min-width: 0;
 }
@@ -102,21 +228,125 @@
   width: 100%;
 }
 
-.active-checkbox {
+// Languages Section
+.languages-section {
   margin-top: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: var(--gray-100);
-  border-radius: var(--radius-sm);
   
-  .checkbox-icon {
-    color: var(--success-color);
-    margin-right: var(--spacing-xs);
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+  .selected-languages {
+    margin-top: var(--spacing-md);
+    
+    mat-chip-listbox {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+    }
   }
 }
 
+// Skills Section (similar to languages)
+.selected-skills {
+  margin-top: var(--spacing-md);
+  
+  mat-chip-listbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    
+    mat-chip {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      
+      &:hover {
+        background-color: var(--primary-color);
+        color: var(--white);
+      }
+      
+      button[matChipRemove] {
+        opacity: 0.7;
+        
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+// Info Banner
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--radius-sm);
+  
+  mat-icon {
+    color: var(--primary-color);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+  }
+  
+  span {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    
+    strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+  }
+}
+
+// File Upload Wrapper
+.file-input-wrapper {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  transition: all 0.3s ease;
+  
+  .file-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  
+  button {
+    width: 100%;
+  }
+  
+  .file-name {
+    font-size: 12px;
+    color: var(--success-color);
+    padding: var(--spacing-xs);
+    background: var(--success-light);
+    border-radius: var(--radius-xs);
+    
+    &::before {
+      content: '📄';
+      margin-right: var(--spacing-xs);
+    }
+  }
+  
+  &:hover {
+    border-color: var(--primary-color);
+    background: var(--gray-50);
+  }
+}
+
+// Spinner
 .spinner-inline {
   display: inline-block;
   margin-right: var(--spacing-xs);
@@ -129,7 +359,7 @@
 
 // Responsive
 @media (max-width: $breakpoint-md) {
-  .class-form-container {
+  .teacher-form-container {
     padding: var(--spacing-md);
   }
   
@@ -138,7 +368,9 @@
     gap: 0;
   }
   
-  .form-field-half {
+  .form-field-half,
+  .form-field-third,
+  .form-field-quarter {
     width: 100%;
   }
   
@@ -152,22 +384,260 @@
     mat-card-content {
       padding: var(--spacing-md);
     }
+    
+    .form-section {
+      padding: var(--spacing-md);
+    }
+  }
+  
+  .profile-picture-upload {
+    flex-direction: column;
+    text-align: center;
+    
+    .profile-picture-preview {
+      width: 90px;
+      height: 90px;
+    }
+    
+    .profile-picture-actions {
+      align-items: center;
+      width: 100%;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+  
+  .simple-checkbox-wrapper {
+    text-align: left;
+  }
+  
+  .file-input-wrapper {
+    min-width: 100%;
   }
 }
 
 @media (max-width: $breakpoint-sm) {
+  .form-card {
+    mat-card-header {
+      padding: var(--spacing-md);
+      margin: calc(var(--spacing-md) * -1) calc(var(--spacing-md) * -1) 0;
+      margin-bottom: var(--spacing-md);
+      
+      mat-card-title {
+        font-size: 18px;
+        
+        .header-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+    }
+    
+    mat-card-content {
+      padding: var(--spacing-md);
+    }
+    
+    mat-card-actions {
+      padding: var(--spacing-md);
+      margin: 0 calc(var(--spacing-md) * -1) calc(var(--spacing-md) * -1);
+      flex-direction: column-reverse;
+      align-items: stretch;
+      
+      button {
+        margin: var(--spacing-xs) 0;
+        width: 100%;
+      }
+    }
+  }
+  
   .section-title {
     font-size: 16px;
   }
   
-  .form-card mat-card-actions {
-    flex-direction: column-reverse;
-    align-items: stretch;
+  .profile-picture-section {
+    padding: var(--spacing-sm);
+  }
+  
+  .simple-checkbox-wrapper {
+    padding: var(--spacing-xs);
+  }
+  
+  .subsection {
+    padding: var(--spacing-sm);
     
-    button {
-      margin: var(--spacing-xs) 0;
-      width: 100%;
+    h4 {
+      font-size: 14px;
     }
+  }
+}
+
+// Profile Upload Row
+.profile-upload-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+// Circular Profile Picture
+.profile-picture-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  
+  // Inner container for image overflow
+  // Inner container for image
+  .profile-picture-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: var(--text-secondary);
+      
+      mat-icon {
+        font-size: 60px;
+        width: 60px;
+        height: 60px;
+      }
+    }
+  }
+  
+  .delete-profile-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f44336 !important;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #d32f2f !important;
+      transform: scale(1.1);
+    }
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+}
+
+// Profile Upload Button
+.profile-upload-button {
+  flex: 1;
+  
+  ::ng-deep {
+    .file-upload-container {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      min-height: auto !important;
+    }
+    
+    .file-upload-button {
+      padding: var(--spacing-sm) var(--spacing-md) !important;
+      background: var(--primary-color) !important;
+      color: white !important;
+      border-radius: var(--radius-sm) !important;
+      font-weight: 500 !important;
+      
+      &:hover {
+        background: var(--primary-dark) !important;
+      }
+    }
+  }
+}
+
+// Status Toggle Row
+.status-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gray-200);
+  margin-top: var(--spacing-md);
+  
+  .status-toggle {
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-weight: 500;
+      font-size: 16px;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+  
+  .toggle-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
   }
 }
 

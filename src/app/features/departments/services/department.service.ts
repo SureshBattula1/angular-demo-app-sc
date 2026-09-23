@@ -15,7 +15,7 @@ export class DepartmentService {
     return this.apiService.get<Department[]>(this.ENDPOINT, params);
   }
 
-  getDepartment(id: number): Observable<ApiResponse<Department>> {
+  getDepartment(id: string | number): Observable<ApiResponse<Department>> {
     return this.apiService.get<Department>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -23,16 +23,17 @@ export class DepartmentService {
     return this.apiService.post<Department>(this.ENDPOINT, departmentData);
   }
 
-  updateDepartment(id: number, departmentData: Partial<DepartmentFormData>): Observable<ApiResponse<Department>> {
+  updateDepartment(id: string | number, departmentData: Partial<DepartmentFormData>): Observable<ApiResponse<Department>> {
     return this.apiService.put<Department>(`${this.ENDPOINT}/${id}`, departmentData);
   }
 
-  deleteDepartment(id: number): Observable<ApiResponse> {
+  deleteDepartment(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
-  toggleStatus(id: number): Observable<ApiResponse<Department>> {
+  toggleStatus(id: string | number): Observable<ApiResponse<Department>> {
     return this.apiService.put<Department>(`${this.ENDPOINT}/${id}/toggle-status`, {});
   }
 }
+
 

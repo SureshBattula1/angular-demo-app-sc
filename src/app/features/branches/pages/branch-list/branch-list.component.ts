@@ -7,7 +7,10 @@ import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../.
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { BranchService } from '../../services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Branch } from '../../../../core/models/branch.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-branch-list',
@@ -19,7 +22,7 @@ import { Branch } from '../../../../core/models/branch.model';
       [data]="branches"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Branch'"
+      [title]="'Branches'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
@@ -27,7 +30,8 @@ import { Branch } from '../../../../core/models/branch.model';
       (exportClicked)="onExport($event)"
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`
@@ -49,12 +53,15 @@ export class BranchListComponent implements OnInit {
   // Table Configuration
   tableConfig: TableConfig = {
     columns: [
-      { 
-        key: 'id', 
-        header: 'ID', 
-        sortable: true, 
-        width: '80px'
-      },
+      // { 
+      //   key: 'logo', 
+      //   header: 'Logo', 
+      //   sortable: false,
+      //   type: 'image',
+      //   width: '80px',
+      //   align: 'center',
+      //   cellClass: 'branch-logo-cell'
+      // },
       { 
         key: 'code', 
         header: 'Code', 
@@ -83,12 +90,6 @@ export class BranchListComponent implements OnInit {
         width: '120px'
       },
       { 
-        key: 'region', 
-        header: 'Region', 
-        sortable: true,
-        width: '120px'
-      },
-      { 
         key: 'phone', 
         header: 'Phone', 
         width: '140px'
@@ -98,13 +99,7 @@ export class BranchListComponent implements OnInit {
         header: 'Principal',
         width: '150px'
       },
-      { 
-        key: 'current_enrollment', 
-        header: 'Enrollment',
-        type: 'number',
-        align: 'center',
-        width: '110px'
-      },
+    
       { 
         key: 'total_capacity', 
         header: 'Capacity',
@@ -113,43 +108,41 @@ export class BranchListComponent implements OnInit {
         width: '100px'
       },
       { 
-        key: 'status', 
+        key: 'status_label', 
         header: 'Status', 
         type: 'badge',
-        width: '120px',
-        align: 'center'
-      },
-      { 
-        key: 'is_active', 
-        header: 'Active', 
-        type: 'badge',
         width: '90px',
-        align: 'center'
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'Deactive') ? 'badge-danger' : 'badge-success'
       }
     ],
     actions: [
       {
         icon: 'visibility',
         label: 'View Details',
-        action: (row) => this.viewBranch(row)
+        action: (row) => this.viewBranch(row),
+        permission: 'branches.view'
       },
       {
         icon: 'edit',
         label: 'Edit',
         color: 'primary',
-        action: (row) => this.editBranch(row)
+        action: (row) => this.editBranch(row),
+        permission: 'branches.edit'
       },
       {
         icon: 'bar_chart',
         label: 'Statistics',
         color: 'accent',
-        action: (row) => this.viewStats(row)
+        action: (row) => this.viewStats(row),
+        permission: 'branches.stats'
       },
       {
         icon: 'delete',
         label: 'Delete',
         color: 'warn',
-        action: (row) => this.deleteBranch(row)
+        action: (row) => this.deleteBranch(row),
+        permission: 'branches.delete'
       }
     ],
     selectable: true,
@@ -158,10 +151,11 @@ export class BranchListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
-    pageSizeOptions: [5, 10, 25, 50, 100],
-    defaultPageSize: 10
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25,
+    addButtonPermission: 'branches.create'
   };
   
   // Advanced Search Configuration
@@ -172,14 +166,6 @@ export class BranchListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
-        key: 'code',
-        label: 'Branch Code',
-        type: 'text',
-        placeholder: 'Enter branch code',
-        icon: 'qr_code',
-        group: 'Basic Information'
-      },
-      {
         key: 'name',
         label: 'Branch Name',
         type: 'text',
@@ -187,6 +173,14 @@ export class BranchListComponent implements OnInit {
         icon: 'business',
         group: 'Basic Information'
       },
+      {
+        key: 'code',
+        label: 'Branch Code',
+        type: 'text',
+        placeholder: 'Enter branch code',
+        icon: 'qr_code',
+        group: 'Basic Information'
+      }, 
       {
         key: 'branch_type',
         label: 'Branch Type',
@@ -207,24 +201,25 @@ export class BranchListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter city',
         icon: 'location_city',
-        group: 'Location'
+         group: 'Basic Information'
+        // group: 'Location'
       },
-      {
-        key: 'region',
-        label: 'Region',
-        type: 'text',
-        placeholder: 'Enter region',
-        icon: 'place',
-        group: 'Location'
-      },
-      {
-        key: 'state',
-        label: 'State',
-        type: 'text',
-        placeholder: 'Enter state',
-        icon: 'map',
-        group: 'Location'
-      },
+      // {
+      //   key: 'region',
+      //   label: 'Region',
+      //   type: 'text',
+      //   placeholder: 'Enter region',
+      //   icon: 'place',
+      //   group: 'Location'
+      // },
+      // {
+      //   key: 'state',
+      //   label: 'State',
+      //   type: 'text',
+      //   placeholder: 'Enter state',
+      //   icon: 'map',
+      //   group: 'Location'
+      // },
       {
         key: 'status',
         label: 'Status',
@@ -237,50 +232,50 @@ export class BranchListComponent implements OnInit {
           { value: 'Maintenance', label: 'Maintenance' },
           { value: 'Closed', label: 'Closed' }
         ],
-        group: 'Status'
+        group: 'Basic Information'
       },
-      {
-        key: 'is_active',
-        label: 'Active Only',
-        type: 'checkbox',
-        icon: 'check_circle',
-        group: 'Status'
-      },
-      {
-        key: 'is_main_branch',
-        label: 'Main Branch Only',
-        type: 'checkbox',
-        icon: 'home',
-        group: 'Filters'
-      },
-      {
-        key: 'has_hostel',
-        label: 'Has Hostel',
-        type: 'checkbox',
-        icon: 'hotel',
-        group: 'Facilities'
-      },
-      {
-        key: 'has_transport',
-        label: 'Has Transport',
-        type: 'checkbox',
-        icon: 'directions_bus',
-        group: 'Facilities'
-      },
-      {
-        key: 'has_library',
-        label: 'Has Library',
-        type: 'checkbox',
-        icon: 'local_library',
-        group: 'Facilities'
-      },
-      {
-        key: 'has_lab',
-        label: 'Has Lab',
-        type: 'checkbox',
-        icon: 'biotech',
-        group: 'Facilities'
-      }
+      // {
+      //   key: 'is_active',
+      //   label: 'Active Only',
+      //   type: 'checkbox',
+      //   icon: 'check_circle',
+      //   group: 'Status'
+      // },
+      // {
+      //   key: 'is_main_branch',
+      //   label: 'Main Branch Only',
+      //   type: 'checkbox',
+      //   icon: 'home',
+      //   group: 'Filters'
+      // },
+      // {
+      //   key: 'has_hostel',
+      //   label: 'Has Hostel',
+      //   type: 'checkbox',
+      //   icon: 'hotel',
+      //   group: 'Facilities'
+      // },
+      // {
+      //   key: 'has_transport',
+      //   label: 'Has Transport',
+      //   type: 'checkbox',
+      //   icon: 'directions_bus',
+      //   group: 'Facilities'
+      // },
+      // {
+      //   key: 'has_library',
+      //   label: 'Has Library',
+      //   type: 'checkbox',
+      //   icon: 'local_library',
+      //   group: 'Facilities'
+      // },
+      // {
+      //   key: 'has_lab',
+      //   label: 'Has Lab',
+      //   type: 'checkbox',
+      //   icon: 'biotech',
+      //   group: 'Facilities'
+      // }
     ]
   };
   
@@ -288,7 +283,9 @@ export class BranchListComponent implements OnInit {
     private branchService: BranchService,
     private router: Router,
     private dialog: MatDialog,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService,
+    private permissionService: PermissionService
   ) {}
   
   ngOnInit(): void {
@@ -296,16 +293,31 @@ export class BranchListComponent implements OnInit {
   }
   
   /**
-   * Load branches from server
+   * Load branches from server with pagination and sorting
    */
   loadBranches(): void {
     this.loading = true;
     
-    this.branchService.getBranches(this.currentFilters).subscribe({
+    // Ensure inactive branches are included (this page should show all branches).
+    // Remove any persisted/auto-applied is_active filter from table state.
+    const filters = { ...this.currentFilters } as Record<string, unknown>;
+    delete filters['is_active'];
+
+    // 🔥 Use getAllBranches() for branch management (admins need to see all)
+    this.branchService.getAllBranches(filters).subscribe({
       next: (response) => {
         if (response.success) {
-          this.branches = response.data;
-          this.tableConfig.totalCount = response.count;
+          this.branches = response.data.map(branch => ({
+            ...branch,
+            logo: this.getLogoUrl(branch.logo),
+            status_label: branch?.is_active ? 'Active' : 'Deactive'
+          }));
+          // Update total count from meta for server-side pagination
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          } else {
+            this.tableConfig.totalCount = response.count || response.data.length;
+          }
           this.loading = false;
         }
       },
@@ -332,11 +344,22 @@ export class BranchListComponent implements OnInit {
    * Handle sort changes
    */
   onSortChange(event: SortEvent): void {
+    // Map frontend column names to backend column names if needed
+    const columnMapping: Record<string, string> = {
+      // Most branch columns match directly, but add mappings if needed
+      'is_active': 'is_active',
+      'branch_type': 'branch_type',
+      'total_capacity': 'total_capacity'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
     this.currentFilters = {
       ...this.currentFilters,
-      sort_by: event.field,
+      sort_by: sortColumn,
       sort_direction: event.direction
     };
+    
     this.loadBranches();
   }
   
@@ -344,19 +367,28 @@ export class BranchListComponent implements OnInit {
    * Handle advanced search changes
    */
   onAdvancedSearchChange(event: SearchEvent): void {
+    // Reset to first page when searching
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
+    this.loadBranches();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadBranches();
   }
   
   onAction(event: { action: string, row: Branch | null }): void {
-    console.log('Action triggered:', event);
-    
     // Handle add action
     if (event.action === 'add') {
-      this.router.navigate(['/branches/create']);
+      if (this.permissionService.hasPermission('branches.create')) {
+        this.router.navigate(['/branches/create']);
+      } else {
+        this.errorHandler.showError('You do not have permission to create branches');
+      }
     }
   }
   
@@ -366,7 +398,6 @@ export class BranchListComponent implements OnInit {
   
   onSelectionChange(selected: Branch[]): void {
     this.selectedBranches = selected;
-    console.log('Selected branches:', selected);
   }
   
   /**
@@ -450,8 +481,46 @@ export class BranchListComponent implements OnInit {
   /**
    * Export branches
    */
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Check permission before exporting
+    if (!this.permissionService.hasPermission('branches.export')) {
+      this.errorHandler.showError('You do not have permission to export branches');
+      return;
+    }
+    
+    // Show loading message
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters
+    this.exportService.export(
+      {
+        endpoint: '/branches/export',
+        filename: 'branches'
+      },
+      {
+        format: format,
+        filters: this.currentFilters
+      }
+    );
+  }
+  
+  /**
+   * Get logo URL for display
+   */
+  getLogoUrl(logoPath: string | undefined): string {
+    if (!logoPath) {
+      return '/assets/images/branch-placeholder.png';
+    }
+    
+    // If logo path already includes http, return as is
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+    
+    // Construct full URL from logo path - storage is served from public directory
+    // Remove /api from the base URL for storage
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}/storage/${logoPath}`;
   }
 }
 

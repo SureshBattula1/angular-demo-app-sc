@@ -1,113 +1,279 @@
-<div class="page-container">
-  <!-- Loading State -->
-  <mat-card *ngIf="loading" class="loading-card">
-    <mat-card-content>
-      <mat-spinner></mat-spinner>
-      <p>Loading grade details...</p>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Grade Details -->
-  <mat-card class="view-card" *ngIf="grade && !loading">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>school</mat-icon>
-        {{ grade.label }}
-      </mat-card-title>
-      <mat-card-subtitle>Grade Information and Statistics</mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-divider></mat-divider>
-
-    <mat-card-content>
-      <!-- Basic Information -->
-      <div class="info-section">
-        <h3><mat-icon>info</mat-icon> Basic Information</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Grade Number</span>
-            <span class="info-value">{{ grade.value }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Display Name</span>
-            <span class="info-value">{{ grade.label }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Status</span>
-            <mat-chip [class.active]="grade.is_active">
-              {{ grade.is_active ? 'Active' : 'Inactive' }}
-            </mat-chip>
-          </div>
-          <div class="info-item" *ngIf="grade.description">
-            <span class="info-label">Description</span>
-            <span class="info-value">{{ grade.description }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Statistics -->
-      <div class="stats-section" *ngIf="stats">
-        <h3><mat-icon>insights</mat-icon> Statistics</h3>
-        <div class="stats-grid">
-          <mat-card class="stat-card students">
-            <mat-icon class="stat-icon">people</mat-icon>
-            <div class="stat-content">
-              <span class="stat-value">{{ stats.total_students | number }}</span>
-              <span class="stat-label">Total Students</span>
-            </div>
-          </mat-card>
-
-          <mat-card class="stat-card sections">
-            <mat-icon class="stat-icon">view_list</mat-icon>
-            <div class="stat-content">
-              <span class="stat-value">{{ stats.total_sections | number }}</span>
-              <span class="stat-label">Total Sections</span>
-            </div>
-          </mat-card>
-
-          <mat-card class="stat-card teachers">
-            <mat-icon class="stat-icon">person</mat-icon>
-            <div class="stat-content">
-              <span class="stat-value">{{ stats.total_teachers | number }}</span>
-              <span class="stat-label">Total Teachers</span>
-            </div>
-          </mat-card>
-
-          <mat-card class="stat-card attendance">
-            <mat-icon class="stat-icon">event_available</mat-icon>
-            <div class="stat-content">
-              <span class="stat-value">{{ stats.average_attendance | number:'1.0-2' }}%</span>
-              <span class="stat-label">Avg Attendance</span>
-            </div>
-          </mat-card>
-        </div>
-      </div>
-
-      <!-- Sections List -->
-      <div class="sections-section" *ngIf="grade.sections && grade.sections.length > 0">
-        <h3><mat-icon>class</mat-icon> Available Sections</h3>
-        <div class="sections-chips">
-          <mat-chip *ngFor="let section of grade.sections">
-            Section {{ section }}
-          </mat-chip>
-        </div>
-      </div>
-    </mat-card-content>
-
-    <mat-card-actions align="end">
-      <button mat-button (click)="onBack()">
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <button mat-raised-button color="primary" (click)="onEdit()">
-        <mat-icon>edit</mat-icon> Edit Grade
+<div class="view-container" *ngIf="!loading && grade">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button 
+        *ngIf="hasEditPermission"
+        mat-raised-button 
+        color="primary" 
+        (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit Grade
       </button>
       <button mat-raised-button color="accent" (click)="viewStudents()">
-        <mat-icon>people</mat-icon> View Students
+        <mat-icon>people</mat-icon>
+        View Students
       </button>
       <button mat-stroked-button (click)="viewSections()">
-        <mat-icon>view_list</mat-icon> View Sections
+        <mat-icon>view_list</mat-icon>
+        View Sections
       </button>
-    </mat-card-actions>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">school</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ grade.label }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>tag</mat-icon>
+              Grade {{ grade.value }}
+            </span>
+            <span *ngIf="grade.category">
+              <mat-icon>category</mat-icon>
+              {{ grade.category }}
+            </span>
+            <span *ngIf="grade.order !== undefined">
+              <mat-icon>sort</mat-icon>
+              Order: {{ grade.order }}
+            </span>
+            <span *ngIf="grade.students_count !== undefined">
+              <mat-icon>people</mat-icon>
+              {{ grade.students_count }} Students
+            </span>
+            <span *ngIf="grade.sections && grade.sections.length > 0">
+              <mat-icon>class</mat-icon>
+              {{ grade.sections.length }} Sections
+            </span>
+            <span class="status-badge" [class.active]="grade.is_active">
+              <mat-icon>circle</mat-icon>
+              {{ grade.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
   </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid" *ngIf="stats">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>people</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_students }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>view_list</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_sections }}</div>
+          <div class="stat-label">Total Sections</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_teachers }}</div>
+          <div class="stat-label">Total Teachers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>event_available</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.average_attendance }}%</div>
+          <div class="stat-label">Avg Attendance</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Details Grid -->
+  <div class="view-details-grid">
+    <!-- Basic Information Card -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Grade Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Grade Value:</span>
+          <span class="detail-value">{{ grade.value }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Display Name:</span>
+          <span class="detail-value">{{ grade.label }}</span>
+        </div>
+        <div class="detail-row" *ngIf="grade.category">
+          <span class="detail-label">Category:</span>
+          <span class="detail-value">
+            <mat-icon class="inline-icon">category</mat-icon>
+            {{ grade.category }}
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="grade.order !== undefined">
+          <span class="detail-label">Display Order:</span>
+          <span class="detail-value">
+            <mat-icon class="inline-icon">sort</mat-icon>
+            {{ grade.order }}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" [class.view-text-success]="grade.is_active" [class.view-text-muted]="!grade.is_active">
+            {{ grade.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="grade.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ grade.description }}</span>
+        </div>
+        <div class="detail-row" *ngIf="grade.students_count !== undefined">
+          <span class="detail-label">Total Students:</span>
+          <span class="detail-value">{{ grade.students_count }}</span>
+        </div>
+        <div class="detail-row" *ngIf="grade.classes_count !== undefined">
+          <span class="detail-label">Total Classes:</span>
+          <span class="detail-value">{{ grade.classes_count }}</span>
+        </div>
+        <div class="detail-row" *ngIf="grade.created_at">
+          <span class="detail-label">Created At:</span>
+          <span class="detail-value">{{ grade.created_at | date: 'medium' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+  <mat-card class="view-detail-card sections-overview-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>class</mat-icon>
+        Sections
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ sectionSummaries.length }} section{{ sectionSummaries.length === 1 ? '' : 's' }} in this grade
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="section-summary-grid" *ngIf="sectionSummaries.length; else noSections">
+        <article class="section-summary-card" *ngFor="let section of sectionSummaries">
+          <div class="section-summary-header">
+            <div>
+              <h3>Section {{ section.name }}</h3>
+              <p class="section-meta">
+                <span *ngIf="section.room_number">Room {{ section.room_number }}</span>
+                <span *ngIf="section.capacity">Capacity {{ section.capacity }}</span>
+                <span *ngIf="section.code">{{ section.code }}</span>
+              </p>
+            </div>
+            <button
+              *ngIf="section.id"
+              mat-stroked-button
+              color="primary"
+              (click)="viewSection(section)">
+              View
+            </button>
+          </div>
+
+          <div class="gender-stats">
+            <div class="gender-stat total">
+              <span class="gender-value">{{ section.students.total }}</span>
+              <span class="gender-label">Students</span>
+            </div>
+            <div class="gender-stat male">
+              <span class="gender-value">{{ section.students.male }}</span>
+              <span class="gender-label">Male</span>
+            </div>
+            <div class="gender-stat female">
+              <span class="gender-value">{{ section.students.female }}</span>
+              <span class="gender-label">Female</span>
+            </div>
+            <div class="gender-stat other">
+              <span class="gender-value">{{ section.students.other }}</span>
+              <span class="gender-label">Other</span>
+            </div>
+          </div>
+
+          <div class="teacher-block" *ngIf="section.class_teacher; else noTeacher">
+            <mat-icon>person</mat-icon>
+            <div>
+              <div class="teacher-label">Class Teacher</div>
+              <div class="teacher-name">{{ teacherName(section) }}</div>
+              <div class="teacher-meta" *ngIf="section.class_teacher.designation || section.class_teacher.employee_id">
+                {{ section.class_teacher.designation }}
+                <span *ngIf="section.class_teacher.designation && section.class_teacher.employee_id"> · </span>
+                {{ section.class_teacher.employee_id }}
+              </div>
+              <div class="teacher-meta" *ngIf="section.class_teacher.email || section.class_teacher.phone">
+                {{ section.class_teacher.email }}
+                <span *ngIf="section.class_teacher.email && section.class_teacher.phone"> · </span>
+                {{ section.class_teacher.phone }}
+              </div>
+            </div>
+          </div>
+          <ng-template #noTeacher>
+            <div class="teacher-block empty">
+              <mat-icon>person_off</mat-icon>
+              <div>
+                <div class="teacher-label">Class Teacher</div>
+                <div class="teacher-name muted">Not assigned</div>
+              </div>
+            </div>
+          </ng-template>
+
+          <button
+            mat-button
+            color="primary"
+            class="section-students-link"
+            (click)="viewSectionStudents(section)">
+            View students
+          </button>
+        </article>
+      </div>
+      <ng-template #noSections>
+        <div class="view-no-info">
+          <p>No sections are set up for this grade yet.</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="view-loading-container" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading grade details...</p>
 </div>
 

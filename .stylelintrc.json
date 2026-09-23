@@ -1,0 +1,24 @@
+{
+  "customSyntax": "postcss-scss",
+  "defaultSeverity": "warning",
+  "rules": {
+    "declaration-property-value-disallowed-list": [
+      {
+        "/^(color|background|background-color|border|border-top|border-right|border-bottom|border-left|border-color|border-top-color|border-right-color|border-bottom-color|border-left-color|outline|outline-color|box-shadow|fill|stroke)$/": [
+          "/#[0-9a-fA-F]{3,8}\\b/"
+        ]
+      },
+      {
+        "message": "Use a theme CSS variable (var(--primary-color), var(--accent-color), var(--success-color), var(--surface-color), etc.) instead of a hardcoded hex color — see ui/CLAUDE.md > Design system."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/styles/**/*.scss"],
+      "rules": {
+        "declaration-property-value-disallowed-list": null
+      }
+    }
+  ]
+}

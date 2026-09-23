@@ -1,0 +1,165 @@
+<div class="view-container" *ngIf="!loading && feeStructure">
+  
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="accent" (click)="toggleStatus()">
+        <mat-icon>{{ feeStructure.is_active ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+        {{ feeStructure.is_active ? 'Deactivate' : 'Activate' }}
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">account_balance</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ feeStructure.fee_type }} - Grade {{ feeStructure.grade }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>currency_rupee</mat-icon>
+              ₹{{ feeStructure.amount | number:'1.2-2' }}
+            </span>
+            <span *ngIf="feeStructure.branch">
+              <mat-icon>business</mat-icon>
+              {{ feeStructure.branch.name }}
+            </span>
+            <span>
+              <mat-icon>event</mat-icon>
+              {{ feeStructure.academic_year }}
+            </span>
+            <span class="status-badge" [ngClass]="feeStructure.is_active ? 'status-active' : 'status-inactive'">
+              <mat-icon>circle</mat-icon>
+              {{ feeStructure.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Details Grid -->
+  <div class="view-details-grid">
+    <!-- Basic Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Basic Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Fee Type:</span>
+          <span class="detail-value">
+            <span class="fee-type-badge">{{ feeStructure.fee_type }}</span>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Grade:</span>
+          <span class="detail-value">Grade {{ feeStructure.grade }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Amount:</span>
+          <span class="detail-value amount-value">₹{{ feeStructure.amount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Academic Year:</span>
+          <span class="detail-value">{{ feeStructure.academic_year }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feeStructure.due_date">
+          <span class="detail-label">Due Date:</span>
+          <span class="detail-value">{{ feeStructure.due_date | date:'mediumDate' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Branch:</span>
+          <span class="detail-value">{{ feeStructure.branch?.name || 'N/A' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feeStructure.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ feeStructure.description }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Fee Configuration -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>settings</mat-icon>
+          Fee Configuration
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="feeStructure.is_active ? 'status-active' : 'status-inactive'">
+              {{ feeStructure.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Recurring Fee:</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="feeStructure.is_recurring ? 'status-yes' : 'status-no'">
+              {{ feeStructure.is_recurring ? 'Yes' : 'No' }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="feeStructure.is_recurring">
+          <span class="detail-label">Recurrence Period:</span>
+          <span class="detail-value">{{ getRecurrenceText() }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- System Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          System Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">Structure ID:</span>
+          <span class="detail-value">#{{ feeStructure.id }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feeStructure.created_at">
+          <span class="detail-label">Created At:</span>
+          <span class="detail-value">{{ feeStructure.created_at | date:'medium' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="feeStructure.updated_at">
+          <span class="detail-label">Last Updated:</span>
+          <span class="detail-value">{{ feeStructure.updated_at | date:'medium' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- Loading State -->
+<div class="view-loading-container" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+  <p>Loading fee structure information...</p>
+</div>
+

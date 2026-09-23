@@ -1,0 +1,443 @@
+@use '../../../../../styles/assets/variables' as *;
+
+:host {
+  display: block;
+}
+
+.sms-setting-page {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: none;
+}
+
+.sms-branch-row {
+  margin-bottom: var(--spacing-md);
+  max-width: min(100%, 320px);
+
+  .branch-field {
+    width: 100%;
+  }
+}
+
+.sms-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.sms-provider-pills {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-full);
+  background: var(--gray-100);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sms-pill {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 32px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+
+  &:hover:not(.active) {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb), 0.45);
+    outline-offset: 2px;
+  }
+
+  &.active {
+    background: var(--white);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &.sms-pill--configured:not(.active) {
+    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), 0.28);
+  }
+
+  &.sms-pill--active-gateway {
+    box-shadow: inset 0 0 0 2px var(--primary-color);
+  }
+}
+
+.sms-active-hint {
+  margin: 0 0 var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary-color);
+
+  strong {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+}
+
+.sms-saved-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  margin: 0 0 var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: rgba(var(--primary-rgb), 0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--primary-rgb), 0.15);
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--primary-color);
+    margin-top: 1px;
+  }
+}
+
+.sms-test-panel {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+}
+
+.sms-test-title {
+  margin: 0 0 var(--spacing-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sms-test-lead {
+  margin: 0 0 var(--spacing-md);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.sms-test-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.sms-test-field {
+  width: 100%;
+}
+
+.sms-test-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sms-test-spinner {
+  display: inline-block;
+}
+
+.sms-test-hint {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+// Two equal columns: form 50%, brand aside 50% (after gap)
+.sms-form-shell {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-lg);
+  align-items: start;
+  justify-items: stretch;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+}
+
+.sms-form-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.sms-provider-form {
+  max-width: 100%;
+}
+
+.sms-field-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: var(--spacing-sm) var(--spacing-md);
+  align-items: start;
+  margin-bottom: var(--spacing-sm);
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
+
+    .sms-label {
+      text-align: left;
+      padding-top: 0;
+    }
+  }
+}
+
+.sms-label {
+  text-align: right;
+  padding-top: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.35;
+
+  .req {
+    color: var(--danger-color);
+    margin-left: 2px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    text-align: left;
+    padding-top: 0;
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+.sms-field {
+  width: 100%;
+
+  ::ng-deep {
+    .mat-mdc-form-field-subscript-wrapper {
+      margin-top: 2px;
+    }
+
+    .mat-mdc-text-field-wrapper {
+      padding-bottom: 0;
+    }
+  }
+}
+
+.sms-divider {
+  margin: var(--spacing-md) 0;
+  max-width: 100%;
+}
+
+.sms-actions {
+  max-width: 100%;
+  padding-top: var(--spacing-xs);
+}
+
+.sms-save-btn {
+  background: var(--primary-color) !important;
+  color: var(--primary-contrast) !important;
+  min-width: 100px;
+  min-height: 36px;
+  border-radius: var(--radius-sm) !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  &:hover:not(:disabled) {
+    background: var(--primary-dark) !important;
+  }
+
+  &:disabled {
+    opacity: 0.65;
+  }
+}
+
+.sms-save-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  min-height: 22px;
+}
+
+.sms-save-spinner {
+  display: inline-block;
+}
+
+.sms-perm-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: var(--spacing-sm) 0 0;
+  line-height: 1.45;
+}
+
+.sms-brand-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 60%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  align-self: start;
+  box-sizing: border-box;
+}
+
+.sms-brand-panel {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  align-self: stretch;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--primary-color);
+  box-shadow: var(--shadow-sm);
+
+  @media (max-width: $breakpoint-lg) {
+    border-left: 1px solid var(--border-color);
+    border-top: 3px solid var(--primary-color);
+  }
+}
+
+.sms-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  margin: 0;
+}
+
+.sms-brand-eyebrow {
+  margin: 0 0 var(--spacing-xs);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary-color);
+  line-height: 1.2;
+  width: 100%;
+}
+
+.sms-brand-heading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 var(--spacing-xs);
+  width: 100%;
+}
+
+.sms-brand-sub {
+  margin: 0 0 var(--spacing-md);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  max-width: 100%;
+  width: 100%;
+}
+
+.sms-brand-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--spacing-sm) 0 0;
+  border-top: 1px solid var(--border-color);
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-decoration: none;
+  word-break: break-word;
+  box-sizing: border-box;
+
+  &:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb), 0.45);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.sms-brand-link-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--primary-color);
+}
+
+.sms-brand-link-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+@media (max-width: $breakpoint-sm) {
+  .sms-setting-page {
+    padding: var(--spacing-sm);
+  }
+
+  .sms-provider-pills {
+    flex-wrap: wrap;
+  }
+
+  .sms-pill {
+    flex: 1 1 calc(50% - var(--spacing-xs));
+    min-width: 72px;
+    justify-content: center;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}

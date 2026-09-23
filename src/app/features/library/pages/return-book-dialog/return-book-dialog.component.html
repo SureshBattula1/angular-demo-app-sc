@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>Return Book</h2>
+
+<mat-dialog-content class="return-dialog">
+  <div class="summary">
+    <div class="row"><span class="lbl">Book</span><span class="val">{{ data.bookTitle }}</span></div>
+    <div class="row"><span class="lbl">Member</span><span class="val">{{ data.issue.member_name || '—' }} ({{ data.issue.borrower_type }})</span></div>
+    <div class="row"><span class="lbl">Issued</span><span class="val">{{ data.issue.issue_date | date:'mediumDate' }}</span></div>
+    <div class="row"><span class="lbl">Due</span><span class="val">{{ data.issue.due_date | date:'mediumDate' }}</span></div>
+  </div>
+
+  <!-- Overdue / fine notice -->
+  <div class="fine-box" *ngIf="fine > 0; else onTime">
+    <mat-icon>report</mat-icon>
+    <div>
+      <div class="fine-title">Overdue by {{ daysOverdue }} day{{ daysOverdue === 1 ? '' : 's' }}</div>
+      <div class="fine-amount">Late fine: ₹{{ fine | number:'1.2-2' }}</div>
+    </div>
+  </div>
+  <ng-template #onTime>
+    <div class="ontime-box">
+      <mat-icon>check_circle</mat-icon>
+      <span>Returned on time — no fine.</span>
+    </div>
+  </ng-template>
+
+  <mat-checkbox *ngIf="fine > 0" [(ngModel)]="collectFine" color="primary">
+    Collect the ₹{{ fine | number:'1.2-2' }} fine now
+  </mat-checkbox>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="submitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="confirm()" [disabled]="submitting">
+    <mat-icon>assignment_returned</mat-icon>
+    {{ fine > 0 && collectFine ? 'Return & Collect ₹' + (fine | number:'1.0-0') : 'Confirm Return' }}
+  </button>
+</mat-dialog-actions>

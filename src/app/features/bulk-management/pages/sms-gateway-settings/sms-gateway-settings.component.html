@@ -1,0 +1,289 @@
+<div class="sms-setting-page">
+  <div class="sms-branch-row" *ngIf="branches.length && !useExternalBranchFilter">
+    <mat-form-field appearance="outline" class="branch-field">
+      <mat-label>Branch</mat-label>
+      <mat-select
+        [(ngModel)]="branchId"
+        (selectionChange)="onBranchChange()"
+        [ngModelOptions]="{ standalone: true }">
+        <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+      </mat-select>
+      <mat-icon matPrefix>business</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <div class="sms-loading" *ngIf="loading">
+    <mat-spinner diameter="32"></mat-spinner>
+    <span>Loading configuration…</span>
+  </div>
+
+  <ng-container *ngIf="!loading && branches.length">
+    <div
+      class="sms-provider-pills"
+      role="tablist"
+      [attr.aria-label]="configChannel === 'whatsapp' ? 'WhatsApp provider' : 'SMS provider'">
+      <button
+        type="button"
+        class="sms-pill"
+        *ngFor="let t of providerTabs"
+        [class.active]="activeProvider === t.id"
+        [class.sms-pill--configured]="cachedData?.providers?.[t.id]?.configured"
+        [class.sms-pill--active-gateway]="cachedData?.providers?.[t.id]?.is_active"
+        (click)="selectProvider(t.id)"
+        role="tab"
+        [attr.aria-selected]="activeProvider === t.id">
+        {{ t.label }}
+      </button>
+    </div>
+
+    <p class="sms-active-hint" *ngIf="configChannel === 'sms'">
+      Only one provider can be <strong>Active</strong> per branch. Saving a provider as Active turns all others off.
+      Bulk SMS uses the active provider only.
+    </p>
+    <p class="sms-active-hint" *ngIf="configChannel === 'whatsapp'">
+      WhatsApp bulk messaging uses <strong>Twilio</strong> only. Saving as <strong>Active</strong> applies to this
+      WhatsApp configuration (separate from SMS gateway settings).
+    </p>
+
+    <p class="sms-saved-inline" *ngIf="cachedData?.providers?.[activeProvider]?.configured">
+      <mat-icon aria-hidden="true">cloud_done</mat-icon>
+      <span
+        >Saved configuration is loaded. Masked values (with *) are previews only; saving without changing them
+        keeps your stored credentials. Leave auth tokens blank to keep the current token.</span
+      >
+    </p>
+
+    <div class="sms-form-shell">
+      <div class="sms-form-main">
+        <!-- Twilio -->
+        <form *ngIf="activeProvider === 'twilio'" [formGroup]="twilioForm" class="sms-provider-form">
+          <div class="sms-field-row">
+            <label class="sms-label">
+              Twilio Account SID<span class="req">*</span>
+            </label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="account_sid" autocomplete="off" />
+              <mat-hint *ngIf="cachedData?.providers?.twilio?.configured && twilioForm.value.account_sid?.includes('*')">
+                Masked preview — replace only if changing Account SID.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">
+              Authentication Token<span class="req">*</span>
+            </label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input
+                matInput
+                [type]="hideTwilioToken ? 'password' : 'text'"
+                formControlName="auth_token"
+                autocomplete="new-password" />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="hideTwilioToken = !hideTwilioToken"
+                [attr.aria-label]="'Hide password'">
+                <mat-icon>{{ hideTwilioToken ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint *ngIf="cachedData?.providers?.twilio?.auth_token_set && !twilioForm.value.auth_token">
+                Token on file — leave blank to keep, or enter a new token.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row" *ngIf="configChannel === 'sms'">
+            <label class="sms-label">
+              Registered Phone Number<span class="req">*</span>
+            </label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="from_number" autocomplete="off" />
+              <mat-hint *ngIf="cachedData?.providers?.twilio?.configured && twilioForm.value.from_number?.includes('*')">
+                Masked preview — replace only if changing the number.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row" *ngIf="configChannel === 'whatsapp'">
+            <label class="sms-label">
+              WhatsApp sender (Twilio)<span class="req">*</span>
+            </label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="whatsapp_from" autocomplete="off" placeholder="+14155238886" />
+              <mat-hint>Twilio-approved WhatsApp-enabled sender (E.164 or whatsapp:+…).</mat-hint>
+              <mat-hint *ngIf="cachedData?.providers?.twilio?.configured && twilioForm.value.whatsapp_from?.includes('*')">
+                Masked preview — replace only if changing the sender.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Status<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <mat-select formControlName="status" placeholder="Select">
+                <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </form>
+
+        <!-- MSG91 -->
+        <form *ngIf="activeProvider === 'msg91'" [formGroup]="msg91Form" class="sms-provider-form">
+          <div class="sms-field-row">
+            <label class="sms-label">Auth Key<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input
+                matInput
+                [type]="hideMsg91Key ? 'password' : 'text'"
+                formControlName="auth_key"
+                autocomplete="off" />
+              <button mat-icon-button matSuffix type="button" (click)="hideMsg91Key = !hideMsg91Key">
+                <mat-icon>{{ hideMsg91Key ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint *ngIf="cachedData?.providers?.msg91?.auth_key_set && !msg91Form.value.auth_key">
+                Key on file — leave blank to keep.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Sender ID<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="sender_id" />
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Status<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <mat-select formControlName="status" placeholder="Select">
+                <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </form>
+
+        <!-- Text Local -->
+        <form *ngIf="activeProvider === 'local_text'" [formGroup]="localTextForm" class="sms-provider-form">
+          <div class="sms-field-row">
+            <label class="sms-label">Username<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="username" />
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Hash key<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input
+                matInput
+                [type]="hideLocalHash ? 'password' : 'text'"
+                formControlName="hashkey"
+                autocomplete="off" />
+              <button mat-icon-button matSuffix type="button" (click)="hideLocalHash = !hideLocalHash">
+                <mat-icon>{{ hideLocalHash ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint *ngIf="cachedData?.providers?.local_text?.hashkey_set && !localTextForm.value.hashkey">
+                Hash on file — leave blank to keep.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Sender ID<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="sender_id" />
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Status<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <mat-select formControlName="status" placeholder="Select">
+                <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </form>
+
+        <!-- Nexmo -->
+        <form *ngIf="activeProvider === 'nexmo'" [formGroup]="nexmoForm" class="sms-provider-form">
+          <div class="sms-field-row">
+            <label class="sms-label">Nexmo API Key<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="api_key" />
+              <mat-hint *ngIf="cachedData?.providers?.nexmo?.configured && nexmoForm.value.api_key?.includes('*')">
+                Masked preview — replace only if changing API key.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Nexmo API Secret<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input
+                matInput
+                [type]="hideNexmoSecret ? 'password' : 'text'"
+                formControlName="api_secret"
+                autocomplete="off" />
+              <button mat-icon-button matSuffix type="button" (click)="hideNexmoSecret = !hideNexmoSecret">
+                <mat-icon>{{ hideNexmoSecret ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint *ngIf="cachedData?.providers?.nexmo?.api_secret_set && !nexmoForm.value.api_secret">
+                Secret on file — leave blank to keep.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Registered / From Number<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <input matInput formControlName="from_number" />
+              <mat-hint *ngIf="cachedData?.providers?.nexmo?.configured && nexmoForm.value.from_number?.includes('*')">
+                Masked preview — replace only if changing the number.
+              </mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="sms-field-row">
+            <label class="sms-label">Status<span class="req">*</span></label>
+            <mat-form-field appearance="outline" class="sms-field">
+              <mat-select formControlName="status" placeholder="Select">
+                <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </form>
+
+        <mat-divider class="sms-divider"></mat-divider>
+
+        <div class="sms-actions">
+          <button
+            mat-raised-button
+            type="button"
+            class="sms-save-btn"
+            (click)="save()"
+            [disabled]="saving || !canEdit()"
+            *ngIf="canEdit()">
+            <span class="sms-save-inner">
+              <mat-spinner *ngIf="saving" diameter="20" class="sms-save-spinner"></mat-spinner>
+              <span *ngIf="!saving">Save</span>
+            </span>
+          </button>
+          <p class="sms-perm-hint" *ngIf="!canEdit()">You need bulk management edit permission to save.</p>
+        </div>
+
+
+      </div>
+
+      <aside class="sms-brand-aside" *ngIf="providerTabs.length" aria-label="Provider information">
+        <div class="sms-brand-panel">
+          <ng-container *ngFor="let t of providerTabs">
+            <div class="sms-brand-block" *ngIf="activeProvider === t.id">
+              <p class="sms-brand-eyebrow">Provider</p>
+              <div class="sms-brand-heading">{{ t.brandTitle }}</div>
+              <p class="sms-brand-sub">{{ t.brandSubtitle }}</p>
+              <a
+                [href]="t.website"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="sms-brand-link">
+                <mat-icon class="sms-brand-link-icon" aria-hidden="true">open_in_new</mat-icon>
+                <span class="sms-brand-link-text">{{ t.website }}</span>
+              </a>
+            </div>
+          </ng-container>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+</div>

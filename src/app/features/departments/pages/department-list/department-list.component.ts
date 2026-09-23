@@ -2,10 +2,12 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { DepartmentService } from '../../services/department.service';
+import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { Department } from '../../../../core/models/department.model';
 
 @Component({
@@ -18,13 +20,16 @@ import { Department } from '../../../../core/models/department.model';
       [data]="departments"
       [config]="tableConfig"
       [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Department Management'"
+      [title]="'Departments'"
       [loading]="loading"
       (actionClicked)="onAction($event)"
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -39,18 +44,26 @@ export class DepartmentListComponent implements OnInit {
   
   tableConfig: TableConfig = {
     columns: [
-      { key: 'id', header: 'ID', sortable: true, width: '80px' },
-      { key: 'name', header: 'Department Name', sortable: true, searchable: true },
+      // { key: 'id', header: 'ID', sortable: true, width: '80px' },
+      { key: 'name', header: 'Name', sortable: true, searchable: true },
       { key: 'head', header: 'Head', sortable: true, searchable: true },
+      { key: 'branch.name', header: 'Branch', sortable: true },
       { key: 'established_date', header: 'Established', sortable: true, type: 'date', width: '130px' },
       { key: 'students_count', header: 'Students', type: 'number', align: 'center', width: '100px' },
       { key: 'teachers_count', header: 'Teachers', type: 'number', align: 'center', width: '100px' },
-      { key: 'is_active', header: 'Active', type: 'badge', width: '90px', align: 'center' }
+      {
+        key: 'status_label',
+        header: 'Status',
+        type: 'badge',
+        width: '110px',
+        align: 'center',
+        cellClass: (row: any) => (row?.is_active === false || row?.status_label === 'De-Active') ? 'badge-danger' : 'badge-success'
+      }
     ],
     actions: [
-      { icon: 'visibility', label: 'View Details', action: (row) => this.viewDepartment(row) },
-      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editDepartment(row) },
-      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteDepartment(row) }
+      { icon: 'visibility', label: 'View Details', action: (row) => this.viewDepartment(row), permission: 'departments.view' },
+      { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editDepartment(row), permission: 'departments.edit' },
+      { icon: 'delete', label: 'Delete', color: 'warn', action: (row) => this.deleteDepartment(row), permission: 'departments.delete' }
     ],
     selectable: true,
     pagination: true,
@@ -58,10 +71,11 @@ export class DepartmentListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
-    defaultPageSize: 10
+    defaultPageSize: 25,
+    addButtonPermission: 'departments.create'
   };
   
   advancedSearchConfig: AdvancedSearchConfig = {
@@ -71,12 +85,21 @@ export class DepartmentListComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select branch',
+        icon: 'business',
+        options: [], // Will be populated dynamically
+        // group: 'Basic'
+      },
+      {
         key: 'name',
         label: 'Department Name',
         type: 'text',
         placeholder: 'Enter department name',
-        icon: 'business',
-        group: 'Basic'
+        icon: 'apartment',
+        // group: 'Basic'
       },
       {
         key: 'head',
@@ -84,26 +107,49 @@ export class DepartmentListComponent implements OnInit {
         type: 'text',
         placeholder: 'Enter head name',
         icon: 'person',
-        group: 'Basic'
+        // group: 'Basic'
       },
       {
         key: 'is_active',
         label: 'Active Only',
         type: 'checkbox',
         icon: 'check_circle',
-        group: 'Status'
+        // group: 'Status'
       }
     ]
   };
   
   constructor(
     private departmentService: DepartmentService,
+    private branchService: BranchService,
     private router: Router,
     private errorHandler: ErrorHandlerService
   ) {}
   
   ngOnInit(): void {
+    this.loadBranches();
     this.loadDepartments();
+  }
+  
+  /**
+   * Load branches dynamically for advanced search filter
+   */
+  loadBranches(): void {
+    this.branchService.getBranches({ is_active: true }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          const branchField = this.advancedSearchConfig.fields.find(f => f.key === 'branch_id');
+          if (branchField) {
+            branchField.options = response.data.map(branch => ({
+              value: branch.id.toString(),
+              label: branch.name
+            }));
+          }
+        }
+      },
+      error: (error) => {
+      }
+    });
   }
   
   loadDepartments(): void {
@@ -111,9 +157,15 @@ export class DepartmentListComponent implements OnInit {
     
     this.departmentService.getDepartments(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.departments = response.data;
-          this.tableConfig.totalCount = response.data.length;
+        if (response.success) {
+          this.departments = (response.data || []).map((d: any) => ({
+            ...d,
+            status_label: d?.is_active ? 'Active' : 'De-Active'
+          }));
+          if (response.meta) {
+            // Update config by creating a new reference to trigger Angular change detection
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          }
           this.loading = false;
         }
       },
@@ -124,11 +176,55 @@ export class DepartmentListComponent implements OnInit {
     });
   }
   
+  /**
+   * Handle pagination changes
+   */
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1, // Backend expects 1-based page numbers
+      per_page: event.pageSize
+    };
+    this.loadDepartments();
+  }
+  
+  /**
+   * Handle sort changes
+   */
+  onSortChange(event: SortEvent): void {
+    // Map frontend column names to backend column names
+    const columnMapping: Record<string, string> = {
+      'name': 'name',
+      'head': 'head',
+      'branch.name': 'branch_id',
+      'established_date': 'established_date',
+      'students_count': 'students_count',
+      'teachers_count': 'teachers_count',
+      'is_active': 'is_active'
+    };
+    
+    const sortColumn = columnMapping[event.field] || event.field;
+    
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: sortColumn,
+      sort_direction: event.direction
+    };
+    this.loadDepartments();
+  }
+
   onAdvancedSearchChange(event: SearchEvent): void {
+    // Reset to first page when searching
     this.currentFilters = {
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
     };
+    this.loadDepartments();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {};
     this.loadDepartments();
   }
   

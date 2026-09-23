@@ -1,0 +1,187 @@
+<div class="company-form-container">
+  <mat-card class="form-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add_business' }}</mat-icon>
+        {{ isEditMode ? 'Edit Company' : 'Create New Company' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update company information' : 'Add a new company to the system' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <!-- Form -->
+    <mat-card-content>
+      <form [formGroup]="companyForm" (ngSubmit)="onSubmit()">
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Company Name</mat-label>
+              <input matInput formControlName="name" placeholder="Enter company name">
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error *ngIf="companyForm.get('name')?.invalid && companyForm.get('name')?.touched">
+                {{ getErrorMessage('name') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Company Code</mat-label>
+              <input matInput formControlName="code" placeholder="e.g., COMP001" [readonly]="isEditMode">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-error *ngIf="companyForm.get('code')?.invalid && companyForm.get('code')?.touched">
+                {{ getErrorMessage('code') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                  {{ status.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>toggle_on</mat-icon>
+              <mat-error *ngIf="companyForm.get('status')?.invalid && companyForm.get('status')?.touched">
+                {{ getErrorMessage('status') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>contact_phone</mat-icon>
+            Contact Information
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" placeholder="Enter email address" type="email">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error *ngIf="companyForm.get('email')?.invalid && companyForm.get('email')?.touched">
+                {{ getErrorMessage('email') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" placeholder="Enter phone number" type="tel">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error *ngIf="companyForm.get('phone')?.invalid && companyForm.get('phone')?.touched">
+                {{ getErrorMessage('phone') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Website (Optional)</mat-label>
+              <input matInput formControlName="website" placeholder="https://example.com" type="url">
+              <mat-icon matPrefix>language</mat-icon>
+              <mat-error *ngIf="companyForm.get('website')?.invalid && companyForm.get('website')?.touched">
+                {{ getErrorMessage('website') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Tax ID (Optional)</mat-label>
+              <input matInput formControlName="tax_id" placeholder="Enter tax identification number">
+              <mat-icon matPrefix>receipt</mat-icon>
+              <mat-error *ngIf="companyForm.get('tax_id')?.invalid && companyForm.get('tax_id')?.touched">
+                {{ getErrorMessage('tax_id') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Address Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>location_on</mat-icon>
+            Address
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Address (Optional)</mat-label>
+              <textarea matInput formControlName="address" placeholder="Enter full address" rows="2"></textarea>
+              <mat-icon matPrefix>home</mat-icon>
+              <mat-error *ngIf="companyForm.get('address')?.invalid && companyForm.get('address')?.touched">
+                {{ getErrorMessage('address') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" placeholder="Enter city">
+              <mat-icon matPrefix>location_city</mat-icon>
+              <mat-error *ngIf="companyForm.get('city')?.invalid && companyForm.get('city')?.touched">
+                {{ getErrorMessage('city') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>State</mat-label>
+              <input matInput formControlName="state" placeholder="Enter state">
+              <mat-icon matPrefix>map</mat-icon>
+              <mat-error *ngIf="companyForm.get('state')?.invalid && companyForm.get('state')?.touched">
+                {{ getErrorMessage('state') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Country</mat-label>
+              <input matInput formControlName="country" placeholder="Enter country">
+              <mat-icon matPrefix>public</mat-icon>
+              <mat-error *ngIf="companyForm.get('country')?.invalid && companyForm.get('country')?.touched">
+                {{ getErrorMessage('country') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Pincode (Optional)</mat-label>
+              <input matInput formControlName="pincode" placeholder="Enter pincode" maxlength="20">
+              <mat-icon matPrefix>markunread_mailbox</mat-icon>
+              <mat-error *ngIf="companyForm.get('pincode')?.invalid && companyForm.get('pincode')?.touched">
+                {{ getErrorMessage('pincode') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Action Buttons -->
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" type="submit" (click)="onSubmit()"
+        [disabled]="isLoading || companyForm.invalid">
+        <mat-spinner *ngIf="isLoading" diameter="20" class="spinner-inline"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Company' : 'Create Company' }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

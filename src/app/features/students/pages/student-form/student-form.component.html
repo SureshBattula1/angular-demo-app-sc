@@ -22,6 +22,51 @@
             <mat-icon>person</mat-icon>
             Basic Information
           </h3>
+
+          <!-- Profile Picture Upload Section -->
+          <div class="profile-upload-row">
+            <!-- Circular Profile Picture -->
+            <div class="profile-picture-circle">
+              <div class="profile-picture-inner">
+                <img *ngIf="profilePicturePreview" 
+                     [src]="profilePicturePreview" 
+                     alt="Profile Picture"
+                     (error)="onProfilePictureError()">
+                <div *ngIf="!profilePicturePreview" class="profile-placeholder">
+                  <mat-icon>account_circle</mat-icon>
+                </div>
+              </div>
+              <!-- Delete Button Overlay -->
+              <button 
+                *ngIf="profilePicturePreview" 
+                type="button"
+                mat-icon-button 
+                class="delete-profile-btn"
+                (click)="removeProfilePicture()"
+                [disabled]="isLoading">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            
+            <!-- Upload Button -->
+            <div class="profile-upload-button">
+              <input 
+                #fileInput 
+                type="file" 
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp,image/bmp"
+                (change)="onProfileFileSelected($event)"
+                style="display: none">
+              <button 
+                type="button"
+                mat-raised-button 
+                color="primary"
+                (click)="fileInput.click()"
+                [disabled]="isLoading">
+                <mat-icon>upload</mat-icon>
+                Upload Image
+              </button>
+            </div>
+          </div>
           
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
@@ -57,7 +102,9 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Date of Birth *</mat-label>
-              <input matInput type="date" formControlName="date_of_birth">
+              <input matInput [matDatepicker]="dobPicker" formControlName="date_of_birth">
+              <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+              <mat-datepicker #dobPicker></mat-datepicker>
               <mat-icon matPrefix>cake</mat-icon>
               <mat-error *ngIf="studentForm.get('date_of_birth')?.invalid">{{ getErrorMessage('date_of_birth') }}</mat-error>
             </mat-form-field>
@@ -82,18 +129,41 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Religion</mat-label>
+              <input matInput formControlName="religion">
+              <mat-icon matPrefix>auto_awesome</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Category</mat-label>
               <mat-select formControlName="category">
                 <mat-option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</mat-option>
               </mat-select>
               <mat-icon matPrefix>category</mat-icon>
             </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Caste</mat-label>
+              <input matInput formControlName="caste">
+              <mat-icon matPrefix>groups</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Sub-Caste</mat-label>
+              <input matInput formControlName="sub_caste">
+              <mat-icon matPrefix>people</mat-icon>
+            </mat-form-field>
           </div>
 
           <mat-form-field appearance="outline" class="w-100" *ngIf="!isEditMode">
             <mat-label>Password *</mat-label>
-            <input matInput type="password" formControlName="password">
+            <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
             <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword" tabindex="-1">
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
             <mat-error *ngIf="studentForm.get('password')?.invalid">{{ getErrorMessage('password') }}</mat-error>
           </mat-form-field>
         </div>
@@ -109,11 +179,16 @@
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
               <mat-select formControlName="branch_id">
+                <mat-option *ngIf="branches.length === 0" disabled>
+                  Loading branches...
+                </mat-option>
                 <mat-option *ngFor="let branch of branches" [value]="branch.id">
                   {{ branch.name }} ({{ branch.code }})
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>business</mat-icon>
+              <mat-hint *ngIf="branches.length > 0">{{ branches.length }} branches available</mat-hint>
+              <mat-hint *ngIf="branches.length === 0">No branches found. Please contact administrator.</mat-hint>
               <mat-error *ngIf="studentForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
             </mat-form-field>
 
@@ -128,7 +203,9 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Admission Date *</mat-label>
-              <input matInput type="date" formControlName="admission_date">
+              <input matInput [matDatepicker]="admissionPicker" formControlName="admission_date">
+              <mat-datepicker-toggle matSuffix [for]="admissionPicker"></mat-datepicker-toggle>
+              <mat-datepicker #admissionPicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
               <mat-error *ngIf="studentForm.get('admission_date')?.invalid">{{ getErrorMessage('admission_date') }}</mat-error>
             </mat-form-field>
@@ -149,44 +226,87 @@
           </h3>
           
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Grade *</mat-label>
-              <mat-select formControlName="grade" [disabled]="loadingGrades">
-                <mat-option *ngIf="loadingGrades" disabled>
-                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-                  Loading grades...
-                </mat-option>
-                <mat-option *ngFor="let g of grades" [value]="g.value">{{ g.label }}</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>grade</mat-icon>
-              <mat-hint *ngIf="grades.length > 0">{{ grades.length }} grades available</mat-hint>
-              <mat-error *ngIf="studentForm.get('grade')?.invalid">{{ getErrorMessage('grade') }}</mat-error>
-            </mat-form-field>
+            <!-- Create: grade & section are editable -->
+            <ng-container *ngIf="!isEditMode">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Grade *</mat-label>
+                <mat-select
+                  formControlName="grade"
+                  [disabled]="!studentForm.get('branch_id')?.value"
+                >
+                  <mat-option *ngIf="!studentForm.get('branch_id')?.value" disabled>
+                    Select branch first
+                  </mat-option>
+                  <mat-option *ngIf="loadingGrades" disabled>
+                    <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                    Loading grades...
+                  </mat-option>
+                  <mat-option *ngFor="let g of grades" [value]="g.value">{{ g.label }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>grade</mat-icon>
+                <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
+                <mat-hint *ngIf="studentForm.get('branch_id')?.value && grades.length > 0">
+                  {{ grades.length }} grades available
+                </mat-hint>
+                <mat-error *ngIf="studentForm.get('grade')?.invalid">{{ getErrorMessage('grade') }}</mat-error>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Section</mat-label>
-              <mat-select formControlName="section" [disabled]="loadingSections">
-                <mat-option [value]="null">None</mat-option>
-                <mat-option *ngIf="loadingSections" disabled>
-                  <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-                  Loading sections...
-                </mat-option>
-                <mat-option *ngFor="let s of sections" [value]="s.name">{{ s.name }} ({{ s.grade_label }})</mat-option>
-              </mat-select>
-              <mat-icon matPrefix>class</mat-icon>
-              <mat-hint *ngIf="!studentForm.get('grade')?.value">Select a grade first to load sections</mat-hint>
-              <mat-hint *ngIf="studentForm.get('grade')?.value && sections.length === 0 && !loadingSections">
-                No sections available for this grade
-              </mat-hint>
-            </mat-form-field>
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Section</mat-label>
+                <mat-select
+                  formControlName="section"
+                  [disabled]="!studentForm.get('branch_id')?.value || !studentForm.get('grade')?.value"
+                >
+                  <mat-option [value]="null">None</mat-option>
+                  <mat-option *ngIf="!studentForm.get('branch_id')?.value" disabled>
+                    Select branch first
+                  </mat-option>
+                  <mat-option *ngIf="studentForm.get('branch_id')?.value && !studentForm.get('grade')?.value" disabled>
+                    Select grade first
+                  </mat-option>
+                  <mat-option *ngIf="loadingSections" disabled>
+                    <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                    Loading sections...
+                  </mat-option>
+                  <mat-option *ngFor="let s of sections" [value]="s.name">{{ s.name }} ({{ s.grade_label }})</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>class</mat-icon>
+                <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
+                <mat-hint *ngIf="!studentForm.get('grade')?.value">Select a grade first to load sections</mat-hint>
+                <mat-hint *ngIf="studentForm.get('grade')?.value && sections.length === 0 && !loadingSections">
+                  No sections available for this grade
+                </mat-hint>
+              </mat-form-field>
+            </ng-container>
+
+            <!-- Edit: grade & section are read-only (use promotion flows to change class) -->
+            <ng-container *ngIf="isEditMode">
+              <input type="hidden" formControlName="grade" />
+              <input type="hidden" formControlName="section" />
+              <mat-form-field appearance="outline" class="form-field-half academic-readonly">
+                <mat-label>Grade *</mat-label>
+                <input matInput [value]="getGradeDisplayLabel()" readonly />
+                <mat-icon matPrefix>grade</mat-icon>
+                <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="form-field-half academic-readonly">
+                <mat-label>Section</mat-label>
+                <input matInput [value]="getSectionDisplayLabel()" readonly />
+                <mat-icon matPrefix>class</mat-icon>
+                <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
+              </mat-form-field>
+            </ng-container>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Academic Year *</mat-label>
-              <input matInput formControlName="academic_year">
+              <mat-select formControlName="academic_year_id">
+                <mat-option *ngIf="loadingAcademicYears" disabled>Loading academic years...</mat-option>
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>
+              </mat-select>
               <mat-icon matPrefix>calendar_today</mat-icon>
-              <mat-error *ngIf="studentForm.get('academic_year')?.invalid">{{ getErrorMessage('academic_year') }}</mat-error>
+              <mat-error *ngIf="studentForm.get('academic_year_id')?.invalid">{{ getErrorMessage('academic_year_id') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
@@ -353,9 +473,9 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Religion</mat-label>
-              <input matInput formControlName="religion">
-              <mat-icon matPrefix>ac_unit</mat-icon>
+              <mat-label>Previous Grade</mat-label>
+              <input matInput formControlName="previous_grade">
+              <mat-icon matPrefix>grade</mat-icon>
             </mat-form-field>
           </div>
 
@@ -376,6 +496,412 @@
             <textarea matInput formControlName="remarks" rows="2"></textarea>
             <mat-icon matPrefix>notes</mat-icon>
           </mat-form-field>
+        </div>
+
+        <!-- Identity Documents Section -->
+        <div class="form-section">
+          <h3 class="section-title clickable" (click)="toggleSection('documents')">
+            <mat-icon>badge</mat-icon>
+            Identity Documents (Optional)
+            <mat-icon class="toggle-icon">{{ showDocumentsInfo ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </h3>
+          
+          <div class="collapsible-content" *ngIf="showDocumentsInfo">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Aadhaar Number</mat-label>
+                <input matInput formControlName="aadhaar_number" maxlength="12">
+                <mat-icon matPrefix>fingerprint</mat-icon>
+                <mat-hint>12 digits</mat-hint>
+                <mat-error *ngIf="studentForm.get('aadhaar_number')?.hasError('pattern')">Must be 12 digits</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>PEN Number</mat-label>
+                <input matInput formControlName="pen_number">
+                <mat-icon matPrefix>card_membership</mat-icon>
+                <mat-hint>Permanent Education Number</mat-hint>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Birth Certificate Number</mat-label>
+                <input matInput formControlName="birth_certificate_number">
+                <mat-icon matPrefix>assignment</mat-icon>
+              </mat-form-field>
+              <!-- Caste is captured in the Personal Information section; duplicate field removed. -->
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Passport Number</mat-label>
+                <input matInput formControlName="passport_number">
+                <mat-icon matPrefix>flight</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Passport Expiry</mat-label>
+                <input matInput [matDatepicker]="passportExpiryPicker" formControlName="passport_expiry">
+                <mat-datepicker-toggle matSuffix [for]="passportExpiryPicker"></mat-datepicker-toggle>
+                <mat-datepicker #passportExpiryPicker></mat-datepicker>
+                <mat-icon matPrefix>event</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Ration Card Number</mat-label>
+                <input matInput formControlName="ration_card_number">
+                <mat-icon matPrefix>receipt</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Caste Certificate Number</mat-label>
+                <input matInput formControlName="caste_certificate_number">
+                <mat-icon matPrefix>description</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sibling Information Section (Optional/Collapsible) -->
+        <div class="form-section">
+          <h3 class="section-title clickable" (click)="toggleSection('sibling')">
+            <mat-icon>family_restroom</mat-icon>
+            Sibling Information (Optional)
+            <mat-icon class="toggle-icon">{{ showSiblingInfo ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </h3>
+          
+          <div class="collapsible-content" *ngIf="showSiblingInfo">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Number of Siblings</mat-label>
+                <input matInput type="number" formControlName="number_of_siblings" min="0">
+                <mat-icon matPrefix>people</mat-icon>
+              </mat-form-field>
+
+              <div class="form-field-half">
+                <mat-checkbox formControlName="sibling_discount_applicable" color="primary">
+                  Sibling Discount Applicable
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="studentForm.get('sibling_discount_applicable')?.value">
+              <mat-label>Discount Percentage</mat-label>
+              <input matInput type="number" formControlName="sibling_discount_percentage" min="0" max="100">
+              <mat-icon matPrefix>percent</mat-icon>
+              <mat-hint>Enter discount percentage (0-100)</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Transport Details Section (Optional/Collapsible) -->
+        <div class="form-section">
+          <h3 class="section-title clickable" (click)="toggleSection('transport')">
+            <mat-icon>directions_bus</mat-icon>
+            Transport Details (Optional)
+            <mat-icon class="toggle-icon">{{ showTransportDetails ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </h3>
+          
+          <div class="collapsible-content" *ngIf="showTransportDetails">
+            <div class="form-row">
+              <div class="form-field-full">
+                <mat-checkbox formControlName="transport_required" color="primary">
+                  Transport Required
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <div *ngIf="studentForm.get('transport_required')?.value">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Transport Route</mat-label>
+                  <input matInput formControlName="transport_route">
+                  <mat-icon matPrefix>route</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Vehicle Number</mat-label>
+                  <input matInput formControlName="vehicle_number">
+                  <mat-icon matPrefix>local_shipping</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Pickup Point</mat-label>
+                  <input matInput formControlName="pickup_point">
+                  <mat-icon matPrefix>place</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Drop Point</mat-label>
+                  <input matInput formControlName="drop_point">
+                  <mat-icon matPrefix>location_on</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-third">
+                  <mat-label>Pickup Time</mat-label>
+                  <input matInput type="time" formControlName="pickup_time">
+                  <mat-icon matPrefix>schedule</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-third">
+                  <mat-label>Drop Time</mat-label>
+                  <input matInput type="time" formControlName="drop_time">
+                  <mat-icon matPrefix>schedule</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-third">
+                  <mat-label>Transport Fee</mat-label>
+                  <input matInput type="number" formControlName="transport_fee" min="0">
+                  <mat-icon matPrefix>currency_rupee</mat-icon>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hostel Details Section (Optional/Collapsible) -->
+        <div class="form-section">
+          <h3 class="section-title clickable" (click)="toggleSection('hostel')">
+            <mat-icon>hotel</mat-icon>
+            Hostel Details (Optional)
+            <mat-icon class="toggle-icon">{{ showHostelDetails ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </h3>
+          
+          <div class="collapsible-content" *ngIf="showHostelDetails">
+            <div class="form-row">
+              <div class="form-field-full">
+                <mat-checkbox formControlName="hostel_required" color="primary">
+                  Hostel Required
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <div *ngIf="studentForm.get('hostel_required')?.value">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-third">
+                  <mat-label>Hostel Name</mat-label>
+                  <input matInput formControlName="hostel_name">
+                  <mat-icon matPrefix>domain</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-third">
+                  <mat-label>Room Number</mat-label>
+                  <input matInput formControlName="hostel_room_number">
+                  <mat-icon matPrefix>meeting_room</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-third">
+                  <mat-label>Hostel Fee</mat-label>
+                  <input matInput type="number" formControlName="hostel_fee" min="0">
+                  <mat-icon matPrefix>currency_rupee</mat-icon>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health & Medical Information Section (Collapsible) -->
+        <div class="form-section">
+          <h3 class="section-title clickable" (click)="toggleSection('health')">
+            <mat-icon>local_hospital</mat-icon>
+            Health & Medical Information (Optional)
+            <mat-icon class="toggle-icon">{{ showHealthInfo ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </h3>
+          
+          <div class="collapsible-content" *ngIf="showHealthInfo">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Height (cm)</mat-label>
+                <input matInput type="number" formControlName="height_cm" min="0" max="300">
+                <mat-icon matPrefix>height</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Weight (kg)</mat-label>
+                <input matInput type="number" formControlName="weight_kg" min="0" max="200">
+                <mat-icon matPrefix>monitor_weight</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-third">
+                <mat-label>Blood Group</mat-label>
+                <mat-select formControlName="blood_group">
+                  <mat-option [value]="null">Not specified</mat-option>
+                  <mat-option *ngFor="let bg of bloodGroups" [value]="bg.value">{{ bg.label }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>bloodtype</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Vision Status</mat-label>
+                <mat-select formControlName="vision_status">
+                  <mat-option *ngFor="let status of visionOptions" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>visibility</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Hearing Status</mat-label>
+                <mat-select formControlName="hearing_status">
+                  <mat-option *ngFor="let status of hearingOptions" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>hearing</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Vaccination Status</mat-label>
+                <mat-select formControlName="vaccination_status">
+                  <mat-option *ngFor="let status of vaccinationStatus" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>vaccines</mat-icon>
+              </mat-form-field>
+
+              <div class="form-field-half">
+                <mat-checkbox formControlName="special_needs" color="primary">
+                  Special Needs
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100" *ngIf="studentForm.get('special_needs')?.value">
+              <mat-label>Special Needs Details</mat-label>
+              <textarea matInput formControlName="special_needs_details" rows="2"></textarea>
+              <mat-icon matPrefix>accessible</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Chronic Conditions</mat-label>
+              <textarea matInput formControlName="chronic_conditions" rows="2"></textarea>
+              <mat-icon matPrefix>medication</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Family Doctor Name</mat-label>
+                <input matInput formControlName="family_doctor_name">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Doctor Phone</mat-label>
+                <input matInput formControlName="family_doctor_phone">
+                <mat-icon matPrefix>phone</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <div class="form-field-half">
+                <mat-checkbox formControlName="medical_insurance" color="primary">
+                  Medical Insurance Available
+                </mat-checkbox>
+              </div>
+
+              <mat-form-field appearance="outline" class="form-field-half" *ngIf="studentForm.get('medical_insurance')?.value">
+                <mat-label>Insurance Provider</mat-label>
+                <input matInput formControlName="insurance_provider">
+                <mat-icon matPrefix>business</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="form-field-half" *ngIf="studentForm.get('medical_insurance')?.value">
+              <mat-label>Insurance Policy Number</mat-label>
+              <input matInput formControlName="insurance_policy_number">
+              <mat-icon matPrefix>policy</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Fee Concession & Scholarship Section (Collapsible) -->
+        <div class="form-section">
+          <h3 class="section-title clickable" (click)="toggleSection('scholarship')">
+            <mat-icon>school</mat-icon>
+            Fee Concession & Scholarship (Optional)
+            <mat-icon class="toggle-icon">{{ showScholarshipInfo ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </h3>
+          
+          <div class="collapsible-content" *ngIf="showScholarshipInfo">
+            <div class="form-row">
+              <div class="form-field-half">
+                <mat-checkbox formControlName="fee_concession_applicable" color="primary">
+                  Fee Concession Applicable
+                </mat-checkbox>
+              </div>
+
+              <mat-form-field appearance="outline" class="form-field-half">
+                <mat-label>Economic Status</mat-label>
+                <mat-select formControlName="economic_status">
+                  <mat-option *ngFor="let status of economicStatus" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>account_balance</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div *ngIf="studentForm.get('fee_concession_applicable')?.value">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Concession Type</mat-label>
+                  <mat-select formControlName="concession_type">
+                    <mat-option *ngFor="let type of concessionTypes" [value]="type">{{ type }}</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>category</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Concession Percentage</mat-label>
+                  <input matInput type="number" formControlName="concession_percentage" min="0" max="100">
+                  <mat-icon matPrefix>percent</mat-icon>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Scholarship Name</mat-label>
+                <input matInput formControlName="scholarship_name">
+                <mat-icon matPrefix>workspace_premium</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Scholarship Details</mat-label>
+                <textarea matInput formControlName="scholarship_details" rows="2"></textarea>
+                <mat-icon matPrefix>description</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Family Annual Income</mat-label>
+              <input matInput type="number" formControlName="family_annual_income" min="0">
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+              <mat-hint>Required for concession/scholarship verification</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Student Attachments Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>attach_file</mat-icon>
+            Student Attachments
+          </h3>
+          
+          <app-universal-attachments
+            module="student"
+            [moduleId]="attachmentModuleId || studentId || null"
+            mode="form">
+          </app-universal-attachments>
+          
+          <p class="help-text">
+            <mat-icon>info</mat-icon>
+            Upload multiple files such as birth certificate, transfer certificate, previous school reports, medical records, etc.
+          </p>
         </div>
 
       </form>
@@ -401,4 +927,5 @@
     </mat-card-actions>
   </mat-card>
 </div>
+
 

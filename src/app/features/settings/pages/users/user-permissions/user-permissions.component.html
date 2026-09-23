@@ -1,0 +1,226 @@
+<div class="user-permissions-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-top">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-content">
+        <h1>Manage User Permissions</h1>
+        <p class="user-info" *ngIf="userData">
+          <mat-icon>person</mat-icon>
+          <span>{{ userData.name }} ({{ userData.email }})</span>
+          <mat-chip class="role-chip">{{ userData.role }}</mat-chip>
+        </p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="header-actions">
+      <button 
+        mat-raised-button 
+        color="warn" 
+        (click)="resetChanges()" 
+        [disabled]="!hasModifications() || isLoading || isSaving">
+        <mat-icon>refresh</mat-icon>
+        Reset Changes
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="savePermissions()" 
+        [disabled]="!hasModifications() || isLoading || isSaving">
+        <mat-icon>save</mat-icon>
+        Save Permissions ({{ getModifiedPermissions().length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading permissions...</p>
+  </div>
+
+  <!-- Permissions Content -->
+  <div *ngIf="!isLoading" class="permissions-content">
+    <!-- Filters and Search -->
+    <mat-card class="filters-card">
+      <mat-card-content>
+        <div class="filters-row">
+          <!-- Search -->
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search permissions</mat-label>
+            <input matInput [(ngModel)]="searchTerm" placeholder="Search by name, module, or action">
+            <mat-icon matPrefix>search</mat-icon>
+            <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="searchTerm = ''">
+              <mat-icon>clear</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <!-- Filter Mode -->
+          <mat-button-toggle-group [(ngModel)]="filterMode" class="filter-toggle">
+            <mat-button-toggle value="all">All</mat-button-toggle>
+            <mat-button-toggle value="granted">Granted</mat-button-toggle>
+            <mat-button-toggle value="denied">Denied</mat-button-toggle>
+            <mat-button-toggle value="overridden">Overridden</mat-button-toggle>
+          </mat-button-toggle-group>
+
+          <!-- Expand/Collapse All -->
+          <div class="expand-buttons">
+            <button mat-stroked-button (click)="expandAll()">
+              <mat-icon>unfold_more</mat-icon> Expand All
+            </button>
+            <button mat-stroked-button (click)="collapseAll()">
+              <mat-icon>unfold_less</mat-icon> Collapse All
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <mat-icon class="from-role">shield</mat-icon>
+        <span>From Role</span>
+      </div>
+      <div class="legend-item">
+        <mat-icon class="overridden">edit</mat-icon>
+        <span>User Override</span>
+      </div>
+      <div class="legend-item">
+        <mat-icon class="modified">fiber_manual_record</mat-icon>
+        <span>Modified (Unsaved)</span>
+      </div>
+    </div>
+
+    <!-- Permissions by Module -->
+    <div class="modules-container">
+      <mat-accordion multi>
+        <mat-expansion-panel 
+          *ngFor="let module of getFilteredGroupedPermissions()"
+          [expanded]="isModuleExpanded(module.module_slug)"
+          (opened)="toggleModuleExpanded(module.module_slug)"
+          (closed)="toggleModuleExpanded(module.module_slug)">
+          
+          <!-- Panel Header -->
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="module-header">
+                <mat-icon [style.color]="module.allGranted ? '#4caf50' : '#9e9e9e'">
+                  {{ module.module_icon }}
+                </mat-icon>
+                <span class="module-name">{{ module.module_name }}</span>
+                <mat-chip class="permission-count">
+                  {{ getGrantedCount(module) }} / {{ module.permissions.length }}
+                </mat-chip>
+                <mat-chip *ngIf="getOverriddenCount(module) > 0" class="overridden-chip">
+                  {{ getOverriddenCount(module) }} overridden
+                </mat-chip>
+              </div>
+            </mat-panel-title>
+            <mat-panel-description>
+              <div class="module-toggle-wrapper">
+                <mat-checkbox
+                  [checked]="areAllPermissionsGranted(module)"
+                  [indeterminate]="areSomePermissionsGranted(module)"
+                  (change)="toggleModule(module)"
+                  (click)="$event.stopPropagation()"
+                  color="primary">
+                  {{ areAllPermissionsGranted(module) ? 'All Granted' : areSomePermissionsGranted(module) ? 'Some Granted' : 'Grant All' }}
+                </mat-checkbox>
+              </div>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <!-- Panel Content -->
+          <div class="permissions-list">
+            <div 
+              *ngFor="let permission of module.permissions" 
+              class="permission-item"
+              [class.granted]="permission.granted"
+              [class.denied]="!permission.granted"
+              [class.modified]="permission.modified">
+              
+              <div class="permission-info">
+                <div class="permission-main">
+                  <mat-slide-toggle
+                    [(ngModel)]="permission.granted"
+                    (change)="togglePermission(permission)"
+                    color="primary"
+                    [disabled]="isSaving">
+                  </mat-slide-toggle>
+                  
+                  <div class="permission-details">
+                    <div class="permission-name">
+                      {{ permission.name }}
+                      <mat-icon 
+                        *ngIf="permission.from_role && !permission.overridden" 
+                        class="from-role-icon"
+                        matTooltip="Permission from role">
+                        shield
+                      </mat-icon>
+                      <mat-icon 
+                        *ngIf="permission.overridden && !permission.modified" 
+                        class="overridden-icon"
+                        matTooltip="User-specific override">
+                        edit
+                      </mat-icon>
+                      <mat-icon 
+                        *ngIf="permission.modified" 
+                        class="modified-icon"
+                        matTooltip="Modified (not saved yet)">
+                        fiber_manual_record
+                      </mat-icon>
+                    </div>
+                    <div class="permission-slug">{{ permission.slug }}</div>
+                  </div>
+                </div>
+                
+                <mat-chip 
+                  [color]="getActionColor(permission.action)"
+                  class="action-chip">
+                  {{ permission.action }}
+                </mat-chip>
+              </div>
+
+              <!-- Status Indicators -->
+              <div class="permission-status" *ngIf="permission.from_role || permission.overridden">
+                <mat-chip 
+                  *ngIf="permission.from_role && !permission.overridden"
+                  class="status-chip role-chip">
+                  From Role
+                </mat-chip>
+                <mat-chip 
+                  *ngIf="permission.overridden && !permission.modified"
+                  class="status-chip override-chip">
+                  Overridden
+                </mat-chip>
+                <mat-chip 
+                  *ngIf="permission.modified"
+                  class="status-chip modified-chip">
+                  Modified
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+
+      <!-- No Results -->
+      <div *ngIf="getFilteredGroupedPermissions().length === 0" class="no-results">
+        <mat-icon>search_off</mat-icon>
+        <h3>No permissions found</h3>
+        <p>Try adjusting your search or filters</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saving Overlay -->
+  <div *ngIf="isSaving" class="saving-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Saving permissions...</p>
+  </div>
+</div>
+

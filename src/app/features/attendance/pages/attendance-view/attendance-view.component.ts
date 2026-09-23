@@ -15,12 +15,17 @@ import { StudentAttendance, TeacherAttendance } from '../../../../core/models/at
 })
 export class AttendanceViewComponent implements OnInit {
   loading = false;
-  attendanceId?: number;
-  studentId?: number;
+  attendanceId?: string;
+  studentId?: string;
+  teacherId?: string;
   showReport = false;
+  reportType: 'student' | 'teacher' = 'student';
+  returnTab: 'student' | 'teacher' = 'student'; // Store the tab to return to
   attendance?: StudentAttendance | TeacherAttendance;
-  attendanceHistory: StudentAttendance[] = [];
+  attendanceHistory: any[] = [];
   summary: any = null;
+  studentInfo: any = null;
+  teacherInfo: any = null;
   
   constructor(
     private route: ActivatedRoute,
@@ -32,15 +37,22 @@ export class AttendanceViewComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
-        this.attendanceId = +params['id'];
+        this.attendanceId = params['id'];
         
         // Check if we need to show report
         this.route.queryParams.subscribe(queryParams => {
           this.showReport = queryParams['report'] === 'true';
+          this.reportType = queryParams['type'] || 'student';
+          this.returnTab = queryParams['returnTab'] || 'student'; // Capture the tab to return to
           
           if (this.showReport) {
-            this.studentId = this.attendanceId;
-            this.loadStudentReport();
+            if (this.reportType === 'student') {
+              this.studentId = this.attendanceId;
+              this.loadStudentReport();
+            } else {
+              this.teacherId = this.attendanceId;
+              this.loadTeacherReport();
+            }
           } else {
             this.loadAttendance();
           }
@@ -64,7 +76,9 @@ export class AttendanceViewComponent implements OnInit {
       error: (error) => {
         this.errorHandler.showError(error);
         this.loading = false;
-        this.router.navigate(['/attendance']);
+        this.router.navigate(['/attendance'], {
+          queryParams: { tab: this.returnTab }
+        });
       }
     });
   }
@@ -82,10 +96,9 @@ export class AttendanceViewComponent implements OnInit {
       to_date: now.toISOString().split('T')[0]
     }).subscribe({
       next: (response: any) => {
-        console.log('Student Attendance Response:', response);
         
         if (response.success) {
-          // Backend returns: { success: true, data: [...], summary: {...} }
+          // Backend returns: { success: true, data: [...], summary: {...}, student: {...} }
           this.attendanceHistory = response.data || [];
           this.summary = response.summary || {
             total_days: 0,
@@ -95,17 +108,65 @@ export class AttendanceViewComponent implements OnInit {
             leaves: 0,
             percentage: 0
           };
+          this.studentInfo = response.student || null;
           
-          console.log('Loaded history:', this.attendanceHistory.length, 'records');
-          console.log('Summary:', this.summary);
         } else {
           this.attendanceHistory = [];
           this.summary = null;
+          this.studentInfo = null;
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading student report:', error);
+        this.errorHandler.showError(error);
+        this.loading = false;
+        this.attendanceHistory = [];
+        this.summary = {
+          total_days: 0,
+          present: 0,
+          absent: 0,
+          late: 0,
+          percentage: 0
+        };
+      }
+    });
+  }
+  
+  loadTeacherReport(): void {
+    if (!this.teacherId) return;
+    
+    this.loading = true;
+    
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    this.attendanceService.getTeacherAttendance(this.teacherId, {
+      from_date: firstDayOfMonth.toISOString().split('T')[0],
+      to_date: now.toISOString().split('T')[0]
+    }).subscribe({
+      next: (response: any) => {
+        
+        if (response.success) {
+          // Backend returns: { success: true, data: [...], summary: {...}, teacher: {...} }
+          this.attendanceHistory = response.data || [];
+          this.summary = response.summary || {
+            total_days: 0,
+            present: 0,
+            absent: 0,
+            late: 0,
+            leaves: 0,
+            percentage: 0
+          };
+          this.teacherInfo = response.teacher || null;
+          
+        } else {
+          this.attendanceHistory = [];
+          this.summary = null;
+          this.teacherInfo = null;
+        }
+        this.loading = false;
+      },
+      error: (error) => {
         this.errorHandler.showError(error);
         this.loading = false;
         this.attendanceHistory = [];
@@ -156,12 +217,18 @@ export class AttendanceViewComponent implements OnInit {
   }
   
   onBack(): void {
-    this.router.navigate(['/attendance']);
+    // Navigate back with the tab that user was on
+    this.router.navigate(['/attendance'], {
+      queryParams: { tab: this.returnTab }
+    });
   }
   
   onEdit(): void {
     if (this.attendanceId) {
-      this.router.navigate(['/attendance/edit', this.attendanceId]);
+      // Pass returnTab to edit page as well
+      this.router.navigate(['/attendance/edit', this.attendanceId], {
+        queryParams: { returnTab: this.returnTab }
+      });
     }
   }
   

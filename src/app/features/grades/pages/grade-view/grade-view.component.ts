@@ -5,11 +5,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatChipsModule } from '@angular/material/chips';
 import { GradeService } from '../../services/grade.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { Grade, GradeStats } from '../../../../core/models/grade.model';
+import { PermissionService } from '../../../../core/services/permission.service';
+import { Grade, GradeSectionSummary, GradeStats } from '../../../../core/models/grade.model';
 
 @Component({
   selector: 'app-grade-view',
@@ -19,9 +18,7 @@ import { Grade, GradeStats } from '../../../../core/models/grade.model';
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    MatChipsModule
+    MatProgressSpinnerModule
   ],
   templateUrl: './grade-view.component.html',
   styleUrls: ['./grade-view.component.scss']
@@ -31,15 +28,26 @@ export class GradeViewComponent implements OnInit {
   gradeValue?: string;
   grade?: Grade;
   stats?: GradeStats;
+  branchId?: number;
+  
+  // Permission checks
+  hasEditPermission = false;
   
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private gradeService: GradeService,
-    private errorHandler: ErrorHandlerService
-  ) {}
+    private errorHandler: ErrorHandlerService,
+    private permissionService: PermissionService
+  ) {
+    this.hasEditPermission = this.permissionService.hasPermission('grades.edit');
+  }
   
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(qp => {
+      const raw = qp.get('branch_id');
+      this.branchId = raw ? Number(raw) : undefined;
+    });
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.gradeValue = params['id'];
@@ -52,12 +60,11 @@ export class GradeViewComponent implements OnInit {
     if (!this.gradeValue) return;
     
     this.loading = true;
-    
-    // Load grade basic info from grades list
-    this.gradeService.getGrades().subscribe({
+
+    this.gradeService.getGrade(this.gradeValue, this.branchId ? { branch_id: this.branchId } : undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.grade = response.data.find(g => g.value === this.gradeValue);
+          this.grade = response.data;
           this.loadStats();
         }
         this.loading = false;
@@ -80,7 +87,6 @@ export class GradeViewComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading stats:', error);
       }
     });
   }
@@ -90,17 +96,51 @@ export class GradeViewComponent implements OnInit {
   }
   
   onEdit(): void {
+    if (!this.hasEditPermission) {
+      this.errorHandler.showError('You do not have permission to edit grades');
+      return;
+    }
     if (this.gradeValue) {
-      this.router.navigate(['/grades/edit', this.gradeValue]);
+      this.router.navigate(['/grades/edit', this.gradeValue], {
+        queryParams: { branch_id: this.branchId ?? null }
+      });
     }
   }
   
+  get sectionSummaries(): GradeSectionSummary[] {
+    return this.grade?.sections_summary ?? [];
+  }
+
+  teacherName(section: GradeSectionSummary): string {
+    const teacher = section.class_teacher;
+    if (!teacher) {
+      return '';
+    }
+    return `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim();
+  }
+
   viewStudents(): void {
     if (this.gradeValue) {
       this.router.navigate(['/students'], { 
         queryParams: { grade: this.gradeValue }
       });
     }
+  }
+
+  viewSectionStudents(section: GradeSectionSummary): void {
+    if (this.gradeValue) {
+      this.router.navigate(['/students'], {
+        queryParams: { grade: this.gradeValue, section: section.name }
+      });
+    }
+  }
+
+  viewSection(section: GradeSectionSummary): void {
+    if (section.id) {
+      this.router.navigate(['/sections/view', section.id]);
+      return;
+    }
+    this.viewSections();
   }
   
   viewSections(): void {

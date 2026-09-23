@@ -1,0 +1,104 @@
+<div class="file-upload-container">
+  
+  <!-- Upload Area -->
+  <div 
+    class="upload-area"
+    [class.dragging]="isDragging"
+    [class.disabled]="disabled || isUploading"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+    
+    <input
+      type="file"
+      [id]="uniqueId"
+      [multiple]="config.multiple"
+      [accept]="accept"
+      (change)="onFileSelected($event)"
+      [disabled]="disabled || isUploading"
+      style="display: none;">
+    
+    <!-- Upload Icon and Instructions -->
+    <div class="upload-content" *ngIf="!isUploading">
+      <mat-icon class="upload-icon" [class.drag-over]="isDragging">{{ icon }}</mat-icon>
+      <h3 class="upload-title">{{ label }}</h3>
+      <p class="upload-subtitle">
+        Drag and drop files here, or 
+        <label [for]="uniqueId" class="browse-link">browse</label>
+      </p>
+      <p class="upload-info" *ngIf="config.maxSize || (config.allowedTypes && config.allowedTypes.length > 0)">
+        <span *ngIf="config.maxSize">Max size: {{ config.maxSize }}MB</span>
+        <span *ngIf="config.allowedTypes && config.allowedTypes.length > 0">
+          Allowed: {{ config.allowedTypes.join(', ') }}
+        </span>
+      </p>
+    </div>
+
+    <!-- Upload Progress -->
+    <div class="upload-progress" *ngIf="isUploading && config.showProgress">
+      <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+      <p class="progress-text">Uploading... {{ uploadProgress }}%</p>
+    </div>
+  </div>
+
+  <!-- Preview Grid -->
+  <div class="preview-grid" *ngIf="config.showPreview && uploadedFiles.length > 0">
+    <div class="file-card" *ngFor="let file of uploadedFiles; let i = index">
+      
+      <!-- Image Preview -->
+      <div class="file-preview" *ngIf="file.extension === 'jpg' || file.extension === 'jpeg' || file.extension === 'png'">
+        <img [src]="getPreviewUrl(file) || file.file_url" [alt]="file.file_name">
+      </div>
+
+      <!-- Generic File Preview -->
+      <div class="file-preview generic" *ngIf="file.extension !== 'jpg' && file.extension !== 'jpeg' && file.extension !== 'png'">
+        <mat-icon [fontIcon]="getFileIcon(file)"></mat-icon>
+      </div>
+
+      <!-- File Info -->
+      <div class="file-info">
+        <p class="file-name" [title]="file.file_name">{{ file.file_name }}</p>
+        <p class="file-size">{{ formatFileSize(file.file_size || 0) }}</p>
+      </div>
+
+      <!-- Remove Button -->
+      <button 
+        mat-icon-button 
+        color="warn" 
+        class="remove-btn"
+        (click)="removeFile(i)"
+        [disabled]="disabled"
+        matTooltip="Remove file">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- File List -->
+  <div class="file-list" *ngIf="config.showFileList && uploadedFiles.length > 0">
+    <mat-list dense>
+      <mat-list-item *ngFor="let file of uploadedFiles; let i = index">
+        <mat-icon matListItemIcon>{{ getFileIcon(file) }}</mat-icon>
+        <div matListItemTitle>{{ file.file_name }}</div>
+        <div matListItemLine>{{ formatFileSize(file.file_size || 0) }}</div>
+        <button mat-icon-button (click)="removeFile(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-list-item>
+    </mat-list>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-buttons" *ngIf="uploadedFiles.length > 0 && !disabled">
+    <button 
+      mat-raised-button 
+      color="warn" 
+      (click)="clearAll()"
+      [disabled]="isUploading">
+      <mat-icon>clear_all</mat-icon>
+      Clear All
+    </button>
+  </div>
+
+</div>
+

@@ -1,0 +1,163 @@
+<div class="view-container" *ngIf="!loading && term">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">calendar_today</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ term.name }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>qr_code</mat-icon>
+              {{ term.code }}
+            </span>
+            <span *ngIf="term.branch">
+              <mat-icon>school</mat-icon>
+              {{ term.branch.name }}
+            </span>
+            <span *ngIf="term.academic_year">
+              <mat-icon>date_range</mat-icon>
+              {{ term.academic_year }}
+            </span>
+            <span class="status-badge" [ngClass]="{'status-active': term.is_active, 'status-inactive': !term.is_active}">
+              <mat-icon>circle</mat-icon>
+              {{ term.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Term Details Cards -->
+  <div class="details-grid">
+    <!-- Basic Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Term Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>calendar_today</mat-icon>
+              <span>Term Name</span>
+            </div>
+            <div class="detail-value">{{ term.name }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>qr_code</mat-icon>
+              <span>Term Code</span>
+            </div>
+            <div class="detail-value">{{ term.code }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>school</mat-icon>
+              <span>Branch</span>
+            </div>
+            <div class="detail-value">{{ term.branch?.name || 'Not specified' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>date_range</mat-icon>
+              <span>Academic Year</span>
+            </div>
+            <div class="detail-value">{{ term.academic_year }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>percent</mat-icon>
+              <span>Weightage</span>
+            </div>
+            <div class="detail-value">{{ term.weightage || 0 }}%</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Dates and Duration -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          Timeline
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>Start Date</span>
+            </div>
+            <div class="detail-value">{{ term.start_date | date: 'mediumDate' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>End Date</span>
+            </div>
+            <div class="detail-value">{{ term.end_date | date: 'mediumDate' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>timeline</mat-icon>
+              <span>Duration</span>
+            </div>
+            <div class="detail-value">{{ getDuration() }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Description -->
+  <mat-card class="details-card" *ngIf="term.description">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>description</mat-icon>
+        Description
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="description-text">{{ term.description }}</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+

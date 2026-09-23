@@ -1,0 +1,44 @@
+// Dashboard Variables - USE GLOBAL THEME COLORS
+// Import the main app variables
+@forward 'assets/variables';
+
+// Re-export existing colors with dashboard-friendly aliases
+// DO NOT define new colors - use global theme!
+
+// Primary Colors (Teal from global theme)
+$primary-color: #00897b;          // Teal
+$primary-light: #4db6ac;
+$primary-dark: #00695c;
+
+// Accent Colors (Green from global theme)
+$accent-color: #4caf50;           // Green  
+$accent-light: #81c784;
+$accent-dark: #388e3c;
+
+// Status Colors (from global theme)
+$success-color: #4caf50;           // Green
+$success-light: #81c784;
+$success-dark: #388e3c;
+
+$warning-color: #ff9800;           // Orange
+$warning-light: #ffb74d;
+$warning-dark: #f57c00;
+
+$danger-color: #f44336;            // Red (error-color)
+$error-color: #f44336;
+$danger-light: #e57373;
+$danger-dark: #d32f2f;
+
+$info-color: #2196f3;              // Info Blue
+$info-light: #64b5f6;
+$info-dark: #1976d2;
+
+// Dashboard Card Colors (use global theme colors)
+$card-students: $primary-color;      // Teal
+$card-teachers: $success-color;      // Green
+$card-attendance: $info-color;       // Blue
+$card-fees: $warning-color;          // Orange
+
+// Use existing global spacing and radius (already defined in assets/variables)
+// No need to redefine - they're already available!
+

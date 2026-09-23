@@ -1,7 +1,9 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Injector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, tap, catchError, of, map } from 'rxjs';
 import { ApiService, ApiResponse } from './api.service';
+import { PermissionService } from './permission.service';
+import { BranchService } from './branch.service';
 
 export interface User {
   id: number;
@@ -56,11 +58,47 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
+  // Lazy getters to avoid circular dependency
+  private _permissionService?: PermissionService;
+  private get permissionService(): PermissionService {
+    if (!this._permissionService) {
+      this._permissionService = this.injector.get(PermissionService);
+    }
+    return this._permissionService;
+  }
+
+  private _branchService?: BranchService;
+  private get branchService(): BranchService {
+    if (!this._branchService) {
+      this._branchService = this.injector.get(BranchService);
+    }
+    return this._branchService;
+  }
+
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private injector: Injector
   ) {
-    this.loadUserFromStorage();
+    // Hydrate the user synchronously so route guards see the impersonated SuperAdmin
+    // immediately. Permission/branch API calls stay deferred to avoid circular DI.
+    this.hydrateUserFromStorage();
+    setTimeout(() => this.loadUserFromStorage(), 0);
+  }
+
+  private hydrateUserFromStorage(): void {
+    const token = this.getToken();
+    const userStr = localStorage.getItem(this.USER_KEY);
+    if (!token || !userStr) {
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr) as User;
+      this.updateCurrentUser(user);
+      this.isAuthenticated.set(true);
+    } catch {
+      // Invalid JSON is handled when loadUserFromStorage runs.
+    }
   }
 
   /**
@@ -72,6 +110,13 @@ export class AuthService {
       tap(response => {
         if (response.success && response.access_token) {
           this.setSession(response);
+          
+          // Load user permissions and branches after successful login
+          if (response.user && response.user.id) {
+            this.permissionService.loadUserPermissions(response.user.id).subscribe();
+            this.permissionService.loadModules().subscribe();
+            this.branchService.getAccessibleBranches().subscribe();
+          }
         }
       })
     );
@@ -126,10 +171,10 @@ export class AuthService {
   }
 
   /**
-   * Reset password
+   * Reset password with token
    */
-  resetPassword(token: string, password: string, password_confirmation: string): Observable<ApiResponse> {
-    return this.apiService.post('/reset-password', { token, password, password_confirmation });
+  resetPassword(data: { token: string, password: string, password_confirmation: string }): Observable<ApiResponse> {
+    return this.apiService.post('/reset-password', data);
   }
 
   /**
@@ -182,6 +227,11 @@ export class AuthService {
     this.currentUser.set(null);
     this.currentUserSubject.next(null);
     this.isAuthenticated.set(false);
+    
+    // Clear permissions and branches
+    this.permissionService.clearPermissions();
+    this.branchService.clearCache();
+    
     this.router.navigate(['/auth/login']);
   }
 
@@ -197,9 +247,51 @@ export class AuthService {
         const user = JSON.parse(userStr) as User;
         this.updateCurrentUser(user);
         this.isAuthenticated.set(true);
+        
+        // Load permissions and branches when user is loaded from storage
+        // This ensures they are available on page refresh
+        if (user && user.id) {
+          this.permissionService.loadUserPermissions(user.id).subscribe();
+          this.permissionService.loadModules().subscribe();
+          this.branchService.getAccessibleBranches().subscribe();
+        }
       } catch {
-        this.clearSession();
+        // If parsing fails, try to fetch user from API (might be impersonation)
+        if (token) {
+          this.getCurrentUser().subscribe({
+            next: (response) => {
+              if (response.success && response.data) {
+                // User loaded successfully
+              } else {
+                // If fetch fails, clear session
+                this.clearSession();
+              }
+            },
+            error: () => {
+              // If API call fails, clear session
+              this.clearSession();
+            }
+          });
+        } else {
+          this.clearSession();
+        }
       }
+    } else if (token && !userStr) {
+      // Token exists but no user data - fetch from API (impersonation scenario)
+      this.getCurrentUser().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            // User loaded successfully
+          } else {
+            // If fetch fails, clear session
+            this.clearSession();
+          }
+        },
+        error: () => {
+          // If API call fails, clear session
+          this.clearSession();
+        }
+      });
     }
   }
 
@@ -217,6 +309,13 @@ export class AuthService {
    */
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
+  }
+
+  /**
+   * Get student by user ID (for logged-in students)
+   */
+  getStudentByUserId(userId: number): Observable<any> {
+    return this.apiService.get(`/students/by-user/${userId}`);
   }
 
   /**

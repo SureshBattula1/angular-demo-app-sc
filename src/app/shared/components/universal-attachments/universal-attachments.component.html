@@ -1,0 +1,169 @@
+<div class="universal-attachments">
+  
+  <!-- Add Button (only when can add more) -->
+  <div class="add-section" *ngIf="mode === 'form'">
+    <button 
+      type="button"
+      mat-fab 
+      color="primary" 
+      (click)="addAttachmentInput()"
+      [disabled]="!canAddMore() || isLoading"
+      matTooltip="Add new attachment ({{ attachmentInputs.length }}/{{ maxAttachments }})">
+      <mat-icon>add</mat-icon>
+    </button>
+    <p *ngIf="attachmentInputs.length > 0 && (!moduleId || moduleId === 0)" class="info-text">
+      Attachments will be uploaded when you save the {{ module }}
+    </p>
+    <p *ngIf="attachmentInputs.length === 0 && attachments.length === 0" class="info-text">
+      Click + to add attachment (Name, Description, File)
+    </p>
+  </div>
+
+  <!-- Attachment Input Sections (for new attachments being added) -->
+  <div class="attachment-inputs" *ngIf="mode === 'form'">
+    <div class="attachment-input-section" *ngFor="let input of attachmentInputs; let i = index" [class.completed]="input.isCompleted">
+      
+      <div class="section-header" *ngIf="!input.isCompleted">
+        <h4>Attachment {{ i + 1 }} - {{ input.name || 'New Attachment' }}</h4>
+      </div>
+
+      <!-- Input Fields (shown when not completed) -->
+      <div class="input-fields" *ngIf="!input.isCompleted">
+        
+        <!-- Hidden file input -->
+        <input 
+          type="file" 
+          [id]="'fileInput' + i"
+          (change)="onFileSelected(i, $event)" 
+          style="display: none;">
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Attachment Name *</mat-label>
+            <input matInput [(ngModel)]="input.name" placeholder="Enter attachment name">
+            <mat-icon matPrefix>label</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput [(ngModel)]="input.description" rows="2" placeholder="Enter description (optional)"></textarea>
+            <mat-icon matPrefix>description</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- File Info Display -->
+        <div class="file-display" *ngIf="input.file">
+          <div class="file-item">
+            <div class="file-info">
+              <mat-icon class="file-icon">{{ getFileIcon(input.file.name.split('.').pop() || '') }}</mat-icon>
+              <div class="file-details">
+                <span class="file-name">{{ input.file.name }}</span>
+                <span class="file-size">{{ formatFileSize(input.file.size) }}</span>
+              </div>
+            </div>
+            <div class="file-actions">
+              <button type="button" mat-icon-button (click)="previewFile(input.file)" matTooltip="Preview">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button type="button" mat-icon-button (click)="input.file = null" matTooltip="Remove">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="section-actions">
+          <button 
+            type="button"
+            mat-stroked-button 
+            (click)="triggerFileInput(i, $event)"
+            class="select-file-btn">
+            <mat-icon>{{ input.file ? 'edit' : 'attach_file' }}</mat-icon>
+            {{ input.file ? 'Change File' : 'Select File' }}
+          </button>
+          <button 
+            type="button"
+            mat-raised-button 
+            color="primary"
+            (click)="saveAttachment(i)"
+            [disabled]="!canSaveAttachment(i) || isLoading"
+            matTooltip="Save attachment - will upload when {{ module }} is saved">
+            <mat-icon>save</mat-icon>
+            Save Attachment
+          </button>
+          <button 
+            type="button"
+            mat-icon-button 
+            (click)="removeAttachmentInput(i)"
+            class="remove-btn">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uploaded Attachments Display -->
+  <div class="uploaded-attachments-section" *ngIf="attachments.length > 0">
+    <h3 class="section-title">
+      <mat-icon>{{ getPendingCount() > 0 ? 'cloud_upload' : 'cloud_done' }}</mat-icon>
+      {{ getPendingCount() > 0 ? 'Pending & Uploaded Attachments' : 'Uploaded Attachments' }} ({{ attachments.length }})
+    </h3>
+    <div class="attachments-grid">
+      <div class="attachment-card" *ngFor="let attachment of attachments" [class.pending]="!attachment.file_path">
+        <div class="attachment-header">
+          <mat-icon class="attachment-type-icon">{{ getFileIcon(attachment.file_type) }}</mat-icon>
+          <div class="attachment-title">
+            <span class="attachment-name">{{ attachment.original_name }}</span>
+            <span class="attachment-size">{{ formatFileSize(attachment.file_size) }}</span>
+            <span class="pending-badge" *ngIf="!attachment.file_path">Pending Upload</span>
+          </div>
+        </div>
+        <div class="attachment-body">
+          <p class="attachment-description" *ngIf="attachment.description">{{ attachment.description }}</p>
+          <div class="attachment-date">
+            <span *ngIf="attachment.file_path">Uploaded: {{ attachment.created_at | date:'short' }}</span>
+            <span *ngIf="!attachment.file_path">Ready to upload</span>
+          </div>
+        </div>
+        <div class="attachment-actions" *ngIf="attachment.file_path">
+          <button type="button" mat-icon-button (click)="previewUploadedFile(attachment)" matTooltip="Preview">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button type="button" mat-icon-button (click)="downloadAttachment(attachment)" matTooltip="Download">
+            <mat-icon>download</mat-icon>
+          </button>
+          <button type="button" mat-icon-button color="warn" (click)="deleteAttachment(attachment)" matTooltip="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        <div class="attachment-actions" *ngIf="!attachment.file_path">
+          <button type="button" mat-icon-button color="warn" (click)="deleteAttachment(attachment)" matTooltip="Remove">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Uploading attachment...</p>
+  </div>
+
+  <!-- Empty state for form mode -->
+  <div class="empty-state" *ngIf="attachmentInputs.length === 0 && attachments.length === 0 && !isLoading && mode === 'form'">
+    <mat-icon>cloud_upload</mat-icon>
+    <p>Click the + button to add attachments</p>
+  </div>
+
+  <!-- Empty state for view mode -->
+  <div class="empty-state" *ngIf="!isLoading && mode === 'view' && attachments.length === 0">
+    <mat-icon>attach_file</mat-icon>
+    <p>No attachments available</p>
+  </div>
+</div>

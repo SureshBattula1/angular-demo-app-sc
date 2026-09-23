@@ -1,0 +1,69 @@
+<div class="detail">
+  <header class="detail__header">
+    <div>
+      <h2>{{ item.title }}</h2>
+      <p class="muted">{{ item.date || item.sent_at || item.created_at | date: 'medium' }}</p>
+    </div>
+    <button mat-icon-button type="button" (click)="close()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="detail__body">
+    <p class="lead">{{ item.description || item.message }}</p>
+    <p class="muted" *ngIf="item.optional_description">{{ item.optional_description }}</p>
+
+    <div class="meta-grid">
+      <div *ngIf="item.audience"><span>Audience</span><strong>{{ item.audience }}</strong></div>
+      <div *ngIf="item.priority"><span>Priority</span><strong>{{ item.priority }}</strong></div>
+      <div *ngIf="item.source"><span>Source</span><strong>{{ item.source }}</strong></div>
+      <div *ngIf="item.student_count != null"><span>Students</span><strong>{{ item.student_count }}</strong></div>
+    </div>
+
+    <div class="attachments" *ngIf="item.attachments?.length">
+      <h4>Attachments</h4>
+      <a
+        *ngFor="let file of item.attachments"
+        [href]="file.url"
+        target="_blank"
+        rel="noopener">
+        <mat-icon>attach_file</mat-icon>
+        {{ file.name || 'Attachment' }}
+      </a>
+    </div>
+
+    <div class="receipts" *ngIf="item.can_view_receipts && item.group_key">
+      <button
+        mat-stroked-button
+        color="primary"
+        type="button"
+        (click)="loadReceipts()"
+        [disabled]="loadingReceipts">
+        <mat-icon>visibility</mat-icon>
+        View receipts
+      </button>
+
+      <div class="receipts-panel" *ngIf="showReceipts">
+        <div class="loading" *ngIf="loadingReceipts">
+          <mat-spinner diameter="28"></mat-spinner>
+        </div>
+        <ng-container *ngIf="!loadingReceipts && receipts">
+          <div class="receipt-stats">
+            <span>{{ receipts.viewed }}/{{ receipts.total }} viewed</span>
+            <span>{{ receipts.percent }}%</span>
+          </div>
+          <ul>
+            <li *ngFor="let v of receipts.viewers">
+              <span>{{ v.name }}</span>
+              <strong [class.ok]="v.viewed">{{ v.viewed ? 'Viewed' : 'Pending' }}</strong>
+            </li>
+          </ul>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <footer class="detail__footer">
+    <button mat-flat-button color="primary" type="button" (click)="close()">Done</button>
+  </footer>
+</div>

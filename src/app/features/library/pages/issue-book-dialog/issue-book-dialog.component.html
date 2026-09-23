@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>Issue "{{ book.title }}"</h2>
+
+<mat-dialog-content class="issue-dialog">
+  <p class="avail-note">Available copies: <strong>{{ book.available_copies }}</strong></p>
+
+  <mat-button-toggle-group [(ngModel)]="borrowerType" (change)="onBorrowerTypeChange()" aria-label="Borrower type">
+    <mat-button-toggle value="Student">Student</mat-button-toggle>
+    <mat-button-toggle value="Teacher">Teacher</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <div class="search-row">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search {{ borrowerType | lowercase }} by name</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (keyup.enter)="searchMembers()" placeholder="Type at least 2 characters">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+    <button mat-stroked-button color="primary" (click)="searchMembers()" [disabled]="searchTerm.trim().length < 2 || searching">
+      Search
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width" *ngIf="members.length">
+    <mat-label>Select member</mat-label>
+    <mat-select [(ngModel)]="selectedMemberId">
+      <mat-option *ngFor="let m of members" [value]="m.userId">{{ m.label }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <p class="no-results" *ngIf="!searching && searchTerm.trim().length >= 2 && !members.length">
+    No members found — try another name.
+  </p>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Due date (optional)</mat-label>
+    <input matInput [matDatepicker]="duePicker" [(ngModel)]="dueDate" readonly>
+    <mat-datepicker-toggle matSuffix [for]="duePicker"></mat-datepicker-toggle>
+    <mat-datepicker #duePicker></mat-datepicker>
+    <mat-hint>Leave blank to use the default loan period.</mat-hint>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="submitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="issue()"
+          [disabled]="!selectedMemberId || submitting || book.available_copies < 1">
+    Issue Book
+  </button>
+</mat-dialog-actions>

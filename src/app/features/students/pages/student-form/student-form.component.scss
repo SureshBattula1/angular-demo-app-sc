@@ -2,8 +2,12 @@
 
 .student-form-container {
   padding: var(--spacing-lg);
-  max-width: 1200px;
+  // max-width: 1200px;
   margin: 0 auto;
+}
+
+.academic-readonly input[readonly] {
+  cursor: default;
 }
 
 .form-card {
@@ -82,6 +86,39 @@
     mat-icon {
       color: var(--primary-color);
     }
+    
+    &.clickable {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s;
+      padding: var(--spacing-sm);
+      margin: 0 calc(var(--spacing-sm) * -1);
+      border-radius: var(--radius-sm);
+      
+      &:hover {
+        background-color: var(--gray-100);
+      }
+      
+      .toggle-icon {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+      }
+    }
+  }
+  
+  .collapsible-content {
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -190,4 +227,155 @@
     }
   }
 }
+
+// Profile Upload Row - Same as Teacher Module
+.profile-upload-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+// Circular Profile Picture - Same as Teacher Module
+.profile-picture-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+  
+  .profile-picture-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: var(--text-secondary);
+      
+      mat-icon {
+        font-size: 60px;
+        width: 60px;
+        height: 60px;
+      }
+    }
+  }
+  
+  .delete-profile-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f44336 !important;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #d32f2f !important;
+      transform: scale(1.1);
+    }
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+}
+
+// Profile Upload Button - Same as Teacher Module
+.profile-upload-button {
+  flex: 1;
+  
+  button {
+    mat-icon {
+      margin-right: var(--spacing-xs);
+    }
+  }
+}
+
+// Status Toggle Row
+.status-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gray-200);
+  margin-top: var(--spacing-md);
+  
+  .status-toggle {
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-weight: 500;
+      font-size: 16px;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+  
+  .toggle-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}
+
 

@@ -1,0 +1,23 @@
+<h2 mat-dialog-title class="sms-confirm__title">Queue SMS send</h2>
+
+<mat-dialog-content class="sms-confirm__content">
+  <section class="sms-confirm__block">
+    <h3 class="sms-confirm__label">Message</h3>
+    <pre class="sms-confirm__pre">{{ data.bodyTemplate }}</pre>
+  </section>
+
+  <section class="sms-confirm__block" *ngIf="data.sampleRendered">
+    <h3 class="sms-confirm__label">Sample for one recipient</h3>
+    <p class="sms-confirm__meta" *ngIf="data.sampleLabel">{{ data.sampleLabel }}</p>
+    <pre class="sms-confirm__pre sms-confirm__pre--sample">{{ data.sampleRendered }}</pre>
+  </section>
+
+  <p class="sms-confirm__count">
+    <strong>{{ data.recipientCount }}</strong> recipient(s) will be queued.
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="sms-confirm__actions">
+  <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="confirm()">OK</button>
+</mat-dialog-actions>

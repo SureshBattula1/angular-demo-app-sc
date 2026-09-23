@@ -1,6 +1,6 @@
 export interface Section {
-  id: number;
-  branch_id: number;
+  id: string;
+  branch_id: number | string;
   name: string;
   code: string;
   grade_level: string | null;
@@ -14,22 +14,22 @@ export interface Section {
   capacity: number;
   current_strength: number;
   room_number: string | null;
-  class_teacher_id: number | null;
+  class_teacher_id: number | string | null;
   description: string | null;
   is_active: boolean;
   branch?: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
   classTeacher?: {
-    id: number;
+    id: string;
     first_name: string;
     last_name: string;
     email: string;
   };
   class?: {  // Associated class information
-    id: number;
+    id: string;
     grade: string;
     section: string;
     class_name: string;
@@ -41,13 +41,13 @@ export interface Section {
 }
 
 export interface SectionFormData {
-  branch_id: number;
+  branch_id: number | string;
   name: string;
   code: string;
   grade_level?: string | null;
   capacity: number;
   room_number?: string | null;
-  class_teacher_id?: number | null;
+  class_teacher_id?: number | string | null;
   description?: string | null;
   is_active?: boolean;
 }
