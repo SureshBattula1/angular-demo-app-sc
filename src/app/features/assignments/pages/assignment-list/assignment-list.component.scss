@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.page-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: var(--spacing-xs);
+  }
+}

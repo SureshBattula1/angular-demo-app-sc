@@ -117,6 +117,12 @@ export const routes: Routes = [
         data: { permissions: ['fees.view', 'fees.collect'], permissionMode: 'any' }
       },
       {
+        path: 'assignments',
+        loadChildren: () => import('./features/assignments/assignments.routes').then(m => m.ASSIGNMENTS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['assignments.view', 'assignments.create'], permissionMode: 'any' }
+      },
+      {
         path: 'exams',
         loadChildren: () => import('./features/exams/exams.routes').then(m => m.EXAMS_ROUTES),
         canActivate: [permissionGuard],

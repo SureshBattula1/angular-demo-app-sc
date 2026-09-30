@@ -18,6 +18,7 @@ export interface User {
   is_active: boolean;
   last_login?: string;
   full_name?: string;
+  permissions?: string[];
 }
 
 export interface LoginCredentials {
@@ -113,6 +114,10 @@ export class AuthService {
           
           // Load user permissions and branches after successful login
           if (response.user && response.user.id) {
+            const loginSlugs = response.user.permissions;
+            if (Array.isArray(loginSlugs) && loginSlugs.length > 0) {
+              this.permissionService.applyPermissionSlugs(loginSlugs);
+            }
             this.permissionService.loadUserPermissions(response.user.id).subscribe();
             this.permissionService.loadModules().subscribe();
             this.branchService.getAccessibleBranches().subscribe();

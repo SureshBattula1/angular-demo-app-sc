@@ -6,6 +6,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable, Subscription } from 'rxjs';
 import { map, take, filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
+import type { User } from '../../core/services/auth.service';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { PermissionService } from '../../core/services/permission.service';
 import { UserPreferenceService } from '../../core/services/user-preference.service';
@@ -26,6 +27,8 @@ interface MenuItem {
   public?: boolean;
   permission?: string | string[];
   permissionMode?: 'any' | 'all';
+  /** Show for these roles even when the permission slug is missing (matches mobile drawer). */
+  roles?: User['role'][];
   tooltip?: string;
 }
 
@@ -54,6 +57,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   // Subscriptions for cleanup
   private routerSubscription?: Subscription;
   private breakpointSubscription?: Subscription;
+  private permissionsSubscription?: Subscription;
   
   // Menu items configuration
   menuItems: MenuItem[] = [
@@ -67,7 +71,15 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'], permissionMode: 'any' },
     { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['student_attendance.view', 'student_attendance.mark', 'teacher_attendance.view', 'teacher_attendance.mark'], permissionMode: 'any' },
     { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
-   { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
+    {
+      icon: 'assignment_turned_in',
+      label: 'Assignments',
+      route: '/assignments',
+      permission: ['assignments.view', 'assignments.create'],
+      permissionMode: 'any',
+      roles: ['SuperAdmin', 'BranchAdmin', 'Teacher', 'Student', 'Staff']
+    },
+    { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
     { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'], permissionMode: 'any' },
     { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'], permissionMode: 'any' },
     { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'], permissionMode: 'any' },
@@ -143,6 +155,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     if (currentUser && currentUser.id) {
       this.permissionService.loadUserPermissions(currentUser.id).subscribe();
     }
+    this.permissionsSubscription = this.permissionService.permissions$.subscribe(() => this.cdr.detectChanges());
     
     // Load user preferences from backend
     this.loadUserPreferences();
@@ -282,6 +295,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     // Clean up subscriptions to prevent memory leaks
     this.routerSubscription?.unsubscribe();
     this.breakpointSubscription?.unsubscribe();
+    this.permissionsSubscription?.unsubscribe();
   }
   
   /**
@@ -703,6 +717,33 @@ export class MainShellComponent implements OnInit, OnDestroy {
   isStudentRole(): boolean {
     const user = this.authService.currentUser();
     return user?.role === 'Student';
+  }
+
+  /**
+   * Same rule as the mobile drawer: a role menu stays visible even if the
+   * assignment permission slug is missing from the cached permission list.
+   */
+  isMenuItemVisible(item: MenuItem): boolean {
+    if (item.public) {
+      return true;
+    }
+
+    const role = this.authService.currentUser()?.role;
+    if (item.roles?.length && role && item.roles.includes(role)) {
+      return true;
+    }
+
+    if (!item.permission) {
+      return false;
+    }
+
+    const permissions = Array.isArray(item.permission) ? item.permission : [item.permission];
+    this.permissionService.userPermissions();
+
+    if ((item.permissionMode || 'all') === 'any') {
+      return this.permissionService.hasAnyPermission(permissions);
+    }
+    return this.permissionService.hasAllPermissions(permissions);
   }
 }
 

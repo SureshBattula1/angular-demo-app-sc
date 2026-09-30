@@ -1,0 +1,230 @@
+<div class="assignment-form-container">
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card class="form-card" *ngIf="!loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">assignment_turned_in</mat-icon>
+        <div>
+          <span>{{ pageTitle }}</span>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>{{ pageSubtitle }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>class</mat-icon>
+            Class targeting
+          </h3>
+          <p class="lock-hint" *ngIf="isEditMode">
+            Class, section, subject, and audience cannot be changed after create.
+          </p>
+
+          <div class="form-row" *ngIf="showBranchSelector">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Branch</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="'' + branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Class</mat-label>
+              <mat-select formControlName="grade">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">{{ grade.label }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>school</mat-icon>
+              <mat-hint *ngIf="loadingGrades">Loading classes…</mat-hint>
+              <mat-error *ngIf="form.controls.grade.hasError('required')">Class is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Section</mat-label>
+              <mat-select formControlName="section">
+                <mat-option *ngFor="let section of sections" [value]="section.value">{{ section.label }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>group</mat-icon>
+              <mat-hint *ngIf="loadingSections">Loading sections…</mat-hint>
+              <mat-error *ngIf="form.controls.section.hasError('required')">Section is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Subject</mat-label>
+              <mat-select formControlName="subject_id">
+                <mat-option *ngFor="let subject of subjects" [value]="subject.value">{{ subject.label }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>menu_book</mat-icon>
+              <mat-hint *ngIf="loadingSubjects">Loading subjects…</mat-hint>
+              <mat-error *ngIf="form.controls.subject_id.hasError('required')">Subject is required</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Assignment details
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Title</mat-label>
+              <input matInput formControlName="title" maxlength="255" placeholder="e.g. Chapter 4 worksheet" />
+              <mat-icon matPrefix>title</mat-icon>
+              <mat-error *ngIf="form.controls.title.hasError('required')">Title is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Description</mat-label>
+              <textarea matInput rows="3" formControlName="description" placeholder="What should students do?"></textarea>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Instructions</mat-label>
+              <textarea matInput rows="3" formControlName="instructions" placeholder="Optional extra notes"></textarea>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Due date</mat-label>
+              <input matInput [matDatepicker]="duePicker" formControlName="due_date" [min]="minDueDate" />
+              <mat-datepicker-toggle matIconSuffix [for]="duePicker"></mat-datepicker-toggle>
+              <mat-datepicker #duePicker></mat-datepicker>
+              <mat-error *ngIf="form.controls.due_date.hasError('required')">Due date is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Max marks</mat-label>
+              <input matInput type="number" min="0" formControlName="max_marks" />
+              <mat-icon matPrefix>grade</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Type</mat-label>
+              <mat-select formControlName="assignment_type">
+                <mat-option *ngFor="let type of assignmentTypes" [value]="type">{{ type }}</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+
+            <div class="toggle-container form-field-half">
+              <mat-slide-toggle formControlName="is_published" color="primary">
+                <span class="toggle-label">
+                  <mat-icon>publish</mat-icon>
+                  Publish now
+                </span>
+              </mat-slide-toggle>
+              <span class="toggle-hint">Students only see published assignments. Updates notify the class.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>groups</mat-icon>
+            Audience
+          </h3>
+
+          <div class="audience">
+            <mat-radio-group formControlName="audience_mode">
+              <mat-radio-button value="all">All students in class</mat-radio-button>
+              <mat-radio-button value="custom">Selected students</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div class="preview-chip" *ngIf="recipientPreview && !isEditMode">
+            <mat-icon>people</mat-icon>
+            {{ recipientPreview.students }} students
+            <span *ngIf="recipientPreview.teachers"> · {{ recipientPreview.teachers }} teachers notified</span>
+          </div>
+
+          <div class="student-picker" *ngIf="form.controls.audience_mode.value === 'custom' && !isEditMode">
+            <div class="student-picker__toolbar">
+              <mat-checkbox
+                [checked]="students.length > 0 && selectedStudentIds.size === students.length"
+                [indeterminate]="selectedStudentIds.size > 0 && selectedStudentIds.size < students.length"
+                (change)="selectAllStudents($event.checked)">
+                Select all
+              </mat-checkbox>
+              <span class="muted" *ngIf="loadingStudents">Loading students…</span>
+            </div>
+            <div class="student-list" *ngIf="students.length; else noStudents">
+              <label class="student-row" *ngFor="let student of students">
+                <mat-checkbox
+                  [checked]="isStudentSelected(student.id)"
+                  (change)="toggleStudent(student.id, $event.checked)">
+                  {{ student.name }}
+                  <span class="muted" *ngIf="student.admission_number"> · {{ student.admission_number }}</span>
+                </mat-checkbox>
+              </label>
+            </div>
+            <ng-template #noStudents>
+              <p class="muted" *ngIf="!loadingStudents">No students found for this class and section.</p>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>attach_file</mat-icon>
+            Attachments
+          </h3>
+
+          <div class="attach-actions">
+            <input
+              #fileInput
+              type="file"
+              multiple
+              hidden
+              accept=".jpeg,.jpg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+              (change)="onFilesSelected($event)" />
+            <button mat-stroked-button type="button" (click)="fileInput.click()" [disabled]="uploading">
+              <mat-icon>upload_file</mat-icon>
+              {{ uploading ? 'Uploading…' : 'Upload files' }}
+            </button>
+            <span class="muted">PDF, Office, images. Max 10MB each.</span>
+          </div>
+
+          <ul class="attachment-list" *ngIf="attachments.length">
+            <li *ngFor="let file of attachments; let i = index">
+              <button type="button" class="attachment-link" (click)="previewAttachment(file)">
+                <mat-icon>{{ isImageAttachment(file) ? 'image' : 'insert_drive_file' }}</mat-icon>
+                {{ attachmentName(file) }}
+              </button>
+              <button mat-icon-button type="button" (click)="removeAttachment(i)" aria-label="Remove attachment">
+                <mat-icon>close</mat-icon>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="form-actions">
+          <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting">Cancel</button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting || uploading || form.invalid">
+            <mat-spinner *ngIf="submitting" diameter="18"></mat-spinner>
+            <span *ngIf="!submitting">{{ isEditMode ? 'Save assignment' : 'Create assignment' }}</span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

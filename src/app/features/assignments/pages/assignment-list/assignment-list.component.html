@@ -1,0 +1,15 @@
+<div class="page-container">
+  <app-data-table
+    [data]="assignments"
+    [config]="tableConfig"
+    [advancedSearchConfig]="searchConfig"
+    [title]="'Assignments'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (advancedSearchChanged)="onAdvancedSearch($event)"
+    (searchFieldChanged)="onSearchFieldChanged($event)"
+    (searchResetEvent)="onSearchReset()"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)">
+  </app-data-table>
+</div>
