@@ -5,7 +5,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { StudentCrudService } from '../../services/student-crud.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { PermissionService } from '../../../../core/services/permission.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Student } from '../../../../core/models/student.model';
 import { AttendanceService } from '../../../attendance/services/attendance.service';
@@ -15,7 +14,7 @@ import { ExamScheduleService } from '../../../exams/services/exam-schedule.servi
 import { ApiService } from '../../../../core/services/api.service';
 import { FeeService } from '../../../fees/services/fee.service';
 import { LibraryService } from '../../../library/services/library.service';
-import { environment } from '../../../../../environments/environment';
+import { MediaUrlService } from '../../../../core/services/media-url.service';
 // Import child components
 import { StudentHeaderComponent } from './components/student-header/student-header.component';
 import { StudentInfoComponent } from './components/student-info/student-info.component';
@@ -75,10 +74,10 @@ export class StudentViewComponent implements OnInit {
   // Date filters
   filterStartDate: Date;
   filterEndDate: Date;
-  filterPreset: string = 'this_month';
+  filterPreset = 'this_month';
   
   // Status filter
-  statusFilter: string = 'all'; // Default to show all statuses
+  statusFilter = 'all'; // Default to show all statuses
   
   // View mode for attendance records
   viewMode: 'list' | 'grid' = 'list';
@@ -119,7 +118,8 @@ export class StudentViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private errorHandler: ErrorHandlerService,
-    private authService: AuthService
+    private authService: AuthService,
+    private mediaUrl: MediaUrlService
   ) {
     // Initialize date filters to current month
     const now = new Date();
@@ -193,7 +193,7 @@ export class StudentViewComponent implements OnInit {
             response.data.user?.avatar_url ||
             response.data.user?.avatar ||
             '';
-          this.profilePictureUrl = this.getFullImageUrl(imageCandidate);
+          this.profilePictureUrl = this.mediaUrl.resolve(imageCandidate);
           this.showProfilePicture = !!this.profilePictureUrl;
           
           this.isLoading = false;
@@ -208,34 +208,6 @@ export class StudentViewComponent implements OnInit {
         this.router.navigate(['/students']);
       }
     });
-  }
-
-  /**
-   * Convert backend image path to full URL.
-   * Supports full URLs, /storage/*, storage/* and raw relative upload paths.
-   */
-  private getFullImageUrl(imagePath: string): string {
-    if (!imagePath) {
-      return '';
-    }
-
-    const normalizedPath = imagePath.trim();
-    if (!normalizedPath) {
-      return '';
-    }
-
-    if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
-      return normalizedPath;
-    }
-
-    const baseUrl = environment.apiUrl.replace('/api', '').replace(/\/$/, '');
-    const cleanPath = normalizedPath.replace(/^\/+/, '');
-
-    if (cleanPath.startsWith('storage/')) {
-      return `${baseUrl}/${cleanPath}`;
-    }
-
-    return `${baseUrl}/storage/${cleanPath}`;
   }
 
   getGradeLabel(): string {
@@ -452,12 +424,13 @@ export class StudentViewComponent implements OnInit {
     const now = new Date();
     
     switch(preset) {
-      case 'this_week':
+      case 'this_week': {
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - now.getDay());
         this.filterStartDate = startOfWeek;
         this.filterEndDate = new Date();
         break;
+      }
         
       case 'this_month':
         this.filterStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -886,19 +859,10 @@ export class StudentViewComponent implements OnInit {
     return 'score-fail';
   }
 
-  /**
-   * Handle image load success
-   */
-  onImageLoad(): void {
-    this.showProfilePicture = true;
-  }
+  /** Header handles avatar fallback; keep URL for retry after save. */
+  onImageLoad(): void {}
 
-  /**
-   * Handle image load error
-   */
-  onImageError(): void {
-    this.showProfilePicture = false;
-  }
+  onImageError(): void {}
 
   /**
    * Get percentage

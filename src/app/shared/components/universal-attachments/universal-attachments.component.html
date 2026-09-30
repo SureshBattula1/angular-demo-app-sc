@@ -136,7 +136,13 @@
           <button type="button" mat-icon-button (click)="downloadAttachment(attachment)" matTooltip="Download">
             <mat-icon>download</mat-icon>
           </button>
-          <button type="button" mat-icon-button color="warn" (click)="deleteAttachment(attachment)" matTooltip="Delete">
+          <button
+            *ngIf="mode !== 'view'"
+            type="button"
+            mat-icon-button
+            color="warn"
+            (click)="deleteAttachment(attachment)"
+            matTooltip="Delete">
             <mat-icon>delete</mat-icon>
           </button>
         </div>

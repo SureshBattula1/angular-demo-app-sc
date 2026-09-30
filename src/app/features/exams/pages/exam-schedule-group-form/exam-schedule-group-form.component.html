@@ -1,0 +1,249 @@
+<div class="group-schedule-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">event_note</mat-icon>
+        <div>
+          <span>Create exam schedules (group)</span>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>
+        Schedule multiple subjects for one class and section. Each subject can have its own date, time, and marks.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="headerForm" (ngSubmit)="onSubmit()">
+        <!-- Exam & class -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>school</mat-icon>
+            Exam &amp; class
+          </h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Exam</mat-label>
+              <mat-select formControlName="exam_id">
+                <mat-option *ngFor="let exam of exams" [value]="exam.id">
+                  {{ exam.name }} — {{ exam.academic_year }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="headerForm.get('exam_id')?.hasError('required')">Exam is required</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch</mat-label>
+              <mat-select formControlName="branch_id">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="headerForm.get('branch_id')?.disabled">Set by selected exam</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Grade level</mat-label>
+              <mat-select formControlName="grade_level">
+                <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                  {{ grade.label }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="headerForm.get('grade_level')?.hasError('required')">Grade is required</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Section</mat-label>
+              <mat-select formControlName="section_id">
+                <mat-option *ngIf="loadingSections" disabled>Loading sections…</mat-option>
+                <mat-option *ngFor="let section of sections" [value]="section.id">
+                  {{ section.name }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Required to load subjects from curriculum</mat-hint>
+              <mat-error *ngIf="headerForm.get('section_id')?.hasError('required')">Section is required</mat-error>
+            </mat-form-field>
+            <div class="form-field-half link-row">
+              <button type="button" mat-button color="primary" (click)="goSingleCreate()">
+                <mat-icon>person</mat-icon>
+                Single-subject schedule instead
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Defaults -->
+        <div class="form-section" [formGroup]="defaultsForm">
+          <h3 class="section-title">
+            <mat-icon>tune</mat-icon>
+            Default values (optional)
+          </h3>
+          <p class="section-hint">Fill once, then apply to rows. You can still edit each subject separately below.</p>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Date</mat-label>
+              <input matInput [matDatepicker]="defDate" formControlName="exam_date">
+              <mat-datepicker-toggle matSuffix [for]="defDate"></mat-datepicker-toggle>
+              <mat-datepicker #defDate></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Start</mat-label>
+              <input matInput type="time" formControlName="start_time">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>End</mat-label>
+              <input matInput type="time" formControlName="end_time">
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Duration (min)</mat-label>
+              <input matInput type="number" formControlName="duration">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Total marks</mat-label>
+              <input matInput type="number" formControlName="total_marks">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-third">
+              <mat-label>Passing marks</mat-label>
+              <input matInput type="number" formControlName="passing_marks">
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Room</mat-label>
+              <input matInput formControlName="room_number">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Invigilator</mat-label>
+              <mat-select formControlName="invigilator_id">
+                <mat-option [value]="null">— None —</mat-option>
+                <mat-option *ngFor="let teacher of teachers" [value]="teacher.user_id">
+                  {{ teacher.user?.first_name }} {{ teacher.user?.last_name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="defaults-actions">
+            <button type="button" mat-stroked-button color="primary" (click)="applyDefaults(true)">
+              Apply to all rows
+            </button>
+            <button type="button" mat-stroked-button (click)="applyDefaults(false)">
+              Apply to checked rows only
+            </button>
+          </div>
+        </div>
+
+        <!-- Subject grid -->
+        <div class="form-section">
+          <div class="grid-header">
+            <h3 class="section-title">
+              <mat-icon>grid_on</mat-icon>
+              Subject schedules
+            </h3>
+            <span class="selection-count">{{ includedCount }} included / {{ subjectRows.length }} listed</span>
+          </div>
+
+          <div *ngIf="loadingCurriculum" class="state-panel">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span>Loading subjects…</span>
+          </div>
+
+          <div *ngIf="!loadingCurriculum && !headerForm.get('section_id')?.value" class="state-panel muted">
+            <mat-icon>info</mat-icon>
+            Select exam, grade, and section to load subjects.
+          </div>
+
+          <div *ngIf="curriculumEmpty && headerForm.get('section_id')?.value && !loadingCurriculum" class="state-panel warn">
+            <mat-icon>warning</mat-icon>
+            No subjects assigned to this section. Assign subjects in Subject Assignment first.
+          </div>
+
+          <div *ngIf="subjectRows.length > 0 && !loadingCurriculum" class="grid-toolbar">
+            <mat-checkbox (change)="toggleSelectAll($event.checked)">Select all subjects</mat-checkbox>
+          </div>
+
+          <div *ngIf="subjectRows.length > 0 && !loadingCurriculum" class="schedule-grid-wrap" formArrayName="subjectRows">
+            <table class="schedule-grid">
+              <thead>
+                <tr>
+                  <th class="col-check"></th>
+                  <th class="col-subject">Subject</th>
+                  <th>Date</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Dur</th>
+                  <th>Total</th>
+                  <th>Pass</th>
+                  <th>Room</th>
+                  <th>Invigilator</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of subjectRows.controls; let i = index" [formGroupName]="i" [class.row-off]="isRowDisabled(i)">
+                  <td class="col-check">
+                    <mat-checkbox formControlName="included"></mat-checkbox>
+                  </td>
+                  <td class="col-subject">
+                    <span class="subject-name">{{ rowControl(i).get('subject_label')?.value }}</span>
+                  </td>
+                  <td>
+                    <input type="date" formControlName="exam_date" [disabled]="isRowDisabled(i)" class="grid-input">
+                  </td>
+                  <td>
+                    <input type="time" formControlName="start_time" [disabled]="isRowDisabled(i)" class="grid-input">
+                  </td>
+                  <td>
+                    <input type="time" formControlName="end_time" [disabled]="isRowDisabled(i)" class="grid-input">
+                  </td>
+                  <td>
+                    <input type="number" formControlName="duration" [disabled]="isRowDisabled(i)" class="grid-input grid-input-sm">
+                  </td>
+                  <td>
+                    <input type="number" formControlName="total_marks" [disabled]="isRowDisabled(i)" class="grid-input grid-input-sm">
+                  </td>
+                  <td>
+                    <input type="number" formControlName="passing_marks" [disabled]="isRowDisabled(i)" class="grid-input grid-input-sm">
+                  </td>
+                  <td>
+                    <input type="text" formControlName="room_number" [disabled]="isRowDisabled(i)" class="grid-input">
+                  </td>
+                  <td>
+                    <select formControlName="invigilator_id" [disabled]="isRowDisabled(i)" class="grid-select">
+                      <option [ngValue]="null">—</option>
+                      <option *ngFor="let teacher of teachers" [ngValue]="teacher.user_id">
+                        {{ teacher.user?.first_name }} {{ teacher.user?.last_name }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>notes</mat-icon>
+            Instructions
+          </h3>
+          <mat-form-field appearance="outline" class="form-field-full">
+            <mat-label>Shared instructions (applied to all included subjects)</mat-label>
+            <textarea matInput rows="3" formControlName="shared_instructions"></textarea>
+          </mat-form-field>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-stroked-button type="button" (click)="onCancel()">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="saving || includedCount === 0">
+        <mat-icon>{{ saving ? 'hourglass_empty' : 'save' }}</mat-icon>
+        {{ saving ? 'Saving…' : createButtonLabel }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

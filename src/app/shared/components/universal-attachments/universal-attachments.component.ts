@@ -1,9 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MaterialModule } from '../../modules/material/material.module';
 import { FileUploadService } from '../../../core/services/file-upload.service';
+import { MediaUrlService } from '../../../core/services/media-url.service';
+import { ImagePreviewService } from '../../services/image-preview.service';
 import { environment } from '../../../../environments/environment';
 
 interface Attachment {
@@ -11,6 +13,7 @@ interface Attachment {
   attachment_type: string;
   file_name: string;
   file_path: string;
+  file_url?: string;
   file_type: string;
   file_size: number;
   original_name: string;
@@ -47,7 +50,9 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
 
   constructor(
     private fileUploadService: FileUploadService,
-    private http: HttpClient
+    private http: HttpClient,
+    private mediaUrl: MediaUrlService,
+    private imagePreview: ImagePreviewService
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +95,7 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
             attachment_type: file.attachment_type || this.module,
             file_name: file.file_name || file.name,
             file_path: file.file_path || file.path,
+            file_url: file.file_url || undefined,
             file_type: file.file_type || file.type,
             file_size: file.file_size || file.size || 0,
             original_name: file.original_name || file.file_name || file.name,
@@ -306,109 +312,66 @@ export class UniversalAttachmentsComponent implements OnInit, OnChanges {
     }
   }
 
+  attachmentPublicUrl(attachment: Attachment): string {
+    if (attachment.file_url) {
+      return this.mediaUrl.resolve(attachment.file_url);
+    }
+    return this.mediaUrl.resolve(attachment.file_path);
+  }
+
   previewFile(file: File | null): void {
     if (!file) return;
-    
+
     const fileType = file.type.toLowerCase();
     const fileName = file.name.toLowerCase();
-    
-    // Check if it's an image
+
     if (fileType.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/)) {
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const modal = window.open('', '_blank');
-        if (modal) {
-          modal.document.write(`
-            <html>
-              <head><title>Preview - ${file.name}</title></head>
-              <body style="margin:0; padding:20px; font-family:Arial; background:#f5f5f5;">
-                <h2>${file.name}</h2>
-                <img src="${e.target.result}" style="max-width:100%; height:auto; border:1px solid #ddd; padding:10px; background:white;" />
-              </body>
-            </html>
-          `);
-          modal.document.close();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          this.imagePreview.openImage(file.name, result);
         }
       };
       reader.readAsDataURL(file);
       return;
     }
-    
-    // Check if it's a PDF
+
     if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const modal = window.open('', '_blank');
-        if (modal) {
-          modal.document.write(`
-            <html>
-              <head><title>Preview - ${file.name}</title></head>
-              <body style="margin:0; padding:0;">
-                <iframe src="${e.target.result}" style="width:100%; height:100vh; border:none;"></iframe>
-              </body>
-            </html>
-          `);
-          modal.document.close();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          window.open(result, '_blank', 'noopener,noreferrer');
         }
       };
       reader.readAsDataURL(file);
       return;
     }
-    
-    // For other file types, show file info
+
     alert(`Preview not available for ${file.name}.\nFile size: ${this.formatFileSize(file.size)}\nFile type: ${file.type || 'Unknown'}`);
   }
 
   previewUploadedFile(attachment: Attachment): void {
-    if (!attachment.file_path) {
+    if (!attachment.file_path && !attachment.file_url) {
       alert('Attachment is pending upload. Please save the ' + this.module + ' first.');
       return;
     }
-    
+
     const fileName = attachment.original_name?.toLowerCase() || attachment.file_name?.toLowerCase() || '';
     const fileType = attachment.file_type?.toLowerCase() || '';
-    
-    // Construct the public URL for the file
-    // Laravel public storage files are accessible at: http://localhost:8004/storage/{file_path}
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    const fileUrl = `${baseUrl}/storage/${attachment.file_path}`;
-    
-    // Check if it's an image
+    const fileUrl = this.attachmentPublicUrl(attachment);
+
     if (fileType.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/)) {
-      const previewWindow = window.open('', '_blank');
-      if (previewWindow) {
-        previewWindow.document.write(`
-          <html>
-            <head><title>Preview - ${attachment.original_name}</title></head>
-            <body style="margin:0; padding:20px; font-family:Arial; background:#f5f5f5;">
-              <h2>${attachment.original_name}</h2>
-              <img src="${fileUrl}" style="max-width:100%; height:auto; border:1px solid #ddd; padding:10px; background:white;" onerror="alert('Failed to load image. Please check if the file exists.')" />
-            </body>
-          </html>
-        `);
-        previewWindow.document.close();
-      }
+      this.imagePreview.openImage(attachment.original_name || 'Image', fileUrl);
       return;
     }
-    
-    // Check if it's a PDF
+
     if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      const previewWindow = window.open('', '_blank');
-      if (previewWindow) {
-        previewWindow.document.write(`
-          <html>
-            <head><title>Preview - ${attachment.original_name}</title></head>
-            <body style="margin:0; padding:0;">
-              <iframe src="${fileUrl}" style="width:100%; height:100vh; border:none;" onerror="alert('Failed to load PDF. Please download the file to view it.')"></iframe>
-            </body>
-          </html>
-        `);
-        previewWindow.document.close();
-      }
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
       return;
     }
-    
-    // For other file types, show file info or download
+
     alert(`Preview not available for ${attachment.original_name}.\nFile size: ${this.formatFileSize(attachment.file_size)}\nFile type: ${fileType || 'Unknown'}\n\nYou can download this file to view it.`);
   }
 

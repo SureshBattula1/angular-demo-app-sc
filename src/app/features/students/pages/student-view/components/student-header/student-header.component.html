@@ -1,14 +1,25 @@
 <mat-card class="view-header-card">
   <div class="view-header">
-    <div class="view-avatar">
-      <!-- Show profile picture if exists, otherwise show icon -->
-      <img *ngIf="showProfilePicture" 
-           [src]="profilePictureUrl" 
-           [alt]="getFullName()"
-           class="student-profile-avatar"
-           (load)="onImageLoad()"
-           (error)="onImageError()">
-      <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
+    <div class="view-avatar" [class.clickable]="canPreviewAvatar" (click)="onAvatarClick()">
+      <mat-spinner
+        *ngIf="hasPhotoUrl && !avatarLoaded && !avatarFailed"
+        diameter="32"
+        class="avatar-spinner">
+      </mat-spinner>
+      <mat-icon
+        *ngIf="!hasPhotoUrl || avatarFailed"
+        class="avatar-icon">person</mat-icon>
+      <img
+        *ngIf="hasPhotoUrl && !avatarFailed"
+        [src]="profilePictureUrl"
+        [alt]="getFullName()"
+        class="student-profile-avatar"
+        [class.avatar-visible]="avatarLoaded"
+        loading="lazy"
+        decoding="async"
+        fetchpriority="high"
+        (load)="onAvatarImageLoad()"
+        (error)="onAvatarImageError()">
     </div>
     <div class="view-info">
       <h1 class="view-name">{{ getFullName() }}</h1>
