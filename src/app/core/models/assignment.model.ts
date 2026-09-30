@@ -46,6 +46,7 @@ export interface Assignment {
   published_at?: string | null;
   student_ids?: Array<string | number>;
   branch_id?: string | number;
+  branch?: { id: string | number; name?: string; code?: string } | null;
 }
 
 export interface AssignmentListItem extends Assignment {

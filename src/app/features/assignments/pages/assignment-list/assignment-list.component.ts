@@ -30,12 +30,13 @@ import { AcademicYearContextService } from '../../../../core/services/academic-y
 export class AssignmentListComponent implements OnInit, OnDestroy {
   loading = false;
   assignments: AssignmentListItem[] = [];
+  assignmentCount = 0;
   currentFilters: Record<string, unknown> = { page: 1, per_page: 25 };
   private academicYearSub?: Subscription;
 
   tableConfig: TableConfig = {
     columns: [
-      { key: 'title', header: 'Title', sortable: true },
+      { key: 'title', header: 'Title', sortable: true, searchable: true },
       { key: 'assignment_type', header: 'Type', sortable: false, width: '110px' },
       { key: 'class_display', header: 'Class', sortable: false, width: '140px' },
       { key: 'subject', header: 'Subject', sortable: false },
@@ -75,21 +76,21 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
         show: (row: AssignmentListItem) => !!row.can_edit
       }
     ],
+    selectable: true,
     pagination: true,
-    searchable: false,
+    searchable: true,
     advancedSearch: true,
     serverSide: true,
-    responsive: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50],
     defaultPageSize: 25,
     showAddButton: true,
     addButtonPermission: 'assignments.create',
-    primaryButtonLabel: 'Add Assignment'
+    primaryButtonLabel: 'Create Assignment'
   };
 
   searchConfig: AdvancedSearchConfig = {
-    title: 'Filter assignments',
+    title: 'Advanced Assignment Search',
     width: '500px',
     showReset: true,
     showSaveSearch: false,
@@ -242,7 +243,9 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
           status_display: item.status || (item.is_published ? 'Published' : 'Draft')
         }));
         if (response.meta) {
-          this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total || 0 };
+          const total = response.meta.total || 0;
+          this.assignmentCount = total;
+          this.tableConfig = { ...this.tableConfig, totalCount: total };
         }
         this.loading = false;
       },
@@ -257,6 +260,11 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     if (event.action === 'add') {
       this.router.navigate(['/assignments/create']);
     }
+  }
+
+  onSearchChange(query: string): void {
+    this.currentFilters = { ...this.currentFilters, search: query, page: 1 };
+    this.loadAssignments();
   }
 
   onPaginationChange(event: PaginationEvent): void {

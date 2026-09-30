@@ -74,6 +74,8 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
   loadingSubjects = false;
   loadingStudents = false;
   showBranchSelector = false;
+  /** Branch label from API when the branches list has not loaded yet. */
+  assignmentBranchName = '';
 
   assignmentTypes = ASSIGNMENT_TYPES;
   branches: Branch[] = [];
@@ -176,8 +178,16 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
 
   get pageSubtitle(): string {
     return this.isEditMode
-      ? 'Update homework details, due date, and attachments'
-      : 'Publish homework to a class, the same way as the mobile app';
+      ? 'Update assignment information'
+      : 'Add a new assignment for your class';
+  }
+
+  getBranchName(branchId: string | number | null | undefined): string {
+    if (branchId === null || branchId === undefined || branchId === '') {
+      return this.assignmentBranchName || '';
+    }
+    const branch = this.branches.find(b => String(b.id) === String(branchId));
+    return branch?.name || this.assignmentBranchName || '';
   }
 
   isStudentSelected(id: string | number): boolean {
@@ -375,7 +385,10 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
       next: response => {
         this.branches = response.data || [];
         this.showBranchSelector = this.branches.length > 1;
-        if (!this.isEditMode && !this.form.controls.branch_id.value) {
+        const currentBranchId = this.form.controls.branch_id.value;
+        if (this.isEditMode && currentBranchId) {
+          this.syncBranchSelection(String(currentBranchId));
+        } else if (!this.isEditMode && !currentBranchId) {
           const userBranch = this.authService.currentUser()?.branch_id;
           const match = this.branches.find(branch => String(branch.id) === String(userBranch));
           this.form.controls.branch_id.setValue(String(match?.id ?? this.branches[0]?.id ?? ''), { emitEvent: false });
@@ -496,12 +509,20 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
           this.router.navigate(['/assignments/view', id]);
           return;
         }
+        this.assignmentBranchName = assignment.branch?.name || '';
+        const branchId =
+          assignment.branch_id != null
+            ? String(assignment.branch_id)
+            : assignment.branch?.id != null
+              ? String(assignment.branch.id)
+              : '';
         this.skipNextGradeChange = true;
         if (assignment.grade) {
           this.loadSections(assignment.grade);
           this.loadSubjects(assignment.grade);
         }
         this.form.patchValue({
+          branch_id: branchId,
           grade: assignment.grade || '',
           section: assignment.section || '',
           subject_id: assignment.subject_id != null ? String(assignment.subject_id) : '',
@@ -516,6 +537,9 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
         });
         this.attachments = [...(assignment.attachments || [])];
         this.selectedStudentIds = new Set((assignment.student_ids || []).map(studentId => String(studentId)));
+        if (branchId) {
+          this.syncBranchSelection(branchId);
+        }
         this.loading = false;
       },
       error: error => {
@@ -524,6 +548,12 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
         this.router.navigate(['/assignments']);
       }
     });
+  }
+
+  private syncBranchSelection(branchId: string): void {
+    const match = this.branches.find(branch => String(branch.id) === String(branchId));
+    const value = match ? String(match.id) : branchId;
+    this.form.controls.branch_id.setValue(value, { emitEvent: false });
   }
 
   private lockTargetingFields(): void {

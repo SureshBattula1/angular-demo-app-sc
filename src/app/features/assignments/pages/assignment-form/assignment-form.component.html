@@ -1,6 +1,6 @@
 <div class="assignment-form-container">
   <div class="loading-overlay" *ngIf="loading">
-    <mat-spinner diameter="40"></mat-spinner>
+    <mat-spinner diameter="50"></mat-spinner>
   </div>
 
   <mat-card class="form-card" *ngIf="!loading">
@@ -18,14 +18,25 @@
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="form-section">
           <h3 class="section-title">
-            <mat-icon>class</mat-icon>
-            Class targeting
+            <mat-icon>info</mat-icon>
+            Basic Information
           </h3>
           <p class="lock-hint" *ngIf="isEditMode">
             Class, section, subject, and audience cannot be changed after create.
           </p>
 
-          <div class="form-row" *ngIf="showBranchSelector">
+          <div class="form-row" *ngIf="isEditMode">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Branch</mat-label>
+              <input
+                matInput
+                [value]="getBranchName(form.controls.branch_id.value)"
+                [readonly]="true">
+              <mat-icon matPrefix>business</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row" *ngIf="!isEditMode && showBranchSelector">
             <mat-form-field appearance="outline" class="form-field-full">
               <mat-label>Branch</mat-label>
               <mat-select formControlName="branch_id">
@@ -74,15 +85,15 @@
 
         <div class="form-section">
           <h3 class="section-title">
-            <mat-icon>info</mat-icon>
-            Assignment details
+            <mat-icon>event</mat-icon>
+            Schedule &amp; Details
           </h3>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-full">
               <mat-label>Title</mat-label>
               <input matInput formControlName="title" maxlength="255" placeholder="e.g. Chapter 4 worksheet" />
-              <mat-icon matPrefix>title</mat-icon>
+              <mat-icon matPrefix>label</mat-icon>
               <mat-error *ngIf="form.controls.title.hasError('required')">Title is required</mat-error>
             </mat-form-field>
           </div>
@@ -90,30 +101,31 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-full">
               <mat-label>Description</mat-label>
-              <textarea matInput rows="3" formControlName="description" placeholder="What should students do?"></textarea>
-            </mat-form-field>
-          </div>
-
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-full">
-              <mat-label>Instructions</mat-label>
-              <textarea matInput rows="3" formControlName="instructions" placeholder="Optional extra notes"></textarea>
+              <textarea
+                matInput
+                rows="4"
+                formControlName="description"
+                placeholder="What should students do?">
+              </textarea>
+              <mat-icon matPrefix>notes</mat-icon>
             </mat-form-field>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Due date</mat-label>
+              <mat-label>Due Date</mat-label>
               <input matInput [matDatepicker]="duePicker" formControlName="due_date" [min]="minDueDate" />
-              <mat-datepicker-toggle matIconSuffix [for]="duePicker"></mat-datepicker-toggle>
+              <mat-datepicker-toggle matSuffix [for]="duePicker"></mat-datepicker-toggle>
               <mat-datepicker #duePicker></mat-datepicker>
+              <mat-icon matPrefix>event</mat-icon>
               <mat-error *ngIf="form.controls.due_date.hasError('required')">Due date is required</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Max marks</mat-label>
-              <input matInput type="number" min="0" formControlName="max_marks" />
-              <mat-icon matPrefix>grade</mat-icon>
+              <mat-label>Max Marks</mat-label>
+              <input matInput type="number" min="0" formControlName="max_marks" placeholder="e.g., 20" />
+              <mat-icon matPrefix>percent</mat-icon>
+              <mat-hint>Maximum score for this assignment</mat-hint>
             </mat-form-field>
           </div>
 
@@ -129,12 +141,34 @@
             <div class="toggle-container form-field-half">
               <mat-slide-toggle formControlName="is_published" color="primary">
                 <span class="toggle-label">
-                  <mat-icon>publish</mat-icon>
-                  Publish now
+                  <mat-icon>{{ form.controls.is_published.value ? 'check_circle' : 'cancel' }}</mat-icon>
+                  Publish Assignment
                 </span>
               </mat-slide-toggle>
-              <span class="toggle-hint">Students only see published assignments. Updates notify the class.</span>
+              <span class="toggle-hint">
+                {{ form.controls.is_published.value ? 'Students can see this assignment' : 'Saved as draft until published' }}
+              </span>
             </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>description</mat-icon>
+            Additional Details
+          </h3>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Instructions</mat-label>
+              <textarea
+                matInput
+                rows="4"
+                formControlName="instructions"
+                placeholder="Optional notes for students">
+              </textarea>
+              <mat-icon matPrefix>notes</mat-icon>
+            </mat-form-field>
           </div>
         </div>
 
@@ -216,15 +250,23 @@
             </li>
           </ul>
         </div>
-
-        <div class="form-actions">
-          <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting">Cancel</button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="submitting || uploading || form.invalid">
-            <mat-spinner *ngIf="submitting" diameter="18"></mat-spinner>
-            <span *ngIf="!submitting">{{ isEditMode ? 'Save assignment' : 'Create assignment' }}</span>
-          </button>
-        </div>
       </form>
     </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting">
+        <mat-icon>cancel</mat-icon>
+        Cancel
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="submit()"
+        [disabled]="submitting || uploading || form.invalid">
+        <mat-icon>{{ submitting ? 'hourglass_empty' : 'save' }}</mat-icon>
+        {{ submitting ? 'Saving...' : (isEditMode ? 'Update Assignment' : 'Create Assignment') }}
+      </button>
+    </mat-card-actions>
   </mat-card>
 </div>
