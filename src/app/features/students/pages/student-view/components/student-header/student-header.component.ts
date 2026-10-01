@@ -8,6 +8,7 @@ import { Student } from '../../../../../../core/models/student.model';
 import { ExamMarkService, StudentMarksYearBreakdown } from '../../../../../exams/services/exam-mark.service';
 import { AttendanceService } from '../../../../../attendance/services/attendance.service';
 import { AcademicYearContextService } from '../../../../../../core/services/academic-year-context.service';
+import { ImagePreviewService } from '../../../../../../shared/services/image-preview.service';
 
 export interface MarksOverviewRing {
   percentage: number;
@@ -48,6 +49,7 @@ export class StudentHeaderComponent implements OnInit, OnChanges {
   @Output() imageError = new EventEmitter<void>();
 
   private destroyRef = inject(DestroyRef);
+  private imagePreview = inject(ImagePreviewService);
   private academicYearContext = inject(AcademicYearContextService);
 
   readonly ringRadius = 22;
@@ -66,6 +68,17 @@ export class StudentHeaderComponent implements OnInit, OnChanges {
   yearBreakdown: StudentMarksYearBreakdown[] = [];
   monthBreakdown: AttendanceMonthBreakdown[] = [];
 
+  avatarLoaded = false;
+  avatarFailed = false;
+
+  get hasPhotoUrl(): boolean {
+    return this.showProfilePicture && !!this.profilePictureUrl;
+  }
+
+  get canPreviewAvatar(): boolean {
+    return this.hasPhotoUrl && !this.avatarFailed;
+  }
+
   constructor(
     private examMarkService: ExamMarkService,
     private attendanceService: AttendanceService
@@ -79,6 +92,10 @@ export class StudentHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['profilePictureUrl'] || changes['showProfilePicture']) {
+      this.avatarLoaded = false;
+      this.avatarFailed = false;
+    }
     if (changes['student'] && this.getStudentUserId()) {
       this.loadHeaderOverview();
     }
@@ -186,11 +203,21 @@ export class StudentHeaderComponent implements OnInit, OnChanges {
     this.menuClick.emit(menu);
   }
 
-  onImageLoad(): void {
+  onAvatarImageLoad(): void {
+    this.avatarLoaded = true;
+    this.avatarFailed = false;
     this.imageLoad.emit();
   }
 
-  onImageError(): void {
+  onAvatarImageError(): void {
+    this.avatarLoaded = false;
+    this.avatarFailed = true;
     this.imageError.emit();
+  }
+
+  onAvatarClick(): void {
+    if (this.canPreviewAvatar) {
+      this.imagePreview.openImage(this.getFullName(), this.profilePictureUrl);
+    }
   }
 }

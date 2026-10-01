@@ -60,13 +60,13 @@ export class PermissionService {
             const permissions = data.permission_slugs || 
                               this.extractPermissionSlugs(data.permissions);
             
-            this.setPermissions(permissions);
-          } else {
-            this.setPermissions([]);
+            if (Array.isArray(permissions) && permissions.length > 0) {
+              this.applyPermissionSlugs(permissions);
+            }
           }
         },
-        error: (error) => {
-          this.setPermissions([]);
+        error: () => {
+          // Keep cached slugs so the sidebar does not go blank on a failed refresh.
         }
       })
     );
@@ -155,6 +155,13 @@ export class PermissionService {
    */
   canPerformAction(moduleSlug: string, action: string): boolean {
     return this.hasPermission(`${moduleSlug}.${action}`);
+  }
+
+  /**
+   * Apply permission slugs from login or the permissions API.
+   */
+  applyPermissionSlugs(permissions: string[]): void {
+    this.setPermissions(permissions);
   }
 
   /**

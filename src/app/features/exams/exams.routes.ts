@@ -46,6 +46,16 @@ export const EXAMS_ROUTES: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'schedule/create-group',
+    loadComponent: () => import('./pages/exam-schedule-group-form/exam-schedule-group-form.component').then(m => m.ExamScheduleGroupFormComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'schedule/edit-group/:batchUuid',
+    loadComponent: () => import('./pages/exam-schedule-group-edit/exam-schedule-group-edit.component').then(m => m.ExamScheduleGroupEditComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'schedule/edit/:id',
     loadComponent: () => import('./pages/exam-schedule-form/exam-schedule-form.component').then(m => m.ExamScheduleFormComponent),
     canActivate: [authGuard]

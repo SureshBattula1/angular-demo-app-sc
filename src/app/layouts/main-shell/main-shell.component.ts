@@ -6,6 +6,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable, Subscription } from 'rxjs';
 import { map, take, filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
+import type { User } from '../../core/services/auth.service';
 import { ErrorHandlerService } from '../../core/services/error-handler.service';
 import { PermissionService } from '../../core/services/permission.service';
 import { UserPreferenceService } from '../../core/services/user-preference.service';
@@ -16,6 +17,7 @@ import { AcademicYear } from '../../features/settings/services/academic-year.ser
 import { THEMES, THEME_OPTIONS, DEFAULT_THEME, BREAKPOINTS, ThemeColors } from '../../shared/config/theme.config';
 import { ImpersonationService } from '../../company-portal/services/impersonation.service';
 import { CompanyAuthService } from '../../company-portal/services/company-auth.service';
+import { NotificationBellComponent } from '../../features/communications/components/notification-bell/notification-bell.component';
 
 // Menu item interface
 interface MenuItem {
@@ -26,13 +28,15 @@ interface MenuItem {
   public?: boolean;
   permission?: string | string[];
   permissionMode?: 'any' | 'all';
+  /** Show for these roles even when the permission slug is missing (matches mobile drawer). */
+  roles?: User['role'][];
   tooltip?: string;
 }
 
 @Component({
   selector: 'app-main-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule, MaterialModule, HasPermissionDirective],
+  imports: [CommonModule, RouterModule, MaterialModule, HasPermissionDirective, NotificationBellComponent],
   templateUrl: './main-shell.component.html',
   styleUrls: ['./main-shell.component.scss']
 })
@@ -46,7 +50,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   isImpersonating = false; // Track impersonation state
   academicYears: AcademicYear[] = [];
   selectedAcademicYearId: string | number | null = null;
-  selectedAcademicYearName: string = '';
+  selectedAcademicYearName = '';
   isPastAcademicYear = false;
   /** When the active route sets data.hideSidebar, render full-width (e.g. global search). */
   hideSidebar = false;
@@ -54,6 +58,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   // Subscriptions for cleanup
   private routerSubscription?: Subscription;
   private breakpointSubscription?: Subscription;
+  private permissionsSubscription?: Subscription;
   
   // Menu items configuration
   menuItems: MenuItem[] = [
@@ -67,13 +72,29 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'school', label: 'Students', route: '/students', permission: ['students.view', 'students.create'], permissionMode: 'any' },
     { icon: 'fact_check', label: 'Attendance', route: '/attendance', permission: ['student_attendance.view', 'student_attendance.mark', 'teacher_attendance.view', 'teacher_attendance.mark'], permissionMode: 'any' },
     { icon: 'subject', label: 'Subjects', route: '/subjects', permission: 'subjects.view' },
-   { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
+    {
+      icon: 'assignment_turned_in',
+      label: 'Assignments',
+      route: '/assignments',
+      permission: ['assignments.view', 'assignments.create'],
+      permissionMode: 'any',
+      roles: ['SuperAdmin', 'BranchAdmin', 'Teacher', 'Student', 'Staff']
+    },
+    { icon: 'assignment', label: 'Exams', route: '/exams', permission: ['exams.view', 'exams.create', 'exams.results'], permissionMode: 'any' },
     { icon: 'event_busy', label: 'Leaves', route: '/leaves', permission: ['leaves.view', 'leaves.create'], permissionMode: 'any' },
     { icon: 'payments', label: 'Fee Management', route: '/fees', permission: ['fees.view', 'fees.collect'], permissionMode: 'any' },
     { icon: 'account_balance', label: 'Accounts', route: '/accounts', permission: ['accounts.view', 'transactions.view'], permissionMode: 'any' },
     { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
     { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
     { icon: 'hub', label: 'Bulk Management', route: '/bulk-management', permission: 'bulk_management.view', tooltip: 'Bulk Management' },
+    {
+      icon: 'notifications_active',
+      label: 'Notifications',
+      route: '/notification-campaigns',
+      permission: ['notifications.view', 'notifications.create'],
+      permissionMode: 'any',
+      roles: ['SuperAdmin', 'BranchAdmin', 'Teacher', 'Staff']
+    },
     { icon: 'local_library', label: 'Library', route: '/library', permission: ['library.view', 'library.create'], permissionMode: 'any' },
     { icon: 'directions_bus', label: 'Transport', route: '/transport', permission: ['transport.view', 'transport.create'], permissionMode: 'any' },
     { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
@@ -113,7 +134,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     this.breakpointSubscription = this.breakpointObserver.observe([
       Breakpoints.Handset,
       Breakpoints.Tablet
-    ]).subscribe(result => {
+    ]).subscribe(() => {
       this.isMobile = this.breakpointObserver.isMatched(Breakpoints.Handset);
       this.isTablet = this.breakpointObserver.isMatched(Breakpoints.Tablet);
       
@@ -143,7 +164,14 @@ export class MainShellComponent implements OnInit, OnDestroy {
     if (currentUser && currentUser.id) {
       this.permissionService.loadUserPermissions(currentUser.id).subscribe();
     }
-    
+    this.permissionsSubscription = this.permissionService.permissions$.subscribe(() => this.cdr.detectChanges());
+
+    const cachedPrefs = this.userPreferenceService.hydrateFromCache();
+    if (cachedPrefs?.theme) {
+      this.selectedTheme = cachedPrefs.theme;
+      this.themeService.loadThemeFromPreferences();
+    }
+
     // Load user preferences from backend
     this.loadUserPreferences();
     
@@ -158,11 +186,13 @@ export class MainShellComponent implements OnInit, OnDestroy {
         this.isPastAcademicYear = this.isAcademicYearPast(y);
         this.cdr.detectChanges();
       });
-      this.academicYearContext.getActiveYears().subscribe(res => {
-        if (res.success && res.data) {
-          this.academicYears = res.data;
-          this.cdr.detectChanges();
-        }
+      const cachedYears = this.academicYearContext.hydrateYearsFromCache();
+      if (cachedYears.length > 0) {
+        this.academicYears = cachedYears;
+      }
+      this.academicYearContext.loadYearsForSwitcher().subscribe(years => {
+        this.academicYears = years;
+        this.cdr.detectChanges();
       });
     }
   }
@@ -261,7 +291,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
           this.errorHandler.showError('Failed to exit impersonation');
         }
       },
-      error: (error) => {
+      error: () => {
         // Even on error, try to restore and redirect
         const companyPortalToken = localStorage.getItem('company_portal_token_backup');
         if (companyPortalToken) {
@@ -282,6 +312,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     // Clean up subscriptions to prevent memory leaks
     this.routerSubscription?.unsubscribe();
     this.breakpointSubscription?.unsubscribe();
+    this.permissionsSubscription?.unsubscribe();
   }
   
   /**
@@ -334,24 +365,27 @@ export class MainShellComponent implements OnInit, OnDestroy {
           // Apply the theme from backend preferences
           this.selectedTheme = response.data.theme;
           this.applyTheme(response.data.theme);
-          // Load academic year: prefer backend preference, else localStorage/API current
-          if (!this.isStudentRole()) {
-            const ayId = (response.data.additional_settings as any)?.academic_year_id;
-            const id = Number(ayId);
-            if (!isNaN(id) && id > 0) {
-              this.academicYearContext.loadYearById(id);
+          // Academic year: keep local selection on refresh; prefs apply only when nothing stored
+          if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+            const rawAy = (response.data.additional_settings as Record<string, unknown>)?.['academic_year_id'];
+            if (rawAy != null && String(rawAy) !== '') {
+              this.academicYearContext.loadYearById(rawAy as string | number);
             } else {
               this.academicYearContext.loadCurrent();
             }
           }
         } else {
           this.loadThemeFromLocalStorage();
-          if (!this.isStudentRole()) this.academicYearContext.loadCurrent();
+          if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+            this.academicYearContext.loadCurrent();
+          }
         }
       },
       error: () => {
         this.loadThemeFromLocalStorage();
-        if (!this.isStudentRole()) this.academicYearContext.loadCurrent();
+        if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+          this.academicYearContext.loadCurrent();
+        }
       }
     });
   }
@@ -635,7 +669,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
             // Redirect is handled by clearSession in auth service
           }
         },
-        error: (error) => {
+        error: () => {
           // Session is cleared even on error
           this.errorHandler.showInfo('Logged out');
         }
@@ -703,6 +737,33 @@ export class MainShellComponent implements OnInit, OnDestroy {
   isStudentRole(): boolean {
     const user = this.authService.currentUser();
     return user?.role === 'Student';
+  }
+
+  /**
+   * Same rule as the mobile drawer: a role menu stays visible even if the
+   * assignment permission slug is missing from the cached permission list.
+   */
+  isMenuItemVisible(item: MenuItem): boolean {
+    if (item.public) {
+      return true;
+    }
+
+    const role = this.authService.currentUser()?.role;
+    if (item.roles?.length && role && item.roles.includes(role)) {
+      return true;
+    }
+
+    if (!item.permission) {
+      return false;
+    }
+
+    const permissions = Array.isArray(item.permission) ? item.permission : [item.permission];
+    this.permissionService.userPermissions();
+
+    if ((item.permissionMode || 'all') === 'any') {
+      return this.permissionService.hasAnyPermission(permissions);
+    }
+    return this.permissionService.hasAllPermissions(permissions);
   }
 }
 

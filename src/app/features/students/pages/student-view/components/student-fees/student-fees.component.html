@@ -8,6 +8,13 @@
 
 <!-- Fees Content -->
 <div class="fees-content" *ngIf="!isLoading">
+  <div class="statement-actions" *ngIf="student?.user_id">
+    <button mat-stroked-button color="primary" (click)="downloadFeeStatement()" [disabled]="downloadingStatement">
+      <mat-icon>picture_as_pdf</mat-icon>
+      Download fee statement
+    </button>
+  </div>
+
   <!-- Summary Cards -->
   <div class="fees-summary">
     <div class="summary-card total-paid">
@@ -61,7 +68,7 @@
             <span class="fee-grade">Grade {{ fee.grade || 'N/A' }}</span>
           </div>
           <div class="fee-amount">
-            <span class="amount">{{ fee.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+            <span class="amount">{{ (fee.remaining_amount ?? fee.amount) | currency:'INR':'symbol':'1.0-0' }}</span>
             <span class="overdue-badge" *ngIf="isOverdue(fee)">OVERDUE</span>
           </div>
         </div>
@@ -123,6 +130,12 @@
           <div class="detail-row" *ngIf="payment.remarks">
             <span class="detail-label">Remarks:</span>
             <span class="detail-value">{{ payment.remarks }}</span>
+          </div>
+          <div class="detail-row">
+            <button mat-button color="primary" type="button" (click)="downloadPaymentReceipt(payment)">
+              <mat-icon>receipt</mat-icon>
+              Download receipt
+            </button>
           </div>
         </div>
       </div>

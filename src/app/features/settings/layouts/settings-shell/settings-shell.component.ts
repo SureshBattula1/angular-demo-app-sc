@@ -51,7 +51,7 @@ export class SettingsShellComponent implements OnInit {
     this.breakpointObserver.observe([
       Breakpoints.Handset,
       Breakpoints.Tablet
-    ]).subscribe(result => {
+    ]).subscribe(() => {
       this.isMobile = this.breakpointObserver.isMatched(Breakpoints.Handset);
       this.isTablet = this.breakpointObserver.isMatched(Breakpoints.Tablet);
       
@@ -115,7 +115,7 @@ export class SettingsShellComponent implements OnInit {
             this.errorHandler.showSuccess('Logged out successfully');
           }
         },
-        error: (error) => {
+        error: () => {
           this.errorHandler.showInfo('Logged out');
         }
       });

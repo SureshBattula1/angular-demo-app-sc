@@ -26,6 +26,7 @@ export class StudentFeesComponent implements OnInit, OnChanges {
   totalPaid = 0;
   pendingCount = 0;
   isLoading = false;
+  downloadingStatement = false;
 
   constructor(
     private feeService: FeeService,
@@ -125,5 +126,47 @@ export class StudentFeesComponent implements OnInit, OnChanges {
 
   getOverdueCount(): number {
     return this.pendingFees.filter(f => this.isOverdue(f)).length;
+  }
+
+  downloadFeeStatement(): void {
+    const userId = this.student?.user_id;
+    if (!userId || this.downloadingStatement) {
+      return;
+    }
+    this.downloadingStatement = true;
+    this.feeService.downloadStudentFeeStatement(userId, { scopeAll: true }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fee-statement-${userId}-all.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.downloadingStatement = false;
+      },
+      error: () => {
+        this.errorHandler.showError('Failed to download fee statement');
+        this.downloadingStatement = false;
+      }
+    });
+  }
+
+  downloadPaymentReceipt(payment: { id?: string | number }): void {
+    if (!payment?.id) {
+      return;
+    }
+    this.feeService.downloadFeePaymentReceipt(payment.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fee-receipt-${payment.id}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.errorHandler.showError('Failed to download receipt');
+      }
+    });
   }
 }

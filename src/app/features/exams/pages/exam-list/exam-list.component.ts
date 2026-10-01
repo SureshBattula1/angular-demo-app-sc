@@ -530,7 +530,7 @@ export class ExamListComponent implements OnInit, OnDestroy {
   }
 
   createSchedule(exam: Exam): void {
-    this.router.navigate(['/exams/schedule/create'], { queryParams: { exam_id: exam.id } });
+    this.router.navigate(['/exams/schedule/create-group'], { queryParams: { exam_id: exam.id } });
   }
 
   // Schedule Actions
@@ -559,7 +559,7 @@ export class ExamListComponent implements OnInit, OnDestroy {
   }
 
   addSchedule(): void {
-    this.router.navigate(['/exams/schedule/create']);
+    this.router.navigate(['/exams/schedule/create-group']);
   }
 
   viewSchedule(schedule: ExamSchedule): void {

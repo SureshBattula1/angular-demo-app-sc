@@ -1,52 +1,78 @@
-<div class="detail">
-  <header class="detail__header">
-    <div>
-      <h2>{{ item.title }}</h2>
-      <p class="muted">{{ item.date || item.sent_at || item.created_at | date: 'medium' }}</p>
+<div class="detail" [class.detail--campaign]="isCampaign()">
+  <header class="detail-hero" [attr.data-tone]="isCampaign() ? statusTone() : null">
+    <div class="detail-hero__bg"></div>
+    <div class="detail-hero__content">
+      <div class="detail-hero__top">
+        <div class="detail-hero__icon">
+          <mat-icon>{{ moduleIcon() }}</mat-icon>
+        </div>
+        <div class="detail-hero__titles">
+          <div class="detail-hero__badges">
+            <span class="badge badge-module">{{ sourceLabel() }}</span>
+            <span class="badge badge-status" *ngIf="isCampaign() && statusLabel()" [attr.data-tone]="statusTone()">
+              {{ statusLabel() }}
+            </span>
+            <span class="badge badge-reviewed" *ngIf="isCampaign() && item.campaign_viewed">
+              <mat-icon>check_circle</mat-icon>
+              Reviewed
+            </span>
+          </div>
+          <h2 *ngIf="!isCampaign()">{{ item.title || 'Notification' }}</h2>
+          <p class="detail-hero__time" *ngIf="sentAtLabel()">
+            <mat-icon>schedule</mat-icon>
+            {{ sentAtLabel() | date: 'medium' }}
+          </p>
+        </div>
+        <button mat-icon-button type="button" class="detail-hero__close" (click)="close()" aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
     </div>
-    <button mat-icon-button type="button" (click)="close()" aria-label="Close">
-      <mat-icon>close</mat-icon>
-    </button>
   </header>
 
   <div class="detail__body">
-    <p class="lead">{{ item.description || item.message }}</p>
-    <p class="muted" *ngIf="item.optional_description">{{ item.optional_description }}</p>
-
-    <div class="meta-grid">
-      <div *ngIf="item.audience"><span>Audience</span><strong>{{ item.audience }}</strong></div>
-      <div *ngIf="item.priority"><span>Priority</span><strong>{{ item.priority }}</strong></div>
-      <div *ngIf="item.source"><span>Source</span><strong>{{ item.source }}</strong></div>
-      <div *ngIf="item.student_count != null"><span>Students</span><strong>{{ item.student_count }}</strong></div>
+    <div class="detail-loading" *ngIf="loading">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Loading…</span>
     </div>
+
+    <ng-container *ngIf="!loading">
+      <p class="message-compact">{{ messageBody }}</p>
+      <p class="message-optional" *ngIf="optionalBody">{{ optionalBody }}</p>
+
+      <div class="meta-inline" *ngIf="isCampaign() && (classSectionLine() || showPriority())">
+        <span class="meta-inline__item" *ngIf="classSectionLine()">
+          <mat-icon>school</mat-icon>
+          {{ classSectionLine() }}
+        </span>
+        <span class="meta-inline__item" *ngIf="showPriority()">
+          <mat-icon>flag</mat-icon>
+          {{ item.priority }}
+        </span>
+      </div>
+
+      <div class="meta-grid" *ngIf="showGenericMeta()">
+        <div *ngIf="item.audience"><span>Audience</span><strong>{{ item.audience }}</strong></div>
+        <div *ngIf="item.priority"><span>Priority</span><strong>{{ item.priority }}</strong></div>
+        <div *ngIf="item.student_count != null"><span>Students</span><strong>{{ item.student_count }}</strong></div>
+      </div>
+    </ng-container>
 
     <div class="attachments" *ngIf="item.attachments?.length">
       <h4>Attachments</h4>
-      <a
-        *ngFor="let file of item.attachments"
-        [href]="file.url"
-        target="_blank"
-        rel="noopener">
+      <a *ngFor="let file of item.attachments" [href]="attachmentUrl(file)" target="_blank" rel="noopener">
         <mat-icon>attach_file</mat-icon>
-        {{ file.name || 'Attachment' }}
+        {{ attachmentLabel(file) }}
       </a>
     </div>
 
     <div class="receipts" *ngIf="item.can_view_receipts && item.group_key">
-      <button
-        mat-stroked-button
-        color="primary"
-        type="button"
-        (click)="loadReceipts()"
-        [disabled]="loadingReceipts">
+      <button mat-stroked-button color="primary" type="button" class="btn-compact" (click)="loadReceipts()" [disabled]="loadingReceipts">
         <mat-icon>visibility</mat-icon>
         View receipts
       </button>
-
       <div class="receipts-panel" *ngIf="showReceipts">
-        <div class="loading" *ngIf="loadingReceipts">
-          <mat-spinner diameter="28"></mat-spinner>
-        </div>
+        <div class="loading" *ngIf="loadingReceipts"><mat-spinner diameter="22"></mat-spinner></div>
         <ng-container *ngIf="!loadingReceipts && receipts">
           <div class="receipt-stats">
             <span>{{ receipts.viewed }}/{{ receipts.total }} viewed</span>
@@ -64,6 +90,10 @@
   </div>
 
   <footer class="detail__footer">
-    <button mat-flat-button color="primary" type="button" (click)="close()">Done</button>
+    <button *ngIf="canLike" mat-stroked-button type="button" class="btn-compact" (click)="toggleLike()" [disabled]="liking">
+      <mat-icon>{{ liked ? 'favorite' : 'favorite_border' }}</mat-icon>
+      {{ liked ? 'Liked' : 'Like' }}
+    </button>
+    <button mat-flat-button color="primary" type="button" class="btn-compact btn-done" (click)="close()">Done</button>
   </footer>
 </div>

@@ -1,0 +1,26 @@
+<div class="page-container">
+  <mat-card class="view-header-card">
+    <mat-toolbar class="module-toolbar">
+      <button mat-button class="toolbar-menu-item active" type="button">
+        <mat-icon>assignment_turned_in</mat-icon>
+        <span>Assignments</span>
+        <span class="tab-badge" *ngIf="assignmentCount > 0">{{ assignmentCount }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <app-data-table
+    [data]="assignments"
+    [config]="tableConfig"
+    [advancedSearchConfig]="searchConfig"
+    [title]="'Assignments'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (searchChanged)="onSearchChange($event)"
+    (advancedSearchChanged)="onAdvancedSearch($event)"
+    (searchFieldChanged)="onSearchFieldChanged($event)"
+    (searchResetEvent)="onSearchReset()"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)">
+  </app-data-table>
+</div>

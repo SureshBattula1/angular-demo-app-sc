@@ -16,7 +16,8 @@ import { Student } from '../../../../core/models/student.model';
 import { Grade } from '../../../../core/models/grade.model';
 import { Section } from '../../../../core/models/section.model';
 import { UniversalAttachmentsComponent } from '../../../../shared/components/universal-attachments/universal-attachments.component';
-import { environment } from '../../../../../environments/environment';
+import { MediaUrlService } from '../../../../core/services/media-url.service';
+import { ImagePreviewService } from '../../../../shared/services/image-preview.service';
 
 @Component({
   selector: 'app-student-form',
@@ -45,6 +46,8 @@ export class StudentFormComponent implements OnInit {
   // Profile picture
   profilePicturePreview: string | null = null;
   profilePictureFile: File | null = null;
+  profilePictureLoaded = false;
+  profilePictureFailed = false;
   
   // For attachments - will be set after student is created/updated
   attachmentModuleId: number | null = null;
@@ -110,7 +113,9 @@ export class StudentFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private errorHandler: ErrorHandlerService,
-    private fileUploadService: FileUploadService
+    private fileUploadService: FileUploadService,
+    private mediaUrl: MediaUrlService,
+    private imagePreview: ImagePreviewService
   ) {}
 
   ngOnInit(): void {
@@ -433,7 +438,7 @@ export class StudentFormComponent implements OnInit {
           
           // Load profile picture preview if exists - convert path to full URL
           if (student.profile_picture) {
-            this.profilePicturePreview = this.getFullImageUrl(student.profile_picture);
+            this.setProfilePicturePreview(this.mediaUrl.resolve(student.profile_picture));
           }
 
           // Hydrate branch-scoped grade/section dropdowns for edit mode
@@ -496,7 +501,7 @@ export class StudentFormComponent implements OnInit {
         this.loadingGrades = false;
         done?.();
       },
-      error: (error) => {
+      error: () => {
         this.errorHandler.showError('Failed to load grades');
         this.grades = [];
         this.loadingGrades = false;
@@ -524,7 +529,7 @@ export class StudentFormComponent implements OnInit {
         this.loadingSections = false;
         done?.();
       },
-      error: (error) => {
+      error: () => {
         this.sections = [];
         this.loadingSections = false;
         done?.();
@@ -723,7 +728,7 @@ export class StudentFormComponent implements OnInit {
     // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e: any) => {
-      this.profilePicturePreview = e.target.result;
+      this.setProfilePicturePreview(e.target.result);
     };
     reader.readAsDataURL(file);
     
@@ -750,13 +755,15 @@ export class StudentFormComponent implements OnInit {
           // Store the file path in the form
           this.studentForm.get('profile_picture')?.setValue(uploadResponse.data.file_path);
           // Use the file_url from the upload response for preview
-          this.profilePicturePreview = uploadResponse.data.file_url || this.getFullImageUrl(uploadResponse.data.file_path);
+          this.setProfilePicturePreview(this.mediaUrl.resolve(
+            uploadResponse.data.file_url || uploadResponse.data.file_path
+          ));
           
           // Update student record with the new path
           const updateData: any = { profile_picture: uploadResponse.data.file_path };
           
           this.studentCrudService.updateStudent(this.studentId!, updateData).subscribe({
-            next: (updateResponse: any) => {
+            next: () => {
               this.errorHandler.showSuccess('Profile picture uploaded successfully');
             },
             error: (error: any) => {
@@ -798,7 +805,7 @@ export class StudentFormComponent implements OnInit {
           const updateData: any = { profile_picture: uploadResponse.data.file_path };
           
           this.studentCrudService.updateStudent(studentId, updateData).subscribe({
-            next: (updateResponse: any) => {
+            next: () => {
               this.isLoading = false;
               
               // Upload any pending attachments after profile picture is saved
@@ -862,8 +869,7 @@ export class StudentFormComponent implements OnInit {
   }
 
   removeProfilePicture(): void {
-    // Clear preview
-    this.profilePicturePreview = null;
+    this.setProfilePicturePreview(null);
     
     // Clear form value (set to null to delete the image from database)
     this.studentForm.get('profile_picture')?.setValue(null);
@@ -888,36 +894,26 @@ export class StudentFormComponent implements OnInit {
   /**
    * Get full URL for image display
    */
-  getFullImageUrl(imagePath: string): string {
-    if (!imagePath) {
-      return '';
+  openProfilePicturePreview(): void {
+    if (this.profilePicturePreview && !this.profilePictureFailed) {
+      this.imagePreview.openImage('Profile photo', this.profilePicturePreview);
     }
-    
-    // If already a full URL, return as is
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-    
-    // If it's a data URL (base64), return as is
-    if (imagePath.startsWith('data:')) {
-      return imagePath;
-    }
-    
-    // Remove storage/ prefix if it exists (we'll add it back)
-    imagePath = imagePath.replace(/^storage\//, '');
-    
-    // Construct full URL - remove /api from base URL
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    const fullUrl = `${baseUrl}/storage/${imagePath}`;
-    
-    return fullUrl;
   }
 
-  /**
-   * Handle image preview error
-   */
+  onProfilePictureLoad(): void {
+    this.profilePictureLoaded = true;
+    this.profilePictureFailed = false;
+  }
+
   onProfilePictureError(): void {
-    this.profilePicturePreview = null;
+    this.profilePictureLoaded = false;
+    this.profilePictureFailed = true;
+  }
+
+  private setProfilePicturePreview(url: string | null): void {
+    this.profilePicturePreview = url;
+    this.profilePictureLoaded = false;
+    this.profilePictureFailed = false;
   }
 
   /**

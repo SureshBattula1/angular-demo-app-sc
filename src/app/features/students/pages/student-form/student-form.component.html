@@ -28,11 +28,22 @@
             <!-- Circular Profile Picture -->
             <div class="profile-picture-circle">
               <div class="profile-picture-inner">
-                <img *ngIf="profilePicturePreview" 
-                     [src]="profilePicturePreview" 
-                     alt="Profile Picture"
-                     (error)="onProfilePictureError()">
-                <div *ngIf="!profilePicturePreview" class="profile-placeholder">
+                <mat-spinner
+                  *ngIf="profilePicturePreview && !profilePictureLoaded && !profilePictureFailed"
+                  diameter="36"
+                  class="profile-preview-spinner">
+                </mat-spinner>
+                <img
+                  *ngIf="profilePicturePreview && !profilePictureFailed"
+                  [src]="profilePicturePreview"
+                  alt="Profile Picture"
+                  class="clickable-preview"
+                  [class.preview-visible]="profilePictureLoaded"
+                  decoding="async"
+                  (click)="openProfilePicturePreview()"
+                  (load)="onProfilePictureLoad()"
+                  (error)="onProfilePictureError()">
+                <div *ngIf="!profilePicturePreview || profilePictureFailed" class="profile-placeholder">
                   <mat-icon>account_circle</mat-icon>
                 </div>
               </div>

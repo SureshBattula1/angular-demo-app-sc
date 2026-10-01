@@ -1,9 +1,12 @@
-import { Injectable, signal, Injector, inject } from '@angular/core';
+import { Injectable, signal, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, tap, catchError, of, map } from 'rxjs';
 import { ApiService, ApiResponse } from './api.service';
 import { PermissionService } from './permission.service';
 import { BranchService } from './branch.service';
+import { UserPreferenceService } from './user-preference.service';
+import { ThemeService } from './theme.service';
+import { AcademicYearContextService } from './academic-year-context.service';
 
 export interface User {
   id: number;
@@ -18,6 +21,7 @@ export interface User {
   is_active: boolean;
   last_login?: string;
   full_name?: string;
+  permissions?: string[];
 }
 
 export interface LoginCredentials {
@@ -75,6 +79,30 @@ export class AuthService {
     return this._branchService;
   }
 
+  private _userPreferenceService?: UserPreferenceService;
+  private get userPreferenceService(): UserPreferenceService {
+    if (!this._userPreferenceService) {
+      this._userPreferenceService = this.injector.get(UserPreferenceService);
+    }
+    return this._userPreferenceService;
+  }
+
+  private _academicYearContext?: AcademicYearContextService;
+  private get academicYearContext(): AcademicYearContextService {
+    if (!this._academicYearContext) {
+      this._academicYearContext = this.injector.get(AcademicYearContextService);
+    }
+    return this._academicYearContext;
+  }
+
+  private _themeService?: ThemeService;
+  private get themeService(): ThemeService {
+    if (!this._themeService) {
+      this._themeService = this.injector.get(ThemeService);
+    }
+    return this._themeService;
+  }
+
   constructor(
     private apiService: ApiService,
     private router: Router,
@@ -113,9 +141,22 @@ export class AuthService {
           
           // Load user permissions and branches after successful login
           if (response.user && response.user.id) {
+            const loginSlugs = response.user.permissions;
+            if (Array.isArray(loginSlugs) && loginSlugs.length > 0) {
+              this.permissionService.applyPermissionSlugs(loginSlugs);
+            }
             this.permissionService.loadUserPermissions(response.user.id).subscribe();
             this.permissionService.loadModules().subscribe();
             this.branchService.getAccessibleBranches().subscribe();
+            this.userPreferenceService.loadPreferences({ force: true }).subscribe({
+              next: pref => {
+                this.themeService.loadThemeFromPreferences();
+                const rawAy = (pref.data?.additional_settings as Record<string, unknown> | null)?.['academic_year_id'];
+                const preferredAy =
+                  rawAy != null && String(rawAy) !== '' ? (rawAy as string | number) : null;
+                this.academicYearContext.bootstrapAfterLogin(preferredAy);
+              }
+            });
           }
         }
       })
@@ -231,7 +272,9 @@ export class AuthService {
     // Clear permissions and branches
     this.permissionService.clearPermissions();
     this.branchService.clearCache();
-    
+    this.userPreferenceService.clearCache();
+    this.academicYearContext.clearCache();
+
     this.router.navigate(['/auth/login']);
   }
 

@@ -49,8 +49,17 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     return true;
   }
 
-  // School SuperAdmin always has dashboard; other modules still use assigned slugs.
-  if (storedRole === 'SuperAdmin' && permissions.includes('dashboard.view')) {
+  // School SuperAdmin always has dashboard; assignments follow the mobile role menu.
+  if (storedRole === 'SuperAdmin' && permissions.some(p => p === 'dashboard.view' || p.startsWith('assignments.'))) {
+    return true;
+  }
+
+  const assignmentRoles = ['SuperAdmin', 'BranchAdmin', 'Teacher', 'Student', 'Staff'];
+  if (
+    storedRole &&
+    assignmentRoles.includes(storedRole) &&
+    permissions.some(p => p.startsWith('assignments.'))
+  ) {
     return true;
   }
 

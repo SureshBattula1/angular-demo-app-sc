@@ -22,6 +22,13 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/communications/pages/notification-center/notification-center.component').then(
+            m => m.NotificationCenterComponent
+          )
+      },
+      {
         path: 'dashboard',
         loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
         canActivate: [permissionGuard],
@@ -117,6 +124,12 @@ export const routes: Routes = [
         data: { permissions: ['fees.view', 'fees.collect'], permissionMode: 'any' }
       },
       {
+        path: 'assignments',
+        loadChildren: () => import('./features/assignments/assignments.routes').then(m => m.ASSIGNMENTS_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['assignments.view', 'assignments.create'], permissionMode: 'any' }
+      },
+      {
         path: 'exams',
         loadChildren: () => import('./features/exams/exams.routes').then(m => m.EXAMS_ROUTES),
         canActivate: [permissionGuard],
@@ -159,10 +172,16 @@ export const routes: Routes = [
         data: { permissions: ['events.view', 'events.create'], permissionMode: 'any' }
       },
       {
+        path: 'notification-campaigns',
+        loadChildren: () => import('./features/notification-campaigns/notification-campaigns.routes').then(m => m.NOTIFICATION_CAMPAIGN_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['notifications.view', 'notifications.create'], permissionMode: 'any' }
+      },
+      {
         path: 'communications',
         loadChildren: () => import('./features/communications/communications.routes').then(m => m.COMMUNICATIONS_ROUTES),
         canActivate: [permissionGuard],
-        data: { permissions: ['communications.view', 'communications.create'], permissionMode: 'any' }
+        data: { permissions: ['notifications.view', 'notifications.create'], permissionMode: 'any' }
       },
       {
         path: 'branch-transfers',

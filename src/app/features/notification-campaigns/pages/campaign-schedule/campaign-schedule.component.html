@@ -1,0 +1,669 @@
+<div class="schedule-page">
+  <mat-card class="schedule-card">
+    <div class="page-top">
+      <div class="page-title-block">
+        <h1 class="page-title">{{ title }}</h1>
+        <nav class="step-nav" aria-label="Schedule steps">
+          <span class="step-pill" [class.active]="step === 1">1 · Classes</span>
+          <span class="step-sep"></span>
+          <span class="step-pill" [class.active]="step === 2">2 · Templates</span>
+        </nav>
+      </div>
+      <div class="page-top__actions">
+        <button
+          mat-stroked-button
+          type="button"
+          class="create-template-btn"
+          [disabled]="!branchId"
+          [matTooltip]="branchId ? 'Add SMS template for this branch' : 'Select a branch first'"
+          (click)="openCreateTemplateDialog()">
+          <mat-icon>note_add</mat-icon>
+          Create template
+        </button>
+      </div>
+    </div>
+
+    <mat-card-content class="page-body">
+      <div class="form-section" *ngIf="step === 1">
+        <div class="control-strip">
+          <div class="control-group filters-inline">
+            <mat-form-field appearance="outline" class="compact-field branch-field" subscriptSizing="dynamic">
+              <mat-label>Branch</mat-label>
+              <mat-select [(ngModel)]="branchId" (selectionChange)="onBranchChange()">
+                <mat-option *ngFor="let branch of branches" [value]="'' + branch.id">{{ branch.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="compact-field date-field" subscriptSizing="dynamic" *ngIf="showEventDatePicker">
+              <mat-label>{{ eventDateFieldLabel }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="eventPicker"
+                [(ngModel)]="eventDate"
+                (dateChange)="onEventDatePicked($event)"
+                [min]="isTodayOnlyDate ? minEventDate : null"
+                [max]="isTodayOnlyDate ? maxEventDate : null"
+                [matDatepickerFilter]="eventDateFilter" />
+              <mat-datepicker-toggle matSuffix [for]="eventPicker"></mat-datepicker-toggle>
+              <mat-datepicker #eventPicker></mat-datepicker>
+            </mat-form-field>
+            <span class="date-chip" *ngIf="isTodayOnlyDate" title="Today only">
+              <mat-icon>today</mat-icon>
+              {{ eventDate | date:'mediumDate' }}
+            </span>
+          </div>
+
+          <div class="control-group exam-mode-row" *ngIf="isExamsModule && branchId">
+            <span class="legend-label">Notify for:</span>
+            <mat-button-toggle-group
+              [(ngModel)]="examNotifyMode"
+              (change)="onExamNotifyModeChange()"
+              aria-label="Exam notification type">
+              <mat-button-toggle value="scheduled">Upcoming exam schedule</mat-button-toggle>
+              <mat-button-toggle value="result">Exam results</mat-button-toggle>
+            </mat-button-toggle-group>
+            <mat-form-field appearance="outline" class="compact-field exam-filter-field exam-combobox" subscriptSizing="dynamic">
+              <mat-label>Exam</mat-label>
+              <input
+                matInput
+                #examComboInput
+                #examComboTrigger="matAutocompleteTrigger"
+                [(ngModel)]="examFilterQuery"
+                (ngModelChange)="onExamFilterQueryChange($event)"
+                [matAutocomplete]="examAuto"
+                (focus)="onExamFilterFocus(examComboTrigger)"
+                (click)="openExamDropdown(examComboTrigger, examComboInput)"
+                (input)="openExamDropdown(examComboTrigger, examComboInput)"
+                placeholder="Select or search exam…"
+                autocomplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                [attr.aria-expanded]="examComboTrigger.panelOpen" />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                class="exam-combo-toggle"
+                aria-label="Open exam list"
+                (mousedown)="$event.preventDefault()"
+                (click)="toggleExamDropdown(examComboTrigger, examComboInput)">
+                <mat-icon>{{ examComboTrigger.panelOpen ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+              </button>
+              <mat-autocomplete
+                #examAuto="matAutocomplete"
+                panelClass="exam-autocomplete-panel"
+                [displayWith]="displayExamInInput"
+                (optionSelected)="onExamOptionSelected($event.option.value)">
+                <mat-option [value]="filterClearValue" class="filter-clear-option" *ngIf="selectedExamId">
+                  Clear selection
+                </mat-option>
+                <mat-option disabled class="exam-panel-hint" *ngIf="examDropdownShowsSearchHint">
+                  Showing {{ filterDropdownDefaultSize }} of {{ examDropdownTotalCount }} — type to search all
+                </mat-option>
+                <mat-option disabled class="exam-panel-hint" *ngIf="!examDropdownShowsSearchHint && !examFilterQueryText && examDropdownTotalCount > 0">
+                  Active exams first — {{ examDropdownTotalCount }} with schedules
+                </mat-option>
+                <mat-option
+                  *ngFor="let exam of examOptionsInDropdown"
+                  [value]="exam.exam_id"
+                  [disabled]="!exam.selectable">
+                  <span class="exam-opt-line">
+                    <span class="exam-opt-name">{{ exam.name }}</span>
+                    <span class="exam-opt-sep">:</span>
+                    <span class="exam-opt-state" [class.is-active]="exam.list_state === 'active'" [class.is-closed]="exam.list_state === 'closed'">
+                      {{ exam.list_state === 'active' ? 'Active' : 'Closed' }}
+                    </span>
+                  </span>
+                </mat-option>
+                <mat-option disabled class="exam-panel-hint" *ngIf="examFilterQueryText && examOptionsInDropdown.length === 0">
+                  No exams match your search
+                </mat-option>
+              </mat-autocomplete>
+              <mat-hint *ngIf="selectedExamIsClosed">Closed exams cannot be used again</mat-hint>
+              <mat-hint *ngIf="!selectedExamIsClosed && examDropdownTotalCount > filterDropdownDefaultSize">
+                Open list: {{ filterDropdownDefaultSize }} shown · type to search all
+              </mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="control-group exam-mode-row" *ngIf="isFeesModule && branchId">
+            <span class="legend-label">Notify for:</span>
+            <mat-button-toggle-group
+              [(ngModel)]="feeNotifyMode"
+              (change)="onFeeNotifyModeChange()"
+              aria-label="Fee notification type">
+              <mat-button-toggle value="structure">Fee structure notify</mat-button-toggle>
+              <mat-button-toggle value="due">Due notify</mat-button-toggle>
+            </mat-button-toggle-group>
+
+            <ng-container *ngIf="feeNotifyMode === 'structure'">
+              <mat-form-field appearance="outline" class="compact-field exam-filter-field exam-combobox" subscriptSizing="dynamic">
+                <mat-label>Fee structure</mat-label>
+                <input
+                  matInput
+                  #feeStructureComboInput
+                  #feeStructureComboTrigger="matAutocompleteTrigger"
+                  [(ngModel)]="feeStructureFilterQuery"
+                  (ngModelChange)="onFeeStructureFilterQueryChange($event)"
+                  [matAutocomplete]="feeStructureAuto"
+                  (focus)="onFeeStructureFilterFocus(feeStructureComboTrigger)"
+                  (click)="openFeeStructureDropdown(feeStructureComboTrigger, feeStructureComboInput)"
+                  (input)="openFeeStructureDropdown(feeStructureComboTrigger, feeStructureComboInput)"
+                  placeholder="Select or search fee structure…"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  [attr.aria-expanded]="feeStructureComboTrigger.panelOpen" />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  class="exam-combo-toggle"
+                  aria-label="Open fee structure list"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="toggleFeeStructureDropdown(feeStructureComboTrigger, feeStructureComboInput)">
+                  <mat-icon>{{ feeStructureComboTrigger.panelOpen ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                </button>
+                <mat-autocomplete
+                  #feeStructureAuto="matAutocomplete"
+                  panelClass="exam-autocomplete-panel"
+                  [displayWith]="displayFeeStructureInInput"
+                  (optionSelected)="onFeeStructureOptionSelected($event.option.value)">
+                  <mat-option [value]="filterClearValue" class="filter-clear-option" *ngIf="selectedFeeStructureId">
+                    Clear selection
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="feeStructureDropdownShowsSearchHint">
+                    Showing {{ filterDropdownDefaultSize }} of {{ feeStructureDropdownTotalCount }} — type to search all
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="!feeStructureFilterQueryText && feeStructureDropdownTotalCount > 0 && !feeStructureDropdownShowsSearchHint">
+                    Active structures first — {{ feeStructureDropdownTotalCount }} available
+                  </mat-option>
+                  <mat-option
+                    *ngFor="let opt of feeStructureOptionsInDropdown"
+                    [value]="opt.fee_structure_id"
+                    [disabled]="!opt.selectable">
+                    <span class="exam-opt-line">
+                      <span class="exam-opt-name">{{ opt.label }}</span>
+                      <span class="exam-opt-sep">:</span>
+                      <span class="exam-opt-state" [class.is-active]="opt.list_state === 'active'" [class.is-closed]="opt.list_state === 'closed'">
+                        {{ opt.list_state === 'active' ? 'Active' : 'Closed' }}
+                      </span>
+                    </span>
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="feeStructureFilterQueryText && feeStructureOptionsInDropdown.length === 0">
+                    No fee structures match your search
+                  </mat-option>
+                </mat-autocomplete>
+                <mat-hint *ngIf="selectedFeeStructureIsClosed">Closed structures cannot be used again</mat-hint>
+                <mat-hint *ngIf="!selectedFeeStructureIsClosed && feeStructureDropdownTotalCount > filterDropdownDefaultSize">
+                  Open list: {{ filterDropdownDefaultSize }} shown · type to search all
+                </mat-hint>
+              </mat-form-field>
+              <span class="date-chip" *ngIf="structureDueDateChip" title="Structure due date">
+                <mat-icon>event</mat-icon>
+                Due {{ parseExamHintDate(structureDueDateChip) | date:'mediumDate' }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngIf="feeNotifyMode === 'due'">
+              <mat-form-field appearance="outline" class="compact-field exam-filter-field exam-combobox" subscriptSizing="dynamic">
+                <mat-label>Fee type</mat-label>
+                <input
+                  matInput
+                  #feeTypeComboInput
+                  #feeTypeComboTrigger="matAutocompleteTrigger"
+                  [(ngModel)]="feeFilterQuery"
+                  (ngModelChange)="onFeeFilterQueryChange($event)"
+                  [matAutocomplete]="feeTypeAuto"
+                  (focus)="onFeeTypeFilterFocus(feeTypeComboTrigger)"
+                  (click)="openFeeTypeDropdown(feeTypeComboTrigger, feeTypeComboInput)"
+                  (input)="openFeeTypeDropdown(feeTypeComboTrigger, feeTypeComboInput)"
+                  placeholder="Select or search fee type…"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  [attr.aria-expanded]="feeTypeComboTrigger.panelOpen" />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  class="exam-combo-toggle"
+                  aria-label="Open fee type list"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="toggleFeeTypeDropdown(feeTypeComboTrigger, feeTypeComboInput)">
+                  <mat-icon>{{ feeTypeComboTrigger.panelOpen ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                </button>
+                <mat-autocomplete
+                  #feeTypeAuto="matAutocomplete"
+                  panelClass="exam-autocomplete-panel"
+                  [displayWith]="displayFeeTypeInInput"
+                  (optionSelected)="onFeeTypeOptionSelected($event.option.value)">
+                  <mat-option [value]="filterClearValue" class="filter-clear-option" *ngIf="selectedFeeType">
+                    Clear selection
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="feeTypeDropdownShowsSearchHint">
+                    Showing {{ filterDropdownDefaultSize }} of {{ feeTypeDropdownTotalCount }} — type to search all
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="!feeFilterQueryText && feeTypeDropdownTotalCount > 0 && !feeTypeDropdownShowsSearchHint">
+                    Active fee types first — {{ feeTypeDropdownTotalCount }} available
+                  </mat-option>
+                  <mat-option
+                    *ngFor="let opt of feeTypeOptionsInDropdown"
+                    [value]="opt.fee_type"
+                    [disabled]="!opt.selectable">
+                    <span class="exam-opt-line">
+                      <span class="exam-opt-name">{{ opt.label }}</span>
+                      <span class="exam-opt-sep">:</span>
+                      <span class="exam-opt-state" [class.is-active]="opt.list_state === 'active'" [class.is-closed]="opt.list_state === 'closed'">
+                        {{ opt.list_state === 'active' ? 'Active' : 'Closed' }}
+                      </span>
+                    </span>
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="feeFilterQueryText && feeTypeOptionsInDropdown.length === 0">
+                    No fee types match your search
+                  </mat-option>
+                </mat-autocomplete>
+                <mat-hint *ngIf="selectedFeeTypeIsClosed">Closed fee types cannot be used again</mat-hint>
+                <mat-hint *ngIf="!selectedFeeTypeIsClosed && feeTypeDropdownTotalCount > filterDropdownDefaultSize">
+                  Open list: {{ filterDropdownDefaultSize }} shown · type to search all
+                </mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="compact-field exam-filter-field exam-combobox" subscriptSizing="dynamic">
+                <mat-label>Due date</mat-label>
+                <input
+                  matInput
+                  #feeDueDateComboInput
+                  #feeDueDateComboTrigger="matAutocompleteTrigger"
+                  [(ngModel)]="feeDueDateFilterQuery"
+                  (ngModelChange)="onFeeDueDateFilterQueryChange($event)"
+                  [matAutocomplete]="feeDueDateAuto"
+                  (focus)="onFeeDueDateFilterFocus(feeDueDateComboTrigger)"
+                  (click)="openFeeDueDateDropdown(feeDueDateComboTrigger, feeDueDateComboInput)"
+                  (input)="openFeeDueDateDropdown(feeDueDateComboTrigger, feeDueDateComboInput)"
+                  placeholder="Select or search due date…"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  [disabled]="!selectedFeeType || feeDueDates.length === 0"
+                  [attr.aria-expanded]="feeDueDateComboTrigger.panelOpen" />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  class="exam-combo-toggle"
+                  aria-label="Open due date list"
+                  [disabled]="!selectedFeeType || feeDueDates.length === 0"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="toggleFeeDueDateDropdown(feeDueDateComboTrigger, feeDueDateComboInput)">
+                  <mat-icon>{{ feeDueDateComboTrigger.panelOpen ? 'arrow_drop_up' : 'arrow_drop_down' }}</mat-icon>
+                </button>
+                <mat-autocomplete
+                  #feeDueDateAuto="matAutocomplete"
+                  panelClass="exam-autocomplete-panel"
+                  [displayWith]="displayFeeDueDateInInput"
+                  (optionSelected)="onFeeDueDateOptionSelected($event.option.value)">
+                  <mat-option [value]="filterClearValue" class="filter-clear-option" *ngIf="selectedDueDateIso">
+                    Clear selection
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="feeDueDateDropdownShowsSearchHint">
+                    Showing {{ filterDropdownDefaultSize }} of {{ feeDueDateDropdownTotalCount }} — type to search all
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="!feeDueDateFilterQueryText && feeDueDateDropdownTotalCount > 0 && !feeDueDateDropdownShowsSearchHint">
+                    Upcoming dates first — open dues and fee structures
+                  </mat-option>
+                  <mat-option *ngFor="let d of feeDueDatesInDropdown" [value]="d">
+                    <span class="exam-opt-line">
+                      <span class="exam-opt-name">{{ feeDueDateDisplay(d) }}</span>
+                      <span class="exam-opt-sep" *ngIf="isUpcomingDueDate(d)">·</span>
+                      <span class="exam-opt-state is-active" *ngIf="isUpcomingDueDate(d)">Upcoming</span>
+                    </span>
+                  </mat-option>
+                  <mat-option disabled class="exam-panel-hint" *ngIf="feeDueDateFilterQueryText && feeDueDatesInDropdown.length === 0">
+                    No due dates match your search
+                  </mat-option>
+                </mat-autocomplete>
+                <mat-hint *ngIf="selectedFeeType && feeDueDates.length === 0">No fee structure due dates for this fee type</mat-hint>
+                <mat-hint *ngIf="!selectedFeeType">Select a fee type first</mat-hint>
+                <mat-hint *ngIf="selectedFeeType && feeDueDateDropdownTotalCount > filterDropdownDefaultSize">
+                  Open list: {{ filterDropdownDefaultSize }} shown · type to search all
+                </mat-hint>
+              </mat-form-field>
+            </ng-container>
+          </div>
+
+          <div class="control-group actions" *ngIf="!loadingClasses && classGroups.length">
+            <button mat-stroked-button type="button" class="mini-btn" (click)="selectAll(true)">Select all</button>
+            <button mat-stroked-button type="button" class="mini-btn" (click)="selectAll(false)">Clear</button>
+            <span class="selection-count">{{ selectedCount }}/{{ selectableSections.length }} selected</span>
+          </div>
+        </div>
+
+        <div class="legend-row" *ngIf="isExamsModule && branchId">
+          <span class="legend-label">Exam:</span>
+          <span class="status-pill danger">Not ready</span>
+          <span class="status-pill tally-ok">{{ examNotifyMode === 'scheduled' ? 'Schedule listed' : 'Marks listed' }}</span>
+          <span class="legend-label">Notify:</span>
+          <span class="status-pill notify-inactive">Not sent</span>
+          <span class="status-pill notify-pending">Sending…</span>
+          <span class="status-pill notify-active">Sent</span>
+        </div>
+
+        <div class="legend-row" *ngIf="isFeesModule && branchId">
+          <span class="legend-label">Fees:</span>
+          <span class="status-pill danger">Not ready</span>
+          <span class="status-pill tally-ok">{{ feeNotifyMode === 'due' ? 'To remind listed' : 'Enrolled listed' }}</span>
+          <span class="legend-label">Notify:</span>
+          <span class="status-pill notify-inactive">Not sent</span>
+          <span class="status-pill notify-pending">Sending…</span>
+          <span class="status-pill notify-active">Sent</span>
+        </div>
+
+        <div class="legend-row" *ngIf="isAttendanceModule && branchId">
+          <span class="legend-label">Attendance:</span>
+          <span class="status-pill danger">Not marked</span>
+          <span class="status-pill tally-ok">P / A / L tally</span>
+          <span class="legend-label">Notify:</span>
+          <span class="status-pill notify-inactive">Not sent</span>
+          <span class="status-pill notify-pending">Sending…</span>
+          <span class="status-pill notify-active">Sent</span>
+        </div>
+
+        <p class="state-msg muted" *ngIf="loadingClasses">Loading classes…</p>
+        <p class="state-msg muted" *ngIf="isExamsModule && branchId && !loadingClasses && examOptions.length === 0">
+          No exams with schedules for this notify type at this branch.
+        </p>
+        <p class="state-msg muted" *ngIf="isExamsModule && branchId && !loadingClasses && examOptions.length && !selectedExamId">
+          Select an active exam to load assigned classes and sections.
+        </p>
+        <p class="state-msg muted" *ngIf="!loadingClasses && branchId && classGroups.length === 0 && !(isExamsModule && examOptions.length && !selectedExamId) && !(isFeesModule && (feeTypeOptions.length || feeStructureOptions.length))">
+          No classes found for this branch.
+        </p>
+        <p class="state-msg" *ngIf="isExamsModule && branchId && !loadingClasses">
+          {{ examNotifyModeLabel }} — enable checkboxes only where
+          {{ examNotifyMode === 'scheduled' ? 'exam schedules exist' : 'marks are entered' }} for the selected exam.
+        </p>
+        <p class="state-msg muted" *ngIf="isFeesModule && branchId && !loadingClasses && feeNotifyMode === 'structure' && feeStructureOptions.length === 0">
+          No fee structures for this branch and academic year.
+        </p>
+        <p class="state-msg muted" *ngIf="isFeesModule && branchId && !loadingClasses && feeNotifyMode === 'due' && feeTypeOptions.length === 0">
+          No fee types with open dues at this branch.
+        </p>
+        <p class="state-msg muted" *ngIf="isFeesModule && branchId && !loadingClasses && feeNotifyMode === 'structure' && feeStructureOptions.length && !selectedFeeStructureId">
+          Select a fee structure to load assigned classes and sections.
+        </p>
+        <p class="state-msg muted" *ngIf="isFeesModule && branchId && !loadingClasses && feeNotifyMode === 'due' && feeTypeOptions.length && !selectedFeeType">
+          Select a fee type and due date. All classes are listed below; enable checkboxes only where students have balance due.
+        </p>
+        <p class="state-msg muted" *ngIf="isFeesModule && branchId && !loadingClasses && feeNotifyMode === 'due' && selectedFeeType && !selectedDueDateIso">
+          Select a due date for {{ selectedFeeTypeOption?.label || 'this fee type' }}. Reminder counts and checkboxes load after you choose the due date.
+        </p>
+        <p class="state-msg muted" *ngIf="isFeesModule && branchId && !loadingClasses && feeNotifyMode === 'due' && selectedFeeType && selectedDueDateIso && !hasFeeReminderSections">
+          No sections with matched students for this fee type and due date (all classes shown as not ready).
+        </p>
+        <p class="state-msg" *ngIf="isFeesModule && branchId && !loadingClasses && selectedFeeStructureId && feeNotifyMode === 'structure'">
+          {{ feeNotifyModeLabel }} — enable checkboxes for enrolled sections matching the structure grade.
+        </p>
+        <p class="state-msg" *ngIf="isFeesModule && branchId && !loadingClasses && selectedFeeType && selectedDueDateIso && feeNotifyMode === 'due' && classGroups.length">
+          {{ feeNotifyModeLabel }} — all classes are listed; enable checkboxes only where matched students &gt; 0 (balance due) for the selected fee type and due date.
+        </p>
+        <p class="state-msg muted" *ngIf="isHolidaysModule && branchId && !loadingClasses && classGroups.length && !hasSelectableSectionsForDate">
+          No holiday configured for this date at this branch. Pick another date with an active holiday.
+        </p>
+        <p class="state-msg" *ngIf="isHolidaysModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
+          Holiday on this date — select sections to notify.
+        </p>
+        <p class="state-msg muted" *ngIf="isAssignmentsModule && branchId && !loadingClasses && classGroups.length && !hasSelectableSectionsForDate">
+          No assignments due on this date (or published today with a later due date). Try another date.
+        </p>
+        <p class="state-msg" *ngIf="isAssignmentsModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
+          Select sections with assignments matching the chosen date (due today or published today).
+        </p>
+        <p class="state-msg" *ngIf="usesEligibleTargets && !isAttendanceModule && !isExamsModule && !isFeesModule && !isHolidaysModule && !isAssignmentsModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
+          Select eligible sections for the chosen date.
+        </p>
+
+        <div class="class-grid" *ngIf="classGroups.length">
+          <div class="class-group" *ngFor="let group of classGroups">
+            <div class="class-head">
+              <mat-checkbox
+                class="compact-check"
+                [checked]="isClassChecked(group)"
+                [indeterminate]="isClassIndeterminate(group)"
+                [disabled]="!hasSelectable(group)"
+                (change)="toggleClass(group, $event.checked)">
+                {{ group.className }}
+              </mat-checkbox>
+              <span class="status-pill danger head-badge" *ngIf="isAttendanceModule && classMissingAttendanceCount(group) > 0">
+                {{ classMissingAttendanceCount(group) }} no attendance
+              </span>
+              <span class="status-pill danger head-badge" *ngIf="isExamsModule && classMissingExamCriteriaCount(group) > 0">
+                {{ classMissingExamCriteriaCount(group) }} not ready
+              </span>
+              <span class="status-pill danger head-badge" *ngIf="isFeesModule && classMissingFeeCriteriaCount(group) > 0">
+                {{ classMissingFeeCriteriaCount(group) }} not ready
+              </span>
+            </div>
+            <div class="section-list">
+              <label
+                class="class-row"
+                [class.is-disabled]="!section.selectable"
+                *ngFor="let section of group.sections">
+                <mat-checkbox class="compact-check" [(ngModel)]="section.selected" [disabled]="!section.selectable">
+                  Sec {{ section.section }}
+                </mat-checkbox>
+                <div class="row-meta">
+                  <ng-container *ngIf="isAttendanceModule">
+                    <span
+                      class="status-pill att"
+                      [class.danger]="!section.attendanceMarked"
+                      [class.tally-ok]="section.attendanceMarked"
+                      [title]="section.attendanceMarked ? 'Attendance marked' : 'Attendance not taken'">
+                      {{ section.attendanceMarked ? 'Marked' : 'None' }}
+                    </span>
+                    <span
+                      class="tally"
+                      [class.danger]="!section.attendanceMarked"
+                      [class.tally-ok]="section.attendanceMarked"
+                      [title]="attendanceTallyTitle(section)">
+                      {{ attendanceTallyLabel(section) }}
+                    </span>
+                    <span class="status-pill notify" [ngClass]="notificationStatusClass(section.notificationStatus)">
+                      {{ notificationStatusLabel(section.notificationStatus) }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngIf="isExamsModule">
+                    <span
+                      class="status-pill att"
+                      [class.danger]="!section.examCriteriaMet"
+                      [class.tally-ok]="section.examCriteriaMet"
+                      [title]="examTallyTitle(section)">
+                      {{ section.examCriteriaMet ? 'Ready' : 'None' }}
+                    </span>
+                    <span
+                      class="tally"
+                      [class.danger]="!section.examCriteriaMet"
+                      [class.tally-ok]="section.examCriteriaMet"
+                      [title]="examTallyTitle(section)">
+                      {{ examTallyLabel(section) }}
+                    </span>
+                    <span class="status-pill notify" [ngClass]="notificationStatusClass(section.notificationStatus)">
+                      {{ notificationStatusLabel(section.notificationStatus) }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngIf="isFeesModule">
+                    <span
+                      class="status-pill att"
+                      [class.danger]="!section.feeCriteriaMet"
+                      [class.tally-ok]="section.feeCriteriaMet"
+                      [title]="feeTallyTitle(section)">
+                      {{ section.feeCriteriaMet ? 'Ready' : 'None' }}
+                    </span>
+                    <span
+                      class="tally"
+                      [class.danger]="!section.feeCriteriaMet"
+                      [class.tally-ok]="section.feeCriteriaMet"
+                      [title]="feeTallyTitle(section)">
+                      {{ feeTallyLabel(section) }}
+                    </span>
+                    <span class="status-pill notify" [ngClass]="notificationStatusClass(section.notificationStatus)">
+                      {{ notificationStatusLabel(section.notificationStatus) }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngIf="usesEligibleTargets && !isAttendanceModule && !isExamsModule && !isFeesModule">
+                    <span class="status-pill" [ngClass]="notificationStatusClass(section.notificationStatus)">
+                      {{ notificationStatusLabel(section.notificationStatus) }}
+                    </span>
+                    <span class="count">{{ section.student_count }}</span>
+                  </ng-container>
+                  <span class="count" *ngIf="!usesEligibleTargets">{{ section.student_count }}</span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section templates-step" *ngIf="step === 2">
+        <p class="state-msg" *ngIf="!isExamsModule && !isFeesModule && !isAssignmentsModule">Choose a template for each status (from Bulk Management).</p>
+        <p class="state-msg" *ngIf="isAssignmentsModule">
+          Choose a template for each assignment type on this date
+          <ng-container *ngIf="assignmentStatusLabelsHint"> ({{ assignmentStatusLabelsHint }})</ng-container>.
+          Only types with assignments on the selected date are shown.
+        </p>
+        <p class="state-msg" *ngIf="isExamsModule">Choose a template for {{ examNotifyModeLabel | lowercase }}.</p>
+        <p class="state-msg" *ngIf="isFeesModule">Choose template(s) for {{ feeNotifyModeLabel | lowercase }}.</p>
+        <p class="template-hint">Missing a template? Use <strong>Create template</strong> above.</p>
+        <div class="template-grid">
+          <mat-form-field appearance="outline" class="compact-field" subscriptSizing="dynamic" *ngFor="let status of filteredStatuses">
+            <mat-label>{{ status.label }}</mat-label>
+            <mat-select [(ngModel)]="templateMap[status.key]">
+              <mat-option [value]="null">Not used</mat-option>
+              <mat-option *ngFor="let template of templates" [value]="template.id">{{ template.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <footer class="page-footer">
+      <button mat-button type="button" (click)="step === 1 ? cancel() : step = 1">
+        {{ step === 1 ? 'Cancel' : 'Back' }}
+      </button>
+      <button *ngIf="step === 1" mat-flat-button color="primary" type="button" (click)="nextFromClasses()">Continue</button>
+      <button *ngIf="step === 2" mat-flat-button color="primary" type="button" (click)="openPreview()" [disabled]="saving">
+        Preview &amp; schedule
+      </button>
+    </footer>
+  </mat-card>
+</div>
+
+<div class="preview-backdrop" *ngIf="showSelectionConfirm" (click)="closeSelectionConfirm()">
+  <div class="preview-dialog selection-confirm-dialog" role="dialog" aria-labelledby="selection-title" (click)="$event.stopPropagation()">
+    <header class="preview-header">
+      <div class="preview-heading">
+        <mat-icon>fact_check</mat-icon>
+        <div>
+          <h2 id="selection-title">Confirm class selection</h2>
+          <p *ngIf="!isExamsModule">Review selected and excluded sections for {{ branchName }} on {{ eventDate | date:'mediumDate' }}.</p>
+          <p *ngIf="isExamsModule">Review selected and excluded sections for {{ branchName }} ({{ examNotifyModeLabel }}).</p>
+          <p *ngIf="isFeesModule">Review selected and excluded sections for {{ branchName }} ({{ feeNotifyModeLabel }}).</p>
+        </div>
+      </div>
+      <button mat-icon-button type="button" (click)="closeSelectionConfirm()" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="preview-body selection-confirm-body">
+      <section class="confirm-block">
+        <h3><mat-icon>check_circle</mat-icon> Selected sections ({{ confirmedSelectedSections.length }})</h3>
+        <ul class="confirm-list selected" *ngIf="confirmedSelectedSections.length; else noSelected">
+          <li *ngFor="let row of confirmedSelectedSections">
+            <div class="confirm-row-main">
+              <strong>{{ row.className }} · Section {{ row.section }}</strong>
+              <span class="confirm-chip selected">Selected</span>
+            </div>
+            <span class="confirm-meta">{{ row.studentCount }} students</span>
+          </li>
+        </ul>
+        <ng-template #noSelected>
+          <p class="confirm-empty">No sections selected.</p>
+        </ng-template>
+      </section>
+
+      <section class="confirm-block">
+        <h3><mat-icon>remove_circle_outline</mat-icon> Not selected ({{ confirmedNotSelectedSections.length }})</h3>
+        <ul class="confirm-list not-selected" *ngIf="confirmedNotSelectedSections.length; else noneExcluded">
+          <li *ngFor="let row of confirmedNotSelectedSections">
+            <div class="confirm-row-main">
+              <strong>{{ row.className }} · Section {{ row.section }}</strong>
+              <span class="confirm-chip" [class.missing]="row.reason === 'Attendance not taken'">
+                {{ row.reason }}
+              </span>
+            </div>
+            <span class="confirm-meta" *ngIf="row.reason !== 'Attendance not taken'">{{ row.studentCount }} students</span>
+          </li>
+        </ul>
+        <ng-template #noneExcluded>
+          <p class="confirm-empty">All listed sections are selected.</p>
+        </ng-template>
+      </section>
+    </div>
+
+    <footer class="preview-actions">
+      <button mat-stroked-button type="button" (click)="closeSelectionConfirm()">
+        <mat-icon>edit</mat-icon>
+        Change selection
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="confirmSelectionDialog()" [disabled]="confirmedSelectedSections.length === 0">
+        <mat-icon>arrow_forward</mat-icon>
+        Continue
+      </button>
+    </footer>
+  </div>
+</div>
+
+<div class="preview-backdrop" *ngIf="showPreview" (click)="showPreview = false">
+  <div class="preview-dialog" role="dialog" aria-labelledby="sample-title" (click)="$event.stopPropagation()">
+    <header class="preview-header">
+      <div class="preview-heading">
+        <mat-icon>forum</mat-icon>
+        <div>
+          <h2 id="sample-title">Sample messages</h2>
+          <p>Review one message for each status before you schedule.</p>
+        </div>
+      </div>
+      <button mat-icon-button type="button" (click)="showPreview = false" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="preview-body">
+      <article class="sample" *ngFor="let sample of samples">
+        <div class="sample-top">
+          <span class="status-chip">{{ sample.label }}</span>
+          <span class="sample-meta">{{ sample.recipient_count }} recipients</span>
+        </div>
+        <div class="sample-student">
+          <mat-icon>person</mat-icon>
+          <span>{{ sample.student_name }}</span>
+        </div>
+        <div class="message-bubble">{{ sample.message }}</div>
+      </article>
+      <div class="empty-samples" *ngIf="samples.length === 0">
+        <mat-icon>inbox</mat-icon>
+        <p>No sample could be rendered for the selected statuses.</p>
+      </div>
+    </div>
+
+    <footer class="preview-actions">
+      <button mat-stroked-button type="button" (click)="showPreview = false">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="confirm()" [disabled]="saving || samples.length === 0">
+        <mat-icon>send</mat-icon>
+        {{ saving ? 'Scheduling…' : 'Confirm and schedule' }}
+      </button>
+    </footer>
+  </div>
+</div>
