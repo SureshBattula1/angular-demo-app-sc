@@ -44,7 +44,7 @@ export interface Assignment {
   instructions?: string | null;
   attachments?: AssignmentAttachment[];
   published_at?: string | null;
-  student_ids?: Array<string | number>;
+  student_ids?: (string | number)[];
   branch_id?: string | number;
   branch?: { id: string | number; name?: string; code?: string } | null;
 }
@@ -57,7 +57,7 @@ export interface AssignmentListItem extends Assignment {
 export interface CreateAssignmentPayload {
   branch_id?: string | number | null;
   grade: string;
-  section: string;
+  section?: string | null;
   subject_id: string | number;
   title: string;
   description?: string | null;
@@ -66,7 +66,7 @@ export interface CreateAssignmentPayload {
   max_marks?: number | null;
   assignment_type?: AssignmentType | string;
   audience_mode: AssignmentAudienceMode;
-  student_ids?: Array<string | number>;
+  student_ids?: (string | number)[];
   is_published?: boolean;
   attachments?: AssignmentAttachment[];
 }

@@ -60,13 +60,14 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
-              <mat-label>Section</mat-label>
+              <mat-label>Section (optional)</mat-label>
               <mat-select formControlName="section">
+                <mat-option [value]="''">All sections (whole class)</mat-option>
                 <mat-option *ngFor="let section of sections" [value]="section.value">{{ section.label }}</mat-option>
               </mat-select>
               <mat-icon matPrefix>group</mat-icon>
               <mat-hint *ngIf="loadingSections">Loading sections…</mat-hint>
-              <mat-error *ngIf="form.controls.section.hasError('required')">Section is required</mat-error>
+              <mat-hint *ngIf="!loadingSections">Leave as whole class or pick one section</mat-hint>
             </mat-form-field>
           </div>
 
@@ -212,7 +213,7 @@
               </label>
             </div>
             <ng-template #noStudents>
-              <p class="muted" *ngIf="!loadingStudents">No students found for this class and section.</p>
+              <p class="muted" *ngIf="!loadingStudents">No students found for this class{{ form.controls.section.value ? ' and section' : '' }}.</p>
             </ng-template>
           </div>
         </div>

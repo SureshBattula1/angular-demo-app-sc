@@ -11,7 +11,15 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 
-type HubTab = 'dashboard' | 'attendance' | 'exams' | 'fees' | 'holidays' | 'assignments';
+type HubTab = 'dashboard' | string;
+
+const MODULE_ICONS: Record<string, string> = {
+  attendance: 'fact_check',
+  exams: 'assignment',
+  fees: 'payments',
+  holidays: 'event',
+  assignments: 'assignment_turned_in'
+};
 
 @Component({
   selector: 'app-campaign-hub',
@@ -21,7 +29,7 @@ type HubTab = 'dashboard' | 'attendance' | 'exams' | 'fees' | 'holidays' | 'assi
   styleUrls: ['./campaign-hub.component.scss']
 })
 export class CampaignHubComponent implements OnInit {
-  tabs: Array<{ id: HubTab; label: string; icon: string }> = [
+  tabs: { id: HubTab; label: string; icon: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'attendance', label: 'Attendance', icon: 'fact_check' },
     { id: 'exams', label: 'Exams', icon: 'assignment' },
@@ -48,7 +56,7 @@ export class CampaignHubComponent implements OnInit {
         cellClass: () => 'cell-nowrap'
       },
       { key: 'event_date', header: 'Date', sortable: false, width: '130px' },
-      { key: 'scheduled_at', header: 'Scheduled', sortable: false, width: '180px' },
+      { key: 'scheduled_at', header: 'Scheduled', sortable: false, width: '180px', pipe: 'datetime' },
       { key: 'student_count', header: 'Students', sortable: false, width: '110px', align: 'center' },
       {
         key: 'status',
@@ -56,7 +64,7 @@ export class CampaignHubComponent implements OnInit {
         type: 'badge',
         width: '120px',
         align: 'center',
-        cellClass: (row: CampaignListRow) => this.statusClass(row.status)
+        cellClass: (row: CampaignListRow) => this.statusClass(this.rowDisplayStatus(row))
       }
     ],
     actions: [
@@ -134,12 +142,30 @@ export class CampaignHubComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const tab = this.route.snapshot.queryParamMap.get('tab') as HubTab | null;
-    if (tab && this.tabs.some(item => item.id === tab)) {
-      this.activeTab = tab;
-    }
-    this.loadBranches();
-    this.load();
+    this.campaigns.modules().subscribe({
+      next: response => {
+        const meta = response.meta || {};
+        const moduleTabs = Object.keys(response.data || {}).map(slug => ({
+          id: slug,
+          label: meta[slug]?.label || slug.charAt(0).toUpperCase() + slug.slice(1),
+          icon: MODULE_ICONS[slug] || 'campaign'
+        }));
+        this.tabs = [{ id: 'dashboard', label: 'Dashboard', icon: 'dashboard' }, ...moduleTabs];
+        const tab = this.route.snapshot.queryParamMap.get('tab');
+        if (tab && this.tabs.some(item => item.id === tab)) {
+          this.activeTab = tab;
+        } else if (moduleTabs.length > 0) {
+          this.activeTab = moduleTabs[0].id;
+        }
+        this.loadBranches();
+        this.load();
+      },
+      error: error => {
+        this.errorHandler.showError(error);
+        this.loadBranches();
+        this.load();
+      }
+    });
   }
 
   switchTab(tab: string): void {
@@ -225,7 +251,7 @@ export class CampaignHubComponent implements OnInit {
         this.rows = (response.data || []).map(row => ({
           ...row,
           class_display: this.classSectionLabel(row),
-          status: this.statusLabel(row.status)
+          status: this.statusLabel(this.rowDisplayStatus(row))
         }));
         this.tableConfig = { ...this.tableConfig, totalCount: total };
         this.loading = false;
@@ -244,6 +270,10 @@ export class CampaignHubComponent implements OnInit {
     }
   }
 
+  view(row: CampaignListRow): void {
+    this.router.navigate(['/notification-campaigns/view', row.id]);
+  }
+
   onPagination(event: PaginationEvent): void {
     this.page = event.page + 1;
     this.perPage = event.pageSize;
@@ -255,9 +285,15 @@ export class CampaignHubComponent implements OnInit {
     const section = row.section ? `Section ${row.section}` : '';
     return [name, section].filter(Boolean).join(' · ') || '—';
   }
-
-  view(row: CampaignListRow): void {
-    this.router.navigate(['/notification-campaigns/view', row.id]);
+  rowDisplayStatus(row: CampaignListRow): string {
+    const campaign = (row.campaign_status || '').toLowerCase();
+    if (['materializing', 'queued'].includes(campaign)) {
+      return campaign;
+    }
+    if (campaign === 'sending' && (row.status || '').toLowerCase() === 'pending') {
+      return 'sending';
+    }
+    return row.status || campaign || 'pending';
   }
 
   statusClass(status: string): string {
@@ -265,6 +301,7 @@ export class CampaignHubComponent implements OnInit {
     if (value === 'sent') return 'badge-success';
     if (value === 'failed') return 'badge-danger';
     if (value === 'partial') return 'badge-warning';
+    if (value === 'materializing' || value === 'queued' || value === 'sending') return 'badge-warning';
     return 'badge-warning';
   }
 
@@ -273,7 +310,9 @@ export class CampaignHubComponent implements OnInit {
     if (value === 'sent') return 'Sent';
     if (value === 'failed') return 'Failed';
     if (value === 'partial') return 'Partial';
-    if (value === 'sending') return 'Pending';
+    if (value === 'materializing') return 'Preparing';
+    if (value === 'queued') return 'Queued';
+    if (value === 'sending') return 'Sending';
     return 'Pending';
   }
 
@@ -291,14 +330,14 @@ export class CampaignHubComponent implements OnInit {
     });
   }
 
-  private setGradeOptions(options: Array<{ value: string; label: string; disabled?: boolean }>): void {
+  private setGradeOptions(options: { value: string; label: string; disabled?: boolean }[]): void {
     const field = this.advancedSearchConfig.fields.find(item => item.key === 'grade');
     if (field) {
       field.options = options;
     }
   }
 
-  private setSectionOptions(options: Array<{ value: string; label: string; disabled?: boolean }>): void {
+  private setSectionOptions(options: { value: string; label: string; disabled?: boolean }[]): void {
     const field = this.advancedSearchConfig.fields.find(item => item.key === 'section');
     if (field) {
       field.options = options;
@@ -331,7 +370,7 @@ export class CampaignHubComponent implements OnInit {
     });
   }
 
-  dashboardCards(): Array<{ key: string; label: string; stats: { campaigns: number; pending: number; sent: number; failed: number; recipients: number } }> {
+  dashboardCards(): { key: string; label: string; stats: { campaigns: number; pending: number; sent: number; failed: number; recipients: number } }[] {
     return this.tabs
       .filter(tab => tab.id !== 'dashboard')
       .map(tab => ({

@@ -52,7 +52,7 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
   form = this.fb.group({
     branch_id: [''],
     grade: ['', Validators.required],
-    section: ['', Validators.required],
+    section: [''],
     subject_id: ['', Validators.required],
     title: ['', [Validators.required, Validators.maxLength(255)]],
     description: [''],
@@ -122,11 +122,11 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
       })
     );
     this.subscriptions.push(
-      this.form.controls.section.valueChanges.subscribe(section => {
+      this.form.controls.section.valueChanges.subscribe(() => {
         if (!this.isEditMode) {
           this.students = [];
           this.selectedStudentIds.clear();
-          if (section && this.form.controls.audience_mode.value === 'custom') {
+          if (this.form.controls.audience_mode.value === 'custom' && this.form.controls.grade.value) {
             this.loadEligibleStudents();
           }
         }
@@ -135,7 +135,7 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
     );
     this.subscriptions.push(
       this.form.controls.audience_mode.valueChanges.subscribe(mode => {
-        if (!this.isEditMode && mode === 'custom' && this.form.controls.grade.value && this.form.controls.section.value) {
+        if (!this.isEditMode && mode === 'custom' && this.form.controls.grade.value) {
           this.loadEligibleStudents();
         }
         this.queuePreview();
@@ -353,7 +353,7 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
       .createAssignment({
         branch_id: value.branch_id || null,
         grade: value.grade || '',
-        section: value.section || '',
+        section: value.section?.trim() ? value.section.trim() : null,
         subject_id: value.subject_id || '',
         title: (value.title || '').trim(),
         description: value.description?.trim() || null,
@@ -470,15 +470,15 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
 
   private loadEligibleStudents(): void {
     const grade = this.form.controls.grade.value;
-    const section = this.form.controls.section.value;
-    if (!grade || !section) {
+    const section = this.form.controls.section.value ?? '';
+    if (!grade) {
       return;
     }
     this.loadingStudents = true;
     this.assignmentService
       .getEligibleStudents({
         grade,
-        section,
+        section: section || undefined,
         branch_id: this.form.controls.branch_id.value || null
       })
       .subscribe({
@@ -573,15 +573,15 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
 
   private loadRecipientPreview(): void {
     const grade = this.form.controls.grade.value;
-    const section = this.form.controls.section.value;
-    if (!grade || !section) {
+    const section = this.form.controls.section.value ?? '';
+    if (!grade) {
       this.recipientPreview = null;
       return;
     }
     this.assignmentService
       .previewRecipients({
         grade,
-        section,
+        section: section || undefined,
         audience_mode: this.form.controls.audience_mode.value,
         student_ids:
           this.form.controls.audience_mode.value === 'custom'

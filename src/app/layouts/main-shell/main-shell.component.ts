@@ -50,7 +50,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
   isImpersonating = false; // Track impersonation state
   academicYears: AcademicYear[] = [];
   selectedAcademicYearId: string | number | null = null;
-  selectedAcademicYearName: string = '';
+  selectedAcademicYearName = '';
   isPastAcademicYear = false;
   /** When the active route sets data.hideSidebar, render full-width (e.g. global search). */
   hideSidebar = false;
@@ -91,7 +91,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
       icon: 'notifications_active',
       label: 'Notifications',
       route: '/notification-campaigns',
-      permission: ['communications.view', 'communications.create', 'bulk_management.view', 'student_attendance.mark'],
+      permission: ['notifications.view', 'notifications.create'],
       permissionMode: 'any',
       roles: ['SuperAdmin', 'BranchAdmin', 'Teacher', 'Staff']
     },
@@ -134,7 +134,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     this.breakpointSubscription = this.breakpointObserver.observe([
       Breakpoints.Handset,
       Breakpoints.Tablet
-    ]).subscribe(result => {
+    ]).subscribe(() => {
       this.isMobile = this.breakpointObserver.isMatched(Breakpoints.Handset);
       this.isTablet = this.breakpointObserver.isMatched(Breakpoints.Tablet);
       
@@ -165,7 +165,13 @@ export class MainShellComponent implements OnInit, OnDestroy {
       this.permissionService.loadUserPermissions(currentUser.id).subscribe();
     }
     this.permissionsSubscription = this.permissionService.permissions$.subscribe(() => this.cdr.detectChanges());
-    
+
+    const cachedPrefs = this.userPreferenceService.hydrateFromCache();
+    if (cachedPrefs?.theme) {
+      this.selectedTheme = cachedPrefs.theme;
+      this.themeService.loadThemeFromPreferences();
+    }
+
     // Load user preferences from backend
     this.loadUserPreferences();
     
@@ -180,11 +186,13 @@ export class MainShellComponent implements OnInit, OnDestroy {
         this.isPastAcademicYear = this.isAcademicYearPast(y);
         this.cdr.detectChanges();
       });
-      this.academicYearContext.getActiveYears().subscribe(res => {
-        if (res.success && res.data) {
-          this.academicYears = res.data;
-          this.cdr.detectChanges();
-        }
+      const cachedYears = this.academicYearContext.hydrateYearsFromCache();
+      if (cachedYears.length > 0) {
+        this.academicYears = cachedYears;
+      }
+      this.academicYearContext.loadYearsForSwitcher().subscribe(years => {
+        this.academicYears = years;
+        this.cdr.detectChanges();
       });
     }
   }
@@ -283,7 +291,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
           this.errorHandler.showError('Failed to exit impersonation');
         }
       },
-      error: (error) => {
+      error: () => {
         // Even on error, try to restore and redirect
         const companyPortalToken = localStorage.getItem('company_portal_token_backup');
         if (companyPortalToken) {
@@ -357,24 +365,27 @@ export class MainShellComponent implements OnInit, OnDestroy {
           // Apply the theme from backend preferences
           this.selectedTheme = response.data.theme;
           this.applyTheme(response.data.theme);
-          // Load academic year: prefer backend preference, else localStorage/API current
-          if (!this.isStudentRole()) {
-            const ayId = (response.data.additional_settings as any)?.academic_year_id;
-            const id = Number(ayId);
-            if (!isNaN(id) && id > 0) {
-              this.academicYearContext.loadYearById(id);
+          // Academic year: keep local selection on refresh; prefs apply only when nothing stored
+          if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+            const rawAy = (response.data.additional_settings as Record<string, unknown>)?.['academic_year_id'];
+            if (rawAy != null && String(rawAy) !== '') {
+              this.academicYearContext.loadYearById(rawAy as string | number);
             } else {
               this.academicYearContext.loadCurrent();
             }
           }
         } else {
           this.loadThemeFromLocalStorage();
-          if (!this.isStudentRole()) this.academicYearContext.loadCurrent();
+          if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+            this.academicYearContext.loadCurrent();
+          }
         }
       },
       error: () => {
         this.loadThemeFromLocalStorage();
-        if (!this.isStudentRole()) this.academicYearContext.loadCurrent();
+        if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+          this.academicYearContext.loadCurrent();
+        }
       }
     });
   }
@@ -658,7 +669,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
             // Redirect is handled by clearSession in auth service
           }
         },
-        error: (error) => {
+        error: () => {
           // Session is cleared even on error
           this.errorHandler.showInfo('Logged out');
         }

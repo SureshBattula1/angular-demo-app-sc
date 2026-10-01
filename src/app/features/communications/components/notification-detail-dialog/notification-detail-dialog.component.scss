@@ -231,6 +231,14 @@
   border-radius: var(--radius-md);
 }
 
+.message-optional {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
 .meta-inline {
   display: flex;
   flex-wrap: wrap;

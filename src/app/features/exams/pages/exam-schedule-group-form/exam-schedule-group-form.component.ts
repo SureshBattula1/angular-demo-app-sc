@@ -18,6 +18,7 @@ import { BranchService } from '../../../branches/services/branch.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { SectionSubjectService } from '../../../subjects/services/section-subject.service';
+import { SubjectService } from '../../../subjects/services/subject.service';
 import { TeacherService } from '../../../teachers/services/teacher.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { Section } from '../../../../core/models/section.model';
@@ -54,6 +55,7 @@ export class ExamScheduleGroupFormComponent implements OnInit {
     private gradeService: GradeService,
     private sectionService: SectionService,
     private sectionSubjectService: SectionSubjectService,
+    private subjectService: SubjectService,
     private teacherService: TeacherService,
     private errorHandler: ErrorHandlerService,
     private router: Router,
@@ -82,16 +84,12 @@ export class ExamScheduleGroupFormComponent implements OnInit {
 
     this.headerForm.get('grade_level')?.valueChanges.subscribe(() => {
       this.headerForm.patchValue({ section_id: '' }, { emitEvent: false });
-      this.clearSubjectRows();
       this.loadSectionsForGrade();
+      this.refreshSubjectRows();
     });
 
-    this.headerForm.get('section_id')?.valueChanges.subscribe(sectionId => {
-      if (sectionId) {
-        this.loadCurriculum(sectionId);
-      } else {
-        this.clearSubjectRows();
-      }
+    this.headerForm.get('section_id')?.valueChanges.subscribe(() => {
+      this.refreshSubjectRows();
     });
   }
 
@@ -100,7 +98,7 @@ export class ExamScheduleGroupFormComponent implements OnInit {
       exam_id: ['', Validators.required],
       branch_id: ['', Validators.required],
       grade_level: ['', Validators.required],
-      section_id: ['', Validators.required],
+      section_id: [''],
       shared_instructions: ['']
     });
 
@@ -174,6 +172,9 @@ export class ExamScheduleGroupFormComponent implements OnInit {
         error: () => { this.teachers = []; }
       });
       this.loadSectionsForGrade();
+      if (this.headerForm.get('grade_level')?.value) {
+        this.refreshSubjectRows();
+      }
     };
 
     if (exam?.branch_id) {
@@ -234,6 +235,74 @@ export class ExamScheduleGroupFormComponent implements OnInit {
     this.curriculumEmpty = false;
   }
 
+  /** Section curriculum when a section is chosen; otherwise branch + grade subjects (class-wide). */
+  private refreshSubjectRows(): void {
+    const sectionId = this.headerForm.get('section_id')?.value;
+    const gradeLevel = this.headerForm.get('grade_level')?.value;
+    const branchId = this.headerForm.get('branch_id')?.value;
+
+    if (sectionId) {
+      this.loadCurriculum(sectionId);
+      return;
+    }
+    if (gradeLevel && branchId && this.selectedExam) {
+      this.loadSubjectsForClass(gradeLevel, branchId);
+      return;
+    }
+    this.clearSubjectRows();
+  }
+
+  private appendSubjectScheduleRow(subjectId: string | number, name: string, code: string): void {
+    const rows = this.ensureSubjectRowsArray();
+    const label = `${name || 'Subject'} (${code || ''})`.trim();
+    rows.push(this.fb.group({
+      included: [false],
+      subject_id: [subjectId],
+      subject_label: [label],
+      exam_date: ['', Validators.required],
+      start_time: ['', Validators.required],
+      end_time: ['', Validators.required],
+      duration: ['', Validators.required],
+      total_marks: ['', Validators.required],
+      passing_marks: ['', Validators.required],
+      room_number: [''],
+      invigilator_id: [null]
+    }));
+  }
+
+  loadSubjectsForClass(gradeLevel: string | number, branchId: string | number): void {
+    if (!this.selectedExam) {
+      return;
+    }
+    this.loadingCurriculum = true;
+    this.curriculumEmpty = false;
+    this.clearSubjectRows();
+
+    this.subjectService.getSubjects({
+      branch_id: branchId,
+      grade_level: gradeLevel,
+      is_active: true,
+      per_page: 1000
+    }).subscribe({
+      next: (response) => {
+        const subjects = response.success && response.data ? response.data : [];
+        subjects.forEach((subject: { id: string | number; name?: string; code?: string }) => {
+          if (subject?.id) {
+            this.appendSubjectScheduleRow(subject.id, subject.name || '', subject.code || '');
+          }
+        });
+        const rows = this.ensureSubjectRowsArray();
+        this.curriculumEmpty = rows.length === 0;
+        this.loadingCurriculum = false;
+      },
+      error: (error) => {
+        this.loadingCurriculum = false;
+        this.curriculumEmpty = true;
+        this.errorHandler.showError(error);
+      }
+    });
+  }
+
   loadCurriculum(sectionId: string | number): void {
     if (!sectionId || !this.selectedExam) {
       return;
@@ -257,19 +326,11 @@ export class ExamScheduleGroupFormComponent implements OnInit {
           if (!subjectId) {
             return;
           }
-          rows.push(this.fb.group({
-            included: [false],
-            subject_id: [subjectId],
-            subject_label: [`${subject.name || 'Subject'} (${subject.code || ''})`.trim()],
-            exam_date: ['', Validators.required],
-            start_time: ['', Validators.required],
-            end_time: ['', Validators.required],
-            duration: ['', Validators.required],
-            total_marks: ['', Validators.required],
-            passing_marks: ['', Validators.required],
-            room_number: [''],
-            invigilator_id: [null]
-          }));
+          this.appendSubjectScheduleRow(
+            subjectId,
+            subject.name || '',
+            subject.code || ''
+          );
         });
 
         this.curriculumEmpty = rows.length === 0;
@@ -285,6 +346,18 @@ export class ExamScheduleGroupFormComponent implements OnInit {
 
   get includedCount(): number {
     return this.subjectRows.controls.filter(c => c.get('included')?.value).length;
+  }
+
+  get subjectsReadyToLoad(): boolean {
+    return !!(
+      this.headerForm.get('exam_id')?.value &&
+      this.headerForm.get('grade_level')?.value &&
+      this.headerForm.get('branch_id')?.value
+    );
+  }
+
+  get usingSectionCurriculum(): boolean {
+    return !!this.headerForm.get('section_id')?.value;
   }
 
   get createButtonLabel(): string {
@@ -370,9 +443,7 @@ export class ExamScheduleGroupFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.headerForm.get('exam_id')?.invalid ||
-        this.headerForm.get('grade_level')?.invalid ||
-        this.headerForm.get('section_id')?.invalid) {
+    if (this.headerForm.get('exam_id')?.invalid || this.headerForm.get('grade_level')?.invalid) {
       this.headerForm.markAllAsTouched();
       return;
     }
@@ -387,10 +458,6 @@ export class ExamScheduleGroupFormComponent implements OnInit {
     }
 
     const sectionName = this.getSectionName();
-    if (!sectionName) {
-      this.errorHandler.showError({ message: 'Invalid section selection.' });
-      return;
-    }
 
     const schedules = this.subjectRows.controls
       .filter(c => c.get('included')?.value)
@@ -413,7 +480,7 @@ export class ExamScheduleGroupFormComponent implements OnInit {
     const payload: ExamScheduleBulkCreatePayload = {
       exam_id: this.headerForm.get('exam_id')?.value,
       grade_level: this.headerForm.get('grade_level')?.value,
-      section: sectionName,
+      section: sectionName || null,
       schedules
     };
 

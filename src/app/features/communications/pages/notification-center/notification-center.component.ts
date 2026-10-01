@@ -5,7 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
@@ -16,17 +16,21 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationInboxUiService } from '../../services/notification-inbox-ui.service';
 import {
+  groupNotificationsByDate,
+  notificationCategorySource,
   notificationClassSectionLine,
   notificationDisplayDate,
   notificationIsUnread,
   notificationListSubtitle,
   notificationListTitle,
+  notificationModuleFilterLabel,
   notificationPreviewText,
   notificationRelativeTime,
   notificationSourceIcon,
   notificationSourceLabel,
   notificationStatusLabel,
-  notificationStatusTone
+  notificationStatusTone,
+  NotificationCategoryFilter
 } from '../../utils/notification-display.util';
 
 type TabKey = 'inbox' | 'sent';
@@ -42,7 +46,7 @@ type StatusFilter = 'all' | 'unread' | 'read';
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
-    MatSelectModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatDialogModule,
     MatChipsModule,
@@ -60,6 +64,9 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
 
   activeTab: TabKey = 'inbox';
   statusFilter: StatusFilter = 'all';
+  categoryFilter: NotificationCategoryFilter = 'all';
+  moduleFilter = 'all';
+  searchText = '';
   loading = false;
   loadingMore = false;
   inbox: AppNotification[] = [];
@@ -69,6 +76,22 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   inboxPage = 1;
   inboxHasMore = false;
   canCompose = false;
+  readonly skeletonRows = [1, 2, 3, 4, 5];
+
+  readonly categoryOptions: { key: NotificationCategoryFilter; label: string; icon: string }[] = [
+    { key: 'all', label: 'All notifications', icon: 'inbox' },
+    { key: 'campaign', label: 'Campaign alerts', icon: 'campaign' },
+    { key: 'message', label: 'Class messages', icon: 'mail' },
+    { key: 'assignment', label: 'Assignments', icon: 'assignment' },
+    { key: 'attendance', label: 'Attendance', icon: 'fact_check' }
+  ];
+
+  readonly statusOptions: { key: StatusFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'unread', label: 'Unread' },
+    { key: 'read', label: 'Read' }
+  ];
+
   private sub?: Subscription;
   private readonly perPage = 25;
 
@@ -83,6 +106,57 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   classLine = notificationClassSectionLine;
   listTitle = notificationListTitle;
   listSubtitle = notificationListSubtitle;
+  moduleLabel = notificationModuleFilterLabel;
+
+  get filteredInbox(): AppNotification[] {
+    let list = this.inbox;
+    const q = this.searchText.trim().toLowerCase();
+    if (q) {
+      list = list.filter(item => {
+        const haystack = [
+          this.listTitle(item),
+          this.listSubtitle(item),
+          item.title,
+          item.message,
+          item.description,
+          this.sourceLabel(item)
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+    if (this.moduleFilter !== 'all') {
+      const mod = this.moduleFilter.toLowerCase();
+      list = list.filter(item => (item.module || '').toLowerCase() === mod);
+    }
+    return list;
+  }
+
+  get groupedInbox() {
+    return groupNotificationsByDate(this.filteredInbox);
+  }
+
+  get moduleOptions(): string[] {
+    const mods = new Set<string>();
+    for (const item of this.inbox) {
+      const m = (item.module || '').trim().toLowerCase();
+      if (m) {
+        mods.add(m);
+      }
+    }
+    return [...mods].sort();
+  }
+
+  get hasActiveFilters(): boolean {
+    return (
+      this.categoryFilter !== 'all' ||
+      this.statusFilter !== 'all' ||
+      this.moduleFilter !== 'all' ||
+      this.searchText.trim() !== ''
+    );
+  }
 
   async ngOnInit(): Promise<void> {
     const user = await firstValueFrom(this.authService.getCurrentUser());
@@ -96,12 +170,61 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
+  refresh(): void {
+    if (this.activeTab === 'inbox') {
+      this.loadInbox(true);
+    } else {
+      this.loadSent();
+    }
+  }
+
   setTab(tab: TabKey): void {
     this.activeTab = tab;
     if (tab === 'inbox') {
       this.loadInbox(true);
     } else {
       this.loadSent();
+    }
+  }
+
+  setCategory(key: NotificationCategoryFilter): void {
+    if (this.categoryFilter === key) {
+      return;
+    }
+    this.categoryFilter = key;
+    this.moduleFilter = 'all';
+    this.loadInbox(true);
+  }
+
+  setStatus(key: StatusFilter): void {
+    if (this.statusFilter === key) {
+      return;
+    }
+    this.statusFilter = key;
+    this.loadInbox(true);
+  }
+
+  setModuleFilter(mod: string): void {
+    this.moduleFilter = mod;
+  }
+
+  onSearchChange(): void {
+    // client-side only
+  }
+
+  clearSearch(): void {
+    this.searchText = '';
+  }
+
+  clearAllFilters(): void {
+    this.searchText = '';
+    this.moduleFilter = 'all';
+    const resetCategory = this.categoryFilter !== 'all';
+    const resetStatus = this.statusFilter !== 'all';
+    this.categoryFilter = 'all';
+    this.statusFilter = 'all';
+    if (resetCategory || resetStatus) {
+      this.loadInbox(true);
     }
   }
 
@@ -113,28 +236,33 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
     this.loading = reset;
     this.loadingMore = !reset;
     this.sub?.unsubscribe();
-    this.sub = this.communicationService
-      .getNotifications({
-        status: this.statusFilter,
-        page: this.inboxPage,
-        per_page: this.perPage
-      })
-      .subscribe({
-        next: res => {
-          const batch = res.data || [];
-          this.inbox = reset ? batch : [...this.inbox, ...batch];
-          this.inboxTotal = res.meta?.total ?? this.inbox.length;
-          this.inboxHasMore = !!res.meta?.has_more_pages;
-          this.loading = false;
-          this.loadingMore = false;
-          this.refreshUnreadCount();
-        },
-        error: err => {
-          this.errorHandler.handleError(err);
-          this.loading = false;
-          this.loadingMore = false;
-        }
-      });
+
+    const params: Record<string, unknown> = {
+      status: this.statusFilter,
+      page: this.inboxPage,
+      per_page: this.perPage
+    };
+    const source = notificationCategorySource(this.categoryFilter);
+    if (source) {
+      params['source'] = source;
+    }
+
+    this.sub = this.communicationService.getNotifications(params).subscribe({
+      next: res => {
+        const batch = res.data || [];
+        this.inbox = reset ? batch : [...this.inbox, ...batch];
+        this.inboxTotal = res.meta?.total ?? this.inbox.length;
+        this.inboxHasMore = !!res.meta?.has_more_pages;
+        this.loading = false;
+        this.loadingMore = false;
+        this.refreshUnreadCount();
+      },
+      error: err => {
+        this.errorHandler.handleError(err);
+        this.loading = false;
+        this.loadingMore = false;
+      }
+    });
   }
 
   loadMoreInbox(): void {
@@ -158,10 +286,6 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
         this.loading = false;
       }
     });
-  }
-
-  onStatusChange(): void {
-    this.loadInbox(true);
   }
 
   private refreshUnreadCount(): void {

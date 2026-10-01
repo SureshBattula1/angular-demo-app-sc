@@ -97,6 +97,92 @@ export function notificationListSubtitle(item: AppNotification): string {
   return '';
 }
 
+export type NotificationCategoryFilter = 'all' | 'campaign' | 'message' | 'assignment' | 'attendance';
+
+export function notificationCategorySource(filter: NotificationCategoryFilter): string | null {
+  switch (filter) {
+    case 'campaign':
+      return 'notification_campaign';
+    case 'message':
+      return 'custom';
+    case 'assignment':
+      return 'assignment';
+    case 'attendance':
+      return 'attendance';
+    default:
+      return null;
+  }
+}
+
+export type NotificationDateGroupKey = 'today' | 'yesterday' | 'week' | 'earlier';
+
+export function notificationDateGroupKey(iso: string): NotificationDateGroupKey {
+  if (!iso) {
+    return 'earlier';
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return 'earlier';
+  }
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.floor((startOfToday.getTime() - startOfDate.getTime()) / 86400000);
+  if (diffDays === 0) {
+    return 'today';
+  }
+  if (diffDays === 1) {
+    return 'yesterday';
+  }
+  if (diffDays < 7) {
+    return 'week';
+  }
+  return 'earlier';
+}
+
+export function notificationDateGroupLabel(key: NotificationDateGroupKey): string {
+  switch (key) {
+    case 'today':
+      return 'Today';
+    case 'yesterday':
+      return 'Yesterday';
+    case 'week':
+      return 'This week';
+    default:
+      return 'Earlier';
+  }
+}
+
+const DATE_GROUP_ORDER: NotificationDateGroupKey[] = ['today', 'yesterday', 'week', 'earlier'];
+
+export function groupNotificationsByDate<T extends AppNotification>(
+  items: T[],
+  dateFn: (item: T) => string = item => notificationDisplayDate(item)
+): { key: NotificationDateGroupKey; label: string; items: T[] }[] {
+  const buckets = new Map<NotificationDateGroupKey, T[]>();
+  for (const item of items) {
+    const key = notificationDateGroupKey(dateFn(item));
+    const list = buckets.get(key) ?? [];
+    list.push(item);
+    buckets.set(key, list);
+  }
+  return DATE_GROUP_ORDER.filter(k => (buckets.get(k)?.length ?? 0) > 0).map(key => ({
+    key,
+    label: notificationDateGroupLabel(key),
+    items: buckets.get(key) ?? []
+  }));
+}
+
+export function notificationModuleFilterLabel(module: string): string {
+  const m = module.toLowerCase();
+  if (m === 'fees') return 'Fees';
+  if (m === 'exams') return 'Exams';
+  if (m === 'attendance') return 'Attendance';
+  if (m === 'holidays') return 'Holidays';
+  if (m === 'assignments') return 'Assignments';
+  return module.charAt(0).toUpperCase() + module.slice(1);
+}
+
 export function notificationRelativeTime(iso: string): string {
   if (!iso) return '';
   const then = new Date(iso).getTime();

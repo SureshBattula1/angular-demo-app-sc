@@ -239,7 +239,10 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
         const rows = response.data || [];
         this.assignments = rows.map(item => ({
           ...item,
-          class_display: [item.grade, item.section].filter(Boolean).join(' ') || item.class_name || '-',
+          class_display:
+            [item.grade, item.section?.trim() ? item.section : 'All sections'].filter(Boolean).join(' · ') ||
+            item.class_name ||
+            '-',
           status_display: item.status || (item.is_published ? 'Published' : 'Draft')
         }));
         if (response.meta) {

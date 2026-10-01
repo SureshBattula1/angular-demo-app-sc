@@ -68,7 +68,7 @@
             <span class="fee-grade">Grade {{ fee.grade || 'N/A' }}</span>
           </div>
           <div class="fee-amount">
-            <span class="amount">{{ fee.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+            <span class="amount">{{ (fee.remaining_amount ?? fee.amount) | currency:'INR':'symbol':'1.0-0' }}</span>
             <span class="overdue-badge" *ngIf="isOverdue(fee)">OVERDUE</span>
           </div>
         </div>

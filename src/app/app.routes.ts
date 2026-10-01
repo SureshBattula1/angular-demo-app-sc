@@ -175,12 +175,13 @@ export const routes: Routes = [
         path: 'notification-campaigns',
         loadChildren: () => import('./features/notification-campaigns/notification-campaigns.routes').then(m => m.NOTIFICATION_CAMPAIGN_ROUTES),
         canActivate: [permissionGuard],
-        data: { permissions: ['communications.view', 'communications.create', 'bulk_management.view', 'student_attendance.mark'], permissionMode: 'any' }
+        data: { permissions: ['notifications.view', 'notifications.create'], permissionMode: 'any' }
       },
       {
         path: 'communications',
         loadChildren: () => import('./features/communications/communications.routes').then(m => m.COMMUNICATIONS_ROUTES),
-        canActivate: [authGuard]
+        canActivate: [permissionGuard],
+        data: { permissions: ['notifications.view', 'notifications.create'], permissionMode: 'any' }
       },
       {
         path: 'branch-transfers',

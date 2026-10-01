@@ -743,13 +743,13 @@ export class StudentViewComponent implements OnInit {
    * Load fees data for the student
    */
   loadFeesData(): void {
-    if (!this.student || !this.student.id) {
+    if (!this.student?.user_id) {
       return;
     }
     
     this.feesLoading = true;
     
-    this.feeService.getStudentFees(this.student.id).subscribe({
+    this.feeService.getStudentFees(this.student.user_id).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.feePayments = response.data.payments || [];

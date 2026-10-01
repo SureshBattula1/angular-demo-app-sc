@@ -188,7 +188,7 @@ export class ThemeService {
    * @param themeName - Theme name to apply
    * @param saveToBackend - Whether to save to backend (default: false)
    */
-  applyTheme(themeName: string, saveToBackend: boolean = false): void {
+  applyTheme(themeName: string, saveToBackend = false): void {
     const theme = this.themes[themeName];
     if (!theme) {
       return;
@@ -255,7 +255,7 @@ export class ThemeService {
    * Toggle dark mode
    * @param saveToBackend - Whether to save to backend (default: false)
    */
-  toggleDarkMode(saveToBackend: boolean = false): void {
+  toggleDarkMode(saveToBackend = false): void {
     const isDark = !this.isDarkMode();
     this.isDarkMode.set(isDark);
     
@@ -277,19 +277,30 @@ export class ThemeService {
 
   /**
    * Load saved theme from storage
-   * Priority: Backend preferences > localStorage
+   * Priority: per-user preferences cache > localStorage (e.g. login page)
    */
   private loadTheme(): void {
-    const savedTheme = localStorage.getItem(this.THEME_KEY);
-    const savedDarkMode = localStorage.getItem('darkMode');
-    
-    if (savedTheme) {
-      this.applyTheme(savedTheme);
+    const cached = this.userPreferenceService.getCachedPreferences();
+    if (cached?.theme) {
+      this.applyTheme(cached.theme, false);
+      this.applyDarkMode(!!cached.dark_mode);
+      return;
     }
-    
-    if (savedDarkMode === 'true') {
-      this.isDarkMode.set(true);
+
+    const savedTheme = localStorage.getItem(this.THEME_KEY);
+    if (savedTheme) {
+      this.applyTheme(savedTheme, false);
+    }
+
+    this.applyDarkMode(localStorage.getItem('darkMode') === 'true');
+  }
+
+  private applyDarkMode(isDark: boolean): void {
+    this.isDarkMode.set(isDark);
+    if (isDark) {
       document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
     }
   }
 

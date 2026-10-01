@@ -6,6 +6,12 @@ export interface NotificationAttachment {
   id?: string | number;
   name?: string;
   url?: string;
+  file_name?: string;
+  original_name?: string;
+  file_path?: string;
+  file_url?: string;
+  file_type?: string;
+  file_size?: number;
   mime?: string;
   size?: number;
 }

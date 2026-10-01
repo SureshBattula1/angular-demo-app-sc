@@ -42,7 +42,7 @@ export class AssignmentService {
 
   getEligibleStudents(params: {
     grade: string;
-    section: string;
+    section?: string | null;
     branch_id?: string | number | null;
   }): Observable<ApiResponse<EligibleStudent[]>> {
     return this.apiService.get<EligibleStudent[]>(`${this.ENDPOINT}/eligible-students`, params);
@@ -50,9 +50,9 @@ export class AssignmentService {
 
   previewRecipients(body: {
     grade: string;
-    section: string;
+    section?: string | null;
     audience_mode: 'all' | 'custom';
-    student_ids?: Array<string | number>;
+    student_ids?: (string | number)[];
     branch_id?: string | number | null;
   }): Observable<ApiResponse<AssignmentRecipientPreview>> {
     return this.apiService.post<AssignmentRecipientPreview>(

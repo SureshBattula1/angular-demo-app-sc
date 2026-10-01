@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../core/guards/auth.guard';
 import { permissionGuard } from '../../core/guards/permission.guard';
 
 export const COMMUNICATIONS_ROUTES: Routes = [
@@ -20,6 +19,6 @@ export const COMMUNICATIONS_ROUTES: Routes = [
         (m) => m.ComposeNotificationComponent
       ),
     canActivate: [permissionGuard],
-    data: { permissions: ['communications.create', 'communications.view'], permissionMode: 'any' }
+    data: { permissions: ['notifications.create', 'notifications.view'], permissionMode: 'any' }
   }
 ];

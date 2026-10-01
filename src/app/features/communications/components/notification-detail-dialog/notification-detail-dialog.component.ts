@@ -86,7 +86,22 @@ export class NotificationDetailDialogComponent implements OnInit {
   }
 
   get messageBody(): string {
-    return this.item.message || this.item.description || '';
+    if (this.isCampaign()) {
+      return this.item.message || this.item.description || '';
+    }
+    return this.item.description || this.item.message || '';
+  }
+
+  get optionalBody(): string {
+    return (this.item.optional_description || '').trim();
+  }
+
+  attachmentUrl(file: { url?: string; file_url?: string; file_path?: string }): string {
+    return file.url || file.file_url || file.file_path || '#';
+  }
+
+  attachmentLabel(file: { name?: string; original_name?: string; file_name?: string }): string {
+    return file.name || file.original_name || file.file_name || 'Attachment';
   }
 
   isCampaign(): boolean {

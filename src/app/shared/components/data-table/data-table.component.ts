@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '../../shared.module';
 import { TableColumn, TableAction, TableConfig, SearchCriteria, PaginationEvent, SortEvent, SearchEvent } from './data-table.interface';
 import { AdvancedSearchConfig } from '../advanced-search-sidebar/search-field.interface';
+import { formatApiDateTimeLocal } from '../../utils/api-datetime.util';
 import { AdvancedSearchSidebarComponent } from '../advanced-search-sidebar/advanced-search-sidebar.component';
 import { ExportButtonComponent, ExportEvent } from '../export-button/export-button.component';
 import { MatTableDataSource } from '@angular/material/table';
@@ -77,7 +78,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   
   // Server-side state
   currentSort: { field: string; direction: 'asc' | 'desc' } | null = null;
-  currentFilters: { [key: string]: any } = {};
+  currentFilters: Record<string, any> = {};
   
   // View modes
   isMobile = false;
@@ -457,7 +458,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     // Count non-empty filter values
     let count = 0;
     for (const key in this.currentFilters) {
-      if (this.currentFilters.hasOwnProperty(key) && !excludeKeys.includes(key)) {
+      if (Object.prototype.hasOwnProperty.call(this.currentFilters, key) && !excludeKeys.includes(key)) {
         const value = this.currentFilters[key];
         
         // Only count non-empty, non-null values
@@ -653,6 +654,8 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
     switch (pipeName) {
       case 'date':
         return value ? new Date(value).toLocaleDateString() : '-';
+      case 'datetime':
+        return value ? formatApiDateTimeLocal(String(value)) : '-';
       case 'currency':
         return (value !== null && value !== undefined) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value) : '-';
       case 'yesNo':

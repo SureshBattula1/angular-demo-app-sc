@@ -15,6 +15,8 @@ export interface SmsTemplateDialogData {
   branches: Branch[];
   allowedTags: string[];
   template: SmsTemplate | null;
+  /** Pre-select branch when creating from another screen (e.g. campaign schedule). */
+  defaultBranchId?: string | number;
 }
 
 @Component({

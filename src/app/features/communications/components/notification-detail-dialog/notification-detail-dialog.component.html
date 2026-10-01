@@ -38,6 +38,7 @@
 
     <ng-container *ngIf="!loading">
       <p class="message-compact">{{ messageBody }}</p>
+      <p class="message-optional" *ngIf="optionalBody">{{ optionalBody }}</p>
 
       <div class="meta-inline" *ngIf="isCampaign() && (classSectionLine() || showPriority())">
         <span class="meta-inline__item" *ngIf="classSectionLine()">
@@ -59,9 +60,9 @@
 
     <div class="attachments" *ngIf="item.attachments?.length">
       <h4>Attachments</h4>
-      <a *ngFor="let file of item.attachments" [href]="file.url" target="_blank" rel="noopener">
+      <a *ngFor="let file of item.attachments" [href]="attachmentUrl(file)" target="_blank" rel="noopener">
         <mat-icon>attach_file</mat-icon>
-        {{ file.name || 'Attachment' }}
+        {{ attachmentLabel(file) }}
       </a>
     </div>
 

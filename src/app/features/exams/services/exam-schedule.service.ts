@@ -84,7 +84,7 @@ export interface ExamScheduleBulkRowPayload {
 export interface ExamScheduleBulkCreatePayload {
   exam_id: string;
   grade_level: string;
-  section: string;
+  section?: string | null;
   schedules: ExamScheduleBulkRowPayload[];
 }
 

@@ -43,7 +43,9 @@ export class AssignmentViewComponent implements OnInit {
     if (!this.assignment) {
       return '-';
     }
-    return [this.assignment.grade, this.assignment.section].filter(Boolean).join(' ') || this.assignment.class_name || '-';
+    const section = this.assignment.section?.trim();
+    const parts = [this.assignment.grade, section || (this.assignment.grade ? 'All sections' : '')].filter(Boolean);
+    return parts.join(' · ') || this.assignment.class_name || '-';
   }
 
   audienceLabel(): string {

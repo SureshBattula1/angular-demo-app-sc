@@ -8,7 +8,7 @@
         </div>
       </mat-card-title>
       <mat-card-subtitle>
-        Schedule multiple subjects for one class and section. Each subject can have its own date, time, and marks.
+        Schedule multiple subjects for one class. Section is optional when the exam applies to the whole class.
       </mat-card-subtitle>
     </mat-card-header>
 
@@ -55,13 +55,13 @@
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Section</mat-label>
               <mat-select formControlName="section_id">
+                <mat-option [value]="">All sections (class-wide)</mat-option>
                 <mat-option *ngIf="loadingSections" disabled>Loading sections…</mat-option>
                 <mat-option *ngFor="let section of sections" [value]="section.id">
                   {{ section.name }}
                 </mat-option>
               </mat-select>
-              <mat-hint>Required to load subjects from curriculum</mat-hint>
-              <mat-error *ngIf="headerForm.get('section_id')?.hasError('required')">Section is required</mat-error>
+              <mat-hint>Optional — leave as class-wide or pick a section for section curriculum</mat-hint>
             </mat-form-field>
             <div class="form-field-half link-row">
               <button type="button" mat-button color="primary" (click)="goSingleCreate()">
@@ -149,14 +149,19 @@
             <span>Loading subjects…</span>
           </div>
 
-          <div *ngIf="!loadingCurriculum && !headerForm.get('section_id')?.value" class="state-panel muted">
+          <div *ngIf="!loadingCurriculum && !subjectsReadyToLoad" class="state-panel muted">
             <mat-icon>info</mat-icon>
-            Select exam, grade, and section to load subjects.
+            Select exam and grade to load subjects. Section is optional.
           </div>
 
-          <div *ngIf="curriculumEmpty && headerForm.get('section_id')?.value && !loadingCurriculum" class="state-panel warn">
+          <div *ngIf="curriculumEmpty && subjectsReadyToLoad && !loadingCurriculum" class="state-panel warn">
             <mat-icon>warning</mat-icon>
-            No subjects assigned to this section. Assign subjects in Subject Assignment first.
+            <ng-container *ngIf="usingSectionCurriculum; else noGradeSubjects">
+              No subjects assigned to this section. Assign subjects in Subject Assignment first.
+            </ng-container>
+            <ng-template #noGradeSubjects>
+              No active subjects found for this grade. Add subjects for the branch and grade first.
+            </ng-template>
           </div>
 
           <div *ngIf="subjectRows.length > 0 && !loadingCurriculum" class="grid-toolbar">

@@ -1,12 +1,14 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { NotificationCampaignService } from '../../services/notification-campaign.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { formatApiDateTimeLocal } from '../../../../shared/utils/api-datetime.util';
+import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
 
 @Component({
   selector: 'app-campaign-view',
@@ -15,13 +17,21 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
   templateUrl: './campaign-view.component.html',
   styleUrls: ['./campaign-view.component.scss']
 })
-export class CampaignViewComponent implements OnInit {
+export class CampaignViewComponent implements OnInit, OnDestroy {
   loading = true;
   campaign: any = null;
+  progress: any = null;
+  recipientsLoading = false;
 
   recipientColumns = ['student', 'class', 'status', 'delivery', 'viewed', 'liked'];
   recipientDataSource = new MatTableDataSource<any>([]);
   recipientSearch = '';
+  recipientTotal = 0;
+  recipientPage = 1;
+  recipientPageSize = 25;
+
+  private pollSub?: Subscription;
+  private campaignId = '';
 
   @ViewChild('recipientPaginator')
   set recipientPaginatorRef(paginator: MatPaginator | undefined) {
@@ -29,7 +39,6 @@ export class CampaignViewComponent implements OnInit {
       return;
     }
     this.recipientDataSource.paginator = paginator;
-    paginator.length = this.recipientDataSource.filteredData.length;
   }
 
   constructor(
@@ -45,23 +54,41 @@ export class CampaignViewComponent implements OnInit {
       this.router.navigate(['/notification-campaigns']);
       return;
     }
-    this.campaigns.show(id).subscribe({
-      next: response => {
-        this.campaign = response.data;
-        this.setupRecipientsTable();
-        this.loading = false;
-      },
-      error: error => {
-        this.errorHandler.showError(error);
-        this.loading = false;
-      }
-    });
+    this.campaignId = id;
+    this.loadCampaign();
+    this.loadRecipients(1);
+    this.startProgressPolling();
+  }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+  }
+
+  formatScheduledAt(value: string | null | undefined): string {
+    return formatApiDateTimeLocal(value);
   }
 
   back(): void {
     this.router.navigate(['/notification-campaigns'], {
       queryParams: { tab: this.campaign?.module || 'attendance' }
     });
+  }
+
+  retryFailed(): void {
+    this.campaigns.retryFailed(this.campaignId).subscribe({
+      next: () => {
+        this.errorHandler.showSuccess('Retry queued');
+        this.loadCampaign();
+        this.startProgressPolling();
+      },
+      error: error => this.errorHandler.showError(error)
+    });
+  }
+
+  onRecipientPage(event: PageEvent): void {
+    this.recipientPage = event.pageIndex + 1;
+    this.recipientPageSize = event.pageSize;
+    this.loadRecipients(this.recipientPage);
   }
 
   moduleIcon(module: string): string {
@@ -84,7 +111,7 @@ export class CampaignViewComponent implements OnInit {
     if (value === 'sent') return 'status-sent';
     if (value === 'failed') return 'status-failed';
     if (value === 'partial') return 'status-partial';
-    if (value === 'sending') return 'status-pending';
+    if (value === 'materializing' || value === 'queued' || value === 'sending') return 'status-pending';
     return 'status-pending';
   }
 
@@ -93,14 +120,35 @@ export class CampaignViewComponent implements OnInit {
     if (value === 'sent') return 'Sent';
     if (value === 'failed') return 'Failed';
     if (value === 'partial') return 'Partial';
+    if (value === 'materializing') return 'Preparing recipients';
+    if (value === 'queued') return 'Queued';
     if (value === 'sending') return 'Sending';
     return 'Pending';
+  }
+
+  isInProgress(): boolean {
+    const status = (this.progress?.status || this.campaign?.status || '').toLowerCase();
+    return ['materializing', 'queued', 'sending', 'pending'].includes(status);
+  }
+
+  progressPercent(): number {
+    const total = this.progress?.recipient_count || this.campaign?.recipient_count || 0;
+    const sent = this.progress?.sent_count ?? this.campaign?.sent_count ?? 0;
+    if (!total) {
+      const expected = this.progress?.expected_recipient_count || this.campaign?.expected_recipient_count || 0;
+      if (expected && this.progress?.materialized_count != null) {
+        return Math.min(100, Math.round((this.progress.materialized_count / expected) * 100));
+      }
+      return 0;
+    }
+    return Math.min(100, Math.round((sent / total) * 100));
   }
 
   deliveryStatusClass(status: string): string {
     const value = (status || '').toLowerCase();
     if (value === 'sent') return 'badge-success';
     if (value === 'failed') return 'badge-danger';
+    if (value === 'processing') return 'badge-warning';
     return 'badge-warning';
   }
 
@@ -156,38 +204,84 @@ export class CampaignViewComponent implements OnInit {
   }
 
   applyRecipientFilter(value: string): void {
-    this.recipientDataSource.filter = (value || '').trim().toLowerCase();
-    const paginator = this.recipientDataSource.paginator;
-    if (paginator) {
-      paginator.length = this.recipientDataSource.filteredData.length;
-      paginator.firstPage();
-    }
+    this.recipientSearch = (value || '').trim().toLowerCase();
+    this.loadRecipients(1);
   }
 
   filteredRecipientCount(): number {
-    return this.recipientDataSource.filteredData.length;
+    return this.recipientTotal;
   }
 
-  private setupRecipientsTable(): void {
-    this.recipientDataSource.data = this.campaign?.recipients || [];
-    const paginator = this.recipientDataSource.paginator;
-    if (paginator) {
-      paginator.length = this.recipientDataSource.filteredData.length;
-      paginator.firstPage();
-    }
-    this.recipientDataSource.filterPredicate = (row, filter) => {
-      const haystack = [
-        row.student_name,
-        this.recipientClassName(row),
-        row.section,
-        row.status_key,
-        row.delivery_status
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(filter);
-    };
+  private loadCampaign(): void {
+    this.campaigns.show(this.campaignId).subscribe({
+      next: response => {
+        this.campaign = response.data;
+        this.loading = false;
+      },
+      error: error => {
+        this.errorHandler.showError(error);
+        this.loading = false;
+      }
+    });
   }
 
+  private loadRecipients(page: number): void {
+    this.recipientsLoading = true;
+    this.campaigns.recipients(this.campaignId, {
+      page,
+      per_page: this.recipientPageSize
+    }).subscribe({
+      next: response => {
+        let rows = response.data || [];
+        if (this.recipientSearch) {
+          rows = rows.filter(row => {
+            const haystack = [
+              row.student_name,
+              row.class_name,
+              row.section,
+              row.status_key,
+              row.delivery_status
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
+            return haystack.includes(this.recipientSearch);
+          });
+        }
+        this.recipientDataSource.data = rows;
+        this.recipientTotal = response.meta?.total ?? rows.length;
+        this.recipientPage = response.meta?.current_page ?? page;
+        this.recipientsLoading = false;
+      },
+      error: error => {
+        this.errorHandler.showError(error);
+        this.recipientsLoading = false;
+      }
+    });
+  }
+
+  private startProgressPolling(): void {
+    this.pollSub?.unsubscribe();
+    this.pollSub = interval(4000)
+      .pipe(
+        switchMap(() => this.campaigns.progress(this.campaignId)),
+        takeWhile(response => {
+          const status = (response.data?.status || '').toLowerCase();
+          this.progress = response.data;
+          if (this.campaign && response.data) {
+            this.campaign.sent_count = response.data.sent_count;
+            this.campaign.failed_count = response.data.failed_count;
+            this.campaign.recipient_count = response.data.recipient_count;
+            this.campaign.status = response.data.status;
+          }
+          if (!['materializing', 'queued', 'sending', 'pending'].includes(status)) {
+            this.loadRecipients(this.recipientPage);
+            this.loadCampaign();
+            return false;
+          }
+          return true;
+        }, true)
+      )
+      .subscribe();
+  }
 }
