@@ -1,0 +1,50 @@
+<div class="page-container">
+  <mat-card class="view-header-card">
+    <mat-toolbar class="module-toolbar">
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        *ngFor="let tab of tabs"
+        [class.active]="activeTab === tab.id"
+        (click)="switchTab(tab.id)">
+        <mat-icon>{{ tab.icon }}</mat-icon>
+        <span>{{ tab.label }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <div class="dashboard-grid" *ngIf="activeTab === 'dashboard' && !loading">
+    <mat-card class="stat-card" *ngFor="let card of dashboardCards()">
+      <mat-card-header>
+        <mat-card-title>{{ card.label }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stat-row"><span>Campaigns</span><strong>{{ card.stats.campaigns }}</strong></div>
+        <div class="stat-row"><span>Pending</span><strong>{{ card.stats.pending }}</strong></div>
+        <div class="stat-row"><span>Sent</span><strong>{{ card.stats.sent }}</strong></div>
+        <div class="stat-row"><span>Failed</span><strong>{{ card.stats.failed }}</strong></div>
+        <div class="stat-row"><span>Recipients</span><strong>{{ card.stats.recipients }}</strong></div>
+        <button mat-stroked-button type="button" (click)="switchTab(card.key)">Open {{ card.label }}</button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="loading-overlay" *ngIf="activeTab === 'dashboard' && loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <app-data-table
+    *ngIf="activeTab !== 'dashboard'"
+    [data]="rows"
+    [config]="tableConfig"
+    [title]="activeTab | titlecase"
+    [loading]="loading"
+    [advancedSearchConfig]="advancedSearchConfig"
+    (actionClicked)="onAction($event)"
+    (advancedSearchChanged)="onAdvancedSearch($event)"
+    (searchFieldChanged)="onSearchFieldChanged($event)"
+    (searchResetEvent)="onSearchReset()"
+    (paginationChanged)="onPagination($event)">
+  </app-data-table>
+</div>

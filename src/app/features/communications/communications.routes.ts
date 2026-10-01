@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/guards/auth.guard';
+import { permissionGuard } from '../../core/guards/permission.guard';
 
 export const COMMUNICATIONS_ROUTES: Routes = [
   {
@@ -9,12 +10,8 @@ export const COMMUNICATIONS_ROUTES: Routes = [
   },
   {
     path: 'notifications',
-    loadComponent: () =>
-      import('./pages/notification-center/notification-center.component').then(
-        (m) => m.NotificationCenterComponent
-      ),
-    canActivate: [authGuard],
-    data: { permissions: ['communications.view', 'communications.create'], permissionMode: 'any' }
+    redirectTo: '/notifications',
+    pathMatch: 'full'
   },
   {
     path: 'notifications/compose',
@@ -22,7 +19,7 @@ export const COMMUNICATIONS_ROUTES: Routes = [
       import('./pages/compose-notification/compose-notification.component').then(
         (m) => m.ComposeNotificationComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [permissionGuard],
     data: { permissions: ['communications.create', 'communications.view'], permissionMode: 'any' }
   }
 ];

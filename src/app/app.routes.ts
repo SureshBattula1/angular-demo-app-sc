@@ -22,6 +22,13 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/communications/pages/notification-center/notification-center.component').then(
+            m => m.NotificationCenterComponent
+          )
+      },
+      {
         path: 'dashboard',
         loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES),
         canActivate: [permissionGuard],
@@ -165,10 +172,15 @@ export const routes: Routes = [
         data: { permissions: ['events.view', 'events.create'], permissionMode: 'any' }
       },
       {
+        path: 'notification-campaigns',
+        loadChildren: () => import('./features/notification-campaigns/notification-campaigns.routes').then(m => m.NOTIFICATION_CAMPAIGN_ROUTES),
+        canActivate: [permissionGuard],
+        data: { permissions: ['communications.view', 'communications.create', 'bulk_management.view', 'student_attendance.mark'], permissionMode: 'any' }
+      },
+      {
         path: 'communications',
         loadChildren: () => import('./features/communications/communications.routes').then(m => m.COMMUNICATIONS_ROUTES),
-        canActivate: [permissionGuard],
-        data: { permissions: ['communications.view', 'communications.create'], permissionMode: 'any' }
+        canActivate: [authGuard]
       },
       {
         path: 'branch-transfers',

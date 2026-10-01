@@ -125,7 +125,7 @@ export class ComposeNotificationComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/communications/notifications']);
+    this.router.navigate(['/notifications']);
   }
 
   async submit(): Promise<void> {
@@ -157,7 +157,7 @@ export class ComposeNotificationComponent implements OnInit {
               ? `Notification sent to ${count} students`
               : res.message || 'Notification sent'
           );
-          this.router.navigate(['/communications/notifications']);
+          this.router.navigate(['/notifications']);
         },
         error: (err) => {
           this.submitting = false;

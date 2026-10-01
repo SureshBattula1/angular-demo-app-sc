@@ -7,14 +7,27 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { AppNotification, CommunicationService } from '../../services/communication.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationDetailDialogComponent } from '../../components/notification-detail-dialog/notification-detail-dialog.component';
+import { NotificationInboxUiService } from '../../services/notification-inbox-ui.service';
+import {
+  notificationClassSectionLine,
+  notificationDisplayDate,
+  notificationIsUnread,
+  notificationListSubtitle,
+  notificationListTitle,
+  notificationPreviewText,
+  notificationRelativeTime,
+  notificationSourceIcon,
+  notificationSourceLabel,
+  notificationStatusLabel,
+  notificationStatusTone
+} from '../../utils/notification-display.util';
 
 type TabKey = 'inbox' | 'sent';
 type StatusFilter = 'all' | 'unread' | 'read';
@@ -43,24 +56,40 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   private readonly errorHandler = inject(ErrorHandlerService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly dialog = inject(MatDialog);
+  private readonly inboxUi = inject(NotificationInboxUiService);
 
   activeTab: TabKey = 'inbox';
   statusFilter: StatusFilter = 'all';
   loading = false;
+  loadingMore = false;
   inbox: AppNotification[] = [];
   sent: AppNotification[] = [];
   unreadCount = 0;
+  inboxTotal = 0;
+  inboxPage = 1;
+  inboxHasMore = false;
   canCompose = false;
   private sub?: Subscription;
+  private readonly perPage = 25;
+
+  isUnread = notificationIsUnread;
+  previewText = notificationPreviewText;
+  sourceLabel = notificationSourceLabel;
+  sourceIcon = notificationSourceIcon;
+  displayDate = notificationDisplayDate;
+  relativeTime = notificationRelativeTime;
+  statusLabel = notificationStatusLabel;
+  statusTone = notificationStatusTone;
+  classLine = notificationClassSectionLine;
+  listTitle = notificationListTitle;
+  listSubtitle = notificationListSubtitle;
 
   async ngOnInit(): Promise<void> {
-    // ✅ FIXED: unwrap observable to get role
     const user = await firstValueFrom(this.authService.getCurrentUser());
     const role = user.data?.role ?? '';
     this.canCompose = ['Teacher', 'BranchAdmin', 'SuperAdmin', 'Staff'].includes(role);
 
-    this.loadInbox();
+    this.loadInbox(true);
   }
 
   ngOnDestroy(): void {
@@ -70,39 +99,61 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   setTab(tab: TabKey): void {
     this.activeTab = tab;
     if (tab === 'inbox') {
-      this.loadInbox();
+      this.loadInbox(true);
     } else {
       this.loadSent();
     }
   }
 
-  loadInbox(): void {
-    this.loading = true;
+  loadInbox(reset = false): void {
+    if (reset) {
+      this.inboxPage = 1;
+      this.inbox = [];
+    }
+    this.loading = reset;
+    this.loadingMore = !reset;
     this.sub?.unsubscribe();
     this.sub = this.communicationService
-      .getNotifications({ status: this.statusFilter, per_page: 50 })
+      .getNotifications({
+        status: this.statusFilter,
+        page: this.inboxPage,
+        per_page: this.perPage
+      })
       .subscribe({
-        next: (res) => {
-          this.inbox = res.data || [];
-          this.unreadCount = this.inbox.filter((n) => !n.is_read && !n.read_at).length;
+        next: res => {
+          const batch = res.data || [];
+          this.inbox = reset ? batch : [...this.inbox, ...batch];
+          this.inboxTotal = res.meta?.total ?? this.inbox.length;
+          this.inboxHasMore = !!res.meta?.has_more_pages;
           this.loading = false;
+          this.loadingMore = false;
+          this.refreshUnreadCount();
         },
-        error: (err) => {
+        error: err => {
           this.errorHandler.handleError(err);
           this.loading = false;
+          this.loadingMore = false;
         }
       });
+  }
+
+  loadMoreInbox(): void {
+    if (this.loadingMore || !this.inboxHasMore) {
+      return;
+    }
+    this.inboxPage += 1;
+    this.loadInbox(false);
   }
 
   loadSent(): void {
     this.loading = true;
     this.sub?.unsubscribe();
     this.sub = this.communicationService.getSentNotifications().subscribe({
-      next: (res) => {
+      next: res => {
         this.sent = res.data || [];
         this.loading = false;
       },
-      error: (err) => {
+      error: err => {
         this.errorHandler.handleError(err);
         this.loading = false;
       }
@@ -110,16 +161,25 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   }
 
   onStatusChange(): void {
-    this.loadInbox();
+    this.loadInbox(true);
+  }
+
+  private refreshUnreadCount(): void {
+    this.communicationService.getUnreadNotificationCount().subscribe({
+      next: response => {
+        this.unreadCount = response.data?.unread ?? 0;
+      },
+      error: () => undefined
+    });
   }
 
   markAllRead(): void {
     this.communicationService.markAllAsRead().subscribe({
       next: () => {
         this.errorHandler.showSuccess('All notifications marked as read');
-        this.loadInbox();
+        this.loadInbox(true);
       },
-      error: (err) => this.errorHandler.handleError(err)
+      error: err => this.errorHandler.handleError(err)
     });
   }
 
@@ -128,36 +188,15 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   }
 
   openItem(item: AppNotification, fromSent = false): void {
-    if (!fromSent && !item.is_read && !item.read_at) {
-      this.communicationService.markNotificationAsRead(item.id).subscribe({
-        next: () => {
-          item.is_read = true;
-          item.read_at = new Date().toISOString();
-          this.unreadCount = Math.max(0, this.unreadCount - 1);
-        },
-        error: () => undefined
-      });
-    }
-    this.dialog.open(NotificationDetailDialogComponent, {
-      width: '560px',
-      maxWidth: '95vw',
-      data: { notification: item, fromSent }
+    const ref = this.inboxUi.openDetail(item, fromSent);
+    ref.afterClosed().subscribe(() => {
+      if (!fromSent) {
+        this.loadInbox(true);
+      }
     });
   }
 
   trackById(_: number, item: AppNotification): string | number {
     return item.id;
-  }
-
-  displayDate(item: AppNotification): string {
-    return item.date || item.sent_at || item.created_at || '';
-  }
-
-  sourceLabel(item: AppNotification): string {
-    const s = (item.source || item.type || 'info').toLowerCase();
-    if (s === 'custom') return 'Message';
-    if (s === 'assignment') return 'Assignment';
-    if (s === 'attendance' || s === 'attendance_notify') return 'Attendance';
-    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 }

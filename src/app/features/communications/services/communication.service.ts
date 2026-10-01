@@ -36,6 +36,11 @@ export interface AppNotification {
   student_count?: number | null;
   status?: string | null;
   attachments?: NotificationAttachment[];
+  campaign_id?: number | null;
+  module?: string | null;
+  status_key?: string | null;
+  liked?: boolean;
+  campaign_viewed?: boolean;
 }
 
 export interface NotificationViewer {
@@ -88,6 +93,14 @@ export class CommunicationService {
   /** Inbox — same as mobile app */
   getNotifications(params?: Record<string, unknown>): Observable<ApiResponse<AppNotification[]>> {
     return this.apiService.get<AppNotification[]>(`${this.BASE_ENDPOINT}/notifications`, params);
+  }
+
+  getNotification(notificationId: number | string): Observable<ApiResponse<AppNotification>> {
+    return this.apiService.get<AppNotification>(`${this.BASE_ENDPOINT}/notifications/${notificationId}`);
+  }
+
+  getUnreadNotificationCount(): Observable<ApiResponse<{ unread: number }>> {
+    return this.apiService.get<{ unread: number }>(`${this.BASE_ENDPOINT}/notifications/unread-count`);
   }
 
   markNotificationAsRead(notificationId: number | string): Observable<ApiResponse<AppNotification>> {

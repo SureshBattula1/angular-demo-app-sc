@@ -1,0 +1,221 @@
+<div class="schedule-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">schedule_send</mat-icon>
+        <div>{{ title }}</div>
+      </mat-card-title>
+      <mat-card-subtitle>Choose classes, map message templates, then confirm the sample.</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="form-section" *ngIf="step === 1">
+        <h3 class="section-title"><mat-icon>business</mat-icon> Classes</h3>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field-half">
+            <mat-label>Branch</mat-label>
+            <mat-select [(ngModel)]="branchId" (selectionChange)="onBranchChange()">
+              <mat-option *ngFor="let branch of branches" [value]="'' + branch.id">{{ branch.name }}</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>business</mat-icon>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-field-half">
+            <mat-label>Date</mat-label>
+            <input matInput [matDatepicker]="eventPicker" [(ngModel)]="eventDate" (dateChange)="onDateChange()" />
+            <mat-datepicker-toggle matSuffix [for]="eventPicker"></mat-datepicker-toggle>
+            <mat-datepicker #eventPicker></mat-datepicker>
+            <mat-icon matPrefix>event</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <p class="hint" *ngIf="attendanceMode">
+          All classes are listed. A section can be selected only when attendance is already marked for this date.
+        </p>
+        <p class="hint" *ngIf="loadingClasses">Loading classes…</p>
+        <p class="hint" *ngIf="!loadingClasses && branchId && classGroups.length === 0">
+          No classes found for this branch.
+        </p>
+
+        <div class="selection-toolbar" *ngIf="!loadingClasses && classGroups.length">
+          <button mat-stroked-button type="button" (click)="selectAll(true)">
+            <mat-icon>done_all</mat-icon>
+            Select all
+          </button>
+          <button mat-stroked-button type="button" (click)="selectAll(false)">
+            <mat-icon>remove_done</mat-icon>
+            Deselect all
+          </button>
+          <span class="selection-count">{{ selectedCount }} of {{ selectableSections.length }} selected</span>
+        </div>
+
+        <div class="class-groups" *ngIf="classGroups.length">
+          <div class="class-group" *ngFor="let group of classGroups">
+            <div class="class-head">
+              <mat-checkbox
+                [checked]="isClassChecked(group)"
+                [indeterminate]="isClassIndeterminate(group)"
+                [disabled]="!hasSelectable(group)"
+                (change)="toggleClass(group, $event.checked)">
+                {{ group.className }}
+              </mat-checkbox>
+            </div>
+            <div class="section-list">
+              <label class="class-row" [class.is-disabled]="!section.selectable" *ngFor="let section of group.sections">
+                <mat-checkbox [(ngModel)]="section.selected" [disabled]="!section.selectable">
+                  Section {{ section.section }}
+                </mat-checkbox>
+                <span class="attendance-status taken" *ngIf="attendanceMode && section.selectable">
+                  Attendance taken · {{ section.student_count }} students
+                </span>
+                <span class="attendance-status missing" *ngIf="attendanceMode && !section.selectable">
+                  Attendance not taken
+                </span>
+                <span class="count" *ngIf="!attendanceMode">{{ section.student_count }} students</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section" *ngIf="step === 2">
+        <h3 class="section-title"><mat-icon>library_books</mat-icon> Message templates</h3>
+        <p class="hint">Templates come from Bulk Management for the selected branch.</p>
+        <div class="form-row" *ngFor="let status of statuses">
+          <mat-form-field appearance="outline" class="form-field-full">
+            <mat-label>{{ status.label }}</mat-label>
+            <mat-select [(ngModel)]="templateMap[status.key]">
+              <mat-option [value]="null">Not used</mat-option>
+              <mat-option *ngFor="let template of templates" [value]="template.id">{{ template.name }}</mat-option>
+            </mat-select>
+            <mat-icon matPrefix>notes</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-stroked-button type="button" (click)="step === 1 ? cancel() : step = 1">
+        <mat-icon>{{ step === 1 ? 'cancel' : 'arrow_back' }}</mat-icon>
+        {{ step === 1 ? 'Cancel' : 'Back' }}
+      </button>
+      <button *ngIf="step === 1" mat-raised-button color="primary" type="button" (click)="nextFromClasses()">
+        <mat-icon>arrow_forward</mat-icon>
+        Next
+      </button>
+      <button *ngIf="step === 2" mat-raised-button color="primary" type="button" (click)="openPreview()" [disabled]="saving">
+        <mat-icon>visibility</mat-icon>
+        Preview samples
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+
+<div class="preview-backdrop" *ngIf="showSelectionConfirm" (click)="closeSelectionConfirm()">
+  <div class="preview-dialog selection-confirm-dialog" role="dialog" aria-labelledby="selection-title" (click)="$event.stopPropagation()">
+    <header class="preview-header">
+      <div class="preview-heading">
+        <mat-icon>fact_check</mat-icon>
+        <div>
+          <h2 id="selection-title">Confirm class selection</h2>
+          <p>Review selected and excluded sections for {{ branchName }} on {{ eventDate | date:'mediumDate' }}.</p>
+        </div>
+      </div>
+      <button mat-icon-button type="button" (click)="closeSelectionConfirm()" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="preview-body selection-confirm-body">
+      <section class="confirm-block">
+        <h3><mat-icon>check_circle</mat-icon> Selected sections ({{ confirmedSelectedSections.length }})</h3>
+        <ul class="confirm-list selected" *ngIf="confirmedSelectedSections.length; else noSelected">
+          <li *ngFor="let row of confirmedSelectedSections">
+            <div class="confirm-row-main">
+              <strong>{{ row.className }} · Section {{ row.section }}</strong>
+              <span class="confirm-chip selected">Selected</span>
+            </div>
+            <span class="confirm-meta">{{ row.studentCount }} students</span>
+          </li>
+        </ul>
+        <ng-template #noSelected>
+          <p class="confirm-empty">No sections selected.</p>
+        </ng-template>
+      </section>
+
+      <section class="confirm-block">
+        <h3><mat-icon>remove_circle_outline</mat-icon> Not selected ({{ confirmedNotSelectedSections.length }})</h3>
+        <ul class="confirm-list not-selected" *ngIf="confirmedNotSelectedSections.length; else noneExcluded">
+          <li *ngFor="let row of confirmedNotSelectedSections">
+            <div class="confirm-row-main">
+              <strong>{{ row.className }} · Section {{ row.section }}</strong>
+              <span class="confirm-chip" [class.missing]="row.reason === 'Attendance not taken'">
+                {{ row.reason }}
+              </span>
+            </div>
+            <span class="confirm-meta" *ngIf="row.reason !== 'Attendance not taken'">{{ row.studentCount }} students</span>
+          </li>
+        </ul>
+        <ng-template #noneExcluded>
+          <p class="confirm-empty">All listed sections are selected.</p>
+        </ng-template>
+      </section>
+    </div>
+
+    <footer class="preview-actions">
+      <button mat-stroked-button type="button" (click)="closeSelectionConfirm()">
+        <mat-icon>edit</mat-icon>
+        Change selection
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="confirmSelection()" [disabled]="confirmedSelectedSections.length === 0">
+        <mat-icon>arrow_forward</mat-icon>
+        Continue
+      </button>
+    </footer>
+  </div>
+</div>
+
+<div class="preview-backdrop" *ngIf="showPreview" (click)="showPreview = false">
+  <div class="preview-dialog" role="dialog" aria-labelledby="sample-title" (click)="$event.stopPropagation()">
+    <header class="preview-header">
+      <div class="preview-heading">
+        <mat-icon>forum</mat-icon>
+        <div>
+          <h2 id="sample-title">Sample messages</h2>
+          <p>Review one message for each status before you schedule.</p>
+        </div>
+      </div>
+      <button mat-icon-button type="button" (click)="showPreview = false" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="preview-body">
+      <article class="sample" *ngFor="let sample of samples">
+        <div class="sample-top">
+          <span class="status-chip">{{ sample.label }}</span>
+          <span class="sample-meta">{{ sample.recipient_count }} recipients</span>
+        </div>
+        <div class="sample-student">
+          <mat-icon>person</mat-icon>
+          <span>{{ sample.student_name }}</span>
+        </div>
+        <div class="message-bubble">{{ sample.message }}</div>
+      </article>
+      <div class="empty-samples" *ngIf="samples.length === 0">
+        <mat-icon>inbox</mat-icon>
+        <p>No sample could be rendered for the selected statuses.</p>
+      </div>
+    </div>
+
+    <footer class="preview-actions">
+      <button mat-stroked-button type="button" (click)="showPreview = false">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="confirm()" [disabled]="saving || samples.length === 0">
+        <mat-icon>send</mat-icon>
+        {{ saving ? 'Scheduling…' : 'Confirm and schedule' }}
+      </button>
+    </footer>
+  </div>
+</div>

@@ -417,6 +417,36 @@
   }
 }
 
+/* Notification inbox detail (Material dialog) */
+.notification-detail-dialog-panel .mat-mdc-dialog-surface {
+  padding: var(--spacing-sm);
+  min-height: 420px;
+  max-height: 92vh;
+  border-radius: var(--radius-lg);
+  background: var(--card-background);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-detail-dialog-panel .mat-mdc-dialog-component-host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.notification-detail-dialog-panel .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: var(--card-background);
+}
+
+@media (max-width: 768px) {
+  .notification-detail-dialog-panel .mat-mdc-dialog-surface {
+    padding: var(--spacing-sm);
+  }
+}
+
 /* ========================================
    ACCESSIBILITY
    ======================================== */

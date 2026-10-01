@@ -17,6 +17,7 @@ import { AcademicYear } from '../../features/settings/services/academic-year.ser
 import { THEMES, THEME_OPTIONS, DEFAULT_THEME, BREAKPOINTS, ThemeColors } from '../../shared/config/theme.config';
 import { ImpersonationService } from '../../company-portal/services/impersonation.service';
 import { CompanyAuthService } from '../../company-portal/services/company-auth.service';
+import { NotificationBellComponent } from '../../features/communications/components/notification-bell/notification-bell.component';
 
 // Menu item interface
 interface MenuItem {
@@ -35,7 +36,7 @@ interface MenuItem {
 @Component({
   selector: 'app-main-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule, MaterialModule, HasPermissionDirective],
+  imports: [CommonModule, RouterModule, MaterialModule, HasPermissionDirective, NotificationBellComponent],
   templateUrl: './main-shell.component.html',
   styleUrls: ['./main-shell.component.scss']
 })
@@ -86,6 +87,14 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'event', label: 'Holidays', route: '/holidays', permission: 'holidays.view' },
     { icon: 'groups', label: 'Groups', route: '/groups', permission: 'groups.view' },
     { icon: 'hub', label: 'Bulk Management', route: '/bulk-management', permission: 'bulk_management.view', tooltip: 'Bulk Management' },
+    {
+      icon: 'notifications_active',
+      label: 'Notifications',
+      route: '/notification-campaigns',
+      permission: ['communications.view', 'communications.create', 'bulk_management.view', 'student_attendance.mark'],
+      permissionMode: 'any',
+      roles: ['SuperAdmin', 'BranchAdmin', 'Teacher', 'Staff']
+    },
     { icon: 'local_library', label: 'Library', route: '/library', permission: ['library.view', 'library.create'], permissionMode: 'any' },
     { icon: 'directions_bus', label: 'Transport', route: '/transport', permission: ['transport.view', 'transport.create'], permissionMode: 'any' },
     { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },

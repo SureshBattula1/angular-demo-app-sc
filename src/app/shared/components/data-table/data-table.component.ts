@@ -140,6 +140,9 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
         // Update total count for display
         if (!this.config.serverSide) {
           this.totalCount = this.data?.length || 0;
+        } else if (this.paginator && this.config.totalCount !== undefined) {
+          this.totalCount = this.config.totalCount;
+          this.paginator.length = this.config.totalCount;
         }
         
         // For client-side pagination, the MatTableDataSource automatically updates
