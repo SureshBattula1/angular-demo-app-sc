@@ -1,0 +1,298 @@
+@use '../../../../../styles/assets/variables' as vars;
+@use '../../../../../styles/assets/mixins/responsive' as responsive;
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding-left: 4px;
+  padding-right: 16px;
+  display: flex;
+  align-items: center;
+  
+  @include responsive.mobile-only {
+    height: vars.$header-height-mobile;
+    padding: 0 4px;
+  }
+}
+
+.sidebar-toggle {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: vars.$font-weight-medium;
+  margin-left: 8px;
+  
+  @include responsive.mobile-only {
+    font-size: 18px;
+    margin-left: 4px;
+  }
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.app-sidenav-container {
+  flex: 1;
+  margin-top: vars.$header-height;
+  
+  @include responsive.mobile-only {
+    margin-top: vars.$header-height-mobile;
+  }
+}
+
+.app-sidenav {
+  width: vars.$sidebar-width;
+  transition: width vars.$transition-normal;
+  
+  @include responsive.mobile-only {
+    width: 280px;
+  }
+  
+  /* Collapsed state */
+  &.collapsed {
+    width: 64px;
+    
+    mat-nav-list {
+      padding: 8px 0;
+      
+      a.mat-mdc-list-item {
+        justify-content: center;
+        padding: 0 12px;
+        
+        ::ng-deep .mdc-list-item__content {
+          justify-content: center;
+          padding: 0;
+        }
+        
+        ::ng-deep .mat-mdc-list-item-icon {
+          margin: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        mat-icon {
+          margin: 0 !important;
+          margin-right: 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .hidden {
+          display: none;
+        }
+      }
+    }
+  }
+  
+  .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    margin-bottom: 8px;
+    
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: vars.$text-primary;
+    }
+  }
+  
+  mat-nav-list {
+    padding-top: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+    
+    a.mat-mdc-list-item {
+      display: flex;
+      align-items: center;
+      padding-left: 0;
+      padding-right: 12px;
+      
+      &.active {
+        background-color: rgba(vars.$primary-color, 0.1);
+        color: vars.$primary-color;
+        
+        mat-icon {
+          color: vars.$primary-color;
+        }
+      }
+      
+      &:hover {
+        background-color: rgba(vars.$primary-color, 0.05);
+      }
+      
+      mat-icon {
+        margin-right: 16px;
+        color: vars.$text-secondary;
+        transition: margin vars.$transition-normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      ::ng-deep .mdc-list-item__content {
+        display: flex;
+        align-items: center;
+      }
+      
+      .hidden {
+        opacity: 0;
+        transition: opacity vars.$transition-normal;
+      }
+    }
+  }
+}
+
+.app-content {
+  padding: 8px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: vars.$background-color;
+  transition: margin-left vars.$transition-normal;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - vars.$header-height);
+  
+  @media (max-width: 960px) {
+    padding: 6px 8px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    min-height: calc(100vh - vars.$header-height-mobile);
+  }
+}
+
+/* Adjust content margin based on sidebar state */
+.app-sidenav-container {
+  ::ng-deep .mat-drawer-content {
+    transition: margin-left vars.$transition-normal !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  @media (min-width: 961px) {
+    &:not(.sidebar-collapsed) {
+      ::ng-deep .mat-drawer-content {
+        margin-left: vars.$sidebar-width !important;
+        width: calc(100% - vars.$sidebar-width) !important;
+      }
+    }
+    
+    &.sidebar-collapsed {
+      ::ng-deep .mat-drawer-content {
+        margin-left: 64px !important;
+        width: calc(100% - 64px) !important;
+      }
+    }
+  }
+  
+  @media (max-width: 960px) {
+    ::ng-deep .mat-drawer-content {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      width: 100% !important;
+    }
+  }
+  
+  ::ng-deep .mat-drawer-side {
+    border-right: none;
+  }
+}
+
+/* Tooltip styling */
+::ng-deep .mat-mdc-tooltip {
+  font-size: 12px;
+  background-color: vars.$gray-800;
+}
+
+/* Badge styling */
+::ng-deep {
+  .mat-badge-content {
+    font-size: 10px;
+    font-weight: vars.$font-weight-bold;
+  }
+}
+
+/* User Menu Styles */
+::ng-deep .user-menu {
+  .user-menu-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--soft-surface-color, #f5f5f5);
+    cursor: default !important;
+    
+    .user-avatar {
+      margin-right: 12px;
+      
+      mat-icon {
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+        color: var(--primary-color);
+      }
+    }
+    
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      
+      .user-name {
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
+      
+      .user-email {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+      }
+      
+      .user-role {
+        display: flex;
+        align-items: center;
+        font-size: 11px;
+        color: var(--primary-color);
+        font-weight: 500;
+        
+        .role-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+  
+  .logout-menu-item {
+    color: var(--error-color, #f44336);
+    
+    mat-icon {
+      color: var(--error-color, #f44336);
+    }
+  }
+}
+
+::ng-deep .mat-mdc-menu-panel {
+  min-width: 280px;
+}
+

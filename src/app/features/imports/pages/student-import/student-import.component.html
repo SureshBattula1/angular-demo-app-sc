@@ -1,0 +1,316 @@
+<div class="view-container">
+  <!-- Page Header -->
+  <div class="view-action-bar">
+    <div>
+      <h1 class="page-title">
+        <mat-icon class="page-icon">school</mat-icon>
+        Import Students
+      </h1>
+      <p class="page-subtitle">Follow the steps to import student data</p>
+    </div>
+    <button mat-stroked-button (click)="cancelImport()">
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+  </div>
+
+  <!-- Import Wizard -->
+  <mat-card class="wizard-card">
+    <mat-card-content>
+      <mat-stepper #stepper [linear]="true" class="import-stepper">
+        
+        <!-- Step 1: Context Selection -->
+        <mat-step [stepControl]="contextForm">
+          <ng-template matStepLabel>Select Context</ng-template>
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">settings</mat-icon>
+              <div>
+                <h2>Import Context</h2>
+                <p>Select the branch, grade, section, and academic year for this import</p>
+              </div>
+            </div>
+
+            <form [formGroup]="contextForm" class="context-form">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Branch</mat-label>
+                  <mat-select formControlName="branch_id">
+                    <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                      {{ branch.name }} ({{ branch.code }})
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>business</mat-icon>
+                  <mat-error>Branch is required</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Grade</mat-label>
+                  <mat-select formControlName="grade" [disabled]="!contextForm.get('branch_id')?.value">
+                    <mat-option *ngIf="!contextForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                    <mat-option *ngIf="loadingGrades" disabled>
+                      <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                      Loading grades...
+                    </mat-option>
+                    <mat-option *ngFor="let grade of grades" [value]="grade.value">
+                      {{ grade.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>grade</mat-icon>
+                  <mat-spinner *ngIf="loadingGrades" matSuffix diameter="18"></mat-spinner>
+                  <mat-error>Grade is required</mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Section</mat-label>
+                  <mat-select formControlName="section" [disabled]="!contextForm.get('branch_id')?.value || !contextForm.get('grade')?.value">
+                    <mat-option *ngIf="!contextForm.get('branch_id')?.value" disabled>Select branch first</mat-option>
+                    <mat-option *ngIf="contextForm.get('branch_id')?.value && !contextForm.get('grade')?.value" disabled>Select grade first</mat-option>
+                    <mat-option *ngIf="loadingSections" disabled>
+                      <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                      Loading sections...
+                    </mat-option>
+                    <mat-option value="">All Sections</mat-option>
+                    <mat-option *ngFor="let section of sections" [value]="section.name">
+                      Section {{ section.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>class</mat-icon>
+                  <mat-spinner *ngIf="loadingSections" matSuffix diameter="18"></mat-spinner>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field-half">
+                  <mat-label>Academic Year</mat-label>
+                  <mat-select formControlName="academic_year" [disabled]="loadingAcademicYears">
+                    <mat-option *ngIf="loadingAcademicYears" disabled>
+                      <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                      Loading...
+                    </mat-option>
+                    <mat-option *ngFor="let ay of academicYears" [value]="ay.name">
+                      {{ ay.name }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix>event</mat-icon>
+                  <mat-error>Academic year is required</mat-error>
+                </mat-form-field>
+              </div>
+            </form>
+
+            <div class="step-actions">
+              <button mat-raised-button color="primary" matStepperNext [disabled]="!contextForm.valid">
+                <mat-icon>arrow_forward</mat-icon>
+                Continue
+              </button>
+              <button mat-stroked-button color="accent" (click)="downloadTemplate()">
+                <mat-icon>download</mat-icon>
+                Download Template
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Step 2: File Upload -->
+        <mat-step [stepControl]="uploadForm">
+          <ng-template matStepLabel>Upload File</ng-template>
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">cloud_upload</mat-icon>
+              <div>
+                <h2>Upload Excel File</h2>
+                <p>Select an Excel file (.xlsx, .xls, or .csv) containing student data</p>
+              </div>
+            </div>
+
+            <div class="upload-section">
+              <input type="file" #fileInput accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" hidden />
+              
+              <div class="upload-box" (click)="fileInput.click()" [class.has-file]="selectedFile">
+                <mat-icon class="upload-icon">{{ selectedFile ? 'description' : 'cloud_upload' }}</mat-icon>
+                <div class="upload-text">
+                  <p class="upload-title" *ngIf="!selectedFile">Click to select a file</p>
+                  <p class="upload-title" *ngIf="selectedFile">{{ selectedFile.name }}</p>
+                  <p class="upload-subtitle" *ngIf="!selectedFile">or drag and drop here</p>
+                  <p class="upload-subtitle" *ngIf="selectedFile">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+                </div>
+              </div>
+
+              <div class="upload-info">
+                <mat-icon>info</mat-icon>
+                <span>Maximum file size: 10MB | Supported formats: Excel (.xlsx, .xls), CSV</span>
+              </div>
+            </div>
+
+            <mat-progress-bar *ngIf="isUploading" mode="indeterminate" class="upload-progress"></mat-progress-bar>
+
+            <div class="step-actions">
+              <button mat-button matStepperPrevious>
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button mat-raised-button color="primary" (click)="uploadFile()" [disabled]="!selectedFile || isUploading">
+                <mat-spinner *ngIf="isUploading" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="!isUploading">upload</mat-icon>
+                {{ isUploading ? 'Uploading...' : 'Upload & Validate' }}
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Step 3: Validation -->
+        <mat-step>
+          <ng-template matStepLabel>Validation</ng-template>
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">verified</mat-icon>
+              <div>
+                <h2>Validation Results</h2>
+                <p>Review the validation status of imported records</p>
+              </div>
+            </div>
+
+            <div *ngIf="isValidating" class="validation-loading">
+              <mat-spinner diameter="60"></mat-spinner>
+              <p>Validating imported data...</p>
+            </div>
+
+            <div *ngIf="!isValidating && validationResult" class="validation-results">
+              <div class="stats-grid">
+                <div class="stat-card total">
+                  <mat-icon>list</mat-icon>
+                  <div class="stat-value">{{ validationResult.total_rows }}</div>
+                  <div class="stat-label">Total Rows</div>
+                </div>
+                <div class="stat-card valid">
+                  <mat-icon>check_circle</mat-icon>
+                  <div class="stat-value">{{ validationResult.valid_rows }}</div>
+                  <div class="stat-label">Valid</div>
+                </div>
+                <div class="stat-card invalid">
+                  <mat-icon>error</mat-icon>
+                  <div class="stat-value">{{ validationResult.invalid_rows }}</div>
+                  <div class="stat-label">Invalid</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <button mat-button matStepperPrevious [disabled]="isValidating">
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button mat-raised-button color="primary" matStepperNext [disabled]="isValidating || !validationResult">
+                <mat-icon>arrow_forward</mat-icon>
+                Review Data
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Step 4: Review -->
+        <mat-step>
+          <ng-template matStepLabel>Review</ng-template>
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">visibility</mat-icon>
+              <div>
+                <h2>Review Import Data</h2>
+                <p>Review the records before importing to the system</p>
+              </div>
+            </div>
+
+            <mat-tab-group [(selectedIndex)]="selectedTab" (selectedIndexChange)="onTabChange($event)" class="preview-tabs">
+              <mat-tab label="All ({{ previewSummary?.total || 0 }})"></mat-tab>
+              <mat-tab label="Valid Only ({{ previewSummary?.valid || 0 }})"></mat-tab>
+              <mat-tab label="Invalid Only ({{ previewSummary?.invalid || 0 }})"></mat-tab>
+            </mat-tab-group>
+
+            <!-- Shared table for all tabs (all columns; horizontal + vertical scroll) -->
+            <div class="table-wrapper" *ngIf="previewData && previewData.length > 0">
+              <table mat-table [dataSource]="previewData" class="preview-table">
+                <ng-container *ngFor="let col of previewColumns" [matColumnDef]="col.key">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ col.label }}<span *ngIf="col.required" class="req-asterisk" title="Required">*</span>
+                  </th>
+                  <td mat-cell *matCellDef="let record" [ngSwitch]="col.key">
+                    <mat-chip *ngSwitchCase="'status'" [class]="record.validation_status" class="status-chip">
+                      {{ record.validation_status }}
+                    </mat-chip>
+                    <div *ngSwitchCase="'errors'" class="errors-list">
+                      <mat-chip *ngFor="let error of record.validation_errors" class="error-chip">
+                        <mat-icon>error_outline</mat-icon>
+                        {{ error }}
+                      </mat-chip>
+                    </div>
+                    <span *ngSwitchDefault>{{ $any(record)[col.key] !== null && $any(record)[col.key] !== undefined && $any(record)[col.key] !== '' ? $any(record)[col.key] : '-' }}</span>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
+            </div>
+
+            <mat-paginator *ngIf="totalRecords > pageSize" [length]="totalRecords" [pageSize]="pageSize" [pageSizeOptions]="[pageSize]" (page)="onPageChange($event)"></mat-paginator>
+
+            <!-- Empty state -->
+            <div class="empty-state" *ngIf="!previewData || previewData.length === 0">
+              <mat-icon class="empty-icon">inbox</mat-icon>
+              <h3>No Records</h3>
+              <p>No records match the current filter</p>
+            </div>
+
+            <div class="step-actions">
+              <button mat-button matStepperPrevious>
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button mat-stroked-button color="warn" (click)="cancelImport()">
+                <mat-icon>close</mat-icon>
+                Cancel Import
+              </button>
+              <button mat-raised-button color="primary" matStepperNext [disabled]="!previewSummary || previewSummary.valid === 0">
+                <mat-icon>arrow_forward</mat-icon>
+                Proceed
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Step 5: Import -->
+        <mat-step>
+          <ng-template matStepLabel>Import</ng-template>
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">publish</mat-icon>
+              <div>
+                <h2>Import to Production</h2>
+                <p>Ready to import validated records to the system</p>
+              </div>
+            </div>
+
+            <div *ngIf="isImporting" class="import-progress">
+              <mat-spinner diameter="80"></mat-spinner>
+              <h3>Importing Data...</h3>
+              <p>Importing {{ previewSummary?.valid }} valid records. Please wait...</p>
+            </div>
+
+            <div *ngIf="!isImporting" class="import-ready">
+              <mat-icon class="ready-icon" color="primary">check_circle</mat-icon>
+              <h3>Ready to Import</h3>
+              <p class="import-summary">
+                {{ previewSummary?.valid }} valid records will be imported.<br>
+                {{ previewSummary?.invalid }} invalid records will be skipped.
+              </p>
+              <button mat-raised-button color="primary" size="large" (click)="commitImport()" [disabled]="isImporting">
+                <mat-icon>publish</mat-icon>
+                Import Now
+              </button>
+            </div>
+          </div>
+        </mat-step>
+      </mat-stepper>
+    </mat-card-content>
+  </mat-card>
+</div>

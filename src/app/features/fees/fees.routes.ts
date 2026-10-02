@@ -19,7 +19,7 @@ export const FEES_ROUTES: Routes = [
   },
   {
     path: 'structure/view/:id',
-    loadComponent: () => import('./pages/fee-view/fee-view.component').then(m => m.FeeViewComponent),
+    loadComponent: () => import('./pages/fee-structure-view/fee-structure-view.component').then(m => m.FeeStructureViewComponent),
     canActivate: [authGuard]
   },
   {
@@ -29,12 +29,27 @@ export const FEES_ROUTES: Routes = [
   },
   {
     path: 'payment/view/:id',
-    loadComponent: () => import('./pages/fee-view/fee-view.component').then(m => m.FeeViewComponent),
+    loadComponent: () => import('./pages/fee-payment-view/fee-payment-view.component').then(m => m.FeePaymentViewComponent),
     canActivate: [authGuard]
   },
   {
     path: 'student/:id',
     loadComponent: () => import('./pages/fee-view/fee-view.component').then(m => m.FeeViewComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'type/create',
+    loadComponent: () => import('./pages/fee-type-form/fee-type-form.component').then(m => m.FeeTypeFormComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'type/edit/:id',
+    loadComponent: () => import('./pages/fee-type-form/fee-type-form.component').then(m => m.FeeTypeFormComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'type/view/:id',
+    loadComponent: () => import('./pages/fee-type-view/fee-type-view.component').then(m => m.FeeTypeViewComponent),
     canActivate: [authGuard]
   }
 ];

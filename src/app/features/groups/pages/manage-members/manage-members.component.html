@@ -1,0 +1,165 @@
+<div class="view-container" *ngIf="!loading && group">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Group
+    </button>
+    <button mat-button (click)="onBackToList()">
+      <mat-icon>list</mat-icon>
+      All Groups
+    </button>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">groups</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ group.name }}</h1>
+          <div class="view-meta">
+            <span><mat-icon>qr_code</mat-icon> {{ group.code }}</span>
+            <span><mat-icon>label</mat-icon> {{ group.type }}</span>
+            <span *ngIf="group.branch"><mat-icon>business</mat-icon> {{ group.branch.name }}</span>
+            <span><mat-icon>event</mat-icon> {{ group.academic_year }}</span>
+            <span class="member-count"><mat-icon>people</mat-icon> {{ members.length }} member{{ members.length !== 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Add Member Section -->
+  <mat-card class="details-card add-member-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>person_add</mat-icon>
+        Add Member
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="add-member-row">
+        <mat-form-field appearance="outline" class="grade-select">
+          <mat-label>Class (Grade)</mat-label>
+          <mat-select [(ngModel)]="selectedGrade" (selectionChange)="onGradeChange()" [disabled]="loadingStudents || loadingGrades || adding">
+            <mat-option [value]="null">-- All Classes --</mat-option>
+            <mat-option *ngFor="let g of availableGrades" [value]="g">
+              {{ getGradeDisplayLabelFromValue(g) }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>school</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="section-select">
+          <mat-label>Section</mat-label>
+          <mat-select [(ngModel)]="selectedSection" (selectionChange)="onSectionChange()" [disabled]="loadingStudents || loadingSections || adding || availableSections.length === 0">
+            <mat-option [value]="null">-- All Sections --</mat-option>
+            <mat-option *ngFor="let sec of availableSections" [value]="sec">
+              {{ getSectionLabelFromValue(sec) }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>class</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="student-search">
+          <mat-label>Search Student</mat-label>
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="studentSearchText"
+            (ngModelChange)="onStudentSearchTextChange($event)"
+            [matAutocomplete]="studentAuto"
+            [disabled]="loadingStudents || adding"
+            placeholder="Type name, admission number, or roll number" />
+          <mat-icon matPrefix>person_search</mat-icon>
+
+          <mat-autocomplete #studentAuto="matAutocomplete" (optionSelected)="onStudentAutocompleteSelected($event)">
+            <mat-option
+              *ngFor="let s of studentSearchResults"
+              [value]="getStudentLabel(s)"
+              >
+              <div class="autocomplete-option">
+                <div class="autocomplete-title">{{ getStudentLabel(s) }}</div>
+                <div class="autocomplete-subtitle">{{ getStudentGradeSectionDisplay(s) }}</div>
+              </div>
+            </mat-option>
+            <mat-option *ngIf="studentSearchResults.length === 0" [disabled]="true">
+              No students found for current filters
+            </mat-option>
+          </mat-autocomplete>
+
+          <mat-hint *ngIf="studentsToAdd.length === 0 && !loadingStudents">
+            All students in this branch are already in the group.
+          </mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="role-select">
+          <mat-label>Role</mat-label>
+          <mat-select [(ngModel)]="selectedRole" [disabled]="adding">
+            <mat-option value="Member">Member</mat-option>
+            <mat-option value="Leader">Leader</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>badge</mat-icon>
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="addMember()"
+          [disabled]="!selectedStudentId || adding"
+          class="add-btn">
+          <mat-spinner *ngIf="adding" diameter="20" class="btn-spinner"></mat-spinner>
+          <mat-icon *ngIf="!adding">add</mat-icon>
+          {{ adding ? 'Adding...' : 'Add' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Current Members -->
+  <mat-card class="details-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>people</mat-icon>
+        Current Members ({{ members.length }})
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="members-list" *ngIf="members.length > 0">
+        <div class="member-row" *ngFor="let member of members">
+          <div class="member-info">
+            <mat-icon class="member-icon">{{ member.role === 'Leader' ? 'star' : 'person' }}</mat-icon>
+            <div class="member-details">
+              <span class="member-name">{{ getMemberDisplayName(member) }}</span>
+              <span class="member-meta">{{ getMemberMeta(member) }}</span>
+            </div>
+          </div>
+          <div class="member-actions">
+            <span class="role-badge">{{ member.role }}</span>
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="removeMember(member)"
+              [disabled]="removingId !== null"
+              matTooltip="Remove from group">
+              <mat-spinner *ngIf="removingId === member.student_id" diameter="24"></mat-spinner>
+              <mat-icon *ngIf="removingId !== member.student_id">person_remove</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="empty-state" *ngIf="members.length === 0">
+        <mat-icon>group_off</mat-icon>
+        <p>No members yet. Add students using the form above.</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading group...</p>
+</div>

@@ -1,0 +1,161 @@
+<div class="view-container" *ngIf="loading">
+  <div class="loading-overlay">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>
+
+<div class="view-container" *ngIf="!loading && assignment">
+  <div class="view-action-bar">
+    <button mat-button type="button" (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to list
+    </button>
+    <div class="action-buttons">
+      <ng-container *ngIf="assignment.can_edit">
+        <button
+          *hasPermission="'assignments.edit'"
+          mat-raised-button
+          color="primary"
+          type="button"
+          (click)="onEdit()">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+        <button
+          *hasPermission="'assignments.delete'"
+          mat-raised-button
+          color="warn"
+          type="button"
+          (click)="onDelete()">
+          <mat-icon>delete</mat-icon>
+          Delete
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">assignment_turned_in</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ assignment.title }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>category</mat-icon>
+              {{ assignment.assignment_type || 'Homework' }}
+            </span>
+            <span>
+              <mat-icon>school</mat-icon>
+              {{ classLabel() }}
+            </span>
+            <span *ngIf="assignment.subject">
+              <mat-icon>menu_book</mat-icon>
+              {{ assignment.subject }}
+            </span>
+            <span class="status-badge" [ngClass]="statusClass()">
+              <mat-icon>circle</mat-icon>
+              {{ assignment.status || (assignment.is_published ? 'Published' : 'Draft') }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-icon--primary">
+          <mat-icon>event</mat-icon>
+        </div>
+        <div>
+          <div class="stat-label">Due date</div>
+          <div class="stat-value">{{ assignment.due_date | date }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-icon--accent">
+          <mat-icon>grade</mat-icon>
+        </div>
+        <div>
+          <div class="stat-label">Max marks</div>
+          <div class="stat-value">{{ assignment.max_marks ?? '-' }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-icon--info">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div>
+          <div class="stat-label">Recipients</div>
+          <div class="stat-value">{{ assignment.recipient_count ?? 0 }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="view-details-grid">
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Assignment information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <div class="detail-label">Audience</div>
+          <div class="detail-value">{{ audienceLabel() }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Published</div>
+          <div class="detail-value">{{ assignment.is_published ? 'Yes' : 'No' }}</div>
+        </div>
+        <div class="detail-row" *ngIf="assignment.published_at">
+          <div class="detail-label">Published at</div>
+          <div class="detail-value">{{ assignment.published_at | date: 'medium' }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>notes</mat-icon>
+          Description
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="prose">{{ assignment.description || 'No description' }}</p>
+        <h4 *ngIf="assignment.instructions">Instructions</h4>
+        <p class="prose" *ngIf="assignment.instructions">{{ assignment.instructions }}</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="detail-card attachments-card" *ngIf="assignment.attachments?.length">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>attach_file</mat-icon>
+        Attachments
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <ul class="attachment-list">
+        <li *ngFor="let file of assignment.attachments">
+          <button type="button" class="attachment-link" (click)="previewAttachment(file)">
+            <mat-icon>{{ isImageAttachment(file) ? 'image' : 'insert_drive_file' }}</mat-icon>
+            {{ attachmentName(file) }}
+          </button>
+        </li>
+      </ul>
+    </mat-card-content>
+  </mat-card>
+</div>

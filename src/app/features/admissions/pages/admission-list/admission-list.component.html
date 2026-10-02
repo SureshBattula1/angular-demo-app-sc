@@ -1,0 +1,175 @@
+<div class="page-container">
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="admissions-toolbar">
+      <button
+        mat-button
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'dashboard'"
+        (click)="switchTab('dashboard')">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+
+      <button
+        mat-button
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'applications'"
+        (click)="switchTab('applications')">
+        <mat-icon>description</mat-icon>
+        <span>Admission Applications</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Dashboard Tab -->
+  <div *ngIf="activeTab === 'dashboard' && isTabLoaded('dashboard')" class="dashboard-container">
+    <!-- Filters Row: Branch + Date Range -->
+    <div class="filters-container">
+      <mat-form-field appearance="outline" class="branch-filter">
+        <mat-label>
+          <mat-icon>business</mat-icon>
+          Branch
+        </mat-label>
+        <mat-select [(ngModel)]="dashboardBranch" (selectionChange)="onDashboardFilterChange()">
+          <mat-option value="">All Branches</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Date Range Selector -->
+      <div class="date-range-selector">
+        <mat-button-toggle-group [formControl]="dashboardPeriod" (change)="onDashboardFilterChange()" class="period-toggle">
+          <mat-button-toggle value="today">
+            <mat-icon>today</mat-icon>
+            <span class="toggle-label">Today</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="week">
+            <mat-icon>view_week</mat-icon>
+            <span class="toggle-label">Week</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="month">
+            <mat-icon>calendar_month</mat-icon>
+            <span class="toggle-label">Month</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="custom">
+            <mat-icon>date_range</mat-icon>
+            <span class="toggle-label">Custom</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <!-- Custom Date Range (shown only when custom selected) -->
+    <div class="custom-range-row" *ngIf="dashboardPeriod.value === 'custom'">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>From Date</mat-label>
+        <input matInput [matDatepicker]="dashboardFromPicker" [formControl]="dashboardCustomFrom" (dateChange)="onDashboardCustomRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="dashboardFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dashboardFromPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>To Date</mat-label>
+        <input matInput [matDatepicker]="dashboardToPicker" [formControl]="dashboardCustomTo" (dateChange)="onDashboardCustomRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="dashboardToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dashboardToPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="dashboardLoading" class="dashboard-loading-state">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <mat-card class="dashboard-stats" *ngIf="!dashboardLoading">
+      <h2>Admission Overview</h2>
+      <div class="stats-grid">
+        <mat-card class="stat-card total-stat" (click)="switchTab('applications')">
+          <mat-icon>people</mat-icon>
+          <div class="stat-content">
+            <h3>Total Admissions</h3>
+            <p class="amount">{{ dashboardStats.total }}</p>
+            <span class="count">Applications in period</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card applied-stat" (click)="switchTab('applications')">
+          <mat-icon>hourglass_empty</mat-icon>
+          <div class="stat-content">
+            <h3>Applied</h3>
+            <p class="amount">{{ dashboardStats.by_status.Applied }}</p>
+            <span class="count">Pending review</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card shortlisted-stat" (click)="switchTab('applications')">
+          <mat-icon>star</mat-icon>
+          <div class="stat-content">
+            <h3>Shortlisted</h3>
+            <p class="amount">{{ dashboardStats.by_status.Shortlisted }}</p>
+            <span class="count">Selected candidates</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card admitted-stat" (click)="switchTab('applications')">
+          <mat-icon>check_circle</mat-icon>
+          <div class="stat-content">
+            <h3>Admitted</h3>
+            <p class="amount">{{ dashboardStats.by_status.Admitted }}</p>
+            <span class="count">Confirmed admissions</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card rejected-stat">
+          <mat-icon>cancel</mat-icon>
+          <div class="stat-content">
+            <h3>Rejected</h3>
+            <p class="amount">{{ dashboardStats.by_status.Rejected }}</p>
+            <span class="count">Not selected</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card waitlisted-stat">
+          <mat-icon>schedule</mat-icon>
+          <div class="stat-content">
+            <h3>Waitlisted</h3>
+            <p class="amount">{{ dashboardStats.by_status.Waitlisted }}</p>
+            <span class="count">On waiting list</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card fee-stat">
+          <mat-icon>payments</mat-icon>
+          <div class="stat-content">
+            <h3>Fee Collected</h3>
+            <p class="amount">₹{{ dashboardStats.fee_total | number:'1.2-2' }}</p>
+            <span class="count">Application fees paid</span>
+          </div>
+        </mat-card>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Admission Applications Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'applications' && isTabLoaded('applications')"
+    #dataTable
+    [data]="applications"
+    [config]="tableConfig"
+    [advancedSearchConfig]="advancedSearchConfig"
+    [title]="'Admission Applications'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)"
+    (searchFieldChanged)="onSearchFieldChanged($event)"
+    (advancedSearchChanged)="onAdvancedSearchChange($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
+</div>

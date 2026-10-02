@@ -21,7 +21,7 @@ export class HolidayService {
   /**
    * Get single holiday
    */
-  getHoliday(id: number): Observable<ApiResponse<Holiday>> {
+  getHoliday(id: string | number): Observable<ApiResponse<Holiday>> {
     return this.apiService.get<Holiday>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -35,14 +35,14 @@ export class HolidayService {
   /**
    * Update holiday
    */
-  updateHoliday(id: number, data: Partial<HolidayFormData>): Observable<ApiResponse<Holiday>> {
+  updateHoliday(id: string | number, data: Partial<HolidayFormData>): Observable<ApiResponse<Holiday>> {
     return this.apiService.put<Holiday>(`${this.ENDPOINT}/${id}`, data);
   }
 
   /**
    * Delete holiday
    */
-  deleteHoliday(id: number): Observable<ApiResponse> {
+  deleteHoliday(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 

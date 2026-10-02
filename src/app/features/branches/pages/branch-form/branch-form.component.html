@@ -170,16 +170,22 @@
           </h3>
           
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field-third">
+            <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Principal Name</mat-label>
               <input matInput formControlName="principal_name" placeholder="Enter principal name">
               <mat-icon matPrefix>badge</mat-icon>
+              <mat-error *ngIf="branchForm.get('principal_name')?.invalid && branchForm.get('principal_name')?.touched">
+                {{ getErrorMessage('principal_name') }}
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Principal Contact</mat-label>
               <input matInput formControlName="principal_contact" placeholder="Phone number">
               <mat-icon matPrefix>phone_in_talk</mat-icon>
+              <mat-error *ngIf="branchForm.get('principal_contact')?.invalid && branchForm.get('principal_contact')?.touched">
+                {{ getErrorMessage('principal_contact') }}
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-third">
@@ -188,6 +194,22 @@
               <mat-icon matPrefix>email</mat-icon>
               <mat-error *ngIf="branchForm.get('principal_email')?.invalid && branchForm.get('principal_email')?.touched">
                 {{ getErrorMessage('principal_email') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Branch Admin: create user with principal name/email (create mode only) -->
+          <div *ngIf="!isEditMode" class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch Admin Password</mat-label>
+              <input matInput [type]="hideBranchAdminPassword ? 'password' : 'text'" formControlName="branch_admin_password" placeholder="Min 8 characters to create Branch Admin">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="hideBranchAdminPassword = !hideBranchAdminPassword" tabindex="-1">
+                <mat-icon>{{ hideBranchAdminPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+              <mat-hint>Optional. Creates a Branch Admin user for this branch using Principal name and email.</mat-hint>
+              <mat-error *ngIf="branchForm.get('branch_admin_password')?.invalid && branchForm.get('branch_admin_password')?.touched">
+                Minimum 8 characters required
               </mat-error>
             </mat-form-field>
           </div>
@@ -215,7 +237,9 @@
 
             <mat-form-field appearance="outline" class="form-field-third">
               <mat-label>Established Date</mat-label>
-              <input matInput type="date" formControlName="established_date">
+              <input matInput [matDatepicker]="establishedDatePicker" formControlName="established_date" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="establishedDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #establishedDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
@@ -275,6 +299,81 @@
               Sports Facilities
             </mat-checkbox>
           </div>
+        </div>
+
+        <!-- Branch Logo Upload Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>image</mat-icon>
+            Branch Logo
+          </h3>
+          
+          <!-- Current Logo Preview (Edit Mode) -->
+          <div *ngIf="isEditMode && currentLogoUrl" class="current-logo-preview">
+            <div class="preview-card">
+              <div class="preview-header">
+                <span class="preview-label">
+                  <mat-icon>image</mat-icon>
+                  Current Logo
+                </span>
+                <button mat-icon-button color="warn" (click)="removeLogo()" type="button" matTooltip="Remove logo">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <div class="preview-image-container">
+                <img [src]="currentLogoUrl" 
+                     [alt]="branchForm.get('name')?.value + ' logo'" 
+                     class="preview-image"
+                     (error)="onLogoPreviewError()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload New Logo -->
+          <div class="logo-upload-section">
+            <app-file-upload
+              fileType="logo"
+              module="branch"
+              [label]="isEditMode && currentLogoUrl ? 'Replace Branch Logo' : 'Upload Branch Logo'"
+              icon="image"
+              [config]="{
+                maxSize: 1,
+                allowedTypes: ['jpg', 'jpeg', 'png', 'svg', 'webp'],
+                multiple: false,
+                showPreview: true,
+                showProgress: true,
+                showFileList: true
+              }"
+              accept="image/*"
+              [disabled]="isLoading"
+              (uploadSuccess)="onLogoUploaded($event)"
+              (uploadError)="onLogoUploadError($event)">
+            </app-file-upload>
+            
+            <p class="help-text">
+              <mat-icon>info</mat-icon>
+              Upload your branch logo. Accepted formats: JPG, PNG, SVG, WebP. Max size: 1MB
+            </p>
+          </div>
+        </div>
+
+        <!-- Branch Attachments Section -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>attach_file</mat-icon>
+            Branch Attachments
+          </h3>
+          
+          <app-universal-attachments
+            module="branch"
+            [moduleId]="attachmentModuleId || branchId || 0"
+            mode="form">
+          </app-universal-attachments>
+          
+          <p class="help-text">
+            <mat-icon>info</mat-icon>
+            Upload multiple files with specific types (certifications, documents, certificates, etc.)
+          </p>
         </div>
 
         <!-- Status Section -->

@@ -17,10 +17,11 @@ export class GroupService {
    */
   getGroups(params?: Record<string, unknown>): Observable<GroupListResponse> {
     return this.apiService.get<StudentGroup[]>(this.ENDPOINT, params).pipe(
-      map(response => ({
+      map((response: any) => ({
         success: response.success,
         data: response.data || [],
-        count: response.data?.length || 0
+        count: response.data?.length || 0,
+        meta: response.meta
       }))
     );
   }
@@ -28,7 +29,7 @@ export class GroupService {
   /**
    * Get group by ID
    */
-  getGroup(id: number): Observable<ApiResponse<StudentGroup>> {
+  getGroup(id: string | number): Observable<ApiResponse<StudentGroup>> {
     return this.apiService.get<StudentGroup>(`${this.ENDPOINT}/${id}`);
   }
 
@@ -42,21 +43,21 @@ export class GroupService {
   /**
    * Update group
    */
-  updateGroup(id: number, groupData: Partial<GroupFormData>): Observable<ApiResponse<StudentGroup>> {
+  updateGroup(id: string | number, groupData: Partial<GroupFormData>): Observable<ApiResponse<StudentGroup>> {
     return this.apiService.put<StudentGroup>(`${this.ENDPOINT}/${id}`, groupData);
   }
 
   /**
    * Delete group
    */
-  deleteGroup(id: number): Observable<ApiResponse> {
+  deleteGroup(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${id}`);
   }
 
   /**
    * Add member to group
    */
-  addMember(groupId: number, studentId: number, role: string = 'Member'): Observable<ApiResponse> {
+  addMember(groupId: string | number, studentId: string | number, role: string = 'Member'): Observable<ApiResponse> {
     return this.apiService.post(`${this.ENDPOINT}/${groupId}/add-member`, {
       student_id: studentId,
       role,
@@ -67,7 +68,7 @@ export class GroupService {
   /**
    * Remove member from group
    */
-  removeMember(groupId: number, studentId: number): Observable<ApiResponse> {
+  removeMember(groupId: string | number, studentId: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.ENDPOINT}/${groupId}/members/${studentId}`);
   }
 }

@@ -1,0 +1,70 @@
+<h2 mat-dialog-title>{{ data.template ? 'Edit SMS template' : 'New SMS template' }}</h2>
+
+<mat-dialog-content class="dialog-body">
+  <p class="dialog-hint">
+    Use <code>#tag#</code> placeholders. Student <code>#mobile#</code> uses father → mother → student phone.
+  </p>
+
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Branch</mat-label>
+    <mat-select
+      [(ngModel)]="draftBranchId"
+      name="draftBranchId"
+      [disabled]="isEdit"
+      required>
+      <mat-option *ngFor="let b of data.branches" [value]="b.id">{{ b.name }}</mat-option>
+    </mat-select>
+    <mat-hint *ngIf="isEdit">Branch cannot be changed for an existing template.</mat-hint>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Name</mat-label>
+    <input matInput [(ngModel)]="draftName" name="draftName" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full audience-field">
+    <mat-label>Audience</mat-label>
+    <mat-select [(ngModel)]="draftAudience" name="draftAudience">
+      <mat-option value="student">Students</mat-option>
+      <mat-option value="teacher">Teachers</mat-option>
+      <mat-option value="both">Both</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-checkbox [(ngModel)]="draftActive" name="draftActive">Active</mat-checkbox>
+
+  <div class="tag-sheet" *ngIf="data.allowedTags.length">
+    <span class="tag-sheet-label">Insert tag</span>
+    <button
+      type="button"
+      mat-stroked-button
+      class="tag-chip"
+      *ngFor="let tag of data.allowedTags"
+      (click)="insertTag(tag, bodyArea)">
+      #{{ tag }}#
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Message body</mat-label>
+    <textarea
+      matInput
+      #bodyArea
+      rows="8"
+      [(ngModel)]="draftBody"
+      name="draftBody"></textarea>
+    <mat-hint align="end">{{ draftBody.length }} characters</mat-hint>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    (click)="save()"
+    [disabled]="saving || draftBranchId === null || !draftName.trim() || !draftBody.trim()">
+    Save
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,257 @@
+<div class="view-container" *ngIf="!isLoading && leave">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" *ngIf="leave.status === 'Pending'" (click)="approveLeave()">
+        <mat-icon>check_circle</mat-icon>
+        Approve
+      </button>
+      <button mat-raised-button color="warn" *ngIf="leave.status === 'Pending'" (click)="rejectLeave()">
+        <mat-icon>cancel</mat-icon>
+        Reject
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div
+          class="view-avatar"
+          [matTooltip]="(profilePictureUrl && showProfilePicture) ? getApplicantAvatarTooltip() : ''"
+          matTooltipPosition="below">
+          <img
+            *ngIf="profilePictureUrl && showProfilePicture"
+            [src]="profilePictureUrl"
+            [alt]="leave.first_name + ' ' + leave.last_name"
+            class="leave-profile-avatar"
+            (load)="onProfileImageLoad()"
+            (error)="onProfileImageError()" />
+          <mat-icon *ngIf="!profilePictureUrl || !showProfilePicture" class="avatar-icon">
+            {{ leave.leave_for === 'student' ? 'school' : 'person' }}
+          </mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ leave.first_name }} {{ leave.last_name }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>event_busy</mat-icon>
+              {{ leave.leave_type }}
+            </span>
+            <span>
+              <mat-icon>calendar_today</mat-icon>
+              {{ leave.from_date | date: 'mediumDate' }} - {{ leave.to_date | date: 'mediumDate' }}
+            </span>
+            <span>
+              <mat-icon>today</mat-icon>
+              {{ leave.total_days }} day{{ leave.total_days !== 1 ? 's' : '' }}
+            </span>
+            <span *ngIf="leave.branch_name">
+              <mat-icon>business</mat-icon>
+              {{ leave.branch_name }}
+            </span>
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(leave.status)">
+              <mat-icon>circle</mat-icon>
+              {{ leave.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Leave Details Cards -->
+  <div class="details-grid">
+    <!-- Person Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          {{ leave.leave_for === 'student' ? 'Student' : 'Teacher' }} Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>badge</mat-icon>
+              <span>Name</span>
+            </div>
+            <div class="detail-value">{{ leave.first_name }} {{ leave.last_name }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>email</mat-icon>
+              <span>Email</span>
+            </div>
+            <div class="detail-value">{{ leave.email || 'N/A' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>phone</mat-icon>
+              <span>Mobile Number</span>
+            </div>
+            <div class="detail-value">{{ leave.mobile_number || 'N/A' }}</div>
+          </div>
+          <div class="detail-item" *ngIf="leave.admission_number">
+            <div class="detail-label">
+              <mat-icon>tag</mat-icon>
+              <span>Admission Number</span>
+            </div>
+            <div class="detail-value">{{ leave.admission_number }}</div>
+          </div>
+          <div class="detail-item" *ngIf="leave.employee_id">
+            <div class="detail-label">
+              <mat-icon>work</mat-icon>
+              <span>Employee ID</span>
+            </div>
+            <div class="detail-value">{{ leave.employee_id }}</div>
+          </div>
+          <div class="detail-item" *ngIf="leave.grade_label || leave.grade">
+            <div class="detail-label">
+              <mat-icon>grade</mat-icon>
+              <span>Grade</span>
+            </div>
+            <div class="detail-value">{{ leave.grade_label || leave.grade || 'N/A' }}</div>
+          </div>
+          <div class="detail-item" *ngIf="leave.section">
+            <div class="detail-label">
+              <mat-icon>group</mat-icon>
+              <span>Section</span>
+            </div>
+            <div class="detail-value">{{ leave.section }}</div>
+          </div>
+          <div class="detail-item" *ngIf="leave.designation">
+            <div class="detail-label">
+              <mat-icon>work_outline</mat-icon>
+              <span>Designation</span>
+            </div>
+            <div class="detail-value">{{ leave.designation }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Leave Details -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event_note</mat-icon>
+          Leave Details
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>category</mat-icon>
+              <span>Leave Type</span>
+            </div>
+            <div class="detail-value">{{ leave.leave_type }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>From Date</span>
+            </div>
+            <div class="detail-value">{{ leave.from_date | date: 'mediumDate' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>To Date</span>
+            </div>
+            <div class="detail-value">{{ leave.to_date | date: 'mediumDate' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>today</mat-icon>
+              <span>Total Days</span>
+            </div>
+            <div class="detail-value">{{ leave.total_days }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>calendar_month</mat-icon>
+              <span>Academic Name</span>
+            </div>
+            <div class="detail-value">{{ leave.academic_year_name || 'N/A' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>info</mat-icon>
+              <span>Status</span>
+            </div>
+            <div class="detail-value">
+              <span class="status-chip" [ngClass]="getStatusBadgeClass(leave.status)">{{ leave.status }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Approval Information -->
+    <mat-card class="details-card" *ngIf="leave.approved_by || leave.approved_at">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>verified_user</mat-icon>
+          Approval Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="leave.approved_by">
+            <div class="detail-label">
+              <mat-icon>person</mat-icon>
+              <span>Approved By</span>
+            </div>
+            <div class="detail-value">{{ leave.approved_by_name || leave.approved_by }}</div>
+          </div>
+          <div class="detail-item" *ngIf="leave.approved_at">
+            <div class="detail-label">
+              <mat-icon>schedule</mat-icon>
+              <span>Approved At</span>
+            </div>
+            <div class="detail-value">{{ leave.approved_at | date: 'medium' }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Reason -->
+  <mat-card class="details-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>comment</mat-icon>
+        Reason
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="description-text">{{ leave.reason || 'No reason provided' }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Remarks -->
+  <mat-card class="details-card" *ngIf="leave.remarks">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>note</mat-icon>
+        Remarks
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="description-text">{{ leave.remarks }}</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>

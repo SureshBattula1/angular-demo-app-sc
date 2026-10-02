@@ -1,0 +1,200 @@
+<div class="view-container" *ngIf="!loading && exam">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">assignment</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ exam.name }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>category</mat-icon>
+              {{ exam.exam_type }}
+            </span>
+            <span *ngIf="exam.branch">
+              <mat-icon>school</mat-icon>
+              {{ exam.branch.name }}
+            </span>
+            <span *ngIf="exam.academic_year">
+              <mat-icon>date_range</mat-icon>
+              {{ exam.academic_year }}
+            </span>
+            <span class="status-badge" [ngClass]="{'status-active': exam.is_active, 'status-inactive': !exam.is_active}">
+              <mat-icon>circle</mat-icon>
+              {{ exam.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Exam Details Cards -->
+  <div class="details-grid">
+    <!-- Basic Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Exam Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>assignment</mat-icon>
+              <span>Exam Name</span>
+            </div>
+            <div class="detail-value">{{ exam.name }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>category</mat-icon>
+              <span>Exam Type</span>
+            </div>
+            <div class="detail-value">{{ exam.exam_type }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>school</mat-icon>
+              <span>Branch</span>
+            </div>
+            <div class="detail-value">{{ exam.branch?.name || 'Not specified' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>date_range</mat-icon>
+              <span>Academic Year</span>
+            </div>
+            <div class="detail-value">{{ exam.academic_year }}</div>
+          </div>
+          
+          <div class="detail-item" *ngIf="exam.exam_term">
+            <div class="detail-label">
+              <mat-icon>event_note</mat-icon>
+              <span>Exam Term</span>
+            </div>
+            <div class="detail-value">{{ exam.exam_term.name }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Marks Information -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>score</mat-icon>
+          Marks & Duration
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>signal_cellular_alt</mat-icon>
+              <span>Total Marks</span>
+            </div>
+            <div class="detail-value">{{ exam.total_marks || 'Not specified' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>trending_up</mat-icon>
+              <span>Passing Marks</span>
+            </div>
+            <div class="detail-value">{{ exam.passing_marks || 'Not specified' }}</div>
+          </div>
+          
+          <div class="detail-item" *ngIf="exam.total_marks && exam.passing_marks">
+            <div class="detail-label">
+              <mat-icon>percent</mat-icon>
+              <span>Pass Percentage</span>
+            </div>
+            <div class="detail-value">{{ (exam.passing_marks / exam.total_marks * 100).toFixed(1) }}%</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Timeline -->
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          Timeline
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>Start Date</span>
+            </div>
+            <div class="detail-value">{{ exam.start_date | date: 'mediumDate' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>End Date</span>
+            </div>
+            <div class="detail-value">{{ exam.end_date | date: 'mediumDate' }}</div>
+          </div>
+          
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>timeline</mat-icon>
+              <span>Duration</span>
+            </div>
+            <div class="detail-value">{{ getDuration() }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Description -->
+  <mat-card class="details-card" *ngIf="exam.description">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>description</mat-icon>
+        Description
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="description-text">{{ exam.description }}</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+

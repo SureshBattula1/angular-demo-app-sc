@@ -1,0 +1,80 @@
+<div class="tform-page">
+  <div class="form-card">
+    <div class="form-header"><h1>{{ isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</h1></div>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-body">
+      <div class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Branch</mat-label>
+          <mat-select formControlName="branch_id">
+            <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+          </mat-select>
+          <mat-error>Branch is required</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Vehicle Number</mat-label>
+          <input matInput formControlName="vehicle_number" maxlength="50">
+          <mat-error>Vehicle number is required</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Type</mat-label>
+          <mat-select formControlName="vehicle_type">
+            <mat-option value="Bus">Bus</mat-option>
+            <mat-option value="Van">Van</mat-option>
+            <mat-option value="Car">Car</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Capacity</mat-label>
+          <input matInput type="number" min="1" formControlName="capacity">
+          <mat-error>Must be at least 1</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Make</mat-label>
+          <input matInput formControlName="make">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Model</mat-label>
+          <input matInput formControlName="model">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Driver</mat-label>
+          <mat-select formControlName="transport_driver_id">
+            <mat-option [value]="null">— None —</mat-option>
+            <mat-option *ngFor="let d of drivers" [value]="d.id">{{ d.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Route</mat-label>
+          <mat-select formControlName="route_id">
+            <mat-option [value]="null">— None —</mat-option>
+            <mat-option *ngFor="let r of routes" [value]="r.id">{{ r.route_name }} ({{ r.route_number }})</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Insurance Expiry</mat-label>
+          <input matInput [matDatepicker]="ip" formControlName="insurance_expiry" readonly>
+          <mat-datepicker-toggle matSuffix [for]="ip"></mat-datepicker-toggle>
+          <mat-datepicker #ip></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fitness Expiry</mat-label>
+          <input matInput [matDatepicker]="fp" formControlName="fitness_expiry" readonly>
+          <mat-datepicker-toggle matSuffix [for]="fp"></mat-datepicker-toggle>
+          <mat-datepicker #fp></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="Active">Active</mat-option>
+            <mat-option value="Maintenance">Maintenance</mat-option>
+            <mat-option value="Inactive">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="actions">
+        <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="saving">{{ isEdit ? 'Update' : 'Create' }} Vehicle</button>
+      </div>
+    </form>
+  </div>
+</div>

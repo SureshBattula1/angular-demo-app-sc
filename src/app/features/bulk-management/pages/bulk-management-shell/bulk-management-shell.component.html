@@ -1,0 +1,249 @@
+<div class="page-container">
+  <!-- Toolbar navigation (same pattern as Accounts) -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="accounts-toolbar">
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'dashboard'"
+        (click)="switchTab('dashboard')">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'sms'"
+        (click)="switchTab('sms')">
+        <mat-icon>sms</mat-icon>
+        <span>SMS</span>
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'whatsapp'"
+        (click)="switchTab('whatsapp')">
+        <mat-icon>chat</mat-icon>
+        <span>WhatsApp SMS</span>
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'accounts'"
+        (click)="switchTab('accounts')">
+        <mat-icon>manage_accounts</mat-icon>
+        <span>Account Management</span>
+      </button>
+
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        [class.active]="activeTab === 'templates'"
+        (click)="switchTab('templates')">
+        <mat-icon>article</mat-icon>
+        <span>Templates</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Dashboard -->
+  <div *ngIf="activeTab === 'dashboard' && isTabLoaded('dashboard')" class="dashboard-container">
+    <div class="filters-container">
+      <mat-form-field appearance="outline" class="branch-filter">
+        <mat-label>
+          <mat-icon>business</mat-icon>
+          Branch
+        </mat-label>
+        <mat-select [(ngModel)]="dashboardBranch" (selectionChange)="onDashboardFilterChange()">
+          <mat-option value="">All Branches</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="date-range-selector">
+        <mat-button-toggle-group
+          [formControl]="dashboardPeriod"
+          (change)="onDashboardFilterChange()"
+          class="period-toggle">
+          <mat-button-toggle value="today">
+            <mat-icon>today</mat-icon>
+            <span class="toggle-label">Today</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="week">
+            <mat-icon>view_week</mat-icon>
+            <span class="toggle-label">Week</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="month">
+            <mat-icon>calendar_month</mat-icon>
+            <span class="toggle-label">Month</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="custom">
+            <mat-icon>date_range</mat-icon>
+            <span class="toggle-label">Custom</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <div class="custom-range-row" *ngIf="dashboardPeriod.value === 'custom'">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>From Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="bulkFromPicker"
+          [formControl]="dashboardCustomFrom"
+          (dateChange)="onDashboardCustomRangeChange()" />
+        <mat-datepicker-toggle matIconSuffix [for]="bulkFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #bulkFromPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>To Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="bulkToPicker"
+          [formControl]="dashboardCustomTo"
+          (dateChange)="onDashboardCustomRangeChange()" />
+        <mat-datepicker-toggle matIconSuffix [for]="bulkToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #bulkToPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <mat-card class="dashboard-stats">
+      <h2>Bulk operations overview</h2>
+      <div class="stats-grid">
+        <mat-card class="stat-card income-stat" (click)="switchTab('sms')">
+          <mat-icon>sms</mat-icon>
+          <div class="stat-content">
+            <h3>SMS queued</h3>
+            <p class="amount">{{ dashboardStats.sms_queued }}</p>
+            <span class="count">Messages</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card expense-stat" (click)="switchTab('whatsapp')">
+          <mat-icon>chat</mat-icon>
+          <div class="stat-content">
+            <h3>WhatsApp queued</h3>
+            <p class="amount">{{ dashboardStats.whatsapp_queued }}</p>
+            <span class="count">Messages</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card balance-stat" (click)="switchTab('accounts')">
+          <mat-icon>manage_accounts</mat-icon>
+          <div class="stat-content">
+            <h3>Account jobs</h3>
+            <p class="amount">{{ dashboardStats.account_jobs }}</p>
+            <span class="count">In queue</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card category-stat">
+          <mat-icon>task_alt</mat-icon>
+          <div class="stat-content">
+            <h3>Completed today</h3>
+            <p class="amount">{{ dashboardStats.completed_today }}</p>
+            <span class="count">Jobs</span>
+          </div>
+        </mat-card>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- SMS tab: same container pattern as Templates (data-table + actions inside child) -->
+  <div *ngIf="activeTab === 'sms' && isTabLoaded('sms')" class="tab-section dashboard-container">
+    <app-sms-tab-page
+      [branchId]="bulkBranchId"
+      [shellBranches]="branches"
+      [canViewAllBranches]="canViewAllBranches"></app-sms-tab-page>
+  </div>
+
+  <!-- WhatsApp: same flow as SMS -->
+  <div *ngIf="activeTab === 'whatsapp' && isTabLoaded('whatsapp')" class="tab-section dashboard-container">
+    <app-whatsapp-tab-page
+      [branchId]="bulkBranchId"
+      [shellBranches]="branches"
+      [canViewAllBranches]="canViewAllBranches"></app-whatsapp-tab-page>
+  </div>
+
+  <!-- Account Management: branch + channel header + SMS / WhatsApp settings -->
+  <div *ngIf="activeTab === 'accounts' && isTabLoaded('accounts')" class="dashboard-container">
+    <div class="bulk-toolbar-row">
+     
+      <div class="bulk-channel-header" role="tablist">
+      <button
+        type="button"
+        class="bulk-channel-btn"
+        [class.active]="accountSubChannel === 'sms'"
+        (click)="accountSubChannel = 'sms'"
+        role="tab"
+        [attr.aria-selected]="accountSubChannel === 'sms'">
+        <mat-icon>settings_sms</mat-icon>
+        SMS settings
+      </button>
+      <button
+        type="button"
+        class="bulk-channel-btn"
+        [class.active]="accountSubChannel === 'whatsapp'"
+        (click)="accountSubChannel = 'whatsapp'"
+        role="tab"
+        [attr.aria-selected]="accountSubChannel === 'whatsapp'">
+        <mat-icon>chat</mat-icon>
+        WhatsApp settings
+      </button>
+      </div>
+      <mat-form-field appearance="outline" class="bulk-branch-field" *ngIf="branches.length">
+        <mat-label>
+          <mat-icon>business</mat-icon>
+          Branch
+        </mat-label>
+        <mat-select [(ngModel)]="bulkBranchId" (selectionChange)="onBulkBranchChange()">
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="account-settings-panel" *ngIf="accountSubChannel === 'sms'">
+      <app-sms-gateway-settings
+        [useExternalBranchFilter]="true"
+        [externalBranchId]="bulkBranchId"></app-sms-gateway-settings>
+    </div>
+
+    <div class="account-settings-panel account-whatsapp-stack" *ngIf="accountSubChannel === 'whatsapp'">
+      <nav class="account-whatsapp-subnav" role="tablist" aria-label="WhatsApp account sections">
+        <button
+          type="button"
+          class="bulk-channel-btn"
+          [class.active]="whatsappAccountTab === 'config'"
+          (click)="whatsappAccountTab = 'config'"
+          role="tab"
+          [attr.aria-selected]="whatsappAccountTab === 'config'">
+          <mat-icon>tune</mat-icon>
+          Configurations
+        </button>
+      </nav>
+      <app-sms-gateway-settings
+        *ngIf="whatsappAccountTab === 'config'"
+        [useExternalBranchFilter]="true"
+        [externalBranchId]="bulkBranchId"
+        [configChannel]="'whatsapp'"></app-sms-gateway-settings>
+    </div>
+
+  
+  </div>
+
+  <!-- SMS templates: list + dialog (branch chosen in form) -->
+  <div *ngIf="activeTab === 'templates' && isTabLoaded('templates')" class="tab-section dashboard-container">
+    <app-sms-templates-page></app-sms-templates-page>
+  </div>
+</div>

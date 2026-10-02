@@ -1,0 +1,42 @@
+<div class="dashboard-container">
+  <h1>Company Portal Dashboard</h1>
+  
+  <mat-grid-list cols="4" rowHeight="200px" gutterSize="16px">
+    <mat-grid-tile>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">{{ stats.totalSchools }}</div>
+          <div class="stat-label">Total Schools</div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+    
+    <mat-grid-tile>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">{{ stats.activeSchools }}</div>
+          <div class="stat-label">Active Schools</div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+    
+    <mat-grid-tile>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">{{ stats.totalBranches }}</div>
+          <div class="stat-label">Total Branches</div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+    
+    <mat-grid-tile>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">{{ stats.totalStudents }}</div>
+          <div class="stat-label">Total Students</div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>
+

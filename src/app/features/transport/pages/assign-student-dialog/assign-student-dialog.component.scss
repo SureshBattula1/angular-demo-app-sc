@@ -1,0 +1,30 @@
+.assign-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 480px;
+  padding-top: 8px;
+
+  @media (max-width: 640px) { min-width: 0; }
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+
+  .search-field { flex: 1 1 auto; }
+}
+
+.stop-row {
+  display: flex;
+  gap: 12px;
+
+  mat-form-field { flex: 1 1 50%; }
+
+  @media (max-width: 560px) { flex-direction: column; }
+}
+
+.full-width { width: 100%; }
+
+.no-results { margin: 0; color: var(--warning-color); font-size: 13px; }
