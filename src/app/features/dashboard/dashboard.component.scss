@@ -203,8 +203,8 @@
 // Stats Grid - DYNAMIC THEME COLORS!
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   
   @include tablet-only {
     grid-template-columns: repeat(2, 1fr);
@@ -212,116 +212,111 @@
   
   @include mobile-only {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
   
   .stat-card {
     background: var(--card-background);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    box-shadow: var(--shadow-md);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    position: relative;
-    overflow: hidden;
-    
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-lg);
-    }
+    border: 1px solid color-mix(in srgb, var(--neutral-color) 16%, transparent);
+    border-radius: 12px;
+    padding: 16px 18px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 12px;
+    align-items: start;
+    box-shadow: none;
+    min-height: 108px;
     
     @include mobile-only {
-      padding: 16px;
-      gap: 16px;
+      padding: 14px 16px;
+      min-height: 0;
     }
     
-    // DYNAMIC THEME: Cards use theme colors!
     &.primary {
-      border-left: 4px solid var(--primary-color);
-      .card-icon { background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); }
+      .card-icon {
+        background: color-mix(in srgb, var(--primary-color) 12%, var(--card-background));
+        mat-icon { color: var(--primary-color); }
+      }
     }
     
-    &.success {
-      border-left: 4px solid var(--accent-color);
-      .card-icon { background: linear-gradient(135deg, var(--accent-color), var(--accent-light)); }
+    &.success,
+    &.accent {
+      .card-icon {
+        background: color-mix(in srgb, var(--accent-color) 12%, var(--card-background));
+        mat-icon { color: var(--accent-color); }
+      }
     }
     
     &.info {
-      border-left: 4px solid var(--info-color);
-      .card-icon { background: linear-gradient(135deg, var(--info-color), var(--info-light)); }
+      .card-icon {
+        background: color-mix(in srgb, var(--info-color) 12%, var(--card-background));
+        mat-icon { color: var(--info-color); }
+      }
     }
     
     &.warning {
-      border-left: 4px solid var(--warning-color);
-      .card-icon { background: linear-gradient(135deg, var(--warning-color), var(--warning-light)); }
-    }
-    
-    &.accent {
-      border-left: 4px solid var(--accent-color);
-      .card-icon { background: linear-gradient(135deg, var(--accent-color), var(--accent-light)); }
+      .card-icon {
+        background: color-mix(in srgb, var(--warning-color) 12%, var(--card-background));
+        mat-icon { color: var(--warning-color); }
+      }
     }
     
     .card-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: var(--radius-md);
+      grid-column: 2;
+      grid-row: 1;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       
-      @include mobile-only {
-        width: 50px;
-        height: 50px;
-      }
-      
       mat-icon {
-        color: var(--white);
-        font-size: 32px;
-        width: 32px;
-        height: 32px;
-        
-        @include mobile-only {
-          font-size: 28px;
-          width: 28px;
-          height: 28px;
-        }
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
     }
     
     .card-content {
-      flex: 1;
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      
+      .stat-label {
+        order: 0;
+        font-size: 12px;
+        color: var(--neutral-color);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
       
       .stat-value {
-        font-size: 32px;
-        font-weight: 700;
+        order: 1;
+        margin-top: 6px;
+        font-size: 28px;
+        font-weight: 600;
         color: var(--text-primary);
-        line-height: 1.2;
-        margin-bottom: 4px;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
         
         @include mobile-only {
           font-size: 24px;
         }
       }
       
-      .stat-label {
-        font-size: 13px;
-        color: var(--text-secondary);
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        
-        @include mobile-only {
-          font-size: 12px;
-        }
-      }
-      
       .stat-subtext {
+        order: 2;
+        margin-top: 6px;
         font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 4px;
+        color: var(--neutral-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
   }
