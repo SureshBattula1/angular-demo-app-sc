@@ -81,6 +81,17 @@
             </span>
           </div>
 
+          <div class="control-group control-group--module-filters" *ngIf="isAttendanceModule && branchId">
+            <span class="legend-label">Notify:</span>
+            <mat-button-toggle-group
+              [(ngModel)]="attendanceAudienceTab"
+              (change)="onAttendanceAudienceTabChange()"
+              aria-label="Attendance audience">
+              <mat-button-toggle value="student">Student attendance</mat-button-toggle>
+              <mat-button-toggle value="teacher">Teacher attendance</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
           <div class="control-group control-group--module-filters" *ngIf="isExamsModule && branchId">
             <span class="legend-label">Notify for:</span>
             <mat-button-toggle-group
@@ -386,7 +397,7 @@
           <span class="status-pill notify-active">Sent</span>
         </div>
 
-        <div class="legend-row" *ngIf="isAttendanceModule && branchId">
+        <div class="legend-row" *ngIf="isStudentAttendanceTab && branchId">
           <span class="legend-label">Attendance:</span>
           <span class="status-pill danger">Not marked</span>
           <span class="status-pill tally-ok">P / A / L tally</span>
@@ -396,14 +407,39 @@
           <span class="status-pill notify-active">Sent</span>
         </div>
 
-        <p class="state-msg muted" *ngIf="loadingClasses">Loading classes…</p>
+        <div class="legend-row" *ngIf="isTeacherAttendanceTab && branchId">
+          <span class="legend-label">Attendance:</span>
+          <span class="status-pill danger">Not created</span>
+          <span class="status-pill tally-ok">P / A / L tally</span>
+          <span class="legend-label">Notify:</span>
+          <span class="status-pill notify-inactive">Not sent</span>
+          <span class="status-pill notify-pending">Sending…</span>
+          <span class="status-pill notify-active">Sent</span>
+        </div>
+
+        <div class="legend-row" *ngIf="(isHolidaysModule || isAssignmentsModule) && branchId">
+          <span class="legend-label">Notify:</span>
+          <span class="status-pill notify-inactive">Not sent</span>
+          <span class="status-pill notify-pending">Sending…</span>
+          <span class="status-pill notify-active">Sent</span>
+          <span class="legend-label">Sent sections cannot be selected again for this date.</span>
+        </div>
+
+        <p class="state-msg muted" *ngIf="loadingClasses && !isTeacherAttendanceTab">Loading classes…</p>
+        <p class="state-msg muted" *ngIf="isTeacherAttendanceTab && branchId && (loadingStaff || loadingClasses)">Loading people…</p>
+        <p class="state-msg" *ngIf="isTeacherAttendanceTab && branchId && !loadingStaff && !loadingClasses && classGroups.length">
+          Select people with attendance created for today. Rows without a record show <strong>Not created</strong> and cannot be selected.
+        </p>
+        <p class="state-msg muted" *ngIf="isTeacherAttendanceTab && branchId && !loadingStaff && !loadingClasses && !classGroups.length">
+          No teachers, staff, or admins found for this branch.
+        </p>
         <p class="state-msg muted" *ngIf="isExamsModule && branchId && !loadingClasses && examOptions.length === 0">
           No exams with schedules for this notify type at this branch.
         </p>
         <p class="state-msg muted" *ngIf="isExamsModule && branchId && !loadingClasses && examOptions.length && !selectedExamId">
           Select an active exam to load assigned classes and sections.
         </p>
-        <p class="state-msg muted" *ngIf="!loadingClasses && branchId && classGroups.length === 0 && !(isExamsModule && examOptions.length && !selectedExamId) && !(isFeesModule && (feeTypeOptions.length || feeStructureOptions.length))">
+        <p class="state-msg muted" *ngIf="!isTeacherAttendanceTab && !loadingClasses && branchId && classGroups.length === 0 && !(isExamsModule && examOptions.length && !selectedExamId) && !(isFeesModule && (feeTypeOptions.length || feeStructureOptions.length))">
           No classes found for this branch.
         </p>
         <p class="state-msg" *ngIf="isExamsModule && branchId && !loadingClasses">
@@ -467,8 +503,25 @@
                 (change)="toggleClass(group, $event.checked)">
                 {{ group.className }}
               </mat-checkbox>
-              <span class="status-pill danger head-badge" *ngIf="isAttendanceModule && classMissingAttendanceCount(group) > 0">
+              <mat-form-field
+                appearance="outline"
+                class="compact-field teacher-group-search"
+                subscriptSizing="dynamic"
+                *ngIf="isTeacherAttendanceTab">
+                <mat-label>Search</mat-label>
+                <input
+                  matInput
+                  [ngModel]="teacherGroupSearchQuery(group.grade)"
+                  (ngModelChange)="setTeacherGroupSearch(group.grade, $event)"
+                  placeholder="Name or role…"
+                  autocomplete="off" />
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+              <span class="status-pill danger head-badge" *ngIf="isStudentAttendanceTab && classMissingAttendanceCount(group) > 0">
                 {{ classMissingAttendanceCount(group) }} no attendance
+              </span>
+              <span class="status-pill danger head-badge" *ngIf="isTeacherAttendanceTab && classMissingAttendanceCount(group) > 0">
+                {{ classMissingAttendanceCount(group) }} not created
               </span>
               <span class="status-pill danger head-badge" *ngIf="isExamsModule && classMissingExamCriteriaCount(group) > 0">
                 {{ classMissingExamCriteriaCount(group) }} not ready
@@ -481,18 +534,23 @@
               <label
                 class="class-row"
                 [class.is-disabled]="!section.selectable"
-                *ngFor="let section of group.sections">
-                <mat-checkbox class="compact-check" [(ngModel)]="section.selected" [disabled]="!section.selectable">
-                  {{ sectionDisplayLabel(section.section) }}
+                *ngFor="let section of filteredSectionsForGroup(group)">
+                <mat-checkbox
+                  class="compact-check"
+                  [(ngModel)]="section.selected"
+                  [disabled]="!section.selectable"
+                  (ngModelChange)="onTeacherSectionSelectedChange()">
+                  <span class="row-title">{{ rowPrimaryLabel(section) }}</span>
+                  <span class="row-subtitle muted" *ngIf="rowSecondaryHint(section) as hint">{{ hint }}</span>
                 </mat-checkbox>
                 <div class="row-meta">
-                  <ng-container *ngIf="isAttendanceModule">
+                  <ng-container *ngIf="isStudentAttendanceTab || isTeacherAttendanceTab">
                     <span
                       class="status-pill att"
                       [class.danger]="!section.attendanceMarked"
                       [class.tally-ok]="section.attendanceMarked"
-                      [title]="section.attendanceMarked ? 'Attendance marked' : 'Attendance not taken'">
-                      {{ section.attendanceMarked ? 'Marked' : 'Not marked' }}
+                      [title]="isTeacherAttendanceTab ? (section.attendanceMarked ? 'Attendance created' : 'No attendance record') : (section.attendanceMarked ? 'Attendance marked' : 'Attendance not taken')">
+                      {{ isTeacherAttendanceTab ? teacherAttendanceStatusLabel(section) : (section.attendanceMarked ? 'Marked' : 'Not marked') }}
                     </span>
                     <span
                       class="tally"
@@ -557,7 +615,7 @@
         </div>
       </div>
 
-      <div class="branch-people-section" *ngIf="step === 1 && branchId">
+      <div class="branch-people-section" *ngIf="step === 1 && branchId && isStudentAttendanceTab">
         <div class="branch-people-head">
           <h3>Branch people</h3>
           <p>Teachers, admins, staff, and accounts — same branch as students above.</p>

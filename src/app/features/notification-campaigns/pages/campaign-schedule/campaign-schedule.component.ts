@@ -1,13 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
@@ -33,6 +33,10 @@ import {
 interface SectionChoice {
   grade: string;
   section: string;
+  /** Teacher attendance grid: branch user id. */
+  userId?: number;
+  personName?: string;
+  personSubtitle?: string;
   student_count: number;
   enrolledCount: number;
   markedCount: number;
@@ -68,6 +72,8 @@ interface SectionSummaryRow {
   reason?: string;
 }
 
+export type AttendanceAudienceTab = 'student' | 'teacher';
+
 @Component({
   selector: 'app-campaign-schedule',
   standalone: true,
@@ -75,8 +81,10 @@ interface SectionSummaryRow {
   templateUrl: './campaign-schedule.component.html',
   styleUrls: ['./campaign-schedule.component.scss']
 })
-export class CampaignScheduleComponent implements OnInit {
+export class CampaignScheduleComponent implements OnInit, OnDestroy {
   module = 'attendance';
+  /** Attendance schedule only: student vs teacher attendance notifications. */
+  attendanceAudienceTab: AttendanceAudienceTab = 'student';
   step = 1;
   saving = false;
   loadingClasses = false;
@@ -122,8 +130,14 @@ export class CampaignScheduleComponent implements OnInit {
   loadingStaff = false;
   selectedStaffUserIds: number[] = [];
   staffTemplateId: number | null = null;
+  /** Teacher attendance tab: teachers, admins, staff, accounts (with search per card). */
+  selectedTeacherAttendanceUserIds: number[] = [];
+  /** Per role-group search on teacher attendance class cards. */
+  teacherGroupSearch: Record<string, string> = {};
 
   private loadToken = 0;
+  private staffLoadToken = 0;
+  private scheduleNavReloadBound = false;
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
@@ -154,23 +168,52 @@ export class CampaignScheduleComponent implements OnInit {
         this.loadClasses();
       }
     });
-    this.campaigns.modules().subscribe({
-      next: response => {
-        this.statuses = response.data?.[this.module] || [];
-        this.moduleMeta = response.meta?.[this.module] || null;
-        this.statuses.forEach(status => {
-          this.templateMap[status.key] = null;
-        });
-        this.clampEventDateToPolicy();
-        if (this.branchId) {
-          this.loadClasses();
-        }
+    this.applyModuleStatusesFromApi();
+    this.bindScheduleNavigationReload();
+  }
+
+  ngOnDestroy(): void {
+    this.scheduleNavReloadBound = false;
+  }
+
+  private bindScheduleNavigationReload(): void {
+    if (this.scheduleNavReloadBound) {
+      return;
+    }
+    this.scheduleNavReloadBound = true;
+    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(() => {
+      const url = this.router.url;
+      if (!url.includes('/notification-campaigns/schedule/')) {
+        return;
+      }
+      if (!this.branchId) {
+        return;
+      }
+      if (this.isTeacherAttendanceTab) {
+        this.loadStaffOptions();
+      } else {
+        this.loadClasses();
       }
     });
   }
 
+  get effectiveCampaignModule(): string {
+    if (this.module === 'attendance' && this.attendanceAudienceTab === 'teacher') {
+      return 'teacher_attendance';
+    }
+    return this.module;
+  }
+
   get isAttendanceModule(): boolean {
     return this.module === 'attendance';
+  }
+
+  get isStudentAttendanceTab(): boolean {
+    return this.isAttendanceModule && this.attendanceAudienceTab === 'student';
+  }
+
+  get isTeacherAttendanceTab(): boolean {
+    return this.isAttendanceModule && this.attendanceAudienceTab === 'teacher';
   }
 
   get isExamsModule(): boolean {
@@ -393,17 +436,67 @@ export class CampaignScheduleComponent implements OnInit {
   }
 
   get requiresEventDate(): boolean {
-    return this.moduleMeta?.requires_event_date ?? this.module === 'attendance';
+    if (this.moduleMeta?.requires_event_date != null) {
+      return this.moduleMeta.requires_event_date;
+    }
+    return (
+      this.module === 'attendance' ||
+      this.isHolidaysModule ||
+      this.isAssignmentsModule
+    );
   }
 
   get usesEligibleTargets(): boolean {
     return (
-      this.isAttendanceModule ||
+      this.isStudentAttendanceTab ||
       this.isExamsModule ||
       this.isFeesModule ||
       this.isCustomModule ||
+      this.isHolidaysModule ||
+      this.isAssignmentsModule ||
       (this.moduleMeta?.requires_event_date ?? false)
     );
+  }
+
+  onAttendanceAudienceTabChange(): void {
+    this.step = 1;
+    this.showPreview = false;
+    this.showSelectionConfirm = false;
+    this.classGroups = [];
+    this.selectedStaffUserIds = [];
+    this.staffTemplateId = null;
+    this.selectedTeacherAttendanceUserIds = [];
+    this.applyModuleStatusesFromApi();
+    if (this.branchId) {
+      if (this.isTeacherAttendanceTab) {
+        this.loadStaffOptions();
+      } else {
+        this.loadClasses();
+        this.loadStaffOptions();
+      }
+    }
+  }
+
+  private applyModuleStatusesFromApi(): void {
+    this.campaigns.modules().subscribe({
+      next: response => {
+        const mod = this.effectiveCampaignModule;
+        this.statuses = response.data?.[mod] || [];
+        this.moduleMeta = response.meta?.[mod] || null;
+        this.templateMap = {};
+        this.statuses.forEach(status => {
+          this.templateMap[status.key] = null;
+        });
+        this.clampEventDateToPolicy();
+        if (this.branchId) {
+          if (this.isTeacherAttendanceTab) {
+            this.loadStaffOptions();
+          } else {
+            this.loadClasses();
+          }
+        }
+      }
+    });
   }
 
   get showEventDatePicker(): boolean {
@@ -494,30 +587,64 @@ export class CampaignScheduleComponent implements OnInit {
     this.feeDueDateFilterQuery = '';
     this.selectedStaffUserIds = [];
     this.staffTemplateId = null;
+    this.selectedTeacherAttendanceUserIds = [];
     this.staffGroups = [];
     if (!this.branchId) {
       return;
     }
-    this.loadClasses();
-    this.loadStaffOptions();
+    if (this.isTeacherAttendanceTab) {
+      this.loadStaffOptions();
+    } else {
+      this.loadClasses();
+      this.loadStaffOptions();
+    }
     this.reloadBranchTemplates();
   }
 
   loadStaffOptions(): void {
     if (!this.branchId) {
       this.staffGroups = [];
+      this.classGroups = [];
       return;
     }
+    const date = this.isTeacherAttendanceTab ? this.effectiveDateString() : undefined;
+    const token = ++this.staffLoadToken;
     this.loadingStaff = true;
-    this.campaigns.staffRecipientOptions(this.branchId).subscribe({
+    if (this.isTeacherAttendanceTab) {
+      this.loadingClasses = true;
+      this.classGroups = [];
+    }
+    this.campaigns.staffRecipientOptions(this.branchId, date).subscribe({
       next: response => {
+        if (token !== this.staffLoadToken) {
+          return;
+        }
         this.loadingStaff = false;
         this.staffGroups = response.data?.groups ?? [];
+        if (this.isTeacherAttendanceTab) {
+          if (response.meta?.event_date && this.isTodayOnlyDate) {
+            this.eventDate = this.parseLocalDate(response.meta.event_date);
+          }
+          this.classGroups = this.buildTeacherClassGroupsFromStaff(
+            this.staffGroups,
+            this.normalizeDeliveryByUser(response.meta?.delivery_by_user ?? {})
+          );
+          this.clearSelectionForNonSelectableSections();
+          this.syncTeacherIdsFromGrid();
+          this.loadingClasses = false;
+        }
       },
       error: error => {
+        if (token !== this.staffLoadToken) {
+          return;
+        }
         this.loadingStaff = false;
+        this.loadingClasses = false;
         this.errorHandler.showError(error);
         this.staffGroups = [];
+        if (this.isTeacherAttendanceTab) {
+          this.classGroups = [];
+        }
       }
     });
   }
@@ -533,6 +660,65 @@ export class CampaignScheduleComponent implements OnInit {
     const allowed = new Set(people.map(p => p.user_id));
     const kept = this.selectedStaffUserIds.filter(id => !allowed.has(id));
     this.selectedStaffUserIds = [...kept, ...ids];
+  }
+
+  selectedIdsForTeacherAttendanceGroup(groupKey: string): number[] {
+    const people = this.staffGroups.find(g => g.key === groupKey)?.people ?? [];
+    const allowed = new Set(people.map(p => p.user_id));
+    return this.selectedTeacherAttendanceUserIds.filter(id => allowed.has(id));
+  }
+
+  onTeacherAttendanceGroupSelectionChange(groupKey: string, ids: number[]): void {
+    const people = this.staffGroups.find(g => g.key === groupKey)?.people ?? [];
+    const allowed = new Set(people.map(p => p.user_id));
+    const kept = this.selectedTeacherAttendanceUserIds.filter(id => !allowed.has(id));
+    this.selectedTeacherAttendanceUserIds = [...kept, ...ids];
+    this.applyTeacherSelectionToGrid();
+  }
+
+  teacherGroupSearchQuery(groupKey: string): string {
+    return this.teacherGroupSearch[groupKey] ?? '';
+  }
+
+  setTeacherGroupSearch(groupKey: string, value: string): void {
+    this.teacherGroupSearch[groupKey] = value ?? '';
+  }
+
+  filteredSectionsForGroup(group: ClassGroup): SectionChoice[] {
+    if (!this.isTeacherAttendanceTab) {
+      return group.sections;
+    }
+    const q = (this.teacherGroupSearch[group.grade] ?? '').trim().toLowerCase();
+    if (!q) {
+      return group.sections;
+    }
+    return group.sections.filter(section => {
+      const name = (section.personName ?? '').toLowerCase();
+      const sub = (section.personSubtitle ?? '').toLowerCase();
+      return name.includes(q) || sub.includes(q) || String(section.userId ?? '').includes(q);
+    });
+  }
+
+  rowPrimaryLabel(section: SectionChoice): string {
+    if (this.isTeacherAttendanceTab && section.personName) {
+      return section.personName;
+    }
+    return this.sectionDisplayLabel(section.section);
+  }
+
+  rowSecondaryHint(section: SectionChoice): string | null {
+    if (!this.isTeacherAttendanceTab || !section.personSubtitle) {
+      return null;
+    }
+    return section.personSubtitle;
+  }
+
+  teacherAttendanceStatusLabel(section: SectionChoice): string {
+    return section.attendanceMarked ? 'Marked' : 'Not created';
+  }
+
+  onTeacherSectionSelectedChange(): void {
+    this.syncTeacherIdsFromGrid();
   }
 
   addAllRecipientsForCustom(): void {
@@ -605,12 +791,19 @@ export class CampaignScheduleComponent implements OnInit {
   onDateChange(picked: Date | null = null): void {
     if (this.isTodayOnlyDate) {
       this.clampEventDateToPolicy();
+      if (this.isTeacherAttendanceTab && this.branchId) {
+        this.loadStaffOptions();
+      }
       return;
     }
     if (picked instanceof Date && !Number.isNaN(picked.getTime())) {
       this.eventDate = this.startOfDay(picked);
     }
     this.resetClassSelectionForDateReload();
+    if (this.isTeacherAttendanceTab && this.branchId) {
+      this.loadStaffOptions();
+      return;
+    }
     if (this.usesEligibleTargets && this.branchId) {
       this.loadClasses();
     }
@@ -1055,10 +1248,7 @@ export class CampaignScheduleComponent implements OnInit {
       group.sections.forEach(section => {
         section.examCriteriaMet =
           this.examNotifyMode === 'scheduled' ? section.examScheduleCount > 0 : section.examMarksCount > 0;
-        const blocked =
-          section.notificationStatus === 'sent' ||
-          section.notificationStatus === 'sending' ||
-          section.notificationStatus === 'partial';
+        const blocked = this.notificationBlocksResend(section.notificationStatus);
         section.selectable = section.examCriteriaMet && !blocked;
         if (!section.selectable) {
           section.selected = false;
@@ -1144,27 +1334,80 @@ export class CampaignScheduleComponent implements OnInit {
       return;
     }
 
+    if (this.isTeacherAttendanceTab) {
+      this.classGroups = [];
+      this.loadingClasses = false;
+      return;
+    }
+
     const token = ++this.loadToken;
     this.loadingClasses = true;
     this.classGroups = [];
+    const campaignModule = this.effectiveCampaignModule;
+
     if (this.usesEligibleTargets) {
+      const eligibilityDate = this.eligibilityDateParam();
+      const scheduleFilterOptions = {
+        notify_mode: this.isExamsModule ? this.examNotifyMode : undefined,
+        exam_id: this.isExamsModule && this.selectedExamId ? this.selectedExamId : undefined,
+        fee_notify_mode: this.isFeesModule ? this.feeNotifyMode : undefined,
+        fee_type:
+          this.isFeesModule && this.feeNotifyMode === 'due' && this.selectedFeeType
+            ? this.selectedFeeType
+            : undefined,
+        fee_structure_id:
+          this.isFeesModule && this.feeNotifyMode === 'structure' && this.selectedFeeStructureId
+            ? this.selectedFeeStructureId
+            : undefined
+      };
+      const eligibleRequest = this.campaigns.eligibleTargets(
+        campaignModule,
+        this.branchId,
+        eligibilityDate,
+        scheduleFilterOptions
+      );
+      const markedRequest =
+        this.isStudentAttendanceTab && eligibilityDate
+          ? this.campaigns.markedAttendance(this.branchId, eligibilityDate)
+          : null;
+      const needsDeliveryBoost =
+        this.isHolidaysModule ||
+        this.isAssignmentsModule ||
+        this.isCustomModule ||
+        this.isExamsModule ||
+        this.isFeesModule;
+      const deliveryBoostRequest = needsDeliveryBoost
+        ? this.campaigns.sectionDeliveryStatus(
+            campaignModule,
+            this.branchId,
+            eligibilityDate,
+            scheduleFilterOptions
+          )
+        : null;
+
       forkJoin({
         classes: this.campaigns.classOptions(this.branchId),
-        eligible: this.campaigns.eligibleTargets(this.module, this.branchId, this.eligibilityDateParam(), {
-          notify_mode: this.isExamsModule ? this.examNotifyMode : undefined,
-          exam_id: this.isExamsModule && this.selectedExamId ? this.selectedExamId : undefined,
-          fee_notify_mode: this.isFeesModule ? this.feeNotifyMode : undefined,
-          fee_type:
-            this.isFeesModule && this.feeNotifyMode === 'due' && this.selectedFeeType
-              ? this.selectedFeeType
-              : undefined,
-          fee_structure_id:
-            this.isFeesModule && this.feeNotifyMode === 'structure' && this.selectedFeeStructureId
-              ? this.selectedFeeStructureId
-              : undefined
-        })
+        eligible: eligibleRequest,
+        ...(markedRequest ? { marked: markedRequest } : {}),
+        ...(deliveryBoostRequest ? { deliveryBoost: deliveryBoostRequest } : {})
       }).subscribe({
-        next: ({ classes, eligible }) => {
+        next: (result: {
+          classes: {
+            data?: {
+              grades?: {
+                grade: string;
+                label?: string;
+                sections?: { section: string; student_count?: number }[];
+              }[];
+            };
+          };
+          eligible: EligibleTargetsResponse;
+          marked?: EligibleTargetsResponse;
+          deliveryBoost?: EligibleTargetsResponse;
+        }) => {
+          const { classes, eligible } = result;
+          const marked = result.marked;
+          const deliveryBoost = result.deliveryBoost;
           if (token !== this.loadToken) {
             return;
           }
@@ -1216,7 +1459,13 @@ export class CampaignScheduleComponent implements OnInit {
           if (this.isAssignmentsModule) {
             this.assignmentStatusKeys = [...(eligible.meta?.assignment_status_keys || [])];
           }
-          this.classGroups = this.buildClassGroupsFromGrades(classes.data?.grades || [], eligible);
+          this.classGroups = this.buildClassGroupsFromGrades(
+            classes.data?.grades || [],
+            eligible,
+            marked ?? null,
+            deliveryBoost ?? null
+          );
+          this.clearSelectionForNonSelectableSections();
           this.loadingClasses = false;
         },
         error: error => {
@@ -1227,6 +1476,19 @@ export class CampaignScheduleComponent implements OnInit {
           this.loadingClasses = false;
         }
       });
+      return;
+    }
+
+    // Never fall back to class-options-only for modules that need delivery/eligibility from the API.
+    if (
+      this.isHolidaysModule ||
+      this.isAssignmentsModule ||
+      this.isExamsModule ||
+      this.isFeesModule ||
+      this.isCustomModule ||
+      this.isStudentAttendanceTab
+    ) {
+      this.loadingClasses = false;
       return;
     }
 
@@ -1285,6 +1547,7 @@ export class CampaignScheduleComponent implements OnInit {
       section.selected = selected;
       });
     });
+    this.syncTeacherIdsFromGrid();
   }
 
   toggleClass(group: ClassGroup, selected: boolean): void {
@@ -1293,6 +1556,7 @@ export class CampaignScheduleComponent implements OnInit {
         section.selected = selected;
       }
     });
+    this.syncTeacherIdsFromGrid();
   }
 
   isClassChecked(group: ClassGroup): boolean {
@@ -1353,18 +1617,26 @@ export class CampaignScheduleComponent implements OnInit {
       this.errorHandler.showError('Select an active fee type from the list.');
       return;
     }
-    const hasSections = this.selectedTargets().length > 0;
-    const hasStaff = this.selectedStaffUserIds.length > 0;
-    if (!hasSections && !hasStaff) {
-      const hint = this.isExamsModule
-        ? `Select at least one section with ${this.examNotifyMode === 'scheduled' ? 'exam schedules' : 'marks entered'}, or staff below.`
-        : this.isFeesModule && this.feeNotifyMode === 'due'
-          ? 'Select at least one section with students to remind, or staff below.'
-          : this.isFeesModule
-            ? 'Select at least one section or staff below.'
-            : 'Select at least one class section or staff member below.';
-      this.errorHandler.showError(hint);
-      return;
+    if (this.isTeacherAttendanceTab) {
+      this.syncTeacherIdsFromGrid();
+      if (this.selectedTeacherAttendanceUserIds.length === 0) {
+        this.errorHandler.showError('Select at least one person with attendance created to notify.');
+        return;
+      }
+    } else {
+      const hasSections = this.selectedTargets().length > 0;
+      const hasStaff = this.selectedStaffUserIds.length > 0;
+      if (!hasSections && !hasStaff) {
+        const hint = this.isExamsModule
+          ? `Select at least one section with ${this.examNotifyMode === 'scheduled' ? 'exam schedules' : 'marks entered'}, or staff below.`
+          : this.isFeesModule && this.feeNotifyMode === 'due'
+            ? 'Select at least one section with students to remind, or staff below.'
+            : this.isFeesModule
+              ? 'Select at least one section or staff below.'
+              : 'Select at least one class section or staff member below.';
+        this.errorHandler.showError(hint);
+        return;
+      }
     }
     if (this.confirmSelection) {
       this.showSelectionConfirm = true;
@@ -1399,6 +1671,12 @@ export class CampaignScheduleComponent implements OnInit {
 
   /** Single-line tally for section rows inside grade cards. */
   attendanceTallyLabel(section: SectionChoice): string {
+    if (this.isTeacherAttendanceTab) {
+      if (!section.attendanceMarked) {
+        return 'No attendance record';
+      }
+      return `Present ${section.tallyPresent}, Absent ${section.tallyAbsent}, Leave ${section.tallyLeave}`;
+    }
     if (!section.attendanceMarked) {
       return `${section.enrolledCount} enrolled, not marked`;
     }
@@ -1406,6 +1684,12 @@ export class CampaignScheduleComponent implements OnInit {
   }
 
   attendanceTallyTitle(section: SectionChoice): string {
+    if (this.isTeacherAttendanceTab) {
+      if (!section.attendanceMarked) {
+        return 'No teacher attendance record for this date';
+      }
+      return `Present ${section.tallyPresent}, Absent ${section.tallyAbsent}, Leave ${section.tallyLeave}`;
+    }
     if (!section.attendanceMarked) {
       return `No attendance marked (${section.enrolledCount} enrolled)`;
     }
@@ -1485,6 +1769,10 @@ export class CampaignScheduleComponent implements OnInit {
       : 'No exam marks entered for this section';
   }
 
+  notificationBlocksResend(status: SectionNotificationStatus): boolean {
+    return status === 'sent' || status === 'sending' || status === 'partial';
+  }
+
   notificationStatusClass(status: SectionNotificationStatus): string {
     switch (status) {
       case 'sent':
@@ -1501,19 +1789,31 @@ export class CampaignScheduleComponent implements OnInit {
 
   openPreview(): void {
     const map = this.mappedTemplates();
-    const hasSections = this.selectedTargets().length > 0;
-    const hasStaff = this.selectedStaffUserIds.length > 0;
-    if (hasSections && Object.keys(map).length === 0) {
-      this.errorHandler.showError('Map at least one status to a template.');
-      return;
-    }
-    if (hasStaff && !this.staffTemplateId) {
-      this.errorHandler.showError('Select a staff template.');
-      return;
-    }
-    if (!hasSections && !hasStaff) {
-      this.errorHandler.showError('Select recipients before preview.');
-      return;
+    if (this.isTeacherAttendanceTab) {
+      this.syncTeacherIdsFromGrid();
+      if (this.selectedTeacherAttendanceUserIds.length === 0) {
+        this.errorHandler.showError('Select recipients before preview.');
+        return;
+      }
+      if (Object.keys(map).length === 0) {
+        this.errorHandler.showError('Map at least one status to a template.');
+        return;
+      }
+    } else {
+      const hasSections = this.selectedTargets().length > 0;
+      const hasStaff = this.selectedStaffUserIds.length > 0;
+      if (hasSections && Object.keys(map).length === 0) {
+        this.errorHandler.showError('Map at least one status to a template.');
+        return;
+      }
+      if (hasStaff && !this.staffTemplateId) {
+        this.errorHandler.showError('Select a staff template.');
+        return;
+      }
+      if (!hasSections && !hasStaff) {
+        this.errorHandler.showError('Select recipients before preview.');
+        return;
+      }
     }
     this.saving = true;
     this.campaigns
@@ -1595,7 +1895,8 @@ export class CampaignScheduleComponent implements OnInit {
         }
         rows.push({
           className: group.className,
-          section: section.section,
+          section:
+            this.isTeacherAttendanceTab && section.personName ? section.personName : section.section,
           studentCount: section.student_count,
           reason: this.sectionExcludeReason(section)
         });
@@ -1617,15 +1918,15 @@ export class CampaignScheduleComponent implements OnInit {
         return this.feeNotifyMode === 'due' ? 'No students to remind' : 'No enrolled students';
       }
     } else if (!section.attendanceMarked) {
-      return 'Attendance not taken';
+      return this.isTeacherAttendanceTab ? 'Attendance not created' : 'Attendance not taken';
     }
-    if (section.notificationStatus === 'sent') {
-      return 'Already sent';
-    }
-    if (section.notificationStatus === 'sending') {
-      return 'Send in progress';
-    }
-    if (section.notificationStatus === 'partial') {
+    if (this.notificationBlocksResend(section.notificationStatus)) {
+      if (section.notificationStatus === 'sent') {
+        return 'Already sent';
+      }
+      if (section.notificationStatus === 'sending') {
+        return 'Send in progress';
+      }
       return 'Partially sent';
     }
     return 'Not available';
@@ -1712,34 +2013,53 @@ export class CampaignScheduleComponent implements OnInit {
       label?: string;
       sections?: { section: string; student_count?: number }[];
     }[],
-    eligible: EligibleTargetsResponse | null
+    eligible: EligibleTargetsResponse | null,
+    ...deliveryBoosts: (EligibleTargetsResponse | null)[]
   ): ClassGroup[] {
-    const deliveryBySection = this.normalizeDeliveryMap(eligible?.meta?.delivery_by_section || {});
-    const attendanceBySection = this.normalizeAttendanceMap(eligible?.meta?.attendance_by_section || {});
+    const boostMaps = deliveryBoosts.flatMap(boost => [
+      this.coerceDeliveryRecord(boost?.meta?.delivery_by_section),
+      this.deliveryMapFromEligibleRows(boost?.data || [])
+    ]);
+    const deliveryBySection = this.mergeDeliveryMaps(
+      this.coerceDeliveryRecord(eligible?.meta?.delivery_by_section),
+      ...boostMaps,
+      this.deliveryMapFromEligibleRows(eligible?.data || [])
+    );
+    const markedAttendanceBoost = deliveryBoosts.find(boost => boost?.meta?.attendance_by_section);
+    const attendanceBySection = this.normalizeAttendanceMap({
+      ...(markedAttendanceBoost?.meta?.attendance_by_section || {}),
+      ...(eligible?.meta?.attendance_by_section || {})
+    });
     const examBySection = this.normalizeExamMap(eligible?.meta?.exam_by_section || {});
     const feeBySection = this.normalizeFeeMap(eligible?.meta?.fee_by_section || {});
     const eligibleByKey = new Map<
       string,
       { student_count: number; notification_status: SectionNotificationStatus }
     >();
-    (eligible?.data || []).forEach(row => {
-      const key = this.sectionKey(row.grade, row.section);
-      eligibleByKey.set(key, {
+    const registerEligibleRow = (row: {
+      grade: string;
+      section: string;
+      student_count: number;
+      notification_status?: SectionNotificationStatus;
+    }) => {
+      const payload = {
         student_count: row.student_count,
-        notification_status: row.notification_status || 'not_sent'
-      });
-    });
+        notification_status: row.notification_status || ('not_sent' as SectionNotificationStatus)
+      };
+      this.sectionKeyVariants(row.grade, row.section).forEach(key => eligibleByKey.set(key, payload));
+    };
+    (eligible?.data || []).forEach(registerEligibleRow);
+    deliveryBoosts.forEach(boost => (boost?.data || []).forEach(registerEligibleRow));
 
     return grades
       .map(grade => ({
         grade: grade.grade,
         className: grade.label || `Grade ${grade.grade}`,
         sections: (grade.sections || []).map(section => {
-          const key = this.sectionKey(grade.grade, section.section);
           const info = this.lookupEligibleSection(grade.grade, section.section, eligibleByKey);
-          const delivery = deliveryBySection[key];
-          const attendance = attendanceBySection[key];
-          const exam = examBySection[key];
+          const delivery = this.lookupSectionInRecordMap(grade.grade, section.section, deliveryBySection);
+          const attendance = this.lookupSectionInRecordMap(grade.grade, section.section, attendanceBySection);
+          const exam = this.lookupSectionInRecordMap(grade.grade, section.section, examBySection);
           const enrolledCount = attendance?.enrolled_count ?? section.student_count ?? 0;
           const markedCount = attendance?.marked_count ?? info?.student_count ?? 0;
           const attendanceMarked = markedCount > 0;
@@ -1747,7 +2067,7 @@ export class CampaignScheduleComponent implements OnInit {
           const examMarksCount = exam?.marks_count ?? 0;
           const examCriteriaMet =
             this.examNotifyMode === 'scheduled' ? examScheduleCount > 0 : examMarksCount > 0;
-          const feeSummary = feeBySection[key];
+          const feeSummary = this.lookupSectionInRecordMap(grade.grade, section.section, feeBySection);
           const feeUnpaidCount = feeSummary?.unpaid_count ?? 0;
           const feeOverdueCount = feeSummary?.overdue_count ?? 0;
           const matchedFromApi = info?.student_count ?? 0;
@@ -1764,13 +2084,10 @@ export class CampaignScheduleComponent implements OnInit {
             feeCriteriaMet = structureApplies && structureEnrolledCount > 0;
           }
           const notificationStatus: SectionNotificationStatus =
-            info?.notification_status || delivery?.notification_status || 'not_sent';
-          const blocked =
-            notificationStatus === 'sent' ||
-            notificationStatus === 'sending' ||
-            notificationStatus === 'partial';
+            delivery?.notification_status || info?.notification_status || 'not_sent';
+          const blocked = this.notificationBlocksResend(notificationStatus);
           let selectable = !blocked;
-          if (this.isAttendanceModule) {
+          if (this.isStudentAttendanceTab) {
             selectable = attendanceMarked && !blocked;
           } else if (this.isExamsModule) {
             selectable = examCriteriaMet && !blocked;
@@ -1778,6 +2095,8 @@ export class CampaignScheduleComponent implements OnInit {
             selectable = feeCriteriaMet && !blocked;
           } else if (this.isCustomModule) {
             selectable = (info?.student_count ?? enrolledCount) > 0 && !blocked;
+          } else if (this.isHolidaysModule || this.isAssignmentsModule) {
+            selectable = !!info && !blocked;
           } else if (this.usesEligibleTargets) {
             selectable = !!info && !blocked;
           }
@@ -1889,23 +2208,111 @@ export class CampaignScheduleComponent implements OnInit {
     return out;
   }
 
+  private coerceDeliveryRecord(
+    raw: unknown
+  ): Record<string, { notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }> {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return {};
+    }
+    return raw as Record<
+      string,
+      { notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }
+    >;
+  }
+
   private normalizeDeliveryMap(
     raw: Record<string, { notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }>
   ): Record<string, { notification_status: SectionNotificationStatus; campaign_id?: number; sent_count?: number }> {
     const out: Record<string, { notification_status: SectionNotificationStatus; campaign_id?: number; sent_count?: number }> = {};
-    Object.entries(raw || {}).forEach(([key, value]) => {
+    Object.entries(this.coerceDeliveryRecord(raw)).forEach(([key, value]) => {
       const parts = key.split('|');
       if (parts.length !== 2) {
         return;
       }
-      const normalized = this.sectionKey(parts[0], parts[1]);
-      out[normalized] = {
-        notification_status: value.notification_status || 'not_sent',
+      if (this.isStaffDeliverySectionKey(parts[0], parts[1])) {
+        return;
+      }
+      const entry = {
+        notification_status: value.notification_status || ('not_sent' as SectionNotificationStatus),
         campaign_id: value.campaign_id,
         sent_count: value.sent_count
       };
+      this.sectionKeyVariants(parts[0], parts[1]).forEach(variantKey => {
+        out[variantKey] = entry;
+      });
     });
     return out;
+  }
+
+  private mergeDeliveryMaps(
+    ...sources: Record<string, { notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }>[]
+  ): Record<string, { notification_status: SectionNotificationStatus; campaign_id?: number; sent_count?: number }> {
+    const merged: Record<
+      string,
+      { notification_status: SectionNotificationStatus; campaign_id?: number; sent_count?: number }
+    > = {};
+    for (const raw of sources) {
+      const normalized = this.normalizeDeliveryMap(raw);
+      Object.entries(normalized).forEach(([key, value]) => {
+        const existing = merged[key];
+        if (!existing || this.notificationStatusRank(value.notification_status) > this.notificationStatusRank(existing.notification_status)) {
+          merged[key] = value;
+        }
+      });
+    }
+    return merged;
+  }
+
+  private deliveryMapFromEligibleRows(
+    rows: { grade: string; section: string; notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }[]
+  ): Record<string, { notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }> {
+    const out: Record<string, { notification_status?: SectionNotificationStatus; campaign_id?: number; sent_count?: number }> = {};
+    rows.forEach(row => {
+      if (!row.notification_status || row.notification_status === 'not_sent') {
+        return;
+      }
+      this.sectionKeyVariants(row.grade, row.section).forEach(key => {
+        out[key] = {
+          notification_status: row.notification_status,
+          campaign_id: row.campaign_id,
+          sent_count: row.sent_count
+        };
+      });
+    });
+    return out;
+  }
+
+  private notificationStatusRank(status: SectionNotificationStatus): number {
+    switch (status) {
+      case 'sent':
+        return 4;
+      case 'partial':
+        return 3;
+      case 'sending':
+        return 2;
+      case 'failed':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  private isStaffDeliverySectionKey(grade: string, section: string): boolean {
+    const g = (grade ?? '').trim().toLowerCase();
+    const s = (section ?? '').trim().toLowerCase();
+    return g === 'staff' || s === 'teachers';
+  }
+
+  private sectionKeyVariants(grade: string, section: string): string[] {
+    const sectionName = String(section).trim();
+    const g = String(grade ?? '').trim();
+    const variants = new Set<string>();
+    variants.add(this.sectionKey(g, sectionName));
+    variants.add(this.sectionKey(this.normalizeGradeKey(g), sectionName));
+    if (/^\d+(\.\d+)?$/.test(this.normalizeGradeKey(g))) {
+      variants.add(this.sectionKey(`Grade ${this.normalizeGradeKey(g)}`, sectionName));
+    }
+    return [...variants];
   }
 
   private clampEventDateToPolicy(): void {
@@ -1944,13 +2351,16 @@ export class CampaignScheduleComponent implements OnInit {
 
   private buildCampaignPayload(templateMap: Record<string, number>): Record<string, unknown> {
     const payload: Record<string, unknown> = {
-      module: this.module,
+      module: this.effectiveCampaignModule,
       branch_id: this.branchId,
-      targets: this.selectedTargets(),
+      targets: this.isTeacherAttendanceTab ? [] : this.selectedTargets(),
       template_map: templateMap
     };
     if (!this.isExamsModule && !this.isCustomModule) {
       payload['event_date'] = this.campaignEventDateString();
+    }
+    if (this.isTeacherAttendanceTab && this.selectedTeacherAttendanceUserIds.length > 0) {
+      payload['teacher_user_ids'] = [...this.selectedTeacherAttendanceUserIds];
     }
     if (this.selectedStaffUserIds.length > 0) {
       payload['staff_user_ids'] = [...this.selectedStaffUserIds];
@@ -1988,19 +2398,27 @@ export class CampaignScheduleComponent implements OnInit {
     section: string,
     eligibleByKey: Map<string, { student_count: number; notification_status: SectionNotificationStatus }>
   ): { student_count: number; notification_status: SectionNotificationStatus } | undefined {
+    return this.lookupSectionInMap(grade, section, eligibleByKey);
+  }
+
+  private lookupSectionInRecordMap<T>(grade: string, section: string, map: Record<string, T>): T | undefined {
+    return this.lookupSectionInMap(grade, section, new Map(Object.entries(map || {})));
+  }
+
+  private lookupSectionInMap<T>(grade: string, section: string, map: Map<string, T>): T | undefined {
     const sectionName = String(section).trim();
     const candidates = [
       this.sectionKey(grade, sectionName),
       this.sectionKey(this.normalizeGradeKey(grade), sectionName)
     ];
     for (const key of candidates) {
-      const hit = eligibleByKey.get(key);
-      if (hit) {
+      const hit = map.get(key);
+      if (hit !== undefined) {
         return hit;
       }
     }
     const wantGrade = this.normalizeGradeKey(grade);
-    for (const [key, value] of eligibleByKey.entries()) {
+    for (const [key, value] of map.entries()) {
       const [g, s] = key.split('|');
       if (s === sectionName && this.normalizeGradeKey(g) === wantGrade) {
         return value;
@@ -2035,5 +2453,119 @@ export class CampaignScheduleComponent implements OnInit {
 
   private dateString(): string {
     return this.formatDateYmd(this.eventDate);
+  }
+
+  private buildTeacherClassGroupsFromStaff(
+    groups: {
+      key: string;
+      label: string;
+      people: {
+        user_id: number;
+        name: string;
+        subtitle: string;
+        attendance_marked?: boolean;
+        present?: number;
+        absent?: number;
+        leave?: number;
+      }[];
+    }[],
+    deliveryByUser: Record<
+      number,
+      { notification_status?: SectionNotificationStatus; campaign_id?: number }
+    >
+  ): ClassGroup[] {
+    const selectedSet = new Set(this.selectedTeacherAttendanceUserIds);
+
+    return groups
+      .map(group => ({
+        grade: group.key,
+        className: group.label,
+        sections: group.people.map(person => {
+          const userId = person.user_id;
+          const delivery = deliveryByUser[userId];
+          const attendanceMarked = person.attendance_marked ?? false;
+          const notificationStatus: SectionNotificationStatus =
+            delivery?.notification_status ?? 'not_sent';
+          const blocked = this.notificationBlocksResend(notificationStatus);
+          const selectable = attendanceMarked && !blocked;
+          return {
+            grade: group.key,
+            section: String(userId),
+            userId,
+            personName: person.name,
+            personSubtitle: person.subtitle,
+            student_count: 1,
+            enrolledCount: 1,
+            markedCount: attendanceMarked ? 1 : 0,
+            tallyPresent: person.present ?? 0,
+            tallyAbsent: person.absent ?? 0,
+            tallyLeave: person.leave ?? 0,
+            selected: selectable && selectedSet.has(userId),
+            selectable,
+            attendanceMarked,
+            notificationStatus,
+            examScheduleCount: 0,
+            examMarksCount: 0,
+            examCriteriaMet: false,
+            feeUnpaidCount: 0,
+            feeOverdueCount: 0,
+            feeReminderCount: 0,
+            feeCriteriaMet: false,
+            structureApplies: false,
+            structureEnrolledCount: 0
+          };
+        })
+      }))
+      .filter(group => group.sections.length > 0);
+  }
+
+  private syncTeacherIdsFromGrid(): void {
+    if (!this.isTeacherAttendanceTab) {
+      return;
+    }
+    this.selectedTeacherAttendanceUserIds = this.classGroups
+      .flatMap(group => group.sections)
+      .filter(section => section.selected && section.userId != null)
+      .map(section => section.userId as number);
+  }
+
+  private applyTeacherSelectionToGrid(): void {
+    if (!this.isTeacherAttendanceTab) {
+      return;
+    }
+    const selectedSet = new Set(this.selectedTeacherAttendanceUserIds);
+    this.classGroups.forEach(group => {
+      group.sections.forEach(section => {
+        if (!section.selectable) {
+          section.selected = false;
+          return;
+        }
+        section.selected = section.userId != null && selectedSet.has(section.userId);
+      });
+    });
+  }
+
+  private clearSelectionForNonSelectableSections(): void {
+    this.classGroups.forEach(group => {
+      group.sections.forEach(section => {
+        if (!section.selectable) {
+          section.selected = false;
+        }
+      });
+    });
+  }
+
+  private normalizeDeliveryByUser(
+    raw: Record<string, { notification_status?: SectionNotificationStatus; campaign_id?: number }>
+  ): Record<number, { notification_status?: SectionNotificationStatus; campaign_id?: number }> {
+    const out: Record<number, { notification_status?: SectionNotificationStatus; campaign_id?: number }> =
+      {};
+    Object.entries(raw || {}).forEach(([key, value]) => {
+      const userId = parseInt(key, 10);
+      if (userId > 0) {
+        out[userId] = value;
+      }
+    });
+    return out;
   }
 }

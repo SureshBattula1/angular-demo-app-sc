@@ -228,11 +228,13 @@ export class CampaignHubComponent implements OnInit {
     this.campaigns.modules().subscribe({
       next: response => {
         const meta = response.meta || {};
-        const moduleTabs = Object.keys(response.data || {}).map(slug => ({
-          id: slug,
-          label: meta[slug]?.label || slug.charAt(0).toUpperCase() + slug.slice(1),
-          icon: MODULE_ICONS[slug] || 'campaign'
-        }));
+        const moduleTabs = Object.keys(response.data || {})
+          .filter(slug => slug !== 'teacher_attendance')
+          .map(slug => ({
+            id: slug,
+            label: meta[slug]?.label || slug.charAt(0).toUpperCase() + slug.slice(1),
+            icon: MODULE_ICONS[slug] || 'campaign'
+          }));
         this.tabs = [{ id: 'dashboard', label: 'Dashboard', icon: 'dashboard' }, ...moduleTabs];
         if (!this.tabs.some(item => item.id === this.activeTab)) {
           this.activeTab = 'dashboard';

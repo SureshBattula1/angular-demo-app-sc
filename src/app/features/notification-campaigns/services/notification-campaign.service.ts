@@ -236,7 +236,69 @@ export class NotificationCampaignService {
     return this.api.get('/communications/notification-campaigns/fees-due-notify-meta', params);
   }
 
-  markedAttendance(branchId: string | number, date: string): Observable<ApiResponse<{ grade: string; section: string; class_name: string; student_count: number }[]>> {
+  sectionDeliveryStatus(
+    module: string,
+    branchId: string | number,
+    date?: string,
+    options?: {
+      exam_id?: string | number;
+      notify_mode?: ExamNotifyMode;
+      fee_notify_mode?: FeeNotifyMode;
+      fee_type?: string;
+      fee_structure_id?: string;
+    }
+  ): Observable<
+    ApiResponse<[]> & {
+      meta?: {
+        event_date?: string;
+        delivery_by_section?: Record<string, SectionDeliveryInfo>;
+      };
+    }
+  > {
+    const params: Record<string, unknown> = { module, branch_id: branchId };
+    if (date) {
+      params['date'] = date;
+    }
+    if (options?.exam_id) {
+      params['exam_id'] = options.exam_id;
+    }
+    if (options?.notify_mode) {
+      params['notify_mode'] = options.notify_mode;
+    }
+    if (options?.fee_notify_mode) {
+      params['fee_notify_mode'] = options.fee_notify_mode;
+    }
+    if (options?.fee_type) {
+      params['fee_type'] = options.fee_type;
+    }
+    if (options?.fee_structure_id) {
+      params['fee_structure_id'] = options.fee_structure_id;
+    }
+    return this.api.get('/communications/notification-campaigns/section-delivery-status', params);
+  }
+
+  markedAttendance(
+    branchId: string | number,
+    date: string
+  ): Observable<
+    ApiResponse<
+      {
+        grade: string;
+        section: string;
+        class_name: string;
+        student_count: number;
+        notification_status?: SectionNotificationStatus;
+        campaign_id?: number;
+        sent_count?: number;
+      }[]
+    > & {
+      meta?: {
+        event_date?: string;
+        delivery_by_section?: Record<string, SectionDeliveryInfo>;
+        attendance_by_section?: Record<string, SectionAttendanceSummary>;
+      };
+    }
+  > {
     return this.api.get('/communications/notification-campaigns/marked-attendance', { branch_id: branchId, date });
   }
 
@@ -277,18 +339,39 @@ export class NotificationCampaignService {
     return this.api.get<EligibleTargetRow[]>('/communications/notification-campaigns/eligible-targets', params) as Observable<EligibleTargetsResponse>;
   }
 
-  staffRecipientOptions(branchId: string | number): Observable<
+  staffRecipientOptions(
+    branchId: string | number,
+    date?: string
+  ): Observable<
     ApiResponse<{
       groups: {
         key: string;
         label: string;
-        people: { user_id: number; name: string; subtitle: string }[];
+        people: {
+          user_id: number;
+          name: string;
+          subtitle: string;
+          attendance_marked?: boolean;
+          present?: number;
+          absent?: number;
+          leave?: number;
+        }[];
       }[];
-    }>
+    }> & {
+      meta?: {
+        event_date?: string;
+        delivery_by_user?: Record<
+          string,
+          { notification_status?: SectionNotificationStatus; campaign_id?: number }
+        >;
+      };
+    }
   > {
-    return this.api.get('/communications/notification-campaigns/staff-recipient-options', {
-      branch_id: branchId
-    });
+    const params: Record<string, string | number> = { branch_id: branchId };
+    if (date) {
+      params['date'] = date;
+    }
+    return this.api.get('/communications/notification-campaigns/staff-recipient-options', params);
   }
 
   preview(payload: Record<string, unknown>): Observable<ApiResponse<CampaignSample[]>> {

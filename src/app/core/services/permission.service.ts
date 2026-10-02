@@ -90,6 +90,9 @@ export class PermissionService {
    * NO CACHING - Checks against loaded permissions from API
    */
   hasPermission(permission: string): boolean {
+    if (this.isSuperAdmin()) {
+      return true;
+    }
     const permissions = this.userPermissions();
     return permissions.includes(permission);
   }
@@ -131,9 +134,10 @@ export class PermissionService {
    */
   getAccessibleModules(): Module[] {
     const modules = this.availableModules();
-    
-    // Don't bypass for SuperAdmin - enforce strict permissions
-    // SuperAdmin must have explicit permissions assigned
+
+    if (this.isSuperAdmin()) {
+      return modules;
+    }
 
     return modules.filter(module => {
       // Check if user has at least one permission for this module

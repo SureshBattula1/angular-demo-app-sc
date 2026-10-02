@@ -412,6 +412,24 @@ button.linkish {
     font-size: 9px;
     padding: 1px 5px;
   }
+
+  .teacher-group-search {
+    flex: 1 1 120px;
+    max-width: 200px;
+    margin-left: auto;
+    font-weight: 400;
+
+    .mat-mdc-form-field-infix {
+      min-height: 32px;
+    }
+  }
+}
+
+.class-row .row-subtitle {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .section-list {

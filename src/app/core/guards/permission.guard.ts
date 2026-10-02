@@ -49,8 +49,16 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     return true;
   }
 
-  // School SuperAdmin always has dashboard; assignments follow the mobile role menu.
-  if (storedRole === 'SuperAdmin' && permissions.some(p => p === 'dashboard.view' || p.startsWith('assignments.'))) {
+  // School SuperAdmin: dashboard, assignments, notification campaigns.
+  if (
+    storedRole === 'SuperAdmin' &&
+    permissions.some(
+      p =>
+        p === 'dashboard.view' ||
+        p.startsWith('assignments.') ||
+        p.startsWith('notifications.')
+    )
+  ) {
     return true;
   }
 
