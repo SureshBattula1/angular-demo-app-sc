@@ -97,7 +97,8 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
       exams: 'assignment',
       fees: 'payments',
       holidays: 'event',
-      assignments: 'assignment_turned_in'
+      assignments: 'assignment_turned_in',
+      custom: 'edit_note'
     };
     return icons[module] || 'campaign';
   }

@@ -146,6 +146,44 @@ export type CampaignModulesResponse = Omit<ApiResponse<Record<string, CampaignSt
   meta?: Record<string, CampaignModuleMeta>;
 };
 
+export interface CampaignModuleDashboardStats {
+  campaigns: number;
+  pending: number;
+  sent: number;
+  failed: number;
+  recipients: number;
+}
+
+export interface CampaignDashboardTotals {
+  campaigns: number;
+  pending: number;
+  sent: number;
+  failed: number;
+  recipients: number;
+}
+
+export interface CampaignDashboardRecentRow {
+  id: number;
+  module: string;
+  branch_name?: string | null;
+  status: string;
+  scheduled_at?: string | null;
+  recipient_count: number;
+}
+
+export interface CampaignDashboardActivityDay {
+  date: string;
+  campaigns: number;
+}
+
+export interface CampaignDashboardPayload {
+  by_module: Record<string, CampaignModuleDashboardStats>;
+  totals: CampaignDashboardTotals;
+  status_breakdown: { sent: number; pending: number; failed: number };
+  recent: CampaignDashboardRecentRow[];
+  activity_by_day: CampaignDashboardActivityDay[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationCampaignService {
   constructor(private api: ApiService) {}
@@ -156,8 +194,14 @@ export class NotificationCampaignService {
     ) as Observable<CampaignModulesResponse>;
   }
 
-  dashboard(): Observable<ApiResponse<Record<string, { campaigns: number; pending: number; sent: number; failed: number; recipients: number }>>> {
-    return this.api.get('/communications/notification-campaigns/dashboard');
+  dashboard(params?: {
+    branch_id?: string | number;
+    from?: string;
+    to?: string;
+    /** core = KPIs/modules/charts data; extras = recent + activity; all = both */
+    include?: 'all' | 'core' | 'extras';
+  }): Observable<ApiResponse<Partial<CampaignDashboardPayload>>> {
+    return this.api.get('/communications/notification-campaigns/dashboard', params ?? {});
   }
 
   list(params: Record<string, unknown>): Observable<ApiResponse<CampaignListRow[]>> {
@@ -231,6 +275,20 @@ export class NotificationCampaignService {
       params['fee_structure_id'] = options.fee_structure_id;
     }
     return this.api.get<EligibleTargetRow[]>('/communications/notification-campaigns/eligible-targets', params) as Observable<EligibleTargetsResponse>;
+  }
+
+  staffRecipientOptions(branchId: string | number): Observable<
+    ApiResponse<{
+      groups: {
+        key: string;
+        label: string;
+        people: { user_id: number; name: string; subtitle: string }[];
+      }[];
+    }>
+  > {
+    return this.api.get('/communications/notification-campaigns/staff-recipient-options', {
+      branch_id: branchId
+    });
   }
 
   preview(payload: Record<string, unknown>): Observable<ApiResponse<CampaignSample[]>> {

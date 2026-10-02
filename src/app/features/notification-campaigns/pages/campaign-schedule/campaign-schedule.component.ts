@@ -6,21 +6,16 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import {
-  SmsTemplateService,
-  SmsTemplatesIndexData
-} from '../../../bulk-management/services/sms-template.service';
-import {
-  SmsTemplateDialogComponent,
-  SmsTemplateDialogData
-} from '../../../bulk-management/pages/sms-template-dialog/sms-template-dialog.component';
-import { ApiResponse } from '../../../../core/services/api.service';
+  SmsTemplatesManageDialogComponent
+} from '../../../bulk-management/pages/sms-templates-manage-dialog/sms-templates-manage-dialog.component';
 import { Branch } from '../../../../core/models/branch.model';
+import { StaffGroupPickerComponent } from '../../components/staff-group-picker/staff-group-picker.component';
 import {
   CampaignModuleMeta,
   CampaignSample,
@@ -76,7 +71,7 @@ interface SectionSummaryRow {
 @Component({
   selector: 'app-campaign-schedule',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule],
+  imports: [CommonModule, FormsModule, MaterialModule, StaffGroupPickerComponent],
   templateUrl: './campaign-schedule.component.html',
   styleUrls: ['./campaign-schedule.component.scss']
 })
@@ -122,12 +117,15 @@ export class CampaignScheduleComponent implements OnInit {
   /** From eligible-targets meta — only template rows for assignment statuses on this date. */
   assignmentStatusKeys: string[] = [];
 
-  private loadToken = 0;
-  private templateAllowedTags: string[] | null = null;
+  staffGroups: { key: string; label: string; people: { user_id: number; name: string; subtitle: string }[] }[] =
+    [];
+  loadingStaff = false;
+  selectedStaffUserIds: number[] = [];
+  staffTemplateId: number | null = null;
 
+  private loadToken = 0;
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
-  private readonly smsTemplates = inject(SmsTemplateService);
 
   constructor(
     private route: ActivatedRoute,
@@ -191,6 +189,10 @@ export class CampaignScheduleComponent implements OnInit {
     return this.module === 'assignments';
   }
 
+  get isCustomModule(): boolean {
+    return this.module === 'custom';
+  }
+
   get hasSelectableSectionsForDate(): boolean {
     return this.classGroups.some(group => group.sections.some(section => section.selectable));
   }
@@ -217,6 +219,9 @@ export class CampaignScheduleComponent implements OnInit {
           ? this.assignmentStatusKeys
           : this.statuses.map(status => status.key);
       return this.statuses.filter(status => keys.includes(status.key));
+    }
+    if (this.isCustomModule) {
+      return this.statuses;
     }
     if (!this.isExamsModule) {
       return this.statuses;
@@ -363,6 +368,30 @@ export class CampaignScheduleComponent implements OnInit {
     return `Schedule ${label} notification`;
   }
 
+  moduleIcon(): string {
+    const icons: Record<string, string> = {
+      attendance: 'fact_check',
+      exams: 'assignment',
+      fees: 'payments',
+      holidays: 'event',
+      assignments: 'assignment_turned_in',
+      custom: 'edit_note'
+    };
+    return icons[this.module] || 'campaign';
+  }
+
+  /** Full section label for class cards (avoid "Sec A" shorthand). */
+  sectionDisplayLabel(sectionCode: string): string {
+    const code = (sectionCode ?? '').trim();
+    if (!code) {
+      return 'Section';
+    }
+    if (/^section\s+/i.test(code)) {
+      return code;
+    }
+    return `Section ${code}`;
+  }
+
   get requiresEventDate(): boolean {
     return this.moduleMeta?.requires_event_date ?? this.module === 'attendance';
   }
@@ -372,6 +401,7 @@ export class CampaignScheduleComponent implements OnInit {
       this.isAttendanceModule ||
       this.isExamsModule ||
       this.isFeesModule ||
+      this.isCustomModule ||
       (this.moduleMeta?.requires_event_date ?? false)
     );
   }
@@ -462,11 +492,65 @@ export class CampaignScheduleComponent implements OnInit {
     this.feeDueDates = [];
     this.selectedDueDateIso = '';
     this.feeDueDateFilterQuery = '';
+    this.selectedStaffUserIds = [];
+    this.staffTemplateId = null;
+    this.staffGroups = [];
     if (!this.branchId) {
       return;
     }
     this.loadClasses();
+    this.loadStaffOptions();
     this.reloadBranchTemplates();
+  }
+
+  loadStaffOptions(): void {
+    if (!this.branchId) {
+      this.staffGroups = [];
+      return;
+    }
+    this.loadingStaff = true;
+    this.campaigns.staffRecipientOptions(this.branchId).subscribe({
+      next: response => {
+        this.loadingStaff = false;
+        this.staffGroups = response.data?.groups ?? [];
+      },
+      error: error => {
+        this.loadingStaff = false;
+        this.errorHandler.showError(error);
+        this.staffGroups = [];
+      }
+    });
+  }
+
+  selectedIdsForStaffGroup(groupKey: string): number[] {
+    const people = this.staffGroups.find(g => g.key === groupKey)?.people ?? [];
+    const allowed = new Set(people.map(p => p.user_id));
+    return this.selectedStaffUserIds.filter(id => allowed.has(id));
+  }
+
+  onStaffGroupSelectionChange(groupKey: string, ids: number[]): void {
+    const people = this.staffGroups.find(g => g.key === groupKey)?.people ?? [];
+    const allowed = new Set(people.map(p => p.user_id));
+    const kept = this.selectedStaffUserIds.filter(id => !allowed.has(id));
+    this.selectedStaffUserIds = [...kept, ...ids];
+  }
+
+  addAllRecipientsForCustom(): void {
+    if (!this.isCustomModule) {
+      return;
+    }
+    this.classGroups.forEach(group => {
+      group.sections.forEach(section => {
+        if (section.selectable) {
+          section.selected = true;
+        }
+      });
+    });
+    const allStaff: number[] = [];
+    this.staffGroups.forEach(group => {
+      group.people.forEach(p => allStaff.push(p.user_id));
+    });
+    this.selectedStaffUserIds = [...new Set(allStaff)];
   }
 
   reloadBranchTemplates(): void {
@@ -482,7 +566,7 @@ export class CampaignScheduleComponent implements OnInit {
     });
   }
 
-  openCreateTemplateDialog(): void {
+  openTemplatesManageDialog(): void {
     if (!this.branchId) {
       this.snack.open('Select a branch first.', 'Dismiss', { duration: 4000 });
       return;
@@ -492,44 +576,21 @@ export class CampaignScheduleComponent implements OnInit {
       return;
     }
 
-    const openDialog = (allowedTags: string[]) => {
-      const data: SmsTemplateDialogData = {
-        branches: this.branches as Branch[],
-        allowedTags,
-        template: null,
-        defaultBranchId: this.branchId
-      };
-      this.dialog
-        .open(SmsTemplateDialogComponent, {
-          width: 'min(580px, 100vw - 24px)',
-          maxHeight: '90vh',
-          data,
-          autoFocus: 'input'
-        })
-        .afterClosed()
-        .subscribe(saved => {
-          if (saved) {
-            this.snack.open('Template saved.', 'Dismiss', { duration: 3000 });
-            this.reloadBranchTemplates();
-          }
-        });
-    };
-
-    if (this.templateAllowedTags !== null) {
-      openDialog(this.templateAllowedTags);
-      return;
-    }
-
-    this.smsTemplates
-      .listAll()
-      .pipe(
-        catchError(() =>
-          of({ success: false as const, data: undefined } as ApiResponse<SmsTemplatesIndexData>)
-        )
-      )
-      .subscribe(res => {
-        this.templateAllowedTags = res.success && res.data ? res.data.allowed_tags ?? [] : [];
-        openDialog(this.templateAllowedTags);
+    this.dialog
+      .open(SmsTemplatesManageDialogComponent, {
+        width: 'min(560px, calc(100vw - 16px))',
+        maxHeight: '90vh',
+        autoFocus: 'first-tabbable',
+        data: {
+          branchId: this.branchId,
+          branches: this.branches as Branch[]
+        }
+      })
+      .afterClosed()
+      .subscribe(changed => {
+        if (changed) {
+          this.reloadBranchTemplates();
+        }
       });
   }
 
@@ -1260,7 +1321,7 @@ export class CampaignScheduleComponent implements OnInit {
       this.errorHandler.showError('Select a branch.');
       return;
     }
-    if (this.isExamsModule) {
+    if (this.isExamsModule || this.isCustomModule) {
       // date not required
     } else if (this.isFeesModule && this.feeNotifyMode === 'structure') {
       if (!this.selectedFeeStructureId || this.selectedFeeStructureIsClosed) {
@@ -1292,14 +1353,16 @@ export class CampaignScheduleComponent implements OnInit {
       this.errorHandler.showError('Select an active fee type from the list.');
       return;
     }
-    if (this.selectedTargets().length === 0) {
+    const hasSections = this.selectedTargets().length > 0;
+    const hasStaff = this.selectedStaffUserIds.length > 0;
+    if (!hasSections && !hasStaff) {
       const hint = this.isExamsModule
-        ? `Select at least one section with ${this.examNotifyMode === 'scheduled' ? 'exam schedules' : 'marks entered'}.`
+        ? `Select at least one section with ${this.examNotifyMode === 'scheduled' ? 'exam schedules' : 'marks entered'}, or staff below.`
         : this.isFeesModule && this.feeNotifyMode === 'due'
-          ? 'Select at least one section with students to remind (balance due > 0).'
+          ? 'Select at least one section with students to remind, or staff below.'
           : this.isFeesModule
-            ? 'Select at least one section with enrolled students for this fee structure.'
-            : 'Select at least one class section.';
+            ? 'Select at least one section or staff below.'
+            : 'Select at least one class section or staff member below.';
       this.errorHandler.showError(hint);
       return;
     }
@@ -1334,12 +1397,12 @@ export class CampaignScheduleComponent implements OnInit {
     }
   }
 
-  /** Short single-line tally for section rows inside grade cards. */
+  /** Single-line tally for section rows inside grade cards. */
   attendanceTallyLabel(section: SectionChoice): string {
     if (!section.attendanceMarked) {
-      return `0/${section.enrolledCount}`;
+      return `${section.enrolledCount} enrolled, not marked`;
     }
-    return `P${section.tallyPresent} A${section.tallyAbsent} L${section.tallyLeave}`;
+    return `Present ${section.tallyPresent}, Absent ${section.tallyAbsent}, Leave ${section.tallyLeave}`;
   }
 
   attendanceTallyTitle(section: SectionChoice): string {
@@ -1398,9 +1461,17 @@ export class CampaignScheduleComponent implements OnInit {
 
   examTallyLabel(section: SectionChoice): string {
     if (this.examNotifyMode === 'scheduled') {
-      return section.examScheduleCount > 0 ? `${section.examScheduleCount} sched` : 'No schedule';
+      const count = section.examScheduleCount;
+      if (count <= 0) {
+        return 'No schedule';
+      }
+      return count === 1 ? '1 schedule' : `${count} schedules`;
     }
-    return section.examMarksCount > 0 ? `${section.examMarksCount} marks` : 'No marks';
+    const count = section.examMarksCount;
+    if (count <= 0) {
+      return 'No marks entered';
+    }
+    return count === 1 ? '1 mark entered' : `${count} marks entered`;
   }
 
   examTallyTitle(section: SectionChoice): string {
@@ -1430,22 +1501,34 @@ export class CampaignScheduleComponent implements OnInit {
 
   openPreview(): void {
     const map = this.mappedTemplates();
-    if (Object.keys(map).length === 0) {
+    const hasSections = this.selectedTargets().length > 0;
+    const hasStaff = this.selectedStaffUserIds.length > 0;
+    if (hasSections && Object.keys(map).length === 0) {
       this.errorHandler.showError('Map at least one status to a template.');
       return;
     }
+    if (hasStaff && !this.staffTemplateId) {
+      this.errorHandler.showError('Select a staff template.');
+      return;
+    }
+    if (!hasSections && !hasStaff) {
+      this.errorHandler.showError('Select recipients before preview.');
+      return;
+    }
     this.saving = true;
-    this.campaigns.preview(this.buildCampaignPayload(map)).subscribe({
-      next: response => {
-        this.samples = response.data || [];
-        this.showPreview = true;
-        this.saving = false;
-      },
-      error: error => {
-        this.errorHandler.showError(error);
-        this.saving = false;
-      }
-    });
+    this.campaigns
+      .preview(this.buildCampaignPayload(map))
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: response => {
+          this.samples = response.data || [];
+          this.showPreview = true;
+        },
+        error: error => {
+          this.errorHandler.showError(error);
+          this.showPreview = false;
+        }
+      });
   }
 
   confirm(): void {
@@ -1454,28 +1537,34 @@ export class CampaignScheduleComponent implements OnInit {
       (sum, row) => sum + (row.recipient_count || 0),
       0
     );
-    this.campaigns.create({
-      ...this.buildCampaignPayload(this.mappedTemplates()),
-      expected_recipient_count: expectedRecipientCount
-    }).subscribe({
-      next: response => {
-        this.saving = false;
-        this.showPreview = false;
-        this.errorHandler.showSuccess('Notification scheduled');
-        const id = response.data?.id;
-        this.router.navigate(id ? ['/notification-campaigns/view', id] : ['/notification-campaigns'], {
-          queryParams: { tab: this.module }
-        });
-      },
-      error: error => {
-        this.errorHandler.showError(error);
-        this.saving = false;
-      }
-    });
+    this.campaigns
+      .create({
+        ...this.buildCampaignPayload(this.mappedTemplates()),
+        expected_recipient_count: expectedRecipientCount
+      })
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: response => {
+          this.showPreview = false;
+          this.errorHandler.showSuccess('Notification scheduled');
+          const id = response.data?.id;
+          this.router.navigate(id ? ['/notification-campaigns/view', id] : ['/notification-campaigns'], {
+            queryParams: { tab: this.module }
+          });
+        },
+        error: error => {
+          this.errorHandler.showError(error);
+        }
+      });
   }
 
   cancel(): void {
-    this.router.navigate(['/notification-campaigns'], { queryParams: { tab: this.module } });
+    const tab = this.isCustomModule ? 'dashboard' : this.module;
+    this.router.navigate(['/notification-campaigns'], { queryParams: { tab } });
+  }
+
+  get previewScheduleLabel(): string {
+    return this.isCustomModule ? 'Preview & send' : 'Preview & schedule';
   }
 
   private mappedTemplates(): Record<string, number> {
@@ -1687,6 +1776,8 @@ export class CampaignScheduleComponent implements OnInit {
             selectable = examCriteriaMet && !blocked;
           } else if (this.isFeesModule) {
             selectable = feeCriteriaMet && !blocked;
+          } else if (this.isCustomModule) {
+            selectable = (info?.student_count ?? enrolledCount) > 0 && !blocked;
           } else if (this.usesEligibleTargets) {
             selectable = !!info && !blocked;
           }
@@ -1832,7 +1923,7 @@ export class CampaignScheduleComponent implements OnInit {
   }
 
   private eligibilityDateParam(): string | undefined {
-    if (this.isExamsModule) {
+    if (this.isExamsModule || this.isCustomModule) {
       return undefined;
     }
     if (this.isFeesModule && this.feeNotifyMode === 'structure') {
@@ -1858,8 +1949,14 @@ export class CampaignScheduleComponent implements OnInit {
       targets: this.selectedTargets(),
       template_map: templateMap
     };
-    if (!this.isExamsModule) {
+    if (!this.isExamsModule && !this.isCustomModule) {
       payload['event_date'] = this.campaignEventDateString();
+    }
+    if (this.selectedStaffUserIds.length > 0) {
+      payload['staff_user_ids'] = [...this.selectedStaffUserIds];
+      if (this.staffTemplateId) {
+        payload['staff_template_id'] = this.staffTemplateId;
+      }
     }
     if (this.isExamsModule && this.selectedExamId) {
       payload['exam_id'] = this.selectedExamId;

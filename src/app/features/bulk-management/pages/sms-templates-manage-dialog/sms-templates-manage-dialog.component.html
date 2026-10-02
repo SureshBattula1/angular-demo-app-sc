@@ -1,0 +1,72 @@
+<div class="manage-header">
+  <div class="manage-title">
+    <mat-icon>description</mat-icon>
+    <div>
+      <h2>View &amp; edit templates</h2>
+      <p>SMS templates for the selected branch</p>
+    </div>
+  </div>
+  <button mat-icon-button type="button" aria-label="Close" (click)="close()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div class="manage-toolbar">
+  <button mat-flat-button color="primary" type="button" (click)="createNew()">
+    <mat-icon>add</mat-icon>
+    New template
+  </button>
+</div>
+
+<div class="manage-body">
+  <div class="loading-row" *ngIf="loading">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Loading templates…</span>
+  </div>
+
+  <p class="empty" *ngIf="!loading && templates.length === 0">
+    No active templates for this branch. Create one to use in campaigns.
+  </p>
+
+  <ul class="template-list" *ngIf="!loading && templates.length">
+    <li class="template-row" *ngFor="let t of templates">
+      <div class="template-main">
+        <span class="template-name">{{ t.name }}</span>
+        <span class="template-meta">
+          {{ audienceLabel(t.audience) }}
+          <span class="inactive-tag" *ngIf="!t.is_active"> · Inactive</span>
+        </span>
+        <span class="template-snippet">{{ t.body }}</span>
+      </div>
+      <div class="template-actions" role="group" aria-label="Template actions">
+        <button
+          mat-icon-button
+          type="button"
+          color="primary"
+          aria-label="View template"
+          matTooltip="View"
+          (click)="viewTemplate(t)">
+          <mat-icon>visibility</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          color="primary"
+          aria-label="Edit template"
+          matTooltip="Edit"
+          (click)="editTemplate(t)">
+          <mat-icon>list</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          color="warn"
+          aria-label="Delete template"
+          matTooltip="Delete"
+          (click)="deleteTemplate(t)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>

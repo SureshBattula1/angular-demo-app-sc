@@ -53,7 +53,7 @@ export class SmsTemplateDialogComponent implements OnInit {
       this.draftAudience = t.audience;
       this.draftActive = t.is_active;
     } else {
-      this.draftBranchId = branches[0]?.id ?? null;
+      this.draftBranchId = this.data.defaultBranchId ?? branches[0]?.id ?? null;
     }
   }
 

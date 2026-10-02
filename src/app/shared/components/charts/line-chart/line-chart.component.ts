@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
@@ -37,26 +37,40 @@ export interface LineChartData {
     }
   `]
 })
-export class LineChartComponent implements OnInit, OnChanges, AfterViewInit {
+export class LineChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() data: LineChartData | null = null;
-  @Input() height: string = '300px';
-  @Input() responsive: boolean = true;
-  @Input() showLegend: boolean = true;
-  @Input() showGrid: boolean = true;
+  @Input() height = '300px';
+  @Input() responsive = true;
+  @Input() showLegend = true;
+  @Input() showGrid = true;
   
   @ViewChild('chartCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
   private chart: Chart | null = null;
-
-  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     this.createChart();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && !changes['data'].firstChange) {
-      this.updateChart();
+    if (!changes['data']) {
+      return;
     }
+    if (changes['data'].firstChange) {
+      if (this.canvasRef) {
+        this.createChart();
+      }
+      return;
+    }
+    const prev = changes['data'].previousValue as LineChartData | null;
+    const curr = changes['data'].currentValue as LineChartData | null;
+    if (JSON.stringify(prev) === JSON.stringify(curr)) {
+      return;
+    }
+    if (!this.chart) {
+      this.createChart();
+      return;
+    }
+    this.updateChart();
   }
 
   private createChart(): void {
