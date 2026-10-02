@@ -200,6 +200,82 @@
   gap: 24px;
 }
 
+.overview-split {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+
+  @include tablet-only {
+    grid-template-columns: 1fr;
+  }
+
+  @include mobile-only {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attendance-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  min-width: 0;
+
+  @include mobile-only {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-empty {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px 4px;
+  text-align: center;
+
+  .empty-ring {
+    width: 112px;
+    height: 112px;
+    margin-bottom: 8px;
+    border-radius: 50%;
+    border: 14px solid color-mix(in srgb, var(--neutral-color) 16%, var(--card-background));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+
+    mat-icon {
+      width: 28px;
+      height: 28px;
+      font-size: 28px;
+      color: color-mix(in srgb, var(--neutral-color) 55%, var(--text-secondary));
+    }
+  }
+
+  .empty-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .empty-hint {
+    margin: 0;
+    max-width: 220px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+}
+
+.stats-grid.stats-stack {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
 // Stats Grid - DYNAMIC THEME COLORS!
 .stats-grid {
   display: grid;
@@ -744,10 +820,19 @@
 .financial-overview-section {
   margin-top: 32px;
   margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+  gap: 16px;
+  align-items: stretch;
+
+  @include tablet-only {
+    grid-template-columns: 1fr;
+  }
   
   @include mobile-only {
     margin-top: 24px;
     margin-bottom: 24px;
+    grid-template-columns: 1fr;
   }
   
   .financial-overview-card {
@@ -963,7 +1048,7 @@
   
   // Payment Mode Breakdown Card
   .payment-mode-card {
-    margin-top: 24px;
+    margin-top: 0;
     background: var(--card-background);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);

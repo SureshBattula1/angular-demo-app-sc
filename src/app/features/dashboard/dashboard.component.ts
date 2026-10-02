@@ -345,6 +345,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const net = Number(financial?.net_balance || 0);
     const incomeTx = Number(financial?.income_transactions || 0);
     const expenseTx = Number(financial?.expense_transactions || 0);
+    if (income === 0 && expenses === 0 && incomeTx === 0 && expenseTx === 0) {
+      return null;
+    }
     return {
       labels: [
         `Income (${incomeTx} txn)`,
@@ -375,6 +378,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       labels.push(method.label);
       income.push(this.getPaymentModeAmount(method.value, 'income'));
       expenses.push(this.getPaymentModeAmount(method.value, 'expenses'));
+    }
+    if (income.every(amount => amount === 0) && expenses.every(amount => amount === 0)) {
+      return null;
     }
     return {
       labels,
@@ -415,7 +421,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       absent.push(Number(row.absent || 0));
       leaves.push(Number(row.leaves || 0));
     }
-    if (labels.length === 0) {
+    const hasMarks = present.some((value, index) => value + absent[index] + leaves[index] > 0);
+    if (!hasMarks) {
       this.gradeAttendanceChartHeight = '240px';
       return null;
     }

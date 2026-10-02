@@ -85,8 +85,8 @@
   <!-- Dashboard Content -->
   <div *ngIf="!loading && !error && dashboardData" class="dashboard-content">
     
-    <!-- OVERVIEW CARDS - Responsive Grid -->
-    <div class="stats-grid">
+    <div class="overview-split">
+    <div class="stats-grid stats-stack">
       <!-- Branches Card -->
       <div class="stat-card primary" *ngIf="dashboardData.overview.total_branches">
         <div class="card-icon">
@@ -127,27 +127,31 @@
      
     </div>
 
-    <div class="charts-grid">
+    <div class="attendance-pair">
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>school</mat-icon>
             Student Attendance
           </mat-card-title>
-          <mat-card-subtitle>Present rate {{ dashboardData.attendance.students.rate }}%</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="studentAttendanceChart">Present rate {{ dashboardData.attendance.students.rate }}%</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!studentAttendanceChart">No attendance marked</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <app-doughnut-chart
             *ngIf="studentAttendanceChart"
             [data]="studentAttendanceChart"
-            [height]="'250px'"
+            [height]="'200px'"
             [responsive]="true"
             [showLegend]="true"
             [showPercentage]="false">
           </app-doughnut-chart>
-          <div *ngIf="!studentAttendanceChart" class="no-data">
-            <mat-icon>info</mat-icon>
-            <p>No student attendance for the selected period</p>
+          <div *ngIf="!studentAttendanceChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>event_busy</mat-icon>
+            </div>
+            <p class="empty-title">No student attendance yet</p>
+            <p class="empty-hint">Marks for the selected period will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
@@ -158,31 +162,39 @@
             <mat-icon>how_to_reg</mat-icon>
             Teacher Attendance
           </mat-card-title>
-          <mat-card-subtitle>Present rate {{ dashboardData.attendance.teachers.rate }}%</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="teacherAttendanceChart">Present rate {{ dashboardData.attendance.teachers.rate }}%</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!teacherAttendanceChart">No attendance marked</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <app-doughnut-chart
             *ngIf="teacherAttendanceChart"
             [data]="teacherAttendanceChart"
-            [height]="'250px'"
+            [height]="'200px'"
             [responsive]="true"
             [showLegend]="true"
             [showPercentage]="false">
           </app-doughnut-chart>
-          <div *ngIf="!teacherAttendanceChart" class="no-data">
-            <mat-icon>info</mat-icon>
-            <p>No teacher attendance for the selected period</p>
+          <div *ngIf="!teacherAttendanceChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>event_busy</mat-icon>
+            </div>
+            <p class="empty-title">No teacher attendance yet</p>
+            <p class="empty-hint">Marks for the selected period will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
+    </div>
+    </div>
 
+    <div class="charts-grid">
       <mat-card class="chart-card full-width">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>bar_chart</mat-icon>
             Attendance by Grade and Section
           </mat-card-title>
-          <mat-card-subtitle>Present, absent, and leave for every grade and section</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="gradeAttendanceChart">Present, absent, and leave for every grade and section</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!gradeAttendanceChart">No attendance marked</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <app-bar-chart
@@ -194,9 +206,12 @@
             [stacked]="true"
             [horizontal]="true">
           </app-bar-chart>
-          <div *ngIf="!gradeAttendanceChart" class="no-data">
-            <mat-icon>info</mat-icon>
-            <p>No grade attendance for the selected period</p>
+          <div *ngIf="!gradeAttendanceChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>bar_chart</mat-icon>
+            </div>
+            <p class="empty-title">No grade attendance yet</p>
+            <p class="empty-hint">Marks for each grade and section will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
@@ -210,19 +225,27 @@
             <mat-icon>account_balance</mat-icon>
             Financial Overview
           </mat-card-title>
-          <mat-card-subtitle>Income, expenses, and net balance for the selected period (₹)</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="financialOverviewChart">Income, expenses, and net balance for the selected period (₹)</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!financialOverviewChart">No transactions yet</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <app-bar-chart
             *ngIf="financialOverviewChart"
             [data]="financialOverviewChart"
-            [height]="'220px'"
+            [height]="'240px'"
             [responsive]="true"
             [showLegend]="false"
             [countAxis]="false"
             [showValues]="true"
             valuePrefix="₹">
           </app-bar-chart>
+          <div *ngIf="!financialOverviewChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+            <p class="empty-title">No income or expenses yet</p>
+            <p class="empty-hint">Totals for the selected period will show up here.</p>
+          </div>
         </mat-card-content>
       </mat-card>
 
@@ -232,7 +255,8 @@
             <mat-icon>payment</mat-icon>
             Payment Mode Breakdown
           </mat-card-title>
-          <mat-card-subtitle>Income and expenses by payment mode (₹)</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="paymentModeChart">Income and expenses by payment mode (₹)</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!paymentModeChart">No transactions yet</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <app-bar-chart
@@ -245,9 +269,12 @@
             [showValues]="true"
             valuePrefix="₹">
           </app-bar-chart>
-          <div *ngIf="!paymentModeChart" class="no-data">
-            <mat-icon>info</mat-icon>
-            <p>No income or expenses for the selected period</p>
+          <div *ngIf="!paymentModeChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>payments</mat-icon>
+            </div>
+            <p class="empty-title">No payments yet</p>
+            <p class="empty-hint">Income and expenses by mode will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
