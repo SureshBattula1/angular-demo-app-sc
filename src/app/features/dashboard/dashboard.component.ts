@@ -222,6 +222,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && response.data) {
           this.dashboardData = response.data;
+          this.studentBirthdayPage = 0;
+          this.teacherBirthdayPage = 0;
           this.buildAdminCharts();
         } else {
           this.clearAdminCharts();
@@ -263,6 +265,66 @@ export class DashboardComponent implements OnInit, OnDestroy {
   calculateStrokeDashoffset(percentage: number): number {
     const circumference = 2 * Math.PI * 60; // r=60
     return circumference - (percentage / 100) * circumference;
+  }
+
+  readonly birthdayPageSize = 5;
+  studentBirthdayPage = 0;
+  teacherBirthdayPage = 0;
+
+  get studentBirthdays(): any[] {
+    return this.dashboardData?.birthdays?.students ?? [];
+  }
+
+  get teacherBirthdays(): any[] {
+    return this.dashboardData?.birthdays?.teachers ?? [];
+  }
+
+  get pagedStudentBirthdays(): any[] {
+    return this.pageBirthdays(this.studentBirthdays, this.studentBirthdayPage);
+  }
+
+  get pagedTeacherBirthdays(): any[] {
+    return this.pageBirthdays(this.teacherBirthdays, this.teacherBirthdayPage);
+  }
+
+  get birthdayDateLabel(): string {
+    return this.dashboardData?.birthdays?.label || 'Today';
+  }
+
+  birthdayPageCount(list: any[]): number {
+    return Math.max(1, Math.ceil(list.length / this.birthdayPageSize));
+  }
+
+  birthdayRangeLabel(list: any[], page: number): string {
+    if (!list.length) {
+      return '';
+    }
+    const safePage = Math.min(page, this.birthdayPageCount(list) - 1);
+    const start = safePage * this.birthdayPageSize + 1;
+    const end = Math.min(list.length, start + this.birthdayPageSize - 1);
+    return `${start}–${end} of ${list.length}`;
+  }
+
+  changeBirthdayPage(kind: 'student' | 'teacher', delta: number): void {
+    const list = kind === 'student' ? this.studentBirthdays : this.teacherBirthdays;
+    const current = kind === 'student' ? this.studentBirthdayPage : this.teacherBirthdayPage;
+    const next = Math.min(Math.max(current + delta, 0), this.birthdayPageCount(list) - 1);
+    if (kind === 'student') {
+      this.studentBirthdayPage = next;
+    } else {
+      this.teacherBirthdayPage = next;
+    }
+  }
+
+  birthdayInitials(name: string): string {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || '?';
+  }
+
+  private pageBirthdays(list: any[], page: number): any[] {
+    const safePage = Math.min(Math.max(page, 0), this.birthdayPageCount(list) - 1);
+    const start = safePage * this.birthdayPageSize;
+    return list.slice(start, start + this.birthdayPageSize);
   }
 
   /**

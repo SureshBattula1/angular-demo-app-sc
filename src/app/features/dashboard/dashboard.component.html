@@ -281,6 +281,128 @@
     </div>
     <!-- End Financial Overview Section -->
 
+    <!-- TODAY'S BIRTHDAYS -->
+    <div class="birthday-section">
+      <mat-card class="birthday-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>cake</mat-icon>
+            Student Birthdays
+            <span class="birthday-count" *ngIf="studentBirthdays.length">{{ studentBirthdays.length }}</span>
+          </mat-card-title>
+          <mat-card-subtitle>{{ birthdayDateLabel }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="studentBirthdays.length; else noStudentBirthdays">
+            <div class="birthday-table-wrap">
+              <table class="birthday-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th class="age-col">Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let student of pagedStudentBirthdays">
+                    <td>
+                      <div class="person-cell">
+                        <span class="person-avatar" aria-hidden="true">{{ birthdayInitials(student.name) }}</span>
+                        <span class="person-name">{{ student.name }}</span>
+                      </div>
+                    </td>
+                    <td>{{ student.grade || '—' }}<span *ngIf="student.section"> · {{ student.section }}</span></td>
+                    <td class="age-col"><span class="age-pill">{{ student.age }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="birthday-pager" *ngIf="studentBirthdays.length > birthdayPageSize">
+              <span>{{ birthdayRangeLabel(studentBirthdays, studentBirthdayPage) }}</span>
+              <button mat-icon-button type="button" aria-label="Previous students"
+                      [disabled]="studentBirthdayPage === 0"
+                      (click)="changeBirthdayPage('student', -1)">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button mat-icon-button type="button" aria-label="Next students"
+                      [disabled]="studentBirthdayPage >= birthdayPageCount(studentBirthdays) - 1"
+                      (click)="changeBirthdayPage('student', 1)">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #noStudentBirthdays>
+            <div class="birthday-empty">
+              <mat-icon>cake</mat-icon>
+              <p class="empty-title">No student birthdays today</p>
+              <p class="empty-hint">Students with a birthday today will show up here.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="birthday-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>cake</mat-icon>
+            Teacher Birthdays
+            <span class="birthday-count" *ngIf="teacherBirthdays.length">{{ teacherBirthdays.length }}</span>
+          </mat-card-title>
+          <mat-card-subtitle>{{ birthdayDateLabel }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="teacherBirthdays.length; else noTeacherBirthdays">
+            <div class="birthday-table-wrap">
+              <table class="birthday-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th class="age-col">Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let teacher of pagedTeacherBirthdays">
+                    <td>
+                      <div class="person-cell">
+                        <span class="person-avatar" aria-hidden="true">{{ birthdayInitials(teacher.name) }}</span>
+                        <span class="person-copy">
+                          <span class="person-name">{{ teacher.name }}</span>
+                          <span class="person-meta" *ngIf="teacher.employee_id">{{ teacher.employee_id }}</span>
+                        </span>
+                      </div>
+                    </td>
+                    <td>{{ teacher.designation || '—' }}</td>
+                    <td class="age-col"><span class="age-pill">{{ teacher.age }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="birthday-pager" *ngIf="teacherBirthdays.length > birthdayPageSize">
+              <span>{{ birthdayRangeLabel(teacherBirthdays, teacherBirthdayPage) }}</span>
+              <button mat-icon-button type="button" aria-label="Previous teachers"
+                      [disabled]="teacherBirthdayPage === 0"
+                      (click)="changeBirthdayPage('teacher', -1)">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button mat-icon-button type="button" aria-label="Next teachers"
+                      [disabled]="teacherBirthdayPage >= birthdayPageCount(teacherBirthdays) - 1"
+                      (click)="changeBirthdayPage('teacher', 1)">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #noTeacherBirthdays>
+            <div class="birthday-empty">
+              <mat-icon>cake</mat-icon>
+              <p class="empty-title">No teacher birthdays today</p>
+              <p class="empty-hint">Teachers with a birthday today will show up here.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
     </div>
     <!-- End Dashboard Content -->
     <!-- End Dashboard Details (only shown for Admin roles) -->

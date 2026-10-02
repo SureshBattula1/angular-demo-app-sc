@@ -1252,6 +1252,247 @@
   }
 }
 
+.birthday-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 32px;
+
+  @include tablet-only {
+    grid-template-columns: 1fr;
+  }
+
+  @include mobile-only {
+    grid-template-columns: 1fr;
+    margin-bottom: 24px;
+  }
+}
+
+.birthday-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card-background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  min-width: 0;
+
+  mat-card-header {
+    padding: 20px 20px 4px 20px;
+
+    @include mobile-only {
+      padding: 16px 16px 8px 16px;
+    }
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+
+      @include mobile-only {
+        font-size: 18px;
+      }
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: var(--primary-color);
+      }
+    }
+  }
+
+  .birthday-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    margin-left: 4px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-color) 12%, var(--card-background));
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 8px 16px 12px !important;
+
+    @include mobile-only {
+      padding: 8px 12px 12px !important;
+    }
+  }
+}
+
+.birthday-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.birthday-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  th {
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--divider-color);
+    white-space: nowrap;
+  }
+
+  td {
+    height: 52px;
+    padding: 6px 10px;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--divider-color);
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: var(--soft-surface-color);
+  }
+
+  .age-col {
+    width: 64px;
+    text-align: right;
+  }
+}
+
+.person-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.person-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background));
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.person-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.person-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.person-meta {
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--text-secondary);
+}
+
+.age-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 12%, var(--card-background));
+  color: var(--primary-color);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.birthday-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 4px;
+  border-top: 1px solid var(--divider-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+
+  button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.birthday-empty {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+
+  mat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 36px;
+    margin-bottom: 4px;
+    color: color-mix(in srgb, var(--neutral-color) 55%, var(--text-secondary));
+  }
+
+  .empty-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .empty-hint {
+    margin: 0;
+    max-width: 240px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+}
+
 // Print Styles
 @media print {
   .dashboard-header .header-actions,
