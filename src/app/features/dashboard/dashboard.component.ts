@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -11,10 +11,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
-import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
+import { BarChartComponent, BarChartData } from '../../shared/components/charts/bar-chart/bar-chart.component';
+import { DoughnutChartComponent, DoughnutChartData } from '../../shared/components/charts/doughnut-chart/doughnut-chart.component';
 import { DashboardService } from './dashboard.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../branches/services/branch.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -33,7 +35,8 @@ import { Subscription } from 'rxjs';
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule,
-    IndianCurrencyPipe
+    BarChartComponent,
+    DoughnutChartComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
@@ -56,6 +59,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   dashboardData: any = null;
   loading = false;
   error: string | null = null;
+  studentAttendanceChart: DoughnutChartData | null = null;
+  teacherAttendanceChart: DoughnutChartData | null = null;
+  paymentModeChart: BarChartData | null = null;
+  financialOverviewChart: BarChartData | null = null;
+  gradeAttendanceChart: BarChartData | null = null;
+  gradeAttendanceChartHeight = '320px';
   
   
   // Payment methods (same as transaction form)
@@ -71,12 +80,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Subscriptions
   private subscriptions: Subscription[] = [];
   private autoRefreshInterval: any;
+  private themeService = inject(ThemeService);
 
   constructor(
     private dashboardService: DashboardService,
     private authService: AuthService,
     private branchService: BranchService
-  ) {}
+  ) {
+    effect(() => {
+      this.themeService.currentTheme();
+      if (this.dashboardData) {
+        this.buildAdminCharts();
+      }
+    });
+  }
 
   ngOnInit(): void {
     // Get user role for conditional rendering - handle async loading
@@ -205,11 +222,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success && response.data) {
           this.dashboardData = response.data;
+          this.studentBirthdayPage = 0;
+          this.teacherBirthdayPage = 0;
+          this.buildAdminCharts();
+        } else {
+          this.clearAdminCharts();
         }
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.error = 'Failed to load dashboard data. Please try again.';
+        this.clearAdminCharts();
         this.loading = false;
       }
     });
@@ -244,6 +267,66 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return circumference - (percentage / 100) * circumference;
   }
 
+  readonly birthdayPageSize = 5;
+  studentBirthdayPage = 0;
+  teacherBirthdayPage = 0;
+
+  get studentBirthdays(): any[] {
+    return this.dashboardData?.birthdays?.students ?? [];
+  }
+
+  get teacherBirthdays(): any[] {
+    return this.dashboardData?.birthdays?.teachers ?? [];
+  }
+
+  get pagedStudentBirthdays(): any[] {
+    return this.pageBirthdays(this.studentBirthdays, this.studentBirthdayPage);
+  }
+
+  get pagedTeacherBirthdays(): any[] {
+    return this.pageBirthdays(this.teacherBirthdays, this.teacherBirthdayPage);
+  }
+
+  get birthdayDateLabel(): string {
+    return this.dashboardData?.birthdays?.label || 'Today';
+  }
+
+  birthdayPageCount(list: any[]): number {
+    return Math.max(1, Math.ceil(list.length / this.birthdayPageSize));
+  }
+
+  birthdayRangeLabel(list: any[], page: number): string {
+    if (!list.length) {
+      return '';
+    }
+    const safePage = Math.min(page, this.birthdayPageCount(list) - 1);
+    const start = safePage * this.birthdayPageSize + 1;
+    const end = Math.min(list.length, start + this.birthdayPageSize - 1);
+    return `${start}–${end} of ${list.length}`;
+  }
+
+  changeBirthdayPage(kind: 'student' | 'teacher', delta: number): void {
+    const list = kind === 'student' ? this.studentBirthdays : this.teacherBirthdays;
+    const current = kind === 'student' ? this.studentBirthdayPage : this.teacherBirthdayPage;
+    const next = Math.min(Math.max(current + delta, 0), this.birthdayPageCount(list) - 1);
+    if (kind === 'student') {
+      this.studentBirthdayPage = next;
+    } else {
+      this.teacherBirthdayPage = next;
+    }
+  }
+
+  birthdayInitials(name: string): string {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || '?';
+  }
+
+  private pageBirthdays(list: any[], page: number): any[] {
+    const safePage = Math.min(Math.max(page, 0), this.birthdayPageCount(list) - 1);
+    const start = safePage * this.birthdayPageSize;
+    return list.slice(start, start + this.birthdayPageSize);
+  }
+
   /**
    * Get payment mode amount for income or expenses
    * Handles different key formats: 'Cash', 'cash', 'bank_transfer', etc.
@@ -269,13 +352,159 @@ export class DashboardComponent implements OnInit, OnDestroy {
            0;
   }
 
-  /**
-   * Get net balance by payment mode (income - expenses)
-   */
-  getPaymentModeNetBalance(mode: string): number {
-    const income = this.getPaymentModeAmount(mode, 'income');
-    const expenses = this.getPaymentModeAmount(mode, 'expenses');
-    return income - expenses;
+  private clearAdminCharts(): void {
+    this.studentAttendanceChart = null;
+    this.teacherAttendanceChart = null;
+    this.paymentModeChart = null;
+    this.financialOverviewChart = null;
+    this.gradeAttendanceChart = null;
+  }
+
+  private buildAdminCharts(): void {
+    const attendance = this.dashboardData?.attendance;
+    this.studentAttendanceChart = this.attendanceDoughnut(attendance?.students);
+    this.teacherAttendanceChart = this.attendanceDoughnut(attendance?.teachers);
+    this.paymentModeChart = this.buildPaymentModeChart();
+    this.financialOverviewChart = this.buildFinancialOverviewChart();
+    this.gradeAttendanceChart = this.buildGradeAttendanceChart();
+  }
+
+  private attendanceDoughnut(stats: {
+    present?: number;
+    absent?: number;
+    leaves?: number;
+    late?: number;
+  } | null | undefined): DoughnutChartData | null {
+    if (!stats) {
+      return null;
+    }
+    const present = Number(stats.present || 0);
+    const absent = Number(stats.absent || 0);
+    const leaves = Number(stats.leaves || 0);
+    const late = Number(stats.late || 0);
+    if (present + absent + leaves + late <= 0) {
+      return null;
+    }
+    const labels = ['Present', 'Absent', 'Leave'];
+    const data = [present, absent, leaves];
+    const backgroundColor = [
+      this.themeColor('--success-color', '#2e7d32'),
+      this.themeColor('--error-color', '#c62828'),
+      this.themeColor('--warning-color', '#ef6c00')
+    ];
+    if (late > 0) {
+      labels.push('Late');
+      data.push(late);
+      backgroundColor.push(this.themeColor('--info-color', '#1565c0'));
+    }
+    return { labels, data, backgroundColor };
+  }
+
+  private buildFinancialOverviewChart(): BarChartData | null {
+    const financial = this.dashboardData?.financial;
+    const income = Number(financial?.total_income || 0);
+    const expenses = Number(financial?.total_expenses || 0);
+    const net = Number(financial?.net_balance || 0);
+    const incomeTx = Number(financial?.income_transactions || 0);
+    const expenseTx = Number(financial?.expense_transactions || 0);
+    if (income === 0 && expenses === 0 && incomeTx === 0 && expenseTx === 0) {
+      return null;
+    }
+    return {
+      labels: [
+        `Income (${incomeTx} txn)`,
+        `Expenses (${expenseTx} txn)`,
+        'Net balance'
+      ],
+      datasets: [
+        {
+          label: 'Amount',
+          data: [income, expenses, net],
+          backgroundColor: [
+            this.themeColor('--success-color', '#2e7d32'),
+            this.themeColor('--error-color', '#c62828'),
+            net >= 0
+              ? this.themeColor('--primary-color', '#1565c0')
+              : this.themeColor('--error-color', '#c62828')
+          ]
+        }
+      ]
+    };
+  }
+
+  private buildPaymentModeChart(): BarChartData | null {
+    const labels: string[] = [];
+    const income: number[] = [];
+    const expenses: number[] = [];
+    for (const method of this.paymentMethods) {
+      labels.push(method.label);
+      income.push(this.getPaymentModeAmount(method.value, 'income'));
+      expenses.push(this.getPaymentModeAmount(method.value, 'expenses'));
+    }
+    if (income.every(amount => amount === 0) && expenses.every(amount => amount === 0)) {
+      return null;
+    }
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Income',
+          data: income,
+          backgroundColor: this.themeColor('--success-color', '#2e7d32')
+        },
+        {
+          label: 'Expenses',
+          data: expenses,
+          backgroundColor: this.themeColor('--error-color', '#c62828')
+        }
+      ]
+    };
+  }
+
+  private buildGradeAttendanceChart(): BarChartData | null {
+    const rows: Array<{
+      label?: string;
+      grade?: string;
+      section?: string;
+      present?: number;
+      absent?: number;
+      leaves?: number;
+    }> = this.dashboardData?.trends?.attendance || [];
+    const labels: string[] = [];
+    const present: number[] = [];
+    const absent: number[] = [];
+    const leaves: number[] = [];
+    for (const row of rows) {
+      const grade = String(row.grade || 'Unassigned').trim();
+      const section = String(row.section || '').trim();
+      const label = String(row.label || '').trim() || (section ? `${grade} - ${section}` : grade);
+      labels.push(label);
+      present.push(Number(row.present || 0));
+      absent.push(Number(row.absent || 0));
+      leaves.push(Number(row.leaves || 0));
+    }
+    const hasMarks = present.some((value, index) => value + absent[index] + leaves[index] > 0);
+    if (!hasMarks) {
+      this.gradeAttendanceChartHeight = '240px';
+      return null;
+    }
+    this.gradeAttendanceChartHeight = `${Math.max(240, labels.length * 26)}px`;
+    return {
+      labels,
+      datasets: [
+        { label: 'Present', data: present, backgroundColor: this.themeColor('--success-color', '#2e7d32') },
+        { label: 'Absent', data: absent, backgroundColor: this.themeColor('--error-color', '#c62828') },
+        { label: 'Leave', data: leaves, backgroundColor: this.themeColor('--warning-color', '#ef6c00') }
+      ]
+    };
+  }
+
+  private themeColor(variable: string, fallback: string): string {
+    if (typeof document === 'undefined') {
+      return fallback;
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+    return value || fallback;
   }
 
 }

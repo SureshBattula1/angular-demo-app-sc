@@ -85,10 +85,10 @@
   <!-- Dashboard Content -->
   <div *ngIf="!loading && !error && dashboardData" class="dashboard-content">
     
-    <!-- OVERVIEW CARDS - Responsive Grid -->
-    <div class="stats-grid">
+    <div class="overview-split">
+    <div class="stats-grid stats-stack">
       <!-- Branches Card -->
-      <div class="stat-card accent" *ngIf="dashboardData.overview.total_branches">
+      <div class="stat-card primary" *ngIf="dashboardData.overview.total_branches">
         <div class="card-icon">
           <mat-icon>business</mat-icon>
         </div>
@@ -109,153 +109,112 @@
         <div class="card-content">
           <div class="stat-value">{{ dashboardData.overview.total_students | number }}</div>
           <div class="stat-label">Total Students</div>
+          <div class="stat-subtext">Active enrollment</div>
         </div>
       </div>
       
       <!-- Teachers Card -->
-      <div class="stat-card success">
+      <div class="stat-card primary">
         <div class="card-icon">
           <mat-icon>person</mat-icon>
         </div>
         <div class="card-content">
           <div class="stat-value">{{ dashboardData.overview.total_teachers | number }}</div>
           <div class="stat-label">Total Teachers</div>
+          <div class="stat-subtext">Active staff</div>
         </div>
       </div>
      
     </div>
 
-    <!-- CHARTS SECTION - Responsive Grid -->
-    <div class="charts-grid">
-      
-      <!-- Attendance by Grade & Section Chart -->
-      <!-- <mat-card class="chart-card full-width">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>school</mat-icon>
-            Attendance by Grade & Section
-          </mat-card-title>
-          <mat-card-subtitle>Present, Absent, and Leave counts</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <app-bar-chart 
-            *ngIf="attendanceTrendData"
-            [data]="attendanceTrendData"
-            [height]="'300px'"
-            [responsive]="true"
-            [showLegend]="true">
-          </app-bar-chart>
-          <div *ngIf="!attendanceTrendData" class="no-data">
-            <mat-icon>info</mat-icon>
-            <p>No attendance data available for the selected period</p>
-          </div>
-        </mat-card-content>
-      </mat-card> -->
-
-     
-
-    </div>
-    <div class="charts-grid">
-       <!-- Fee Collection Breakdown -->
-       <!-- <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>pie_chart</mat-icon>
-            Fee Collection
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <app-doughnut-chart 
-            *ngIf="feeBreakdownData"
-            [data]="feeBreakdownData"
-            [height]="'250px'"
-            [responsive]="true"
-            [showLegend]="true"
-            [showPercentage]="false">
-          </app-doughnut-chart>
-          <div class="fee-stats-summary">
-            <div class="fee-stat">
-              <span class="label">Collection Rate</span>
-              <span class="value">{{ dashboardData.fees.collection_rate }}%</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card> -->
-
-      <!-- Teacher Attendance Card -->
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>how_to_reg</mat-icon>
-            Teacher Attendance
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="attendance-summary">
-            <div class="attendance-circle" [style.--percentage]="dashboardData.attendance.teachers.rate">
-              <svg class="progress-ring" width="140" height="140">
-                <circle class="progress-ring-circle-bg" cx="70" cy="70" r="60"></circle>
-                <circle class="progress-ring-circle" cx="70" cy="70" r="60" 
-                        [style.strokeDashoffset]="calculateStrokeDashoffset(dashboardData.attendance.teachers.rate)">
-                </circle>
-              </svg>
-              <div class="percentage-text">{{ dashboardData.attendance.teachers.rate }}%</div>
-            </div>
-            <div class="attendance-details">
-              <div class="detail-row">
-                <span class="label">Present:</span>
-                <span class="value success">{{ dashboardData.attendance.teachers.present }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Absent:</span>
-                <span class="value danger">{{ dashboardData.attendance.teachers.absent }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">On Leave:</span>
-                <span class="value warning">{{ dashboardData.attendance.teachers.leaves }}</span>
-              </div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Student Attendance Card -->
+    <div class="attendance-pair">
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>school</mat-icon>
             Student Attendance
           </mat-card-title>
+          <mat-card-subtitle *ngIf="studentAttendanceChart">Present rate {{ dashboardData.attendance.students.rate }}%</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!studentAttendanceChart">No attendance marked</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <div class="attendance-summary">
-            <div class="attendance-circle" [style.--percentage]="dashboardData.attendance.students.rate">
-              <svg class="progress-ring" width="140" height="140">
-                <circle class="progress-ring-circle-bg" cx="70" cy="70" r="60"></circle>
-                <circle class="progress-ring-circle" cx="70" cy="70" r="60" 
-                        [style.strokeDashoffset]="calculateStrokeDashoffset(dashboardData.attendance.students.rate)">
-                </circle>
-              </svg>
-              <div class="percentage-text">{{ dashboardData.attendance.students.rate }}%</div>
+          <app-doughnut-chart
+            *ngIf="studentAttendanceChart"
+            [data]="studentAttendanceChart"
+            [height]="'200px'"
+            [responsive]="true"
+            [showLegend]="true"
+            [showPercentage]="false">
+          </app-doughnut-chart>
+          <div *ngIf="!studentAttendanceChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>event_busy</mat-icon>
             </div>
-            <div class="attendance-details">
-              <div class="detail-row">
-                <span class="label">Present:</span>
-                <span class="value success">{{ dashboardData.attendance.students.present }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Absent:</span>
-                <span class="value danger">{{ dashboardData.attendance.students.absent }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">On Leave:</span>
-                <span class="value warning">{{ dashboardData.attendance.students.leaves }}</span>
-              </div>
-            </div>
+            <p class="empty-title">No student attendance yet</p>
+            <p class="empty-hint">Marks for the selected period will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
 
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>how_to_reg</mat-icon>
+            Teacher Attendance
+          </mat-card-title>
+          <mat-card-subtitle *ngIf="teacherAttendanceChart">Present rate {{ dashboardData.attendance.teachers.rate }}%</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!teacherAttendanceChart">No attendance marked</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-doughnut-chart
+            *ngIf="teacherAttendanceChart"
+            [data]="teacherAttendanceChart"
+            [height]="'200px'"
+            [responsive]="true"
+            [showLegend]="true"
+            [showPercentage]="false">
+          </app-doughnut-chart>
+          <div *ngIf="!teacherAttendanceChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>event_busy</mat-icon>
+            </div>
+            <p class="empty-title">No teacher attendance yet</p>
+            <p class="empty-hint">Marks for the selected period will show up here.</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    </div>
+
+    <div class="charts-grid">
+      <mat-card class="chart-card full-width">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>bar_chart</mat-icon>
+            Attendance by Grade and Section
+          </mat-card-title>
+          <mat-card-subtitle *ngIf="gradeAttendanceChart">Present, absent, and leave for every grade and section</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!gradeAttendanceChart">No attendance marked</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-bar-chart
+            *ngIf="gradeAttendanceChart"
+            [data]="gradeAttendanceChart"
+            [height]="gradeAttendanceChartHeight"
+            [responsive]="true"
+            [showLegend]="true"
+            [stacked]="true"
+            [horizontal]="true">
+          </app-bar-chart>
+          <div *ngIf="!gradeAttendanceChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>bar_chart</mat-icon>
+            </div>
+            <p class="empty-title">No grade attendance yet</p>
+            <p class="empty-hint">Marks for each grade and section will show up here.</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
 
     <!-- FINANCIAL OVERVIEW SECTION -->
@@ -266,125 +225,183 @@
             <mat-icon>account_balance</mat-icon>
             Financial Overview
           </mat-card-title>
+          <mat-card-subtitle *ngIf="financialOverviewChart">Income, expenses, and net balance for the selected period (₹)</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!financialOverviewChart">No transactions yet</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <div class="financial-summary-grid">
-            <!-- Total Income Card -->
-            <mat-card class="financial-card income-card">
-              <mat-card-content>
-                <div class="financial-icon">
-                  <mat-icon>trending_up</mat-icon>
-                </div>
-                <div class="financial-details">
-                  <h3 class="financial-label">Total Income</h3>
-                  <p class="financial-value">₹{{ dashboardData.financial?.total_income | indianCurrency }}</p>
-                  <p class="financial-meta">{{ dashboardData.financial?.income_transactions || 0 }} Transactions</p>
-                </div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- Total Expenses Card -->
-            <mat-card class="financial-card expense-card">
-              <mat-card-content>
-                <div class="financial-icon">
-                  <mat-icon>trending_down</mat-icon>
-                </div>
-                <div class="financial-details">
-                  <h3 class="financial-label">Total Expenses</h3>
-                  <p class="financial-value">₹{{ dashboardData.financial?.total_expenses | indianCurrency }}</p>
-                  <p class="financial-meta">{{ dashboardData.financial?.expense_transactions || 0 }} Transactions</p>
-                </div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- Net Balance Card -->
-            <mat-card class="financial-card balance-card" 
-                     [class.positive]="(dashboardData.financial?.net_balance || 0) >= 0" 
-                     [class.negative]="(dashboardData.financial?.net_balance || 0) < 0">
-              <mat-card-content>
-                <div class="financial-icon">
-                  <mat-icon>account_balance_wallet</mat-icon>
-                </div>
-                <div class="financial-details">
-                  <h3 class="financial-label">Net Balance</h3>
-                  <p class="financial-value">₹{{ dashboardData.financial?.net_balance | indianCurrency }}</p>
-                  <p class="financial-meta">Current Period</p>
-                </div>
-              </mat-card-content>
-            </mat-card>
+          <app-bar-chart
+            *ngIf="financialOverviewChart"
+            [data]="financialOverviewChart"
+            [height]="'240px'"
+            [responsive]="true"
+            [showLegend]="false"
+            [countAxis]="false"
+            [showValues]="true"
+            valuePrefix="₹">
+          </app-bar-chart>
+          <div *ngIf="!financialOverviewChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+            <p class="empty-title">No income or expenses yet</p>
+            <p class="empty-hint">Totals for the selected period will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- Payment Mode Breakdown -->
       <mat-card class="payment-mode-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>payment</mat-icon>
             Payment Mode Breakdown
           </mat-card-title>
+          <mat-card-subtitle *ngIf="paymentModeChart">Income and expenses by payment mode (₹)</mat-card-subtitle>
+          <mat-card-subtitle *ngIf="!paymentModeChart">No transactions yet</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
-          <div class="payment-mode-grid">
-            <!-- Income by Payment Mode -->
-            <div class="payment-mode-section">
-              <h4 class="payment-mode-title">
-                <mat-icon class="income-icon">trending_up</mat-icon>
-                Income by Payment Mode
-              </h4>
-              <div class="payment-mode-list">
-                <div class="payment-mode-item" *ngFor="let method of paymentMethods">
-                  <div class="payment-mode-info">
-                    <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
-                    <span class="payment-mode-label">{{ method.label }}</span>
-                  </div>
-                  <span class="payment-mode-amount income">₹{{ getPaymentModeAmount(method.value, 'income') | indianCurrency }}</span>
-                </div>
-              </div>
+          <app-bar-chart
+            *ngIf="paymentModeChart"
+            [data]="paymentModeChart"
+            [height]="'240px'"
+            [responsive]="true"
+            [showLegend]="true"
+            [countAxis]="false"
+            [showValues]="true"
+            valuePrefix="₹">
+          </app-bar-chart>
+          <div *ngIf="!paymentModeChart" class="chart-empty">
+            <div class="empty-ring" aria-hidden="true">
+              <mat-icon>payments</mat-icon>
             </div>
-
-            <!-- Expenses by Payment Mode -->
-            <div class="payment-mode-section">
-              <h4 class="payment-mode-title">
-                <mat-icon class="expense-icon">trending_down</mat-icon>
-                Expenses by Payment Mode
-              </h4>
-              <div class="payment-mode-list">
-                <div class="payment-mode-item" *ngFor="let method of paymentMethods">
-                  <div class="payment-mode-info">
-                    <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
-                    <span class="payment-mode-label">{{ method.label }}</span>
-                  </div>
-                  <span class="payment-mode-amount expense">₹{{ getPaymentModeAmount(method.value, 'expenses') | indianCurrency }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Net Balance by Payment Mode -->
-            <div class="payment-mode-section">
-              <h4 class="payment-mode-title">
-                <mat-icon class="balance-icon">account_balance_wallet</mat-icon>
-                Net Balance by Payment Mode
-              </h4>
-              <div class="payment-mode-list">
-                <div class="payment-mode-item" *ngFor="let method of paymentMethods">
-                  <div class="payment-mode-info">
-                    <mat-icon [class]="'payment-icon-' + method.value.toLowerCase().replace(' ', '-')">{{ method.icon }}</mat-icon>
-                    <span class="payment-mode-label">{{ method.label }}</span>
-                  </div>
-                  <span class="payment-mode-amount" 
-                        [class.positive]="getPaymentModeNetBalance(method.value) >= 0"
-                        [class.negative]="getPaymentModeNetBalance(method.value) < 0">
-                    ₹{{ getPaymentModeNetBalance(method.value) | indianCurrency }}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <p class="empty-title">No payments yet</p>
+            <p class="empty-hint">Income and expenses by mode will show up here.</p>
           </div>
         </mat-card-content>
       </mat-card>
     </div>
     <!-- End Financial Overview Section -->
+
+    <!-- TODAY'S BIRTHDAYS -->
+    <div class="birthday-section">
+      <mat-card class="birthday-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>cake</mat-icon>
+            Student Birthdays
+            <span class="birthday-count" *ngIf="studentBirthdays.length">{{ studentBirthdays.length }}</span>
+          </mat-card-title>
+          <mat-card-subtitle>{{ birthdayDateLabel }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="studentBirthdays.length; else noStudentBirthdays">
+            <div class="birthday-table-wrap">
+              <table class="birthday-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th class="age-col">Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let student of pagedStudentBirthdays">
+                    <td>
+                      <div class="person-cell">
+                        <span class="person-avatar" aria-hidden="true">{{ birthdayInitials(student.name) }}</span>
+                        <span class="person-name">{{ student.name }}</span>
+                      </div>
+                    </td>
+                    <td>{{ student.grade || '—' }}<span *ngIf="student.section"> · {{ student.section }}</span></td>
+                    <td class="age-col"><span class="age-pill">{{ student.age }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="birthday-pager" *ngIf="studentBirthdays.length > birthdayPageSize">
+              <span>{{ birthdayRangeLabel(studentBirthdays, studentBirthdayPage) }}</span>
+              <button mat-icon-button type="button" aria-label="Previous students"
+                      [disabled]="studentBirthdayPage === 0"
+                      (click)="changeBirthdayPage('student', -1)">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button mat-icon-button type="button" aria-label="Next students"
+                      [disabled]="studentBirthdayPage >= birthdayPageCount(studentBirthdays) - 1"
+                      (click)="changeBirthdayPage('student', 1)">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #noStudentBirthdays>
+            <div class="birthday-empty">
+              <mat-icon>cake</mat-icon>
+              <p class="empty-title">No student birthdays today</p>
+              <p class="empty-hint">Students with a birthday today will show up here.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="birthday-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>cake</mat-icon>
+            Teacher Birthdays
+            <span class="birthday-count" *ngIf="teacherBirthdays.length">{{ teacherBirthdays.length }}</span>
+          </mat-card-title>
+          <mat-card-subtitle>{{ birthdayDateLabel }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="teacherBirthdays.length; else noTeacherBirthdays">
+            <div class="birthday-table-wrap">
+              <table class="birthday-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th class="age-col">Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let teacher of pagedTeacherBirthdays">
+                    <td>
+                      <div class="person-cell">
+                        <span class="person-avatar" aria-hidden="true">{{ birthdayInitials(teacher.name) }}</span>
+                        <span class="person-copy">
+                          <span class="person-name">{{ teacher.name }}</span>
+                          <span class="person-meta" *ngIf="teacher.employee_id">{{ teacher.employee_id }}</span>
+                        </span>
+                      </div>
+                    </td>
+                    <td>{{ teacher.designation || '—' }}</td>
+                    <td class="age-col"><span class="age-pill">{{ teacher.age }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="birthday-pager" *ngIf="teacherBirthdays.length > birthdayPageSize">
+              <span>{{ birthdayRangeLabel(teacherBirthdays, teacherBirthdayPage) }}</span>
+              <button mat-icon-button type="button" aria-label="Previous teachers"
+                      [disabled]="teacherBirthdayPage === 0"
+                      (click)="changeBirthdayPage('teacher', -1)">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button mat-icon-button type="button" aria-label="Next teachers"
+                      [disabled]="teacherBirthdayPage >= birthdayPageCount(teacherBirthdays) - 1"
+                      (click)="changeBirthdayPage('teacher', 1)">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #noTeacherBirthdays>
+            <div class="birthday-empty">
+              <mat-icon>cake</mat-icon>
+              <p class="empty-title">No teacher birthdays today</p>
+              <p class="empty-hint">Teachers with a birthday today will show up here.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
     </div>
     <!-- End Dashboard Content -->

@@ -1,6 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { ThemeService } from '../../../../core/services/theme.service';
+import { chartCssVar, chartSurfaceColor, chartTextColor, chartTooltipColor } from '../chart-theme';
 
 Chart.register(...registerables);
 
@@ -45,16 +47,25 @@ export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestr
   
   @ViewChild('chartCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
   private chart: Chart | null = null;
+  private themeService = inject(ThemeService);
 
-  // Default color scheme (Material Design colors)
-  private defaultColors = [
-    '#4CAF50', // Green
-    '#F44336', // Red
-    '#FF9800', // Orange
-    '#2196F3', // Blue
-    '#9C27B0', // Purple
-    '#FF5722'  // Deep Orange
-  ];
+  constructor() {
+    effect(() => {
+      this.themeService.currentTheme();
+      this.applyThemeChrome();
+    });
+  }
+
+  private themePalette(): string[] {
+    return [
+      chartCssVar('--success-color', '#16A34A'),
+      chartCssVar('--error-color', '#DC2626'),
+      chartCssVar('--warning-color', '#F59E0B'),
+      chartCssVar('--info-color', '#2563EB'),
+      chartCssVar('--primary-color', '#1E88E5'),
+      chartCssVar('--accent-color', '#00B8D9')
+    ];
+  }
 
   ngAfterViewInit(): void {
     this.createChart();
@@ -104,8 +115,8 @@ export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestr
         labels: this.data.labels,
         datasets: [{
           data: this.data.data,
-          backgroundColor: this.data.backgroundColor || this.defaultColors,
-          borderColor: this.data.borderColor || ['#fff', '#fff', '#fff', '#fff', '#fff', '#fff'],
+          backgroundColor: this.data.backgroundColor || this.themePalette(),
+          borderColor: this.data.borderColor || this.sliceBorders(this.data.data.length),
           borderWidth: 2
         }]
       },
@@ -125,6 +136,7 @@ export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestr
             labels: {
               usePointStyle: true,
               padding: 15,
+              color: chartTextColor(),
               font: {
                 size: 12
               },
@@ -141,6 +153,7 @@ export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestr
                         ? `${label}: ${percentage}%` 
                         : `${label}: ${value}`,
                       fillStyle: (data.datasets[0].backgroundColor as string[])[i],
+                      fontColor: chartTextColor(),
                       hidden: false,
                       index: i
                     };
@@ -151,7 +164,9 @@ export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestr
             }
           },
           tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backgroundColor: chartTooltipColor(),
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
             padding: 12,
             cornerRadius: 4,
             callbacks: {
@@ -176,8 +191,29 @@ export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestr
 
     this.chart.data.labels = this.data.labels;
     this.chart.data.datasets[0].data = this.data.data;
-    this.chart.data.datasets[0].backgroundColor = this.data.backgroundColor || this.defaultColors;
-    
+    this.chart.data.datasets[0].backgroundColor = this.data.backgroundColor || this.themePalette();
+    this.chart.data.datasets[0].borderColor = this.data.borderColor || this.sliceBorders(this.data.data.length);
+    this.applyThemeChrome();
+  }
+
+  private sliceBorders(count: number): string[] {
+    return Array.from({ length: count }, () => chartSurfaceColor());
+  }
+
+  private applyThemeChrome(): void {
+    if (!this.chart) {
+      return;
+    }
+    const legend = this.chart.options.plugins?.legend?.labels;
+    if (legend) {
+      legend.color = chartTextColor();
+    }
+    const tooltip = this.chart.options.plugins?.tooltip;
+    if (tooltip) {
+      tooltip.backgroundColor = chartTooltipColor();
+      tooltip.titleColor = '#ffffff';
+      tooltip.bodyColor = '#ffffff';
+    }
     this.chart.update('none');
   }
 

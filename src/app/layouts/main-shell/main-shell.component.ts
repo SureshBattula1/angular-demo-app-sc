@@ -479,6 +479,15 @@ export class MainShellComponent implements OnInit, OnDestroy {
       root.style.setProperty('--accent-color', theme.accent);
       root.style.setProperty('--accent-light', theme.accentLight);
       root.style.setProperty('--accent-dark', theme.accentDark);
+      root.style.setProperty('--neutral-color', theme.neutral);
+      root.style.setProperty('--surface-color', theme.surface);
+      root.style.setProperty('--soft-surface-color', theme.softSurface);
+      root.style.setProperty('--card-background', theme.surface);
+      root.style.setProperty('--success-color', theme.success);
+      root.style.setProperty('--warning-color', theme.warning);
+      root.style.setProperty('--error-color', theme.danger);
+      root.style.setProperty('--info-color', theme.info);
+      this.themeService.currentTheme.set(themeName);
       
       // Update Material toolbar background dynamically
       const toolbar = document.querySelector('.app-header') as HTMLElement;
