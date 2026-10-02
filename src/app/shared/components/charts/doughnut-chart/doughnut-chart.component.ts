@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
@@ -36,12 +36,12 @@ export interface DoughnutChartData {
     }
   `]
 })
-export class DoughnutChartComponent implements OnInit, OnChanges, AfterViewInit {
+export class DoughnutChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() data: DoughnutChartData | null = null;
-  @Input() height: string = '250px';
-  @Input() responsive: boolean = true;
-  @Input() showLegend: boolean = true;
-  @Input() showPercentage: boolean = true;
+  @Input() height = '250px';
+  @Input() responsive = true;
+  @Input() showLegend = true;
+  @Input() showPercentage = true;
   
   @ViewChild('chartCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
   private chart: Chart | null = null;
@@ -56,16 +56,40 @@ export class DoughnutChartComponent implements OnInit, OnChanges, AfterViewInit 
     '#FF5722'  // Deep Orange
   ];
 
-  ngOnInit(): void {}
-
   ngAfterViewInit(): void {
     this.createChart();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && !changes['data'].firstChange) {
-      this.updateChart();
+    if (!changes['data']) {
+      return;
     }
+    if (changes['data'].firstChange) {
+      if (this.canvasRef) {
+        this.createChart();
+      }
+      return;
+    }
+    const prev = changes['data'].previousValue as DoughnutChartData | null;
+    const curr = changes['data'].currentValue as DoughnutChartData | null;
+    if (this.sameChartData(prev, curr)) {
+      return;
+    }
+    if (!this.chart) {
+      this.createChart();
+      return;
+    }
+    this.updateChart();
+  }
+
+  private sameChartData(a: DoughnutChartData | null, b: DoughnutChartData | null): boolean {
+    if (a === b) {
+      return true;
+    }
+    if (!a || !b) {
+      return false;
+    }
+    return JSON.stringify(a) === JSON.stringify(b);
   }
 
   private createChart(): void {

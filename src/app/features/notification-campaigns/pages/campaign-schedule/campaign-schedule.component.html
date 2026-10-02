@@ -1,32 +1,61 @@
-<div class="schedule-page">
-  <mat-card class="schedule-card">
-    <div class="page-top">
-      <div class="page-title-block">
-        <h1 class="page-title">{{ title }}</h1>
-        <nav class="step-nav" aria-label="Schedule steps">
-          <span class="step-pill" [class.active]="step === 1">1 · Classes</span>
-          <span class="step-sep"></span>
-          <span class="step-pill" [class.active]="step === 2">2 · Templates</span>
-        </nav>
-      </div>
-      <div class="page-top__actions">
-        <button
-          mat-stroked-button
-          type="button"
-          class="create-template-btn"
-          [disabled]="!branchId"
-          [matTooltip]="branchId ? 'Add SMS template for this branch' : 'Select a branch first'"
-          (click)="openCreateTemplateDialog()">
-          <mat-icon>note_add</mat-icon>
-          Create template
-        </button>
-      </div>
+<div class="view-container" [class.module-custom]="isCustomModule">
+  <div class="view-action-bar">
+    <button mat-button type="button" class="back-btn" (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to list
+    </button>
+    <div class="action-buttons">
+      <button
+        mat-stroked-button
+        type="button"
+        class="add-all-btn"
+        *ngIf="isCustomModule"
+        [disabled]="!branchId || loadingClasses || loadingStaff"
+        (click)="addAllRecipientsForCustom()">
+        <mat-icon>select_all</mat-icon>
+        Add all
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        class="create-template-btn"
+        [disabled]="!branchId"
+        [matTooltip]="branchId ? 'View, edit, or delete SMS templates' : 'Select a branch first'"
+        (click)="openTemplatesManageDialog()">
+        <mat-icon>folder_open</mat-icon>
+        View &amp; Edit templates
+      </button>
     </div>
+  </div>
 
-    <mat-card-content class="page-body">
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">{{ moduleIcon() }}</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ title }}</h1>
+          <div class="view-meta">
+            <span *ngIf="branchName">
+              <mat-icon>business</mat-icon>
+              {{ branchName }}
+            </span>
+            <span *ngIf="(showEventDatePicker || isTodayOnlyDate) && branchId">
+              <mat-icon>event</mat-icon>
+              {{ eventDate | date:'mediumDate' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="detail-card" [class.custom-compose-card]="isCustomModule">
+    <mat-card-content>
       <div class="form-section" *ngIf="step === 1">
         <div class="control-strip">
-          <div class="control-group filters-inline">
+          <div class="control-group control-group--branch">
             <mat-form-field appearance="outline" class="compact-field branch-field" subscriptSizing="dynamic">
               <mat-label>Branch</mat-label>
               <mat-select [(ngModel)]="branchId" (selectionChange)="onBranchChange()">
@@ -52,7 +81,7 @@
             </span>
           </div>
 
-          <div class="control-group exam-mode-row" *ngIf="isExamsModule && branchId">
+          <div class="control-group control-group--module-filters" *ngIf="isExamsModule && branchId">
             <span class="legend-label">Notify for:</span>
             <mat-button-toggle-group
               [(ngModel)]="examNotifyMode"
@@ -125,7 +154,7 @@
             </mat-form-field>
           </div>
 
-          <div class="control-group exam-mode-row" *ngIf="isFeesModule && branchId">
+          <div class="control-group control-group--module-filters" *ngIf="isFeesModule && branchId">
             <span class="legend-label">Notify for:</span>
             <mat-button-toggle-group
               [(ngModel)]="feeNotifyMode"
@@ -330,7 +359,7 @@
             </ng-container>
           </div>
 
-          <div class="control-group actions" *ngIf="!loadingClasses && classGroups.length">
+          <div class="control-group control-group--actions" *ngIf="!loadingClasses && classGroups.length">
             <button mat-stroked-button type="button" class="mini-btn" (click)="selectAll(true)">Select all</button>
             <button mat-stroked-button type="button" class="mini-btn" (click)="selectAll(false)">Clear</button>
             <span class="selection-count">{{ selectedCount }}/{{ selectableSections.length }} selected</span>
@@ -417,7 +446,13 @@
         <p class="state-msg" *ngIf="isAssignmentsModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
           Select sections with assignments matching the chosen date (due today or published today).
         </p>
-        <p class="state-msg" *ngIf="usesEligibleTargets && !isAttendanceModule && !isExamsModule && !isFeesModule && !isHolidaysModule && !isAssignmentsModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
+        <p class="state-msg muted" *ngIf="isCustomModule && branchId && !loadingClasses && !classGroups.length">
+          No enrolled class sections at this branch.
+        </p>
+        <p class="state-msg" *ngIf="isCustomModule && branchId && !loadingClasses && classGroups.length">
+          Select class sections to notify. All enrolled students in each section receive the same message template.
+        </p>
+        <p class="state-msg" *ngIf="usesEligibleTargets && !isAttendanceModule && !isExamsModule && !isFeesModule && !isHolidaysModule && !isAssignmentsModule && !isCustomModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
           Select eligible sections for the chosen date.
         </p>
 
@@ -448,7 +483,7 @@
                 [class.is-disabled]="!section.selectable"
                 *ngFor="let section of group.sections">
                 <mat-checkbox class="compact-check" [(ngModel)]="section.selected" [disabled]="!section.selectable">
-                  Sec {{ section.section }}
+                  {{ sectionDisplayLabel(section.section) }}
                 </mat-checkbox>
                 <div class="row-meta">
                   <ng-container *ngIf="isAttendanceModule">
@@ -457,7 +492,7 @@
                       [class.danger]="!section.attendanceMarked"
                       [class.tally-ok]="section.attendanceMarked"
                       [title]="section.attendanceMarked ? 'Attendance marked' : 'Attendance not taken'">
-                      {{ section.attendanceMarked ? 'Marked' : 'None' }}
+                      {{ section.attendanceMarked ? 'Marked' : 'Not marked' }}
                     </span>
                     <span
                       class="tally"
@@ -476,7 +511,7 @@
                       [class.danger]="!section.examCriteriaMet"
                       [class.tally-ok]="section.examCriteriaMet"
                       [title]="examTallyTitle(section)">
-                      {{ section.examCriteriaMet ? 'Ready' : 'None' }}
+                      {{ section.examCriteriaMet ? 'Ready' : 'Not ready' }}
                     </span>
                     <span
                       class="tally"
@@ -495,7 +530,7 @@
                       [class.danger]="!section.feeCriteriaMet"
                       [class.tally-ok]="section.feeCriteriaMet"
                       [title]="feeTallyTitle(section)">
-                      {{ section.feeCriteriaMet ? 'Ready' : 'None' }}
+                      {{ section.feeCriteriaMet ? 'Ready' : 'Not ready' }}
                     </span>
                     <span
                       class="tally"
@@ -522,8 +557,28 @@
         </div>
       </div>
 
+      <div class="branch-people-section" *ngIf="step === 1 && branchId">
+        <div class="branch-people-head">
+          <h3>Branch people</h3>
+          <p>Teachers, admins, staff, and accounts — same branch as students above.</p>
+        </div>
+        <p class="state-msg muted" *ngIf="loadingStaff">Loading staff lists…</p>
+        <div class="staff-groups-grid" *ngIf="!loadingStaff">
+          <app-staff-group-picker
+            *ngFor="let group of staffGroups"
+            [label]="group.label"
+            [people]="group.people"
+            [selectedIds]="selectedIdsForStaffGroup(group.key)"
+            (selectedIdsChange)="onStaffGroupSelectionChange(group.key, $event)">
+          </app-staff-group-picker>
+        </div>
+      </div>
+
       <div class="form-section templates-step" *ngIf="step === 2">
-        <p class="state-msg" *ngIf="!isExamsModule && !isFeesModule && !isAssignmentsModule">Choose a template for each status (from Bulk Management).</p>
+        <p class="state-msg" *ngIf="!isExamsModule && !isFeesModule && !isAssignmentsModule && !isCustomModule">Choose a template for each status (from Bulk Management).</p>
+        <p class="state-msg" *ngIf="isCustomModule">
+          Choose an SMS template for your custom message (from Bulk Management).
+        </p>
         <p class="state-msg" *ngIf="isAssignmentsModule">
           Choose a template for each assignment type on this date
           <ng-container *ngIf="assignmentStatusLabelsHint"> ({{ assignmentStatusLabelsHint }})</ng-container>.
@@ -531,7 +586,7 @@
         </p>
         <p class="state-msg" *ngIf="isExamsModule">Choose a template for {{ examNotifyModeLabel | lowercase }}.</p>
         <p class="state-msg" *ngIf="isFeesModule">Choose template(s) for {{ feeNotifyModeLabel | lowercase }}.</p>
-        <p class="template-hint">Missing a template? Use <strong>Create template</strong> above.</p>
+        <p class="template-hint">Manage templates with <strong>View &amp; Edit templates</strong> above.</p>
         <div class="template-grid">
           <mat-form-field appearance="outline" class="compact-field" subscriptSizing="dynamic" *ngFor="let status of filteredStatuses">
             <mat-label>{{ status.label }}</mat-label>
@@ -541,18 +596,28 @@
             </mat-select>
           </mat-form-field>
         </div>
+        <div class="staff-template-row" *ngIf="selectedStaffUserIds.length > 0">
+          <p class="state-msg">Staff template ({{ selectedStaffUserIds.length }} selected)</p>
+          <mat-form-field appearance="outline" class="compact-field" subscriptSizing="dynamic">
+            <mat-label>Staff message template</mat-label>
+            <mat-select [(ngModel)]="staffTemplateId">
+              <mat-option [value]="null">Select template</mat-option>
+              <mat-option *ngFor="let template of templates" [value]="template.id">{{ template.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
     </mat-card-content>
 
-    <footer class="page-footer">
+    <mat-card-actions class="schedule-footer" align="end">
       <button mat-button type="button" (click)="step === 1 ? cancel() : step = 1">
         {{ step === 1 ? 'Cancel' : 'Back' }}
       </button>
       <button *ngIf="step === 1" mat-flat-button color="primary" type="button" (click)="nextFromClasses()">Continue</button>
       <button *ngIf="step === 2" mat-flat-button color="primary" type="button" (click)="openPreview()" [disabled]="saving">
-        Preview &amp; schedule
+        {{ saving ? 'Loading preview…' : previewScheduleLabel }}
       </button>
-    </footer>
+    </mat-card-actions>
   </mat-card>
 </div>
 
@@ -579,7 +644,7 @@
         <ul class="confirm-list selected" *ngIf="confirmedSelectedSections.length; else noSelected">
           <li *ngFor="let row of confirmedSelectedSections">
             <div class="confirm-row-main">
-              <strong>{{ row.className }} · Section {{ row.section }}</strong>
+              <strong>{{ row.className }} · {{ sectionDisplayLabel(row.section) }}</strong>
               <span class="confirm-chip selected">Selected</span>
             </div>
             <span class="confirm-meta">{{ row.studentCount }} students</span>
@@ -595,7 +660,7 @@
         <ul class="confirm-list not-selected" *ngIf="confirmedNotSelectedSections.length; else noneExcluded">
           <li *ngFor="let row of confirmedNotSelectedSections">
             <div class="confirm-row-main">
-              <strong>{{ row.className }} · Section {{ row.section }}</strong>
+              <strong>{{ row.className }} · {{ sectionDisplayLabel(row.section) }}</strong>
               <span class="confirm-chip" [class.missing]="row.reason === 'Attendance not taken'">
                 {{ row.reason }}
               </span>

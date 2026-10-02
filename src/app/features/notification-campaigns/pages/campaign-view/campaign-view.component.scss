@@ -1,4 +1,8 @@
-:host { display: block; }
+:host {
+  display: block;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 
 .view-container {
   padding: var(--spacing-lg);
@@ -601,6 +605,20 @@
 
 @media (max-width: 768px) {
   .view-container { padding: var(--spacing-sm); }
+
+  .view-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+
+    .action-buttons {
+      width: 100%;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
 
   .view-header {
     flex-direction: column;
