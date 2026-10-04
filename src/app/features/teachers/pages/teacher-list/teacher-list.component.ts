@@ -442,7 +442,7 @@ export class TeacherListComponent implements OnInit {
       },
       {
         format: format,
-        filters: this.currentFilters
+        filters: this.exportService.buildExportFilters(this.currentFilters)
       }
     );
   }
