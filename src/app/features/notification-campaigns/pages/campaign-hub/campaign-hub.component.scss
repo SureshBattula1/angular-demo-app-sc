@@ -138,6 +138,26 @@
     flex: 0 1 280px;
   }
 
+  .branch-lock-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    background: color-mix(in srgb, var(--primary-color) 10%, var(--white));
+    border: 1px solid color-mix(in srgb, var(--primary-color) 22%, var(--white));
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   .period-toggle {
     flex: 1 1 auto;
     flex-wrap: wrap;
@@ -682,4 +702,9 @@
   display: block;
   max-width: 100%;
   overflow-x: hidden;
+
+  .cell-wrap {
+    white-space: normal;
+    line-height: 1.35;
+  }
 }

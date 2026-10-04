@@ -14,8 +14,10 @@ import {
   SmsTemplate,
   SmsTemplateAudience,
   SmsTemplateService,
+  SmsTemplateTagGroup,
   SmsTemplatesIndexData
 } from '../../services/sms-template.service';
+import { smsTemplateModuleLabel } from '../../utils/sms-template-module.util';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import {
   SmsTemplateDialogComponent,
@@ -25,6 +27,7 @@ import {
 /** Row shape for the data table (display labels). */
 export type SmsTemplateRow = SmsTemplate & {
   audience_label: string;
+  module_type_label: string;
   status_label: string;
   branch_name: string;
 };
@@ -46,12 +49,20 @@ export class SmsTemplatesPageComponent implements OnInit {
   loading = false;
   branches: Branch[] = [];
   templates: SmsTemplateRow[] = [];
-  allowedTags: string[] = [];
+  tagCatalogByModule: Record<string, SmsTemplateTagGroup[]> = {};
 
   tableConfig: TableConfig = {
     columns: [
       { key: 'branch_name', header: 'Branch', sortable: true, searchable: true, width: '160px' },
       { key: 'name', header: 'Template name', sortable: true, searchable: true },
+      {
+        key: 'module_type_label',
+        header: 'Type',
+        type: 'badge',
+        sortable: true,
+        width: '120px',
+        align: 'center'
+      },
       {
         key: 'audience_label',
         header: 'Audience',
@@ -119,11 +130,26 @@ export class SmsTemplatesPageComponent implements OnInit {
     showSaveSearch: false,
     fields: [
       {
+        key: 'module_type',
+        label: 'Type',
+        type: 'select',
+        placeholder: 'Any',
+        icon: 'category',
+        options: [
+          { value: 'holidays', label: 'Holidays' },
+          { value: 'exams', label: 'Exams' },
+          { value: 'attendance', label: 'Attendance' },
+          { value: 'fees', label: 'Fees' },
+          { value: 'assignments', label: 'Assignments' },
+          { value: 'custom', label: 'Custom' }
+        ]
+      },
+      {
         key: 'audience',
         label: 'Audience',
         type: 'select',
         placeholder: 'Any',
-        icon: 'category',
+        icon: 'group',
         options: [
           { value: 'student', label: 'Students' },
           { value: 'teacher', label: 'Teachers' },
@@ -165,10 +191,9 @@ export class SmsTemplatesPageComponent implements OnInit {
         this.loading = false;
         this.branches = branches.data ?? [];
         if (!tplRes.success || !tplRes.data) {
-          this.allowedTags = [];
           return;
         }
-        this.allowedTags = tplRes.data.allowed_tags ?? [];
+        this.tagCatalogByModule = tplRes.data.tag_catalog_by_module ?? {};
         const merged: SmsTemplateRow[] = (tplRes.data.templates ?? []).map((t: SmsTemplate) =>
           this.toRow(t, t.branch_name ?? '')
         );
@@ -193,6 +218,7 @@ export class SmsTemplatesPageComponent implements OnInit {
       ...t,
       branch_name: branchName,
       audience_label: this.audienceLabel(t.audience),
+      module_type_label: smsTemplateModuleLabel(t.module_type),
       status_label: t.is_active ? 'Active' : 'Inactive'
     };
   }
@@ -215,15 +241,15 @@ export class SmsTemplatesPageComponent implements OnInit {
     }
     const data: SmsTemplateDialogData = {
       branches: this.branches,
-      allowedTags: this.allowedTags,
+      tagCatalogByModule: this.tagCatalogByModule,
       template
     };
     this.dialog
       .open(SmsTemplateDialogComponent, {
-        width: 'min(580px, 100vw - 24px)',
-        maxHeight: '90vh',
-        data,
-        autoFocus: 'input'
+        width: 'min(960px, 98vw)',
+        maxHeight: '92vh',
+        panelClass: 'sms-template-editor-dialog',
+        data
       })
       .afterClosed()
       .subscribe(saved => {

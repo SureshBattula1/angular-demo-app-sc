@@ -5,15 +5,26 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { Branch } from '../../../../core/models/branch.model';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { SmsTemplate, SmsTemplateService } from '../../services/sms-template.service';
+import {
+  SmsTemplate,
+  SmsTemplateAudience,
+  SmsTemplateService,
+  SmsTemplateTagGroup
+} from '../../services/sms-template.service';
 import {
   SmsTemplateDialogComponent,
   SmsTemplateDialogData
 } from '../sms-template-dialog/sms-template-dialog.component';
+import {
+  normalizeCampaignModuleForTemplates,
+  smsTemplateModuleLabel
+} from '../../utils/sms-template-module.util';
 
 export interface SmsTemplatesManageDialogData {
   branchId: string | number;
   branches: Branch[];
+  /** When opened from campaign schedule, pre-select this notification type for new templates. */
+  campaignModule?: string;
 }
 
 @Component({
@@ -33,11 +44,33 @@ export class SmsTemplatesManageDialogComponent implements OnInit {
 
   loading = false;
   templates: SmsTemplate[] = [];
-  allowedTags: string[] = [];
+  tagCatalogByModule: Record<string, SmsTemplateTagGroup[]> = {};
   private dirty = false;
 
   ngOnInit(): void {
     this.load();
+  }
+
+  get scheduleModuleLabel(): string | null {
+    if (!this.data.campaignModule) {
+      return null;
+    }
+    return smsTemplateModuleLabel(normalizeCampaignModuleForTemplates(this.data.campaignModule));
+  }
+
+  /** Match campaign schedule dropdown filtering (module_type). */
+  get visibleTemplates(): SmsTemplate[] {
+    const mod = normalizeCampaignModuleForTemplates(this.data.campaignModule ?? '');
+    if (!mod) {
+      return this.templates;
+    }
+    return this.templates.filter(t => {
+      const type = (t.module_type ?? '').trim().toLowerCase();
+      if (type === '') {
+        return true;
+      }
+      return type === mod;
+    });
   }
 
   load(): void {
@@ -47,11 +80,10 @@ export class SmsTemplatesManageDialogComponent implements OnInit {
         this.loading = false;
         if (!res.success || !res.data) {
           this.templates = [];
-          this.allowedTags = [];
           return;
         }
         this.templates = [...(res.data.templates ?? [])].sort((a, b) => a.name.localeCompare(b.name));
-        this.allowedTags = res.data.allowed_tags ?? [];
+        this.tagCatalogByModule = res.data.tag_catalog_by_module ?? {};
       },
       error: err => {
         this.loading = false;
@@ -96,19 +128,37 @@ export class SmsTemplatesManageDialogComponent implements OnInit {
     });
   }
 
+  audienceLabel(a: SmsTemplateAudience): string {
+    switch (a) {
+      case 'teacher':
+        return 'Teachers';
+      case 'both':
+        return 'Both';
+      default:
+        return 'Students';
+    }
+  }
+
+  moduleLabel(t: SmsTemplate): string {
+    return smsTemplateModuleLabel(t.module_type);
+  }
+
   private openEditor(template: SmsTemplate | null): void {
     const editorData: SmsTemplateDialogData = {
       branches: this.data.branches,
-      allowedTags: this.allowedTags,
+      tagCatalogByModule: this.tagCatalogByModule,
       template,
-      defaultBranchId: this.data.branchId
+      defaultBranchId: this.data.branchId,
+      defaultModuleType:
+        normalizeCampaignModuleForTemplates(this.data.campaignModule ?? 'custom') ?? 'custom'
     };
+
     this.dialog
       .open(SmsTemplateDialogComponent, {
-        width: 'min(580px, 100vw - 24px)',
-        maxHeight: '90vh',
-        data: editorData,
-        autoFocus: 'input'
+        width: 'min(960px, 98vw)',
+        maxHeight: '92vh',
+        panelClass: 'sms-template-editor-dialog',
+        data: editorData
       })
       .afterClosed()
       .subscribe(saved => {
@@ -118,17 +168,6 @@ export class SmsTemplatesManageDialogComponent implements OnInit {
           this.load();
         }
       });
-  }
-
-  audienceLabel(a: string): string {
-    switch (a) {
-      case 'teacher':
-        return 'Teachers';
-      case 'both':
-        return 'Both';
-      default:
-        return 'Students';
-    }
   }
 }
 
@@ -141,6 +180,7 @@ export class SmsTemplatesManageDialogComponent implements OnInit {
     <h2 mat-dialog-title>{{ data.template.name }}</h2>
     <mat-dialog-content class="view-body">
       <p class="meta">
+        <span class="pill">{{ data.template.module_type || 'custom' }}</span>
         <span class="pill">{{ data.template.audience }}</span>
         <span class="pill" [class.inactive]="!data.template.is_active">
           {{ data.template.is_active ? 'Active' : 'Inactive' }}

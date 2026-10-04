@@ -1,19 +1,25 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { NotificationCampaignService } from '../../services/notification-campaign.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { formatApiDateTimeLocal } from '../../../../shared/utils/api-datetime.util';
 import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
+import { AdvancedSearchSidebarComponent } from '../../../../shared/components/advanced-search-sidebar/advanced-search-sidebar.component';
+import { AdvancedSearchConfig, SearchCriteria, SearchOption } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
+import {
+  BRANCH_TEAM_SECTION_LABELS,
+  createCampaignRecipientAdvancedSearchConfig
+} from '../../config/campaign-search.config';
 
 @Component({
   selector: 'app-campaign-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule],
+  imports: [CommonModule, FormsModule, MaterialModule, AdvancedSearchSidebarComponent],
   templateUrl: './campaign-view.component.html',
   styleUrls: ['./campaign-view.component.scss']
 })
@@ -26,20 +32,18 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
   recipientColumns = ['student', 'class', 'status', 'delivery', 'viewed', 'liked'];
   recipientDataSource = new MatTableDataSource<any>([]);
   recipientSearch = '';
+  recipientAdvancedOpen = false;
+  recipientAdvancedCriteria: SearchCriteria = {};
   recipientTotal = 0;
   recipientPage = 1;
   recipientPageSize = 25;
 
+  recipientAdvancedSearchConfig: AdvancedSearchConfig = createCampaignRecipientAdvancedSearchConfig();
+
+  private recipientSectionsByGrade: Record<string, SearchOption[]> = {};
+  private recipientSearchDebounce?: ReturnType<typeof setTimeout>;
   private pollSub?: Subscription;
   private campaignId = '';
-
-  @ViewChild('recipientPaginator')
-  set recipientPaginatorRef(paginator: MatPaginator | undefined) {
-    if (!paginator) {
-      return;
-    }
-    this.recipientDataSource.paginator = paginator;
-  }
 
   constructor(
     private route: ActivatedRoute,
@@ -62,6 +66,9 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pollSub?.unsubscribe();
+    if (this.recipientSearchDebounce) {
+      clearTimeout(this.recipientSearchDebounce);
+    }
   }
 
   formatScheduledAt(value: string | null | undefined): string {
@@ -155,6 +162,9 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
 
   statusKeyLabel(key: string): string {
     if (!key) return '—';
+    if (key === 'staff') {
+      return 'Team';
+    }
     return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
@@ -184,6 +194,10 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
   }
 
   recipientClassLine(row: { class_name?: string; grade?: string; section?: string }): string {
+    if (String(row.grade ?? '') === 'Staff') {
+      const roleLabel = BRANCH_TEAM_SECTION_LABELS[String(row.section ?? '')] || 'Branch team';
+      return `Branch team · ${roleLabel}`;
+    }
     const name = this.recipientClassName(row);
     const section = row.section ? `Section ${row.section}` : '';
     if (name === '—' && !section) {
@@ -205,18 +219,88 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
   }
 
   applyRecipientFilter(value: string): void {
-    this.recipientSearch = (value || '').trim().toLowerCase();
+    this.recipientSearch = (value || '').replace(/^\s+/, '').replace(/\s+/g, ' ');
+    if (this.recipientSearchDebounce) {
+      clearTimeout(this.recipientSearchDebounce);
+    }
+    this.recipientSearchDebounce = setTimeout(() => this.loadRecipients(1), 350);
+  }
+
+  openRecipientAdvancedSearch(): void {
+    this.recipientAdvancedOpen = true;
+  }
+
+  closeRecipientAdvancedSearch(): void {
+    this.recipientAdvancedOpen = false;
+  }
+
+  onRecipientAdvancedSearch(criteria: SearchCriteria): void {
+    this.recipientAdvancedCriteria = { ...criteria };
     this.loadRecipients(1);
   }
 
-  filteredRecipientCount(): number {
-    return this.recipientTotal;
+  onRecipientAdvancedReset(): void {
+    this.recipientAdvancedCriteria = {};
+    this.loadRecipients(1);
+  }
+
+  onRecipientAdvancedFieldChange(event: { field: string; value: unknown }): void {
+    if (event.field !== 'grade') {
+      return;
+    }
+    const grade = String(event.value ?? '').trim();
+    this.patchRecipientSearchFieldOptions(undefined, grade);
+  }
+
+  private patchRecipientSearchFieldOptions(
+    gradeOptions?: SearchOption[],
+    activeGrade?: string
+  ): void {
+    const gradeField = this.recipientAdvancedSearchConfig.fields.find(f => f.key === 'grade');
+    const sectionField = this.recipientAdvancedSearchConfig.fields.find(f => f.key === 'section');
+    if (gradeOptions && gradeField) {
+      gradeField.options = gradeOptions;
+    }
+    if (sectionField) {
+      const grade = activeGrade ?? String(this.recipientAdvancedCriteria['grade'] ?? '').trim();
+      sectionField.options = grade ? [...(this.recipientSectionsByGrade[grade] || [])] : [];
+    }
+  }
+
+  resetRecipientFilters(): void {
+    this.recipientSearch = '';
+    this.recipientAdvancedCriteria = {};
+    this.loadRecipients(1);
+  }
+
+  recipientActiveFilterCount(): number {
+    let count = Object.keys(this.recipientAdvancedCriteria).filter(key => {
+      const value = this.recipientAdvancedCriteria[key];
+      return value !== null && value !== undefined && value !== '';
+    }).length;
+    if (this.recipientSearch.trim()) {
+      count += 1;
+    }
+    return count;
+  }
+
+  hasRecipientFilters(): boolean {
+    return this.recipientActiveFilterCount() > 0;
+  }
+
+  filteredRecipientCountLabel(): string {
+    const campaignTotal = this.campaign?.recipient_count ?? 0;
+    if (this.hasRecipientFilters() && this.recipientTotal !== campaignTotal) {
+      return `${this.recipientTotal} matching · ${campaignTotal} in campaign`;
+    }
+    return `${this.recipientTotal} total`;
   }
 
   private loadCampaign(): void {
     this.campaigns.show(this.campaignId).subscribe({
       next: response => {
         this.campaign = response.data;
+        this.buildRecipientFilterOptions();
         this.loading = false;
       },
       error: error => {
@@ -226,29 +310,109 @@ export class CampaignViewComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadRecipients(page: number): void {
-    this.recipientsLoading = true;
-    this.campaigns.recipients(this.campaignId, {
+  private buildRecipientFilterOptions(): void {
+    const targets = this.campaign?.targets ?? [];
+    const gradeMap = new Map<string, string>();
+    this.recipientSectionsByGrade = {};
+
+    for (const target of targets) {
+      const grade = String(target.grade ?? '').trim();
+      if (!grade) {
+        continue;
+      }
+      const gradeLabel = target.class_name || `Grade ${grade}`;
+      if (!gradeMap.has(grade)) {
+        gradeMap.set(grade, gradeLabel);
+      }
+      const section = String(target.section ?? '').trim();
+      if (!section) {
+        continue;
+      }
+      if (!this.recipientSectionsByGrade[grade]) {
+        this.recipientSectionsByGrade[grade] = [];
+      }
+      if (!this.recipientSectionsByGrade[grade].some(opt => opt.value === section)) {
+        this.recipientSectionsByGrade[grade].push({
+          value: section,
+          label: `Section ${section}`
+        });
+      }
+    }
+
+    const gradeOptions: SearchOption[] = Array.from(gradeMap.entries()).map(([value, label]) => ({
+      value,
+      label
+    }));
+
+    this.patchRecipientSearchFieldOptions(gradeOptions);
+  }
+
+  private recipientQueryParams(page: number): {
+    page: number;
+    per_page: number;
+    q?: string;
+    delivery_status?: string;
+    grade?: string;
+    section?: string;
+    status_key?: string;
+    viewed?: string;
+    liked?: string;
+    audience?: string;
+    team_role?: string;
+  } {
+    const params: {
+      page: number;
+      per_page: number;
+      q?: string;
+      delivery_status?: string;
+      grade?: string;
+      section?: string;
+      status_key?: string;
+      viewed?: string;
+      liked?: string;
+      audience?: string;
+      team_role?: string;
+    } = {
       page,
       per_page: this.recipientPageSize
-    }).subscribe({
+    };
+    const q = this.recipientSearch.trim();
+    if (q) {
+      params.q = q;
+    }
+    const c = this.recipientAdvancedCriteria;
+    if (c['delivery_status']) {
+      params.delivery_status = String(c['delivery_status']);
+    }
+    if (c['grade']) {
+      params.grade = String(c['grade']);
+    }
+    if (c['section']) {
+      params.section = String(c['section']);
+    }
+    if (c['status_key']) {
+      params.status_key = String(c['status_key']).trim();
+    }
+    if (c['viewed'] !== undefined && c['viewed'] !== null && c['viewed'] !== '') {
+      params.viewed = String(c['viewed']);
+    }
+    if (c['liked'] !== undefined && c['liked'] !== null && c['liked'] !== '') {
+      params.liked = String(c['liked']);
+    }
+    if (c['audience']) {
+      params.audience = String(c['audience']);
+    }
+    if (c['team_role']) {
+      params.team_role = String(c['team_role']);
+    }
+    return params;
+  }
+
+  private loadRecipients(page: number): void {
+    this.recipientsLoading = true;
+    this.campaigns.recipients(this.campaignId, this.recipientQueryParams(page)).subscribe({
       next: response => {
-        let rows = response.data || [];
-        if (this.recipientSearch) {
-          rows = rows.filter(row => {
-            const haystack = [
-              row.student_name,
-              row.class_name,
-              row.section,
-              row.status_key,
-              row.delivery_status
-            ]
-              .filter(Boolean)
-              .join(' ')
-              .toLowerCase();
-            return haystack.includes(this.recipientSearch);
-          });
-        }
+        const rows = response.data || [];
         this.recipientDataSource.data = rows;
         this.recipientTotal = response.meta?.total ?? rows.length;
         this.recipientPage = response.meta?.current_page ?? page;

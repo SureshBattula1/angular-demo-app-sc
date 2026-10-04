@@ -56,12 +56,20 @@
       <div class="form-section" *ngIf="step === 1">
         <div class="control-strip">
           <div class="control-group control-group--branch">
-            <mat-form-field appearance="outline" class="compact-field branch-field" subscriptSizing="dynamic">
+            <mat-form-field
+              appearance="outline"
+              class="compact-field branch-field"
+              subscriptSizing="dynamic"
+              *ngIf="showBranchSelector">
               <mat-label>Branch</mat-label>
               <mat-select [(ngModel)]="branchId" (selectionChange)="onBranchChange()">
                 <mat-option *ngFor="let branch of branches" [value]="'' + branch.id">{{ branch.name }}</mat-option>
               </mat-select>
             </mat-form-field>
+            <span class="date-chip branch-chip" *ngIf="!showBranchSelector && branchName" title="Your branch">
+              <mat-icon>business</mat-icon>
+              {{ branchName }}
+            </span>
             <mat-form-field appearance="outline" class="compact-field date-field" subscriptSizing="dynamic" *ngIf="showEventDatePicker">
               <mat-label>{{ eventDateFieldLabel }}</mat-label>
               <input
@@ -482,17 +490,55 @@
         <p class="state-msg" *ngIf="isAssignmentsModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
           Select sections with assignments matching the chosen date (due today or published today).
         </p>
-        <p class="state-msg muted" *ngIf="isCustomModule && branchId && !loadingClasses && !classGroups.length">
-          No enrolled class sections at this branch.
+        <div class="custom-hub-summary" *ngIf="isCustomModule && branchId && step === 1">
+          <div class="summary-card">
+            <mat-icon>groups</mat-icon>
+            <div>
+              <strong>{{ customRecipientTotal }}</strong>
+              <span>people selected</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <mat-icon>school</mat-icon>
+            <div>
+              <strong>{{ customSelectedSectionCount }}</strong>
+              <span>sections · {{ customSelectedStudentCount }} students</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <mat-icon>badge</mat-icon>
+            <div>
+              <strong>{{ customSelectedStaffCount }}</strong>
+              <span>branch team</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="state-msg muted" *ngIf="isCustomModule && branchId && (loadingClasses || loadingStaff)">
+          Loading everyone at this branch…
         </p>
-        <p class="state-msg" *ngIf="isCustomModule && branchId && !loadingClasses && classGroups.length">
-          Select class sections to notify. All enrolled students in each section receive the same message template.
+        <p class="state-msg" *ngIf="isCustomModule && branchId && !loadingClasses && !loadingStaff">
+          Choose who receives this custom notification — students by class section, plus teachers, admins, staff, and accounts.
+          Use <strong>Add all</strong> to select the whole branch.
+        </p>
+        <p class="state-msg muted" *ngIf="isCustomModule && branchId && !loadingClasses && !classGroups.length && !loadingStaff">
+          No enrolled class sections at this branch.
         </p>
         <p class="state-msg" *ngIf="usesEligibleTargets && !isAttendanceModule && !isExamsModule && !isFeesModule && !isHolidaysModule && !isAssignmentsModule && !isCustomModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
           Select eligible sections for the chosen date.
         </p>
 
-        <div class="class-grid" *ngIf="classGroups.length">
+        <section class="custom-audience-block" *ngIf="isCustomModule && classGroups.length && step === 1">
+          <header class="custom-block-head">
+            <mat-icon>school</mat-icon>
+            <div>
+              <h3>Students</h3>
+              <p>By class section — parents receive SMS where applicable.</p>
+            </div>
+          </header>
+        </section>
+
+        <div class="class-grid" *ngIf="classGroups.length" [class.custom-class-grid]="isCustomModule">
           <div class="class-group" *ngFor="let group of classGroups">
             <div class="class-head">
               <mat-checkbox
@@ -615,11 +661,16 @@
         </div>
       </div>
 
-      <div class="branch-people-section" *ngIf="step === 1 && branchId && isStudentAttendanceTab">
-        <div class="branch-people-head">
-          <h3>Branch people</h3>
-          <p>Teachers, admins, staff, and accounts — same branch as students above.</p>
-        </div>
+      <div
+        class="branch-people-section custom-audience-block"
+        *ngIf="step === 1 && branchId && (isStudentAttendanceTab || isCustomModule)">
+        <header class="custom-block-head branch-people-head">
+          <mat-icon>groups</mat-icon>
+          <div>
+            <h3>Branch team</h3>
+            <p>Teachers, admins, staff, and accounts at this branch.</p>
+          </div>
+        </header>
         <p class="state-msg muted" *ngIf="loadingStaff">Loading staff lists…</p>
         <div class="staff-groups-grid" *ngIf="!loadingStaff">
           <app-staff-group-picker
@@ -635,7 +686,7 @@
       <div class="form-section templates-step" *ngIf="step === 2">
         <p class="state-msg" *ngIf="!isExamsModule && !isFeesModule && !isAssignmentsModule && !isCustomModule">Choose a template for each status (from Bulk Management).</p>
         <p class="state-msg" *ngIf="isCustomModule">
-          Choose an SMS template for your custom message (from Bulk Management).
+          One message template is used for every selected student and branch team member. Optional attachments appear in the in-app notification.
         </p>
         <p class="state-msg" *ngIf="isAssignmentsModule">
           Choose a template for each assignment type on this date
@@ -644,7 +695,13 @@
         </p>
         <p class="state-msg" *ngIf="isExamsModule">Choose a template for {{ examNotifyModeLabel | lowercase }}.</p>
         <p class="state-msg" *ngIf="isFeesModule">Choose template(s) for {{ feeNotifyModeLabel | lowercase }}.</p>
-        <p class="template-hint">Manage templates with <strong>View &amp; Edit templates</strong> above.</p>
+        <p class="template-hint">
+          Only <strong>{{ moduleMeta?.label || module }}</strong> templates are listed here.
+          Manage templates with <strong>View &amp; Edit templates</strong> above.
+        </p>
+        <p class="state-msg muted" *ngIf="templates.length === 0">
+          No templates for this notification type. Create one with the correct <strong>Type</strong> in View &amp; Edit templates.
+        </p>
         <div class="template-grid">
           <mat-form-field appearance="outline" class="compact-field" subscriptSizing="dynamic" *ngFor="let status of filteredStatuses">
             <mat-label>{{ status.label }}</mat-label>
@@ -654,7 +711,36 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div class="staff-template-row" *ngIf="selectedStaffUserIds.length > 0">
+
+        <div class="custom-compose-panel" *ngIf="isCustomModule">
+          <div class="custom-attachments-block">
+            <div class="custom-attachments-head">
+              <mat-icon>attach_file</mat-icon>
+              <div>
+                <strong>Attachments</strong>
+                <span>Optional · multiple files (PDF, images, documents)</span>
+              </div>
+            </div>
+            <app-file-upload
+              label="Add attachments"
+              icon="attach_file"
+              [uploadPath]="customAttachmentUploadPath"
+              [config]="customAttachmentUploadConfig"
+              (uploadSuccess)="onCustomAttachmentUploaded($event)">
+            </app-file-upload>
+            <ul class="custom-attachment-list" *ngIf="customAttachments.length">
+              <li *ngFor="let file of customAttachments; let i = index">
+                <mat-icon>insert_drive_file</mat-icon>
+                <span>{{ file.original_name || file.file_name }}</span>
+                <button mat-icon-button type="button" (click)="removeCustomAttachment(i)" aria-label="Remove attachment">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="staff-template-row" *ngIf="selectedStaffUserIds.length > 0 && !isCustomModule">
           <p class="state-msg">Staff template ({{ selectedStaffUserIds.length }} selected)</p>
           <mat-form-field appearance="outline" class="compact-field" subscriptSizing="dynamic">
             <mat-label>Staff message template</mat-label>

@@ -43,13 +43,21 @@
     </mat-card>
 
     <div class="dashboard-filters">
-      <mat-form-field appearance="outline" class="branch-filter compact-field" subscriptSizing="dynamic">
+      <mat-form-field
+        appearance="outline"
+        class="branch-filter compact-field"
+        subscriptSizing="dynamic"
+        *ngIf="showBranchSelector">
         <mat-label>Branch</mat-label>
         <mat-select [(ngModel)]="dashboardBranchId" (selectionChange)="onDashboardBranchChange()">
           <mat-option value="all">All branches</mat-option>
           <mat-option *ngFor="let branch of branches" [value]="'' + branch.id">{{ branch.name }}</mat-option>
         </mat-select>
       </mat-form-field>
+      <span class="branch-lock-chip" *ngIf="!showBranchSelector && selectedBranchLabel">
+        <mat-icon>business</mat-icon>
+        {{ selectedBranchLabel }}
+      </span>
 
       <mat-button-toggle-group [formControl]="selectedPeriod" class="period-toggle" (change)="onPeriodChange()">
         <mat-button-toggle value="all">All time</mat-button-toggle>
@@ -226,10 +234,10 @@
               <mat-progress-bar mode="determinate" [value]="moduleSentProgress(card.stats)"></mat-progress-bar>
             </div>
             <div class="module-actions">
-              <button mat-stroked-button type="button" *ngIf="card.key !== 'custom'" (click)="switchTab(card.key)">Open list</button>
+              <button mat-stroked-button type="button" (click)="switchTab(card.key)">Open list</button>
               <button mat-flat-button color="primary" type="button" (click)="scheduleModule(card.key)">
-                <mat-icon>{{ card.key === 'custom' ? 'send' : 'schedule_send' }}</mat-icon>
-                {{ card.key === 'custom' ? 'Compose & send' : 'Schedule' }}
+                <mat-icon>schedule_send</mat-icon>
+                Schedule
               </button>
             </div>
           </mat-card-content>
@@ -294,11 +302,12 @@
 
   <app-data-table
     *ngIf="activeTab !== 'dashboard'"
+    [attr.data-list-key]="listTableKey"
     [data]="rows"
-    [config]="tableConfig"
-    [title]="activeTab | titlecase"
+    [config]="activeListTableConfig"
+    [title]="activeTab === 'custom' ? 'Custom notifications' : (activeTab | titlecase)"
     [loading]="loading"
-    [advancedSearchConfig]="advancedSearchConfig"
+    [advancedSearchConfig]="activeAdvancedSearchConfig"
     (actionClicked)="onAction($event)"
     (advancedSearchChanged)="onAdvancedSearch($event)"
     (searchFieldChanged)="onSearchFieldChanged($event)"

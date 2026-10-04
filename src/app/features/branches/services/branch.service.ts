@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 import { Branch, BranchStats, BranchListResponse, BranchFormData } from '../../../core/models/branch.model';
+import { BranchService as BranchAccessService } from '../../../core/services/branch.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,10 @@ import { Branch, BranchStats, BranchListResponse, BranchFormData } from '../../.
 export class BranchService {
   private readonly ENDPOINT = '/branches';
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private branchAccess: BranchAccessService
+  ) {}
 
   /**
    * Get all branches with filters

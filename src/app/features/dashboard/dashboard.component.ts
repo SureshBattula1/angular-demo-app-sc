@@ -16,6 +16,8 @@ import { DoughnutChartComponent, DoughnutChartData } from '../../shared/componen
 import { DashboardService } from './dashboard.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../branches/services/branch.service';
+import { BranchService as BranchAccessService } from '../../core/services/branch.service';
+import { canShowBranchSelector, resolveDefaultBranchId } from '../../core/utils/branch-selection.util';
 import { ThemeService } from '../../core/services/theme.service';
 import { Subscription } from 'rxjs';
 
@@ -53,7 +55,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Branch filter
   selectedBranch = new FormControl('all');
   branches: any[] = [];
-  selectedBranchName: string = 'All Branches';
+  canSelectBranch = false;
+  selectedBranchName = 'All Branches';
+
+  get showBranchSelector(): boolean {
+    return this.canSelectBranch;
+  }
   
   // Dashboard data
   dashboardData: any = null;
@@ -85,7 +92,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private dashboardService: DashboardService,
     private authService: AuthService,
-    private branchService: BranchService
+    private branchService: BranchService,
+    private branchAccess: BranchAccessService
   ) {
     effect(() => {
       this.themeService.currentTheme();
@@ -154,12 +162,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   loadBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
-      next: (response) => {
+      next: response => {
         if (response.success && response.data) {
           this.branches = response.data;
+          this.canSelectBranch = canShowBranchSelector({
+            can_select_branch: response.can_select_branch ?? this.branchAccess.canSelectBranch(),
+            user_branch_id: response.user_branch_id ?? this.branchAccess.getUserBranchId()
+          });
+          if (!this.canSelectBranch) {
+            const locked = resolveDefaultBranchId(
+              {
+                can_select_branch: false,
+                user_branch_id: response.user_branch_id ?? this.branchAccess.getUserBranchId()
+              },
+              this.branches,
+              this.selectedBranch.value ?? 'all'
+            );
+            if (locked) {
+              this.selectedBranch.setValue(String(locked));
+              const branch = this.branches.find(b => String(b.id) === String(locked));
+              this.selectedBranchName = branch?.name ?? '';
+            }
+          }
         }
       },
-      error: (error) => {
+      error: () => {
         // Error loading branches
       }
     });
@@ -192,7 +219,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /**
    * Load dashboard data - OPTIMIZED: Single API call!
    */
-  loadDashboard(showLoader: boolean = true): void {
+  loadDashboard(showLoader = true): void {
     if (showLoader) {
       this.loading = true;
     }
@@ -462,14 +489,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private buildGradeAttendanceChart(): BarChartData | null {
-    const rows: Array<{
+    const rows: {
       label?: string;
       grade?: string;
       section?: string;
       present?: number;
       absent?: number;
       leaves?: number;
-    }> = this.dashboardData?.trends?.attendance || [];
+    }[] = this.dashboardData?.trends?.attendance || [];
     const labels: string[] = [];
     const present: number[] = [];
     const absent: number[] = [];

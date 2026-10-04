@@ -133,51 +133,63 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
   }
   
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && !changes['data'].firstChange) {
-      if (this.dataSource) {
-        // Update existing dataSource data
-        this.dataSource.data = this.data || [];
-        
-        // Update total count for display
-        if (!this.config.serverSide) {
-          this.totalCount = this.data?.length || 0;
-        } else if (this.paginator && this.config.totalCount !== undefined) {
-          this.totalCount = this.config.totalCount;
-          this.paginator.length = this.config.totalCount;
-        }
-        
-        // For client-side pagination, the MatTableDataSource automatically updates
-        // the paginator. We just need to ensure it's connected.
-        if (this.paginator && this.config.pagination !== false && !this.config.serverSide) {
-          // Reset to first page when data changes significantly
-          if (this.paginator.pageIndex > 0 && this.data.length <= this.paginator.pageIndex * this.paginator.pageSize) {
-            this.paginator.firstPage();
-          }
-        }
+    if (changes['config'] && this.config) {
+      const prevKeys = this.columnKeys(changes['config'].previousValue?.columns);
+      const nextKeys = this.columnKeys(this.config.columns);
+      const columnsChanged = prevKeys !== nextKeys;
+
+      if (changes['config'].firstChange || columnsChanged) {
+        this.setupDisplayedColumns();
       }
-    }
-    
-    if (changes['config']) {
-      // For server-side pagination, update totalCount when config changes
+
       if (this.config.serverSide && this.config.totalCount !== undefined) {
         this.totalCount = this.config.totalCount;
-        // Update paginator length if it exists, but preserve pageSize and pageIndex
         if (this.paginator) {
           const currentPageSize = this.paginator.pageSize;
           const currentPageIndex = this.paginator.pageIndex;
-          
           this.paginator.length = this.config.totalCount;
-          // Preserve user's selections
           this.paginator.pageSize = currentPageSize;
           this.paginator.pageIndex = currentPageIndex;
           this.pageSize = currentPageSize;
           this.currentPage = currentPageIndex;
         }
       }
-      
-      if (changes['config'].currentValue && changes['config'].firstChange) {
-        this.initializeTable();
+    }
+
+    if (changes['data'] && this.dataSource) {
+      this.dataSource.data = this.data || [];
+
+      if (!this.config?.serverSide) {
+        this.totalCount = this.data?.length || 0;
+        if (this.paginator) {
+          this.paginator.length = this.totalCount;
+        }
       }
+
+      if (this.paginator && this.config?.pagination !== false && !this.config?.serverSide) {
+        if (this.paginator.pageIndex > 0 && this.data.length <= this.paginator.pageIndex * this.paginator.pageSize) {
+          this.paginator.firstPage();
+        }
+      }
+    }
+  }
+
+  private columnKeys(columns: TableColumn[] | undefined): string {
+    return (columns || []).map(col => col.key).join('|');
+  }
+
+  private setupDisplayedColumns(): void {
+    if (!this.config) {
+      return;
+    }
+
+    this.displayedColumns = [];
+    if (this.config.selectable) {
+      this.displayedColumns.push('select');
+    }
+    this.displayedColumns.push(...this.config.columns.map(col => col.key));
+    if (this.config.actions && this.config.actions.length > 0) {
+      this.displayedColumns.push('actions');
     }
   }
   
@@ -201,19 +213,8 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnChanges, OnD
       this.totalCount = this.data.length;
     }
     
-    // Clear and setup columns
-    this.displayedColumns = [];
-    
-    if (this.config.selectable) {
-      this.displayedColumns.push('select');
-    }
-    
-    this.displayedColumns.push(...this.config.columns.map(col => col.key));
-    
-    if (this.config.actions && this.config.actions.length > 0) {
-      this.displayedColumns.push('actions');
-    }
-    
+    this.setupDisplayedColumns();
+
     // Initialize data source
     this.dataSource = new MatTableDataSource(this.data);
     

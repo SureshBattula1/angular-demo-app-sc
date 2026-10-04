@@ -25,6 +25,26 @@
     gap: 12px;
   }
   
+  .branch-lock-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    background: color-mix(in srgb, var(--primary-color) 10%, var(--white));
+    border: 1px solid color-mix(in srgb, var(--primary-color) 22%, var(--white));
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   .branch-filter {
     min-width: 200px;
     

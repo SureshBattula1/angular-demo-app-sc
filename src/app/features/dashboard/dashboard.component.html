@@ -9,8 +9,8 @@
     
     <!-- Filters Row: Branch + Date Range -->
     <div class="filters-container">
-      <!-- Branch Filter -->
-      <mat-form-field appearance="outline" class="branch-filter">
+      <!-- Branch Filter (SuperAdmin only) -->
+      <mat-form-field appearance="outline" class="branch-filter" *ngIf="showBranchSelector">
         <mat-label>
           <mat-icon>business</mat-icon>
           Branch
@@ -22,6 +22,10 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
+      <div class="branch-lock-chip" *ngIf="!showBranchSelector && selectedBranchName">
+        <mat-icon>business</mat-icon>
+        {{ selectedBranchName }}
+      </div>
 
       <!-- Date Range Selector -->
       <div class="date-range-selector">

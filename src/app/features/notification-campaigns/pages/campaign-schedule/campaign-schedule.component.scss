@@ -115,6 +115,150 @@
     background: color-mix(in srgb, var(--primary-color) 5%, var(--card-background));
     border-color: color-mix(in srgb, var(--primary-color) 16%, var(--gray-200));
   }
+
+  .custom-hub-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .summary-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 20%, var(--gray-200));
+    background: color-mix(in srgb, var(--primary-color) 6%, var(--card-background));
+
+    mat-icon {
+      color: var(--primary-color);
+    }
+
+    strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    span {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  }
+
+  .custom-audience-block {
+    margin-top: 8px;
+    margin-bottom: 12px;
+  }
+
+  .custom-block-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+
+    mat-icon {
+      color: var(--primary-color);
+      margin-top: 2px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  }
+
+  .custom-class-grid {
+    margin-bottom: 8px;
+  }
+
+  .branch-people-section.custom-audience-block {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--gray-200);
+  }
+
+  .custom-compose-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 640px;
+  }
+
+  .custom-template-field {
+    width: 100%;
+  }
+
+  .custom-attachments-block {
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-50, #fafafa);
+  }
+
+  .custom-attachments-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+
+    mat-icon {
+      color: var(--primary-color);
+    }
+
+    strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    span {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  }
+
+  .custom-attachment-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--white, #fff);
+      border: 1px solid var(--gray-200);
+
+      span {
+        flex: 1;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      mat-icon:first-child {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--text-secondary);
+      }
+    }
+  }
 }
 
 .detail-card {

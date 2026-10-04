@@ -39,6 +39,8 @@ export class BranchService {
   
   // Computed values
   public isBranchRestricted = computed(() => !this.canSelectBranch());
+  /** True only for users who may pick a branch in UI (SuperAdmin). */
+  public showBranchSelector = computed(() => this.canSelectBranch());
   public currentBranch = computed(() => {
     const branchId = this.userBranchId();
     return this.accessibleBranches().find(b => b.id === branchId);
@@ -159,7 +161,8 @@ export class BranchService {
         this.canManageAllBranches.set(data.can_manage_all_branches || false);
         this.canViewAllBranches.set(data.can_view_all_branches || false);
         this.accessibleBranchIds.set(data.accessible_branch_ids);
-      } catch (e) {
+      } catch {
+        localStorage.removeItem(this.BRANCHES_KEY);
       }
     }
   }

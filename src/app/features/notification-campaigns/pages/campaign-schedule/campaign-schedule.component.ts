@@ -10,12 +10,16 @@ import { forkJoin } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { BranchService } from '../../../branches/services/branch.service';
+import { BranchService as BranchAccessService } from '../../../../core/services/branch.service';
+import { canShowBranchSelector, resolveDefaultBranchId } from '../../../../core/utils/branch-selection.util';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import {
   SmsTemplatesManageDialogComponent
 } from '../../../bulk-management/pages/sms-templates-manage-dialog/sms-templates-manage-dialog.component';
 import { Branch } from '../../../../core/models/branch.model';
 import { StaffGroupPickerComponent } from '../../components/staff-group-picker/staff-group-picker.component';
+import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload.component';
+import { FileUploadResponse } from '../../../../core/services/file-upload.service';
 import {
   CampaignModuleMeta,
   CampaignSample,
@@ -77,7 +81,7 @@ export type AttendanceAudienceTab = 'student' | 'teacher';
 @Component({
   selector: 'app-campaign-schedule',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule, StaffGroupPickerComponent],
+  imports: [CommonModule, FormsModule, MaterialModule, StaffGroupPickerComponent, FileUploadComponent],
   templateUrl: './campaign-schedule.component.html',
   styleUrls: ['./campaign-schedule.component.scss']
 })
@@ -91,6 +95,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
   moduleMeta: CampaignModuleMeta | null = null;
   branches: { id: string | number; name: string }[] = [];
   branchId = '';
+  canSelectBranch = false;
   eventDate: Date = new Date();
   classGroups: ClassGroup[] = [];
   statuses: CampaignStatusOption[] = [];
@@ -127,6 +132,22 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
 
   staffGroups: { key: string; label: string; people: { user_id: number; name: string; subtitle: string }[] }[] =
     [];
+  /** Custom campaigns: uploaded files linked to inbox notifications after send. */
+  customAttachments: {
+    file_path: string;
+    file_name: string;
+    original_name: string;
+    file_type?: string;
+    file_size?: number;
+  }[] = [];
+  readonly customAttachmentUploadConfig = {
+    multiple: true,
+    maxFiles: 15,
+    maxSize: 15,
+    showPreview: true,
+    showProgress: true,
+    showFileList: true
+  };
   loadingStaff = false;
   selectedStaffUserIds: number[] = [];
   staffTemplateId: number | null = null;
@@ -145,9 +166,14 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private branchService: BranchService,
+    private branchAccess: BranchAccessService,
     private campaigns: NotificationCampaignService,
     private errorHandler: ErrorHandlerService
   ) {}
+
+  get showBranchSelector(): boolean {
+    return this.canSelectBranch;
+  }
 
   ngOnInit(): void {
     this.module = this.route.snapshot.paramMap.get('module') || 'attendance';
@@ -158,6 +184,11 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
           id: branch.id,
           name: branch.name
         }));
+        this.canSelectBranch = canShowBranchSelector({
+          can_select_branch: response.can_select_branch ?? this.branchAccess.canSelectBranch(),
+          user_branch_id: response.user_branch_id ?? this.branchAccess.getUserBranchId()
+        });
+        this.applyDefaultBranchSelection(false);
       },
       error: error => this.errorHandler.showError(error)
     });
@@ -166,6 +197,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
       this.clampEventDateToPolicy();
       if (this.branchId) {
         this.loadClasses();
+        this.reloadBranchTemplates();
       }
     });
     this.applyModuleStatusesFromApi();
@@ -234,6 +266,29 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
 
   get isCustomModule(): boolean {
     return this.module === 'custom';
+  }
+
+  get customAttachmentUploadPath(): string {
+    const bid = this.branchId || 'branch';
+    return `notification-campaigns/custom/${bid}`;
+  }
+
+  get customSelectedSectionCount(): number {
+    return this.selectableSections.filter(section => section.selected).length;
+  }
+
+  get customSelectedStudentCount(): number {
+    return this.selectableSections
+      .filter(section => section.selected)
+      .reduce((sum, section) => sum + (section.student_count || 0), 0);
+  }
+
+  get customSelectedStaffCount(): number {
+    return this.selectedStaffUserIds.length;
+  }
+
+  get customRecipientTotal(): number {
+    return this.customSelectedStudentCount + this.customSelectedStaffCount;
   }
 
   get hasSelectableSectionsForDate(): boolean {
@@ -465,9 +520,11 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     this.classGroups = [];
     this.selectedStaffUserIds = [];
     this.staffTemplateId = null;
+    this.customAttachments = [];
     this.selectedTeacherAttendanceUserIds = [];
     this.applyModuleStatusesFromApi();
     if (this.branchId) {
+      this.reloadBranchTemplates();
       if (this.isTeacherAttendanceTab) {
         this.loadStaffOptions();
       } else {
@@ -587,6 +644,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     this.feeDueDateFilterQuery = '';
     this.selectedStaffUserIds = [];
     this.staffTemplateId = null;
+    this.customAttachments = [];
     this.selectedTeacherAttendanceUserIds = [];
     this.staffGroups = [];
     if (!this.branchId) {
@@ -607,14 +665,18 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
       this.classGroups = [];
       return;
     }
-    const date = this.isTeacherAttendanceTab ? this.effectiveDateString() : undefined;
+    const date =
+      this.isTeacherAttendanceTab || this.showEventDatePicker
+        ? this.effectiveDateString()
+        : undefined;
+    const staffModule = this.isTeacherAttendanceTab ? 'teacher_attendance' : this.effectiveCampaignModule;
     const token = ++this.staffLoadToken;
     this.loadingStaff = true;
     if (this.isTeacherAttendanceTab) {
       this.loadingClasses = true;
       this.classGroups = [];
     }
-    this.campaigns.staffRecipientOptions(this.branchId, date).subscribe({
+    this.campaigns.staffRecipientOptions(this.branchId, date, staffModule).subscribe({
       next: response => {
         if (token !== this.staffLoadToken) {
           return;
@@ -721,6 +783,27 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     this.syncTeacherIdsFromGrid();
   }
 
+  onCustomAttachmentUploaded(data: FileUploadResponse['data'] | undefined): void {
+    if (!data?.file_path) {
+      return;
+    }
+    const exists = this.customAttachments.some(item => item.file_path === data.file_path);
+    if (exists) {
+      return;
+    }
+    this.customAttachments.push({
+      file_path: data.file_path,
+      file_name: data.file_name,
+      original_name: data.file_name,
+      file_type: data.file_type,
+      file_size: data.file_size
+    });
+  }
+
+  removeCustomAttachment(index: number): void {
+    this.customAttachments.splice(index, 1);
+  }
+
   addAllRecipientsForCustom(): void {
     if (!this.isCustomModule) {
       return;
@@ -744,12 +827,49 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
       this.templates = [];
       return;
     }
-    this.campaigns.templates(this.branchId).subscribe({
+    this.campaigns.templates(this.branchId, this.effectiveCampaignModule).subscribe({
       next: response => {
         this.templates = response.data || [];
+        this.pruneTemplateSelections();
       },
       error: error => this.errorHandler.showError(error)
     });
+  }
+
+  /** Auto-select branch for teachers/admins; SuperAdmin keeps the dropdown. */
+  private applyDefaultBranchSelection(triggerChange: boolean): void {
+    const next = resolveDefaultBranchId(
+      {
+        can_select_branch: this.canSelectBranch,
+        user_branch_id: this.branchAccess.getUserBranchId()
+      },
+      this.branches,
+      this.branchId
+    );
+    if (!next || next === this.branchId) {
+      return;
+    }
+    this.branchId = next;
+    if (triggerChange) {
+      this.onBranchChange();
+    } else {
+      this.reloadBranchTemplates();
+      this.loadClasses();
+      this.loadStaffOptions();
+    }
+  }
+
+  private pruneTemplateSelections(): void {
+    const allowed = new Set(this.templates.map(t => t.id));
+    Object.keys(this.templateMap).forEach(key => {
+      const id = this.templateMap[key];
+      if (id && !allowed.has(id)) {
+        this.templateMap[key] = null;
+      }
+    });
+    if (this.staffTemplateId && !allowed.has(this.staffTemplateId)) {
+      this.staffTemplateId = null;
+    }
   }
 
   openTemplatesManageDialog(): void {
@@ -769,7 +889,8 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
         autoFocus: 'first-tabbable',
         data: {
           branchId: this.branchId,
-          branches: this.branches as Branch[]
+          branches: this.branches as Branch[],
+          campaignModule: this.effectiveCampaignModule
         }
       })
       .afterClosed()
@@ -1627,13 +1748,15 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
       const hasSections = this.selectedTargets().length > 0;
       const hasStaff = this.selectedStaffUserIds.length > 0;
       if (!hasSections && !hasStaff) {
-        const hint = this.isExamsModule
-          ? `Select at least one section with ${this.examNotifyMode === 'scheduled' ? 'exam schedules' : 'marks entered'}, or staff below.`
-          : this.isFeesModule && this.feeNotifyMode === 'due'
-            ? 'Select at least one section with students to remind, or staff below.'
-            : this.isFeesModule
-              ? 'Select at least one section or staff below.'
-              : 'Select at least one class section or staff member below.';
+        const hint = this.isCustomModule
+          ? 'Select at least one student section or branch team group (teachers, admins, staff, accounts).'
+          : this.isExamsModule
+            ? `Select at least one section with ${this.examNotifyMode === 'scheduled' ? 'exam schedules' : 'marks entered'}, or staff below.`
+            : this.isFeesModule && this.feeNotifyMode === 'due'
+              ? 'Select at least one section with students to remind, or staff below.'
+              : this.isFeesModule
+                ? 'Select at least one section or staff below.'
+                : 'Select at least one class section or staff member below.';
         this.errorHandler.showError(hint);
         return;
       }
@@ -1806,7 +1929,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
         this.errorHandler.showError('Map at least one status to a template.');
         return;
       }
-      if (hasStaff && !this.staffTemplateId) {
+      if (hasStaff && !this.staffTemplateId && !this.isCustomModule) {
         this.errorHandler.showError('Select a staff template.');
         return;
       }
@@ -1859,8 +1982,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
   }
 
   cancel(): void {
-    const tab = this.isCustomModule ? 'dashboard' : this.module;
-    this.router.navigate(['/notification-campaigns'], { queryParams: { tab } });
+    this.router.navigate(['/notification-campaigns'], { queryParams: { tab: this.module } });
   }
 
   get previewScheduleLabel(): string {
@@ -2350,6 +2472,13 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
   }
 
   private buildCampaignPayload(templateMap: Record<string, number>): Record<string, unknown> {
+    if (this.isCustomModule && this.selectedStaffUserIds.length > 0) {
+      const messageTemplate = templateMap['message'];
+      if (messageTemplate) {
+        this.staffTemplateId = messageTemplate;
+      }
+    }
+
     const payload: Record<string, unknown> = {
       module: this.effectiveCampaignModule,
       branch_id: this.branchId,
@@ -2370,6 +2499,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     }
     if (this.isExamsModule && this.selectedExamId) {
       payload['exam_id'] = this.selectedExamId;
+      payload['notify_mode'] = this.examNotifyMode;
     }
     if (this.isFeesModule) {
       payload['fee_notify_mode'] = this.feeNotifyMode;
@@ -2379,6 +2509,9 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
       if (this.feeNotifyMode === 'structure' && this.selectedFeeStructureId) {
         payload['fee_structure_id'] = this.selectedFeeStructureId;
       }
+    }
+    if (this.isCustomModule && this.customAttachments.length > 0) {
+      payload['attachments'] = this.customAttachments.map(item => ({ ...item }));
     }
     return payload;
   }
