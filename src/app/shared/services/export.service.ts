@@ -34,6 +34,30 @@ export class ExportService {
    * @param config - Export configuration (endpoint, filename)
    * @param options - Export options (format, columns, filters)
    */
+  /**
+   * Strip pagination/sort params so exports match the current list filters only.
+   */
+  buildExportFilters(filters?: Record<string, unknown>): Record<string, unknown> {
+    if (!filters) {
+      return {};
+    }
+
+    const skip = new Set(['page', 'per_page', 'sort_by', 'sort_direction']);
+    const exportFilters: Record<string, unknown> = {};
+
+    Object.keys(filters).forEach((key) => {
+      if (skip.has(key)) {
+        return;
+      }
+      const value = filters[key];
+      if (value !== null && value !== undefined && value !== '') {
+        exportFilters[key] = value;
+      }
+    });
+
+    return exportFilters;
+  }
+
   export(config: ExportConfig, options: ExportOptions): void {
     const url = `${this.API_URL}${config.endpoint}`;
     
@@ -42,14 +66,10 @@ export class ExportService {
     params = params.set('format', options.format);
     
     // Add filters to params
-    if (options.filters) {
-      Object.keys(options.filters).forEach(key => {
-        const value = options.filters![key];
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, value.toString());
-        }
-      });
-    }
+    const filters = this.buildExportFilters(options.filters);
+    Object.keys(filters).forEach(key => {
+      params = params.set(key, filters[key]!.toString());
+    });
     
     // Add columns if specified
     if (options.columns && options.columns.length > 0) {
