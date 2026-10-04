@@ -115,6 +115,12 @@ export interface SectionFeeStructureSummary {
   structure_applies: boolean;
 }
 
+export interface SectionAssignmentSummary {
+  assignment_count: number;
+  has_new?: boolean;
+  subject_names?: string;
+}
+
 export interface EligibleTargetRow {
   grade: string;
   section: string;
@@ -123,6 +129,9 @@ export interface EligibleTargetRow {
   notification_status?: SectionNotificationStatus;
   campaign_id?: number;
   sent_count?: number;
+  assignment_count?: number;
+  subject_names?: string;
+  assignment_has_new?: boolean;
 }
 
 export type EligibleTargetsResponse = Omit<ApiResponse<EligibleTargetRow[]>, 'meta'> & {
@@ -139,6 +148,8 @@ export type EligibleTargetsResponse = Omit<ApiResponse<EligibleTargetRow[]>, 'me
     fee_due_dates?: string[];
     fee_by_section?: Record<string, SectionFeeSummary | SectionFeeStructureSummary>;
     assignment_status_keys?: string[];
+    assignment_by_section?: Record<string, SectionAssignmentSummary>;
+    published_assignment_count?: number;
   };
 };
 

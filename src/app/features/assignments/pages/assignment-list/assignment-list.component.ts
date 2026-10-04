@@ -9,11 +9,17 @@ import {
   PaginationEvent,
   SearchEvent,
   SortEvent,
+  TableColumn,
   TableConfig
 } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AssignmentService } from '../../services/assignment.service';
-import { AssignmentListItem } from '../../../../core/models/assignment.model';
+import {
+  AssignmentListItem,
+  isStudentAssignmentComplete,
+  studentMyStatusLabel
+} from '../../../../core/models/assignment.model';
+import { AuthService } from '../../../../core/services/auth.service';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SubjectService } from '../../../subjects/services/subject.service';
 import { SectionService } from '../../../sections/services/section.service';
@@ -35,23 +41,7 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
   private academicYearSub?: Subscription;
 
   tableConfig: TableConfig = {
-    columns: [
-      { key: 'title', header: 'Title', sortable: true, searchable: true },
-      { key: 'assignment_type', header: 'Type', sortable: false, width: '110px' },
-      { key: 'class_display', header: 'Class', sortable: false, width: '140px' },
-      { key: 'subject', header: 'Subject', sortable: false },
-      { key: 'due_date', header: 'Due Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
-      {
-        key: 'status_display',
-        header: 'Status',
-        type: 'badge',
-        width: '120px',
-        align: 'center',
-        cellClass: (row: AssignmentListItem) => this.statusBadgeClass(row.status)
-      },
-      { key: 'recipient_count', header: 'Recipients', sortable: false, width: '110px', align: 'center' },
-      { key: 'max_marks', header: 'Marks', sortable: false, width: '90px', align: 'center' }
-    ],
+    columns: [],
     actions: [
       {
         icon: 'visibility',
@@ -149,10 +139,12 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
     private sectionService: SectionService,
     private errorHandler: ErrorHandlerService,
     private academicYearContext: AcademicYearContextService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.tableConfig = { ...this.tableConfig, columns: this.buildColumns() };
     this.loadFilterOptions();
     this.loadAssignments();
     this.academicYearSub = this.academicYearContext.selectedYearId$
@@ -162,6 +154,43 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.academicYearSub?.unsubscribe();
+  }
+
+  private buildColumns(): TableConfig['columns'] {
+    const base: TableColumn[] = [
+      { key: 'title', header: 'Title', sortable: true, searchable: true },
+      { key: 'assignment_type', header: 'Type', sortable: false, width: '110px' },
+      { key: 'class_display', header: 'Class', sortable: false, width: '140px' },
+      { key: 'subject', header: 'Subject', sortable: false },
+      { key: 'due_date', header: 'Due Date', sortable: true, width: '130px', type: 'date', pipe: 'date' },
+      {
+        key: 'status_display',
+        header: 'Status',
+        type: 'badge',
+        width: '120px',
+        align: 'center',
+        cellClass: (row: AssignmentListItem) => this.statusBadgeClass(row.status)
+      }
+    ];
+    if (this.authService.hasRole('Student')) {
+      return [
+        ...base,
+        {
+          key: 'my_status_display',
+          header: 'My status',
+          sortable: false,
+          width: '110px',
+          align: 'center',
+          cellClass: (row: AssignmentListItem) =>
+            isStudentAssignmentComplete(row) ? 'badge-success' : 'badge-warning'
+        }
+      ];
+    }
+    return [
+      ...base,
+      { key: 'recipient_count', header: 'Recipients', sortable: false, width: '110px', align: 'center' },
+      { key: 'max_marks', header: 'Marks', sortable: false, width: '90px', align: 'center' }
+    ];
   }
 
   statusBadgeClass(status?: string): string {
@@ -243,7 +272,8 @@ export class AssignmentListComponent implements OnInit, OnDestroy {
             [item.grade, item.section?.trim() ? item.section : 'All sections'].filter(Boolean).join(' · ') ||
             item.class_name ||
             '-',
-          status_display: item.status || (item.is_published ? 'Published' : 'Draft')
+          status_display: item.status || (item.is_published ? 'Published' : 'Draft'),
+          my_status_display: studentMyStatusLabel(item)
         }));
         if (response.meta) {
           const total = response.meta.total || 0;

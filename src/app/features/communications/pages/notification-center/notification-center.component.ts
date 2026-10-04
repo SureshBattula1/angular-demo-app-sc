@@ -17,24 +17,23 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationInboxUiService } from '../../services/notification-inbox-ui.service';
 import {
   groupNotificationsByDate,
-  notificationCategorySource,
+  INBOX_FILTER_CHIPS,
+  inboxFilterToParams,
+  InboxFilterSlug,
   notificationClassSectionLine,
   notificationDisplayDate,
   notificationIsUnread,
   notificationListSubtitle,
   notificationListTitle,
-  notificationModuleFilterLabel,
   notificationPreviewText,
   notificationRelativeTime,
   notificationSourceIcon,
   notificationSourceLabel,
   notificationStatusLabel,
-  notificationStatusTone,
-  NotificationCategoryFilter
+  notificationStatusTone
 } from '../../utils/notification-display.util';
 
 type TabKey = 'inbox' | 'sent';
-type StatusFilter = 'all' | 'unread' | 'read';
 
 @Component({
   selector: 'app-notification-center',
@@ -63,9 +62,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   private readonly inboxUi = inject(NotificationInboxUiService);
 
   activeTab: TabKey = 'inbox';
-  statusFilter: StatusFilter = 'all';
-  categoryFilter: NotificationCategoryFilter = 'all';
-  moduleFilter = 'all';
+  inboxFilter: InboxFilterSlug = 'all';
   searchText = '';
   loading = false;
   loadingMore = false;
@@ -78,19 +75,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   canCompose = false;
   readonly skeletonRows = [1, 2, 3, 4, 5];
 
-  readonly categoryOptions: { key: NotificationCategoryFilter; label: string; icon: string }[] = [
-    { key: 'all', label: 'All notifications', icon: 'inbox' },
-    { key: 'campaign', label: 'Campaign alerts', icon: 'campaign' },
-    { key: 'message', label: 'Class messages', icon: 'mail' },
-    { key: 'assignment', label: 'Assignments', icon: 'assignment' },
-    { key: 'attendance', label: 'Attendance', icon: 'fact_check' }
-  ];
-
-  readonly statusOptions: { key: StatusFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'unread', label: 'Unread' },
-    { key: 'read', label: 'Read' }
-  ];
+  readonly inboxFilterChips = INBOX_FILTER_CHIPS;
 
   private sub?: Subscription;
   private readonly perPage = 25;
@@ -106,56 +91,33 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   classLine = notificationClassSectionLine;
   listTitle = notificationListTitle;
   listSubtitle = notificationListSubtitle;
-  moduleLabel = notificationModuleFilterLabel;
-
   get filteredInbox(): AppNotification[] {
-    let list = this.inbox;
     const q = this.searchText.trim().toLowerCase();
-    if (q) {
-      list = list.filter(item => {
-        const haystack = [
-          this.listTitle(item),
-          this.listSubtitle(item),
-          item.title,
-          item.message,
-          item.description,
-          this.sourceLabel(item)
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(q);
-      });
+    if (!q) {
+      return this.inbox;
     }
-    if (this.moduleFilter !== 'all') {
-      const mod = this.moduleFilter.toLowerCase();
-      list = list.filter(item => (item.module || '').toLowerCase() === mod);
-    }
-    return list;
+    return this.inbox.filter(item => {
+      const haystack = [
+        this.listTitle(item),
+        this.listSubtitle(item),
+        item.title,
+        item.message,
+        item.description,
+        this.sourceLabel(item)
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
   }
 
   get groupedInbox() {
     return groupNotificationsByDate(this.filteredInbox);
   }
 
-  get moduleOptions(): string[] {
-    const mods = new Set<string>();
-    for (const item of this.inbox) {
-      const m = (item.module || '').trim().toLowerCase();
-      if (m) {
-        mods.add(m);
-      }
-    }
-    return [...mods].sort();
-  }
-
   get hasActiveFilters(): boolean {
-    return (
-      this.categoryFilter !== 'all' ||
-      this.statusFilter !== 'all' ||
-      this.moduleFilter !== 'all' ||
-      this.searchText.trim() !== ''
-    );
+    return this.inboxFilter !== 'all' || this.searchText.trim() !== '';
   }
 
   async ngOnInit(): Promise<void> {
@@ -187,25 +149,12 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
     }
   }
 
-  setCategory(key: NotificationCategoryFilter): void {
-    if (this.categoryFilter === key) {
+  setInboxFilter(slug: InboxFilterSlug): void {
+    if (this.inboxFilter === slug) {
       return;
     }
-    this.categoryFilter = key;
-    this.moduleFilter = 'all';
+    this.inboxFilter = slug;
     this.loadInbox(true);
-  }
-
-  setStatus(key: StatusFilter): void {
-    if (this.statusFilter === key) {
-      return;
-    }
-    this.statusFilter = key;
-    this.loadInbox(true);
-  }
-
-  setModuleFilter(mod: string): void {
-    this.moduleFilter = mod;
   }
 
   onSearchChange(): void {
@@ -218,12 +167,9 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
 
   clearAllFilters(): void {
     this.searchText = '';
-    this.moduleFilter = 'all';
-    const resetCategory = this.categoryFilter !== 'all';
-    const resetStatus = this.statusFilter !== 'all';
-    this.categoryFilter = 'all';
-    this.statusFilter = 'all';
-    if (resetCategory || resetStatus) {
+    const resetInbox = this.inboxFilter !== 'all';
+    this.inboxFilter = 'all';
+    if (resetInbox) {
       this.loadInbox(true);
     }
   }
@@ -238,14 +184,10 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
 
     const params: Record<string, unknown> = {
-      status: this.statusFilter,
+      ...inboxFilterToParams(this.inboxFilter),
       page: this.inboxPage,
       per_page: this.perPage
     };
-    const source = notificationCategorySource(this.categoryFilter);
-    if (source) {
-      params['source'] = source;
-    }
 
     this.sub = this.communicationService.getNotifications(params).subscribe({
       next: res => {

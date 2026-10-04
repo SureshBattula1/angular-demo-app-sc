@@ -484,11 +484,11 @@
         <p class="state-msg" *ngIf="isHolidaysModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
           Holiday on this date — select sections to notify.
         </p>
-        <p class="state-msg muted" *ngIf="isAssignmentsModule && branchId && !loadingClasses && classGroups.length && !hasSelectableSectionsForDate">
-          No assignments due on this date (or published today with a later due date). Try another date.
+        <p class="state-msg muted" *ngIf="isAssignmentsModule && branchId && !loadingClasses && !classGroups.length">
+          No assignments were published on this date. Try another date.
         </p>
         <p class="state-msg" *ngIf="isAssignmentsModule && branchId && !loadingClasses && hasSelectableSectionsForDate">
-          Select sections with assignments matching the chosen date (due today or published today).
+          Select sections with assignments published on the chosen date. You can notify again the same day after new assignments are added for a section.
         </p>
         <div class="custom-hub-summary" *ngIf="isCustomModule && branchId && step === 1">
           <div class="summary-card">
@@ -651,7 +651,17 @@
                     <span class="status-pill" [ngClass]="notificationStatusClass(section.notificationStatus)">
                       {{ notificationStatusLabel(section.notificationStatus) }}
                     </span>
-                    <span class="count">{{ section.student_count }}</span>
+                    <span class="status-pill att tally-ok" *ngIf="isAssignmentsModule && section.assignmentHasNew">
+                      New
+                    </span>
+                    <span
+                      class="count"
+                      [title]="isAssignmentsModule ? 'Assignments published on this date' : undefined">
+                      <ng-container *ngIf="isAssignmentsModule; else genericEligibleCount">
+                        {{ section.student_count }} assignment{{ section.student_count === 1 ? '' : 's' }}
+                      </ng-container>
+                      <ng-template #genericEligibleCount>{{ section.student_count }}</ng-template>
+                    </span>
                   </ng-container>
                   <span class="count" *ngIf="!usesEligibleTargets">{{ section.student_count }}</span>
                 </div>
@@ -689,9 +699,9 @@
           One message template is used for every selected student and branch team member. Optional attachments appear in the in-app notification.
         </p>
         <p class="state-msg" *ngIf="isAssignmentsModule">
-          Choose a template for each assignment type on this date
-          <ng-container *ngIf="assignmentStatusLabelsHint"> ({{ assignmentStatusLabelsHint }})</ng-container>.
-          Only types with assignments on the selected date are shown.
+          Choose the message template for assignments published on the selected date.
+          When several subjects publish the same day, use
+          <code>#assignment_list#</code> or <code>#assignment_count#</code> in the template so each student sees every assignment that applies to them.
         </p>
         <p class="state-msg" *ngIf="isExamsModule">Choose a template for {{ examNotifyModeLabel | lowercase }}.</p>
         <p class="state-msg" *ngIf="isFeesModule">Choose template(s) for {{ feeNotifyModeLabel | lowercase }}.</p>
@@ -754,7 +764,7 @@
     </mat-card-content>
 
     <mat-card-actions class="schedule-footer" align="end">
-      <button mat-button type="button" (click)="step === 1 ? cancel() : step = 1">
+      <button mat-button type="button" (click)="step === 1 ? cancel() : backFromLaterStep()">
         {{ step === 1 ? 'Cancel' : 'Back' }}
       </button>
       <button *ngIf="step === 1" mat-flat-button color="primary" type="button" (click)="nextFromClasses()">Continue</button>

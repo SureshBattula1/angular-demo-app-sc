@@ -67,16 +67,38 @@ export interface NotificationReceipts {
   viewers: NotificationViewer[];
 }
 
+export interface BroadcastTarget {
+  grade: string;
+  section: string;
+}
+
 export interface BroadcastNotificationBody {
   title: string;
   description: string;
   optional_description?: string | null;
-  grade: string;
-  section: string;
-  audience_mode: 'all' | 'custom';
+  /** Legacy single class */
+  grade?: string;
+  section?: string;
+  audience_mode?: 'all' | 'custom';
+  include_students?: boolean;
+  include_staff?: boolean;
+  student_audience_mode?: 'all' | 'custom';
+  staff_audience_mode?: 'all' | 'custom';
+  targets?: BroadcastTarget[];
   student_ids?: number[];
+  staff_user_ids?: number[];
   attachments?: NotificationAttachment[];
   branch_id?: number | null;
+}
+
+export interface StaffRecipientGroup {
+  key: string;
+  label: string;
+  people: {
+    user_id: number;
+    name: string;
+    subtitle: string;
+  }[];
 }
 
 export interface BroadcastNotificationResult {
@@ -85,6 +107,8 @@ export interface BroadcastNotificationResult {
   section?: string;
   class_name?: string;
   student_count?: number;
+  staff_count?: number;
+  recipient_count?: number;
   sent_at?: string;
 }
 
@@ -127,6 +151,15 @@ export class CommunicationService {
     return this.apiService.post<BroadcastNotificationResult>(
       `${this.BASE_ENDPOINT}/notifications/broadcast`,
       body
+    );
+  }
+
+  composeStaffRecipientOptions(
+    branchId: number | string
+  ): Observable<ApiResponse<{ groups: StaffRecipientGroup[] }>> {
+    return this.apiService.get<{ groups: StaffRecipientGroup[] }>(
+      `${this.BASE_ENDPOINT}/notifications/compose/staff-recipient-options`,
+      { branch_id: branchId }
     );
   }
 

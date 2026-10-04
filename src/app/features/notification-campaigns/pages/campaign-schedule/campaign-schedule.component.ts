@@ -61,12 +61,23 @@ interface SectionChoice {
   feeCriteriaMet: boolean;
   structureApplies: boolean;
   structureEnrolledCount: number;
+  assignmentCount?: number;
+  assignmentSubjectNames?: string;
+  assignmentHasNew?: boolean;
 }
 
 interface ClassGroup {
   grade: string;
   className: string;
   sections: SectionChoice[];
+}
+
+interface EligibleSectionInfo {
+  student_count: number;
+  notification_status: SectionNotificationStatus;
+  assignment_count?: number;
+  subject_names?: string;
+  assignment_has_new?: boolean;
 }
 
 interface SectionSummaryRow {
@@ -295,7 +306,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     return this.classGroups.some(group => group.sections.some(section => section.selectable));
   }
 
-  /** Human labels for assignment_status_keys (e.g. due → Assignment). */
+  /** Human labels for assignment_status_keys on the selected date. */
   get assignmentStatusLabelsHint(): string {
     if (!this.assignmentStatusKeys.length) {
       return '';
@@ -747,6 +758,9 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
   }
 
   filteredSectionsForGroup(group: ClassGroup): SectionChoice[] {
+    if (this.isAssignmentsModule) {
+      return group.sections.filter(section => (section.assignmentCount ?? 0) > 0);
+    }
     if (!this.isTeacherAttendanceTab) {
       return group.sections;
     }
@@ -769,6 +783,9 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
   }
 
   rowSecondaryHint(section: SectionChoice): string | null {
+    if (this.isAssignmentsModule && section.assignmentSubjectNames) {
+      return section.assignmentSubjectNames;
+    }
     if (!this.isTeacherAttendanceTab || !section.personSubtitle) {
       return null;
     }
@@ -1492,11 +1509,7 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
           ? this.campaigns.markedAttendance(this.branchId, eligibilityDate)
           : null;
       const needsDeliveryBoost =
-        this.isHolidaysModule ||
-        this.isAssignmentsModule ||
-        this.isCustomModule ||
-        this.isExamsModule ||
-        this.isFeesModule;
+        this.isHolidaysModule || this.isCustomModule || this.isExamsModule || this.isFeesModule;
       const deliveryBoostRequest = needsDeliveryBoost
         ? this.campaigns.sectionDeliveryStatus(
             campaignModule,
@@ -1777,6 +1790,13 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     this.step = 2;
   }
 
+  backFromLaterStep(): void {
+    this.step = 1;
+    if (this.isAssignmentsModule && this.branchId) {
+      this.loadClasses();
+    }
+  }
+
   notificationStatusLabel(status: SectionNotificationStatus): string {
     switch (status) {
       case 'sent':
@@ -1994,6 +2014,11 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     let keys = Object.keys(this.templateMap);
     if (this.isExamsModule) {
       keys = [this.examNotifyMode];
+    } else if (this.isAssignmentsModule) {
+      keys =
+        this.assignmentStatusKeys.length > 0
+          ? this.assignmentStatusKeys
+          : this.statuses.map(status => status.key);
     } else if (this.isFeesModule && this.feeNotifyMode === 'structure') {
       keys = ['structure'];
     } else if (this.isFeesModule) {
@@ -2043,6 +2068,9 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
       return this.isTeacherAttendanceTab ? 'Attendance not created' : 'Attendance not taken';
     }
     if (this.notificationBlocksResend(section.notificationStatus)) {
+      if (this.isAssignmentsModule && section.notificationStatus === 'sent') {
+        return 'Already sent for this publish date';
+      }
       if (section.notificationStatus === 'sent') {
         return 'Already sent';
       }
@@ -2138,10 +2166,13 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     eligible: EligibleTargetsResponse | null,
     ...deliveryBoosts: (EligibleTargetsResponse | null)[]
   ): ClassGroup[] {
-    const boostMaps = deliveryBoosts.flatMap(boost => [
-      this.coerceDeliveryRecord(boost?.meta?.delivery_by_section),
-      this.deliveryMapFromEligibleRows(boost?.data || [])
-    ]);
+    const skipDeliveryBoost = this.isAssignmentsModule;
+    const boostMaps = skipDeliveryBoost
+      ? []
+      : deliveryBoosts.flatMap(boost => [
+          this.coerceDeliveryRecord(boost?.meta?.delivery_by_section),
+          this.deliveryMapFromEligibleRows(boost?.data || [])
+        ]);
     const deliveryBySection = this.mergeDeliveryMaps(
       this.coerceDeliveryRecord(eligible?.meta?.delivery_by_section),
       ...boostMaps,
@@ -2154,24 +2185,30 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
     });
     const examBySection = this.normalizeExamMap(eligible?.meta?.exam_by_section || {});
     const feeBySection = this.normalizeFeeMap(eligible?.meta?.fee_by_section || {});
-    const eligibleByKey = new Map<
-      string,
-      { student_count: number; notification_status: SectionNotificationStatus }
-    >();
+    const assignmentBySection = this.normalizeAssignmentMap(eligible?.meta?.assignment_by_section || {});
+    const eligibleByKey = new Map<string, EligibleSectionInfo>();
     const registerEligibleRow = (row: {
       grade: string;
       section: string;
       student_count: number;
       notification_status?: SectionNotificationStatus;
+      assignment_count?: number;
+      subject_names?: string;
+      assignment_has_new?: boolean;
     }) => {
       const payload = {
         student_count: row.student_count,
-        notification_status: row.notification_status || ('not_sent' as SectionNotificationStatus)
+        notification_status: row.notification_status || ('not_sent' as SectionNotificationStatus),
+        assignment_count: row.assignment_count,
+        subject_names: row.subject_names,
+        assignment_has_new: row.assignment_has_new
       };
       this.sectionKeyVariants(row.grade, row.section).forEach(key => eligibleByKey.set(key, payload));
     };
     (eligible?.data || []).forEach(registerEligibleRow);
-    deliveryBoosts.forEach(boost => (boost?.data || []).forEach(registerEligibleRow));
+    if (!skipDeliveryBoost) {
+      deliveryBoosts.forEach(boost => (boost?.data || []).forEach(registerEligibleRow));
+    }
 
     return grades
       .map(grade => ({
@@ -2205,6 +2242,16 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
           } else if (this.isFeesModule && this.feeNotifyMode === 'structure') {
             feeCriteriaMet = structureApplies && structureEnrolledCount > 0;
           }
+          const assignmentSummary = this.lookupSectionInRecordMap(
+            grade.grade,
+            section.section,
+            assignmentBySection
+          );
+          const assignmentCount =
+            info?.assignment_count ?? assignmentSummary?.assignment_count ?? 0;
+          const assignmentSubjectNames =
+            info?.subject_names ?? assignmentSummary?.subject_names ?? '';
+          const assignmentHasNew = info?.assignment_has_new ?? assignmentSummary?.has_new ?? false;
           const notificationStatus: SectionNotificationStatus =
             delivery?.notification_status || info?.notification_status || 'not_sent';
           const blocked = this.notificationBlocksResend(notificationStatus);
@@ -2222,14 +2269,18 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
           } else if (this.usesEligibleTargets) {
             selectable = !!info && !blocked;
           }
-          const displayStudentCount =
-            this.isFeesModule && this.feeNotifyMode === 'due' && feeReminderCount > 0
+          const displayStudentCount = this.isAssignmentsModule
+            ? assignmentCount
+            : this.isFeesModule && this.feeNotifyMode === 'due' && feeReminderCount > 0
               ? feeReminderCount
               : enrolledCount;
           return {
             grade: grade.grade,
             section: section.section,
             student_count: displayStudentCount,
+            assignmentCount,
+            assignmentSubjectNames: assignmentSubjectNames || undefined,
+            assignmentHasNew,
             enrolledCount,
             markedCount,
             tallyPresent: attendance?.present ?? 0,
@@ -2250,9 +2301,42 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
             structureEnrolledCount
           };
         })
-          .filter(section => this.examSectionVisible(section) && this.feeSectionVisible(section))
+          .filter(section => {
+            if (this.isAssignmentsModule) {
+              return (section.assignmentCount ?? 0) > 0;
+            }
+            return this.examSectionVisible(section) && this.feeSectionVisible(section);
+          })
       }))
       .filter(group => group.sections.length > 0);
+  }
+
+  private normalizeAssignmentMap(
+    raw: Record<
+      string,
+      { assignment_count?: number; has_new?: boolean; subject_names?: string }
+    >
+  ): Record<
+    string,
+    { assignment_count: number; has_new: boolean; subject_names: string }
+  > {
+    const out: Record<
+      string,
+      { assignment_count: number; has_new: boolean; subject_names: string }
+    > = {};
+    Object.entries(raw || {}).forEach(([key, value]) => {
+      const parts = key.split('|');
+      if (parts.length !== 2) {
+        return;
+      }
+      const normalized = this.sectionKey(parts[0], parts[1]);
+      out[normalized] = {
+        assignment_count: value.assignment_count ?? 0,
+        has_new: value.has_new ?? false,
+        subject_names: value.subject_names ?? ''
+      };
+    });
+    return out;
   }
 
   private normalizeFeeMap(
@@ -2529,8 +2613,8 @@ export class CampaignScheduleComponent implements OnInit, OnDestroy {
   private lookupEligibleSection(
     grade: string,
     section: string,
-    eligibleByKey: Map<string, { student_count: number; notification_status: SectionNotificationStatus }>
-  ): { student_count: number; notification_status: SectionNotificationStatus } | undefined {
+    eligibleByKey: Map<string, EligibleSectionInfo>
+  ): EligibleSectionInfo | undefined {
     return this.lookupSectionInMap(grade, section, eligibleByKey);
   }
 

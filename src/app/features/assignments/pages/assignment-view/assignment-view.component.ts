@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
@@ -7,12 +8,18 @@ import { AssignmentService } from '../../services/assignment.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { MediaUrlService } from '../../../../core/services/media-url.service';
 import { ImagePreviewService } from '../../../../shared/services/image-preview.service';
-import { Assignment, AssignmentAttachment } from '../../../../core/models/assignment.model';
+import { AuthService } from '../../../../core/services/auth.service';
+import {
+  Assignment,
+  AssignmentAttachment,
+  isStudentAssignmentComplete,
+  studentMyStatusLabel
+} from '../../../../core/models/assignment.model';
 
 @Component({
   selector: 'app-assignment-view',
   standalone: true,
-  imports: [CommonModule, MaterialModule, HasPermissionDirective],
+  imports: [CommonModule, FormsModule, MaterialModule, HasPermissionDirective],
   templateUrl: './assignment-view.component.html',
   styleUrls: ['./assignment-view.component.scss']
 })
@@ -20,6 +27,8 @@ export class AssignmentViewComponent implements OnInit {
   loading = false;
   assignment: Assignment | null = null;
   assignmentId?: string;
+  submissionNote = '';
+  submitting = false;
 
   constructor(
     private assignmentService: AssignmentService,
@@ -27,8 +36,43 @@ export class AssignmentViewComponent implements OnInit {
     private mediaUrl: MediaUrlService,
     private imagePreview: ImagePreviewService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
+
+  isStudentView(): boolean {
+    return this.authService.hasRole('Student');
+  }
+
+  isAssignmentComplete(): boolean {
+    return isStudentAssignmentComplete(this.assignment);
+  }
+
+  studentStatusLabel(): string {
+    return studentMyStatusLabel(this.assignment);
+  }
+
+  onMarkComplete(): void {
+    if (!this.assignmentId || !this.isStudentView() || this.isAssignmentComplete() || this.submitting) {
+      return;
+    }
+    this.submitting = true;
+    this.assignmentService.submitMyAssignment(this.assignmentId, this.submissionNote).subscribe({
+      next: response => {
+        this.submitting = false;
+        if (response.success) {
+          this.errorHandler.showSuccess(response.message || 'Assignment marked complete');
+          this.loadAssignment(this.assignmentId!);
+        } else {
+          this.errorHandler.showError(response.message || 'Could not submit');
+        }
+      },
+      error: error => {
+        this.submitting = false;
+        this.errorHandler.showError(error);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.assignmentId = this.route.snapshot.paramMap.get('id') || undefined;
@@ -129,6 +173,9 @@ export class AssignmentViewComponent implements OnInit {
     this.assignmentService.getAssignment(id).subscribe({
       next: response => {
         this.assignment = response.data || null;
+        if (this.assignment && this.isStudentView()) {
+          this.submissionNote = this.assignment.my_submission?.submission_text || '';
+        }
         if (!this.assignment) {
           this.errorHandler.showError('Assignment not found');
           this.router.navigate(['/assignments']);
