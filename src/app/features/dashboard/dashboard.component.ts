@@ -61,6 +61,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get showBranchSelector(): boolean {
     return this.canSelectBranch;
   }
+
+  /** Income/expense widgets are limited to school admin roles. */
+  get showFinancialOverview(): boolean {
+    const role = this.userRole();
+    return role === 'SuperAdmin' || role === 'Admin' || role === 'BranchAdmin';
+  }
   
   // Dashboard data
   dashboardData: any = null;
@@ -144,8 +150,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Load dashboard data for ALL roles. The backend scopes the data to the user's
     // accessible branches and the template renders a role-appropriate subset:
-    //  - SuperAdmin / Admin / BranchAdmin: full dashboard
-    //  - Teacher: total teachers, total students, teacher + student attendance
+    //  - SuperAdmin / Admin / BranchAdmin: full dashboard incl. financial
+    //  - Teacher: same layout as admin (filters, charts, birthdays), no financial
     //  - Student: total students, student attendance
     this.loadDashboard();
 
