@@ -27,8 +27,10 @@
             <span class="meta-pill route-pill" *ngIf="route">
               <mat-icon>alt_route</mat-icon> {{ route.route_name }}
             </span>
-            <span class="status-indicator" [class.on-duty]="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out">
-              <mat-icon>{{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'fiber_manual_record' : 'radio_button_unchecked' }}</mat-icon>
+            <span class="status-indicator"
+              [class.on-duty]="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out">
+              <mat-icon>{{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'fiber_manual_record'
+                : 'radio_button_unchecked' }}</mat-icon>
               {{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'On Duty' : 'Off Duty' }}
             </span>
           </div>
@@ -41,15 +43,14 @@
             <span class="duty-val">{{ dashboardData?.duty?.clock_in_time }}</span>
           </div>
 
-          <button mat-raised-button color="primary" class="duty-toggle-btn"
-                  *ngIf="!dashboardData?.duty?.clocked_in"
-                  (click)="clockIn()" [disabled]="clockingIn">
+          <button mat-raised-button color="primary" class="duty-toggle-btn" *ngIf="!dashboardData?.duty?.clocked_in"
+            (click)="clockIn()" [disabled]="clockingIn">
             <mat-icon>login</mat-icon> Start Duty (Clock In)
           </button>
 
           <button mat-raised-button color="warn" class="duty-toggle-btn"
-                  *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out"
-                  (click)="clockOut()" [disabled]="clockingOut">
+            *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out" (click)="clockOut()"
+            [disabled]="clockingOut">
             <mat-icon>logout</mat-icon> End Duty (Clock Out)
           </button>
 
@@ -114,7 +115,8 @@
               <div class="spec-row">
                 <span class="label"><mat-icon>security</mat-icon> Insurance Status</span>
                 <span class="value compliance-chip" [class.valid]="vehicle.insurance_expiry">
-                  {{ vehicle.insurance_expiry ? 'Valid till ' + (vehicle.insurance_expiry | date:'mediumDate') : 'Verified' }}
+                  {{ vehicle.insurance_expiry ? 'Valid till ' + (vehicle.insurance_expiry | date:'mediumDate') :
+                  'Verified' }}
                 </span>
               </div>
               <div class="spec-row">
@@ -151,8 +153,12 @@
               <div class="route-name-title">{{ route.route_name }}</div>
               <div class="route-metrics">
                 <span class="metric-chip"><mat-icon>place</mat-icon> {{ stops.length }} Ordered Stops</span>
-                <span class="metric-chip" *ngIf="route.total_distance_km"><mat-icon>timeline</mat-icon> {{ route.total_distance_km }} KM</span>
-                <span class="metric-chip" *ngIf="route.estimated_duration_minutes"><mat-icon>timer</mat-icon> ~{{ route.estimated_duration_minutes }} Mins</span>
+                <span class="metric-chip"
+                  *ngIf="route.total_distance_km || route.distance"><mat-icon>timeline</mat-icon> {{
+                  route.total_distance_km || route.distance }} KM</span>
+                <span class="metric-chip"
+                  *ngIf="route.estimated_duration_minutes || route.estimated_time"><mat-icon>timer</mat-icon> ~{{
+                  route.estimated_duration_minutes || route.estimated_time }} Mins</span>
               </div>
             </div>
 
@@ -164,7 +170,8 @@
                 <div class="timeline-content">
                   <div class="stop-name-row">
                     <span class="stop-title">{{ s.stop_name }}</span>
-                    <span class="stop-time" *ngIf="s.pickup_time"><mat-icon>wb_sunny</mat-icon> {{ s.pickup_time }}</span>
+                    <span class="stop-time" *ngIf="s.pickup_time"><mat-icon>wb_sunny</mat-icon> {{ s.pickup_time
+                      }}</span>
                   </div>
                   <div class="stop-sub" *ngIf="s.drop_time">
                     <span class="drop-time"><mat-icon>nights_stay</mat-icon> Drop: {{ s.drop_time }}</span>
@@ -197,10 +204,8 @@
           <div class="trip-selector-col">
             <span class="trip-bar-lbl">Select Today's Trip:</span>
             <div class="trip-pill-group">
-              <button *ngFor="let t of todayTrips"
-                      class="trip-pill"
-                      [class.active-trip]="selectedTripId === t.id"
-                      (click)="onTripChange(t.id)">
+              <button *ngFor="let t of todayTrips" class="trip-pill" [class.active-trip]="selectedTripId === t.id"
+                (click)="onTripChange(t.id)">
                 <mat-icon>{{ t.trip_type === 'Pickup' ? 'wb_sunny' : 'nights_stay' }}</mat-icon>
                 <span>{{ t.trip_type }} ({{ t.status }})</span>
               </button>
@@ -209,14 +214,13 @@
 
           <!-- Trip Controls -->
           <div class="trip-actions-col" *ngIf="selectedTrip">
-            <button mat-raised-button color="primary" class="trip-btn"
-                    *ngIf="selectedTrip.status === 'Scheduled'"
-                    (click)="startTrip()">
+            <button mat-raised-button color="primary" class="trip-btn" *ngIf="selectedTrip.status === 'Scheduled'"
+              (click)="startTrip()">
               <mat-icon>play_arrow</mat-icon> Start This Trip
             </button>
             <button mat-raised-button color="accent" class="trip-btn"
-                    *ngIf="selectedTrip.status === 'Started' || selectedTrip.status === 'In Progress'"
-                    (click)="completeTrip()">
+              *ngIf="selectedTrip.status === 'Started' || selectedTrip.status === 'In Progress'"
+              (click)="completeTrip()">
               <mat-icon>check_circle</mat-icon> Complete Trip
             </button>
             <span class="trip-badge-done" *ngIf="selectedTrip.status === 'Completed'">
@@ -268,14 +272,18 @@
         <div class="roster-toolbar">
           <div class="search-box">
             <mat-icon>search</mat-icon>
-            <input type="text" [(ngModel)]="studentSearch" (ngModelChange)="applyFilter()" placeholder="Search student name or admission no...">
+            <input type="text" [(ngModel)]="studentSearch" (ngModelChange)="applyFilter()"
+              placeholder="Search student name or admission no...">
           </div>
 
           <div class="filter-chips">
             <button class="chip-btn" [class.active]="activeFilter === 'ALL'" (click)="setFilter('ALL')">All</button>
-            <button class="chip-btn" [class.active]="activeFilter === 'Pending'" (click)="setFilter('Pending')">Pending ({{ pendingCount }})</button>
-            <button class="chip-btn" [class.active]="activeFilter === 'Boarded'" (click)="setFilter('Boarded')">Boarded ({{ boardedCount }})</button>
-            <button class="chip-btn" [class.active]="activeFilter === 'Dropped'" (click)="setFilter('Dropped')">Dropped ({{ droppedCount }})</button>
+            <button class="chip-btn" [class.active]="activeFilter === 'Pending'" (click)="setFilter('Pending')">Pending
+              ({{ pendingCount }})</button>
+            <button class="chip-btn" [class.active]="activeFilter === 'Boarded'" (click)="setFilter('Boarded')">Boarded
+              ({{ boardedCount }})</button>
+            <button class="chip-btn" [class.active]="activeFilter === 'Dropped'" (click)="setFilter('Dropped')">Dropped
+              ({{ droppedCount }})</button>
           </div>
         </div>
 
@@ -296,7 +304,8 @@
               <div class="student-sub">
                 <span>Adm: {{ item.student?.admission_number || 'N/A' }}</span>
                 <span class="dot">•</span>
-                <span class="stop-tag"><mat-icon>place</mat-icon> {{ item.pickup_stop?.stop_name || item.drop_stop?.stop_name || 'Assigned Stop' }}</span>
+                <span class="stop-tag"><mat-icon>place</mat-icon> {{ item.pickup_stop?.stop_name ||
+                  item.drop_stop?.stop_name || 'Assigned Stop' }}</span>
               </div>
             </div>
 
@@ -307,28 +316,28 @@
               <span class="status-tag dropped" *ngIf="item.drop_status === 'Dropped'">
                 <mat-icon>done_all</mat-icon> Dropped {{ item.dropped_at | date:'shortTime' }}
               </span>
-              <span class="status-tag pending" *ngIf="item.boarding_status !== 'Boarded' && item.drop_status !== 'Dropped'">
+              <span class="status-tag pending"
+                *ngIf="item.boarding_status !== 'Boarded' && item.drop_status !== 'Dropped'">
                 <mat-icon>hourglass_empty</mat-icon> Pending
               </span>
             </div>
 
             <!-- 1-Tap Action Buttons -->
             <div class="student-action-btns">
-              <button mat-flat-button color="primary" class="action-btn"
-                      *ngIf="item.boarding_status !== 'Boarded'"
-                      (click)="markStudentBoarded(item)">
+              <button mat-flat-button color="primary" class="action-btn" *ngIf="item.boarding_status !== 'Boarded'"
+                (click)="markStudentBoarded(item)">
                 <mat-icon>login</mat-icon> Board
               </button>
 
               <button mat-stroked-button class="action-btn unboard-btn"
-                      *ngIf="item.boarding_status === 'Boarded' && item.drop_status !== 'Dropped'"
-                      (click)="unmarkStudentBoarded(item)">
+                *ngIf="item.boarding_status === 'Boarded' && item.drop_status !== 'Dropped'"
+                (click)="unmarkStudentBoarded(item)">
                 <mat-icon>undo</mat-icon> Unmark
               </button>
 
               <button mat-flat-button color="accent" class="action-btn drop-btn"
-                      *ngIf="item.boarding_status === 'Boarded' && item.drop_status !== 'Dropped'"
-                      (click)="markStudentDropped(item)">
+                *ngIf="item.boarding_status === 'Boarded' && item.drop_status !== 'Dropped'"
+                (click)="markStudentDropped(item)">
                 <mat-icon>logout</mat-icon> Drop
               </button>
             </div>
@@ -374,15 +383,14 @@
           </div>
 
           <div class="duty-controls-row">
-            <button mat-raised-button color="primary" class="duty-big-btn"
-                    *ngIf="!dashboardData?.duty?.clocked_in"
-                    (click)="clockIn()" [disabled]="clockingIn">
+            <button mat-raised-button color="primary" class="duty-big-btn" *ngIf="!dashboardData?.duty?.clocked_in"
+              (click)="clockIn()" [disabled]="clockingIn">
               <mat-icon>login</mat-icon> Clock In for Today's Duty
             </button>
 
             <button mat-raised-button color="warn" class="duty-big-btn"
-                    *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out"
-                    (click)="clockOut()" [disabled]="clockingOut">
+              *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out" (click)="clockOut()"
+              [disabled]="clockingOut">
               <mat-icon>logout</mat-icon> Clock Out & End Shift
             </button>
 

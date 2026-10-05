@@ -101,7 +101,9 @@ export interface TransportRoute {
   description?: string | null;
   stops_count?: number;
   distance?: number | null;
+  total_distance_km?: number | null;
   estimated_time?: number | null;
+  estimated_duration_minutes?: number | null;
   fare: number;
   is_active?: boolean;
   branch?: { id: string | number | null; name: string | null };
