@@ -1,0 +1,493 @@
+<div class="view-container">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       HEADER CARD — Signature gradient header with role-aware mode switcher
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">how_to_reg</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Passenger Boarding &amp; Drop Verification</h1>
+          <div class="view-meta">
+            <span><mat-icon>verified_user</mat-icon> Stop-Level Check-In</span>
+            <span><mat-icon>directions_bus</mat-icon> Real-time Manifest</span>
+            <span><mat-icon>alt_route</mat-icon> Auto-Verification</span>
+            <span class="role-badge">
+              <mat-icon>manage_accounts</mat-icon> {{ currentUserRole }}
+            </span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Live Session</span>
+          </div>
+        </div>
+
+        <!-- Mode Switcher: Only visible to SuperAdmin / BranchAdmin -->
+        <div class="mode-switcher-container" *ngIf="canToggleMode">
+          <div class="mode-pill-label">Tracking Mode</div>
+          <div class="mode-pill-group">
+            <button mat-button class="mode-btn" [class.active-mode]="activeMode === 'custom'"
+              (click)="toggleMode('custom')">
+              <mat-icon>tune</mat-icon> Custom Map
+            </button>
+            <button mat-button class="mode-btn" [class.active-mode]="activeMode === 'live'"
+              (click)="toggleMode('live')">
+              <mat-icon>gps_fixed</mat-icon> Live GPS
+            </button>
+          </div>
+        </div>
+        <!-- Read-only badge for non-admin users -->
+        <div class="mode-viewer-badge" *ngIf="!canToggleMode">
+          <mat-icon>visibility</mat-icon> View Only
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       STATS GRID
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students"><mat-icon>groups</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ roster.length }}</div>
+          <div class="stat-label">Total Passengers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers"><mat-icon>check_circle</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ boardedCount }}</div>
+          <div class="stat-label">Confirmed Boarded</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects"><mat-icon>where_to_vote</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ droppedCount }}</div>
+          <div class="stat-label">Safely Dropped</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections"><mat-icon>pending</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ pendingCount }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MAIN WORKSPACE CARD
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>{{ activeMode === 'live' ? 'gps_fixed' : 'departure_board' }}</mat-icon>
+        {{ activeMode === 'live' ? 'Live GPS Route Map & Real-Time Boarding' : 'Custom Route Map & Stop-Level Boarding' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+
+      <!-- Trip Selector -->
+      <div class="trip-selection-strip">
+        <mat-form-field appearance="outline" class="trip-selector">
+          <mat-label>Select Active Trip Run</mat-label>
+          <mat-select [(ngModel)]="selectedTripId" (selectionChange)="onTripSelected($event.value)">
+            <mat-option *ngFor="let t of availableTrips" [value]="t.id">
+              {{ t.trip_date || 'Daily' }} — {{ t.route_name }} ({{ t.trip_type }}) [{{ t.status }}]
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div *ngIf="activeTrip" class="active-trip-meta-chips">
+          <span class="chip-item"><mat-icon>directions_bus</mat-icon> {{ activeTrip.vehicle_number || 'No Vehicle' }}</span>
+          <span class="chip-item"><mat-icon>person</mat-icon> {{ activeTrip.driver_name || 'No Driver' }}</span>
+          <span class="chip-item"><mat-icon>schedule</mat-icon> {{ activeTrip.scheduled_start_time || 'Daily Run' }}</span>
+          <span class="chip-item status {{ activeTrip.status | lowercase }}">{{ activeTrip.status }}</span>
+        </div>
+
+        <button mat-icon-button matTooltip="Refresh trip data" (click)="reloadData()" class="refresh-btn">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!selectedTripId" class="empty-state">
+        <mat-icon class="large-icon">commute</mat-icon>
+        <h3>Select a Trip Above</h3>
+        <p>Choose an active or scheduled transit trip to load the route map and passenger manifest.</p>
+      </div>
+
+      <!-- ════════════════════════ ACTIVE TRIP WORKSPACE ════════════════════ -->
+      <div *ngIf="selectedTripId && activeTrip">
+
+        <!-- Bus Location Banner -->
+        <div class="bus-location-banner">
+          <div class="location-badge-icon"><mat-icon>directions_bus</mat-icon></div>
+          <div class="location-details">
+            <div class="loc-subtitle">BUS LOCATION</div>
+            <div class="loc-title">{{ busLocationSummary }}</div>
+            <div class="loc-meta">
+              <span><strong>Vehicle:</strong> {{ activeTrip.vehicle_number || 'Fleet' }}</span>
+              <span><strong>Driver:</strong> {{ activeTrip.driver_name || 'On-Duty' }}</span>
+              <span *ngIf="nextStop"><strong>Next ETA:</strong> {{ nextStop.pickup_time || nextStop.drop_time || 'In Transit' }}</span>
+            </div>
+          </div>
+          <div class="progress-box">
+            <div class="progress-label">
+              <span>Route Progress</span>
+              <strong>{{ completedStopsCount }} / {{ routeStops.length }} ({{ tripProgressPercent }}%)</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" [style.width.%]="tripProgressPercent"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════ FLOW A: CUSTOM MAP MODE ══════════════════════ -->
+        <div *ngIf="activeMode === 'custom'" class="custom-handling-section">
+
+          <!-- Custom Route Map: visual stop timeline -->
+          <div class="section-subhead">
+            <div class="subhead-title">
+              <mat-icon>map</mat-icon>
+              Route Stop Map — Boarding Status Overview
+            </div>
+            <button mat-button class="sm-btn" (click)="clearStopFilter()">
+              Show All ({{ roster.length }})
+            </button>
+          </div>
+
+          <!-- Stop Timeline Cards -->
+          <div class="custom-route-map" *ngIf="routeStops.length > 0">
+            <div class="route-connector-line"></div>
+            <div
+              *ngFor="let stop of routeStops; let i = index; let last = last"
+              class="route-stop-node"
+              [class.is-completed]="stopStatusLabel(stop) === 'completed'"
+              [class.is-current]="stopStatusLabel(stop) === 'current'"
+              [class.is-upcoming]="stopStatusLabel(stop) === 'upcoming'"
+              [class.is-selected]="stop.id == selectedStopId && filterByStopOnly"
+              (click)="selectStop(stop.id)">
+
+              <!-- Stop dot indicator -->
+              <div class="stop-dot">
+                <mat-icon *ngIf="stopStatusLabel(stop) === 'completed'">check_circle</mat-icon>
+                <mat-icon *ngIf="stopStatusLabel(stop) === 'current'">directions_bus</mat-icon>
+                <span *ngIf="stopStatusLabel(stop) === 'upcoming'">{{ stop.sequence_no }}</span>
+              </div>
+
+              <!-- Stop info card -->
+              <div class="stop-info-card">
+                <div class="stop-badges-row">
+                  <span class="seq-badge">#{{ stop.sequence_no }}</span>
+                  <span class="state-tag completed" *ngIf="stopStatusLabel(stop) === 'completed'">Done</span>
+                  <span class="state-tag current"   *ngIf="stopStatusLabel(stop) === 'current'">Current</span>
+                  <span class="state-tag upcoming"  *ngIf="stopStatusLabel(stop) === 'upcoming'">Upcoming</span>
+                </div>
+                <div class="stop-name">{{ stop.stop_name }}</div>
+                <div class="stop-landmark" *ngIf="stop.landmark">{{ stop.landmark }}</div>
+                <div class="stop-time" *ngIf="stop.pickup_time || stop.drop_time">
+                  <mat-icon>schedule</mat-icon>{{ stop.pickup_time || stop.drop_time }}
+                </div>
+                <!-- Boarding status bar -->
+                <div class="stop-boarding-bar">
+                  <div class="bar-track">
+                    <div class="bar-fill boarded"
+                      [style.width.%]="stop.total_students ? ((stop.verified_students || 0) / stop.total_students) * 100 : 0">
+                    </div>
+                  </div>
+                  <div class="bar-labels">
+                    <span class="ok">✓ {{ stop.verified_students || 0 }}</span>
+                    <span class="pending">⧖ {{ stop.pending_students || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Connector line between stops (not last) -->
+              <div class="inter-stop-line" *ngIf="!last"></div>
+            </div>
+          </div>
+
+          <!-- No stops state -->
+          <div *ngIf="routeStops.length === 0 && !loading" class="mini-empty">
+            <mat-icon>alt_route</mat-icon> No stops loaded for this trip.
+          </div>
+
+          <!-- Stop Action Bar (Admin only) -->
+          <div class="stop-action-bar" *ngIf="canToggleMode && routeStops.length > 0">
+            <div class="stop-focus-info">
+              <mat-icon class="focus-pin">location_on</mat-icon>
+              <div>
+                <span class="focus-lbl">Action Target:</span>
+                <strong class="focus-name">{{ focusedStop?.stop_name || currentStop?.stop_name || 'Route Origin' }}</strong>
+                <span class="focus-count">({{ focusedStop?.pending_students ?? pendingCount }} Pending)</span>
+              </div>
+            </div>
+            <div class="stop-buttons-cluster">
+              <button mat-raised-button color="primary" class="reach-board-btn"
+                [disabled]="markingStop"
+                (click)="markStopReached(focusedStop || currentStop)">
+                <mat-icon>{{ isDropTrip ? 'exit_to_app' : 'check_circle' }}</mat-icon>
+                <span *ngIf="!markingStop">
+                  {{ isDropTrip ? 'Mark Stop Reached & Drop All' : 'Mark Stop Reached & Board All' }}
+                  ({{ focusedStop?.pending_students ?? pendingCount }})
+                </span>
+                <span *ngIf="markingStop">Updating...</span>
+              </button>
+              <button mat-stroked-button color="accent" class="next-stop-btn"
+                [disabled]="markingStop || !nextStop"
+                (click)="advanceToNextStop()"
+                matTooltip="Advance to next stop">
+                <mat-icon>skip_next</mat-icon> Next Stop &gt;&gt;
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════ FLOW B: LIVE GPS MAP MODE ══════════════════════
+             Only rendered when user explicitly enables Live GPS via toggle.
+             Map is loaded dynamically via Leaflet using real lat/lng coords.
+        ═══════════════════════════════════════════════════════════════════════ -->
+        <div *ngIf="activeMode === 'live'" class="live-tracking-section">
+
+          <!-- Telemetry Strip -->
+          <div class="live-telemetry-strip">
+            <div class="telemetry-box">
+              <span class="lbl">Vehicle</span>
+              <span class="val">{{ activeTrip.vehicle_number || 'N/A' }}</span>
+            </div>
+            <div class="telemetry-box">
+              <span class="lbl">Driver</span>
+              <span class="val">{{ activeTrip.driver_name || 'Assigned Driver' }}</span>
+            </div>
+            <div class="telemetry-box">
+              <span class="lbl">Speed</span>
+              <span class="val speed"><mat-icon>speed</mat-icon> {{ liveTelemetry?.speed || 0 }} km/h</span>
+            </div>
+            <div class="telemetry-box">
+              <span class="lbl">Current Stop</span>
+              <span class="val stop"><mat-icon>place</mat-icon> {{ currentStop?.stop_name || 'In Transit' }}</span>
+            </div>
+            <div class="telemetry-box">
+              <span class="lbl">GPS Signal</span>
+              <span class="signal-tag"><span class="pulse-dot"></span> Live</span>
+            </div>
+            <div class="telemetry-box action" *ngIf="isSuperAdmin">
+              <button mat-stroked-button color="primary" class="test-ping-btn"
+                (click)="simulateGpsPing()" matTooltip="Simulate GPS movement">
+                <mat-icon>satellite</mat-icon> Test Ping
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaflet Map Container (populated by initLeafletMap()) -->
+          <div class="live-map-wrapper">
+            <div id="live-leaflet-map" class="leaflet-map-container">
+              <!-- Map loads here dynamically via Leaflet -->
+              <div class="map-loading-overlay" *ngIf="!mapInitialized">
+                <mat-spinner diameter="40"></mat-spinner>
+                <span>Loading live GPS map…</span>
+              </div>
+            </div>
+
+            <!-- Map legend -->
+            <div class="map-legend">
+              <div class="legend-item"><span class="legend-dot current"></span> Current Stop</div>
+              <div class="legend-item"><span class="legend-dot completed"></span> Completed</div>
+              <div class="legend-item"><span class="legend-dot upcoming"></span> Upcoming</div>
+              <div class="legend-item"><span class="legend-dot bus">🚌</span> Bus</div>
+            </div>
+          </div>
+
+          <!-- Stops list in live mode (mini) -->
+          <div class="live-stops-list">
+            <div class="live-stop-row"
+              *ngFor="let stop of routeStops"
+              [class.live-current]="stop.id == currentStopId"
+              (click)="selectStop(stop.id)">
+              <div class="live-stop-seq">{{ stop.sequence_no }}</div>
+              <div class="live-stop-details">
+                <div class="live-stop-name">{{ stop.stop_name }}</div>
+                <div class="live-stop-counts">
+                  <span class="ok">✓ {{ stop.verified_students || 0 }}</span>
+                  <span class="pend">⧖ {{ stop.pending_students || 0 }}</span>
+                </div>
+              </div>
+              <div class="live-stop-state">
+                <span *ngIf="stop.id == currentStopId" class="live-bus-here">🚌 Here</span>
+                <span *ngIf="stopStatusLabel(stop) === 'completed'" class="live-done">✅</span>
+                <span *ngIf="stopStatusLabel(stop) === 'upcoming'" class="live-upcoming">⏭</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live mode: Admin action -->
+          <div class="stop-action-bar" *ngIf="canToggleMode && currentStop">
+            <div class="stop-focus-info">
+              <mat-icon class="focus-pin">gps_fixed</mat-icon>
+              <div>
+                <span class="focus-lbl">GPS-Detected Stop:</span>
+                <strong class="focus-name">{{ currentStop?.stop_name }}</strong>
+                <span class="focus-count">({{ currentStop?.pending_students || 0 }} Pending)</span>
+              </div>
+            </div>
+            <div class="stop-buttons-cluster">
+              <button mat-raised-button color="primary"
+                [disabled]="markingStop"
+                (click)="markStopReached(currentStop)">
+                <mat-icon>verified</mat-icon>
+                <span *ngIf="!markingStop">Confirm Arrival &amp; Auto-{{ isDropTrip ? 'Drop' : 'Board' }}</span>
+                <span *ngIf="markingStop">Updating...</span>
+              </button>
+              <button mat-stroked-button color="accent"
+                [disabled]="markingStop || !nextStop"
+                (click)="advanceToNextStop()">
+                <mat-icon>skip_next</mat-icon> Next Stop
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════ STUDENT MANIFEST ══════════════════════════════
+             Shown in both modes. Filter changes based on selected stop.
+        ═══════════════════════════════════════════════════════════════════════ -->
+        <div class="roster-section">
+          <div class="roster-header">
+            <div class="roster-title">
+              <mat-icon>people_alt</mat-icon>
+              Passenger Manifest
+              <span class="roster-count-badge">{{ filteredRoster.length }}</span>
+            </div>
+
+            <!-- Condition-based student filter pills -->
+            <div class="filter-pills">
+              <button mat-button class="filter-pill" [class.active-pill]="studentFilter === 'current_stop'"
+                (click)="setStudentFilter('current_stop')">
+                <mat-icon>place</mat-icon> Current Stop ({{ currentStop?.total_students || 0 }})
+              </button>
+              <button mat-button class="filter-pill" [class.active-pill]="studentFilter === 'ALL'"
+                (click)="setStudentFilter('ALL')">
+                All ({{ roster.length }})
+              </button>
+              <button mat-button class="filter-pill pending-pill" [class.active-pill]="studentFilter === 'Pending'"
+                (click)="setStudentFilter('Pending')">
+                Pending ({{ pendingCount }})
+              </button>
+              <button mat-button class="filter-pill boarded-pill" [class.active-pill]="studentFilter === 'Boarded'"
+                (click)="setStudentFilter('Boarded')">
+                Boarded ({{ boardedCount }})
+              </button>
+              <button mat-button class="filter-pill dropped-pill" [class.active-pill]="studentFilter === 'Dropped'"
+                (click)="setStudentFilter('Dropped')">
+                Dropped ({{ droppedCount }})
+              </button>
+            </div>
+
+            <!-- Search -->
+            <div class="search-input">
+              <mat-icon>search</mat-icon>
+              <input type="text" [(ngModel)]="searchQuery" (input)="filterRoster()"
+                placeholder="Search student name or admission no…">
+            </div>
+          </div>
+
+          <!-- Context label -->
+          <div class="roster-context-banner" *ngIf="studentFilter === 'current_stop' && currentStop">
+            <mat-icon>location_on</mat-icon>
+            Showing passengers for current stop:
+            <strong>{{ currentStop.stop_name }}</strong>
+            <span class="context-next" *ngIf="nextStop"> → Next: {{ nextStop.stop_name }}</span>
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="loading" class="center-spinner">
+            <mat-spinner diameter="36"></mat-spinner>
+          </div>
+
+          <!-- Table -->
+          <div *ngIf="!loading" class="view-table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Class</th>
+                  <th>Designated Stop</th>
+                  <th>Boarded</th>
+                  <th>Dropped</th>
+                  <th>Status</th>
+                  <th class="text-right" *ngIf="canToggleMode">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let log of filteredRoster">
+                  <td>
+                    <div class="s-name">{{ log.student_name }}</div>
+                    <div class="s-adm" *ngIf="log.admission_no">{{ log.admission_no }}</div>
+                  </td>
+                  <td>{{ log.class_name || '—' }} {{ log.section_name || '' }}</td>
+                  <td>
+                    <div class="stop-title">
+                      <mat-icon class="sm-pin">place</mat-icon>
+                      {{ log.pickup_stop_name || log.drop_stop_name || 'Standard Stop' }}
+                    </div>
+                  </td>
+                  <td>
+                    <span *ngIf="log.boarded_at" class="time-stamp">{{ log.boarded_at | slice:11:16 }}</span>
+                    <span *ngIf="!log.boarded_at" class="text-muted">—</span>
+                  </td>
+                  <td>
+                    <span *ngIf="log.dropped_at" class="time-stamp">{{ log.dropped_at | slice:11:16 }}</span>
+                    <span *ngIf="!log.dropped_at" class="text-muted">—</span>
+                  </td>
+                  <td>
+                    <span class="status-pill" [ngClass]="log.status.toLowerCase()">{{ log.status }}</span>
+                  </td>
+                  <td class="text-right" *ngIf="canToggleMode">
+                    <div class="btn-group">
+                      <button *ngIf="log.status === 'Pending'" mat-flat-button color="primary"
+                        class="action-btn" (click)="markBoarded(log)">
+                        <mat-icon>check</mat-icon> Board
+                      </button>
+                      <button *ngIf="log.status === 'Boarded'" mat-stroked-button
+                        class="action-btn undo-btn" (click)="unmarkBoarded(log)">
+                        <mat-icon>undo</mat-icon> Unmark
+                      </button>
+                      <button *ngIf="log.status === 'Boarded'" mat-flat-button color="accent"
+                        class="action-btn" (click)="markDropped(log)">
+                        <mat-icon>exit_to_app</mat-icon> Drop
+                      </button>
+                      <span *ngIf="log.status === 'Dropped'" class="completed-check">
+                        <mat-icon>task_alt</mat-icon> Done
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredRoster.length === 0">
+                  <td [colSpan]="canToggleMode ? 7 : 6" class="text-center text-muted py-4">
+                    <mat-icon style="font-size:32px;opacity:.4;">people_outline</mat-icon>
+                    <p>No students match the current filter.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- end active trip workspace -->
+
+    </mat-card-content>
+  </mat-card>
+
+</div>

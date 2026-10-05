@@ -1,0 +1,482 @@
+<div class="view-container">
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">payments</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Transport Financial Operations</h1>
+          <div class="view-meta">
+            <span><mat-icon>account_balance</mat-icon> Fee Collection Reconciliation</span>
+            <span><mat-icon>receipt</mat-icon> Fleet Operating Expenses</span>
+            <span><mat-icon>local_gas_station</mat-icon> Fuel Logs & Mileage</span>
+            <span><mat-icon>build</mat-icon> Maintenance Logs</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Accounts Synced</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-stroked-button color="accent" (click)="loadFeesSummary()" class="white-btn">
+            <mat-icon>refresh</mat-icon> Refresh Ledger
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>request_quote</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">₹{{ feesSummary?.total_demand || 0 | number:'1.0-0' }}</div>
+          <div class="stat-label">Total Transport Demand</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">₹{{ feesSummary?.total_collected || 0 | number:'1.0-0' }}</div>
+          <div class="stat-label">Total Fee Collected</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">₹{{ feesSummary?.total_due || 0 | number:'1.0-0' }}</div>
+          <div class="stat-label">Outstanding Due</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ feesSummary?.collection_percentage || 0 }}%</div>
+          <div class="stat-label">Collection Realization Rate</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detail Card with Financial Sub-Tabs -->
+  <mat-card class="detail-card">
+    <mat-card-content>
+      <mat-tab-group class="finance-tabs" animationDuration="200ms" (selectedTabChange)="onTabChange($event.index)">
+        <!-- TAB 1: TRANSPORT FEES -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">payments</mat-icon> Transport Fees
+          </ng-template>
+
+          <div class="tab-pane">
+            <div class="pane-action-bar">
+              <h3 class="pane-title"><mat-icon>receipt_long</mat-icon> Recent Transport Fee Collections</h3>
+              <button mat-stroked-button color="primary" (click)="loadFeesSummary()"><mat-icon>refresh</mat-icon> Refresh</button>
+            </div>
+
+            <div class="view-table-container">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Receipt / Txn ID</th>
+                    <th>Student</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Date</th>
+                    <th>Payment Mode</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let col of (feesSummary?.recent_collections || [])">
+                    <td><strong>#{{ col.id || col.receipt_number || 'TXN-01' }}</strong></td>
+                    <td>{{ col.student_name || 'Enrolled Student' }}</td>
+                    <td><strong>₹{{ col.amount || 0 | number:'1.2-2' }}</strong></td>
+                    <td>{{ col.payment_date || col.created_at || 'Recent' }}</td>
+                    <td>{{ col.payment_mode || 'Cash / Online' }}</td>
+                    <td><span class="status-badge active">Paid</span></td>
+                  </tr>
+                  <tr *ngIf="!feesSummary?.recent_collections || feesSummary?.recent_collections?.length === 0">
+                    <td colspan="6" class="text-center py-6 text-muted">
+                      No recent fee collections found for transport.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- TAB 2: FLEET EXPENSES -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">receipt_long</mat-icon> Fleet Expenses ({{ expenses.length }})
+          </ng-template>
+
+          <div class="tab-pane">
+            <div class="pane-action-bar">
+              <div class="search-box">
+                <mat-icon>search</mat-icon>
+                <input type="text" [(ngModel)]="expenseSearch" (input)="filterExpenses()" placeholder="Search expenses by vehicle, category...">
+              </div>
+              <button mat-raised-button color="primary" (click)="openAddExpenseModal()">
+                <mat-icon>add</mat-icon> Record Expense
+              </button>
+            </div>
+
+            <div class="view-table-container">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Vehicle</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Invoice / Ref</th>
+                    <th>Description</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let ex of filteredExpenses">
+                    <td><strong>{{ ex.vehicle_number || 'Vehicle #' + ex.vehicle_id }}</strong></td>
+                    <td><span class="category-pill">{{ ex.expense_category }}</span></td>
+                    <td><strong>₹{{ ex.amount | number:'1.2-2' }}</strong></td>
+                    <td>{{ ex.expense_date }}</td>
+                    <td>{{ ex.invoice_no || '—' }}</td>
+                    <td>{{ ex.description || '—' }}</td>
+                    <td class="text-right">
+                      <button mat-icon-button color="warn" (click)="deleteExpense(ex)"><mat-icon>delete</mat-icon></button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredExpenses.length === 0">
+                    <td colspan="7" class="text-center py-6 text-muted">No expenses recorded.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- TAB 3: FUEL LOGS -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">local_gas_station</mat-icon> Fuel Logs ({{ fuelEntries.length }})
+          </ng-template>
+
+          <div class="tab-pane">
+            <div class="pane-action-bar">
+              <div class="search-box">
+                <mat-icon>search</mat-icon>
+                <input type="text" [(ngModel)]="fuelSearch" (input)="filterFuel()" placeholder="Search fuel logs by vehicle or station...">
+              </div>
+              <button mat-raised-button color="primary" (click)="openAddFuelModal()">
+                <mat-icon>local_gas_station</mat-icon> Record Fuel Entry
+              </button>
+            </div>
+
+            <div class="view-table-container">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Vehicle</th>
+                    <th>Date</th>
+                    <th>Liters</th>
+                    <th>Price / L</th>
+                    <th>Total Cost</th>
+                    <th>Odometer</th>
+                    <th>Calculated Mileage</th>
+                    <th>Fuel Station</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let fe of filteredFuel">
+                    <td><strong>{{ fe.vehicle_number || 'Vehicle #' + fe.vehicle_id }}</strong></td>
+                    <td>{{ fe.entry_date }}</td>
+                    <td>{{ fe.liters }} L</td>
+                    <td>₹{{ fe.price_per_liter }}</td>
+                    <td><strong>₹{{ fe.total_cost | number:'1.2-2' }}</strong></td>
+                    <td>{{ fe.odometer_reading }} KM</td>
+                    <td>
+                      <span class="mileage-pill" *ngIf="fe.mileage_calculated">
+                        <mat-icon>speed</mat-icon> {{ fe.mileage_calculated | number:'1.2-2' }} KM/L
+                      </span>
+                      <span class="text-muted" *ngIf="!fe.mileage_calculated">Baseline</span>
+                    </td>
+                    <td>{{ fe.fuel_station || '—' }}</td>
+                    <td class="text-right">
+                      <button mat-icon-button color="warn" (click)="deleteFuelEntry(fe)"><mat-icon>delete</mat-icon></button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredFuel.length === 0">
+                    <td colspan="9" class="text-center py-6 text-muted">No fuel entries recorded.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- TAB 4: MAINTENANCE LOGS -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">build</mat-icon> Fleet Maintenance ({{ maintenanceLogs.length }})
+          </ng-template>
+
+          <div class="tab-pane">
+            <div class="pane-action-bar">
+              <div class="search-box">
+                <mat-icon>search</mat-icon>
+                <input type="text" [(ngModel)]="maintSearch" (input)="filterMaintenance()" placeholder="Search maintenance logs...">
+              </div>
+              <button mat-raised-button color="primary" (click)="openAddMaintenanceModal()">
+                <mat-icon>build</mat-icon> Record Maintenance
+              </button>
+            </div>
+
+            <div class="view-table-container">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Vehicle</th>
+                    <th>Maintenance Type</th>
+                    <th>Service Date</th>
+                    <th>Service Center</th>
+                    <th>Service Amount</th>
+                    <th>Next Service Due</th>
+                    <th>Notes</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of filteredMaintenance">
+                    <td><strong>{{ m.vehicle_number || 'Vehicle #' + m.vehicle_id }}</strong></td>
+                    <td><span class="category-pill">{{ m.maintenance_type }}</span></td>
+                    <td>{{ m.service_date }}</td>
+                    <td>{{ m.service_center || '—' }}</td>
+                    <td><strong>₹{{ m.amount | number:'1.2-2' }}</strong></td>
+                    <td>
+                      <div *ngIf="m.next_service_due_date">Date: {{ m.next_service_due_date }}</div>
+                      <div class="text-muted" *ngIf="m.next_service_due_odometer">At: {{ m.next_service_due_odometer }} KM</div>
+                      <span *ngIf="!m.next_service_due_date && !m.next_service_due_odometer">—</span>
+                    </td>
+                    <td>{{ m.notes || '—' }}</td>
+                    <td class="text-right">
+                      <button mat-icon-button color="warn" (click)="deleteMaintenance(m)"><mat-icon>delete</mat-icon></button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredMaintenance.length === 0">
+                    <td colspan="8" class="text-center py-6 text-muted">No maintenance logs recorded.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Add Expense Modal -->
+  <div class="modal-backdrop" *ngIf="expenseModalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><mat-icon>receipt</mat-icon> Record Fleet Expense</h3>
+        <button mat-icon-button (click)="expenseModalVisible = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Vehicle *</mat-label>
+          <mat-select [(ngModel)]="newExpense.vehicle_id" required>
+            <mat-option *ngFor="let v of vehicles" [value]="v.id">{{ v.vehicle_number }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Category *</mat-label>
+            <mat-select [(ngModel)]="newExpense.expense_category" required>
+              <mat-option value="Repair">Repair</mat-option>
+              <mat-option value="Tyre">Tyre</mat-option>
+              <mat-option value="Battery">Battery</mat-option>
+              <mat-option value="Cleaning">Cleaning</mat-option>
+              <mat-option value="Insurance">Insurance</mat-option>
+              <mat-option value="Other">Other</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Amount (₹) *</mat-label>
+            <input matInput type="number" [(ngModel)]="newExpense.amount" required>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Date *</mat-label>
+            <input matInput type="date" [(ngModel)]="newExpense.expense_date" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Invoice No</mat-label>
+            <input matInput [(ngModel)]="newExpense.invoice_no">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Description</mat-label>
+          <textarea matInput [(ngModel)]="newExpense.description" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="expenseModalVisible = false">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!newExpense.vehicle_id || !newExpense.amount" (click)="saveExpense()">Save Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Fuel Modal -->
+  <div class="modal-backdrop" *ngIf="fuelModalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><mat-icon>local_gas_station</mat-icon> Record Fuel Refill</h3>
+        <button mat-icon-button (click)="fuelModalVisible = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Vehicle *</mat-label>
+          <mat-select [(ngModel)]="newFuel.vehicle_id" required>
+            <mat-option *ngFor="let v of vehicles" [value]="v.id">{{ v.vehicle_number }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Fuel Date *</mat-label>
+            <input matInput type="date" [(ngModel)]="newFuel.entry_date" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Odometer Reading (KM) *</mat-label>
+            <input matInput type="number" [(ngModel)]="newFuel.odometer_reading" required>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Liters *</mat-label>
+            <input matInput type="number" step="0.01" [(ngModel)]="newFuel.liters" required (input)="calcFuelTotal()">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Price / Liter (₹) *</mat-label>
+            <input matInput type="number" step="0.01" [(ngModel)]="newFuel.price_per_liter" required (input)="calcFuelTotal()">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Total Cost (₹)</mat-label>
+            <input matInput type="number" [(ngModel)]="newFuel.total_cost" readonly>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Fuel Station</mat-label>
+            <input matInput [(ngModel)]="newFuel.fuel_station">
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="fuelModalVisible = false">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!newFuel.vehicle_id || !newFuel.liters || !newFuel.odometer_reading" (click)="saveFuel()">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Maintenance Modal -->
+  <div class="modal-backdrop" *ngIf="maintModalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><mat-icon>build</mat-icon> Record Maintenance Service</h3>
+        <button mat-icon-button (click)="maintModalVisible = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Vehicle *</mat-label>
+          <mat-select [(ngModel)]="newMaint.vehicle_id" required>
+            <mat-option *ngFor="let v of vehicles" [value]="v.id">{{ v.vehicle_number }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Service Type *</mat-label>
+            <mat-select [(ngModel)]="newMaint.maintenance_type" required>
+              <mat-option value="Scheduled">Scheduled Regular Service</mat-option>
+              <mat-option value="Repair">Unscheduled Repair</mat-option>
+              <mat-option value="Inspection">Safety Inspection</mat-option>
+              <mat-option value="Tire Rotation">Tire Rotation / Replacement</mat-option>
+              <mat-option value="Emergency">Emergency Breakdown</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Amount (₹) *</mat-label>
+            <input matInput type="number" [(ngModel)]="newMaint.amount" required>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Service Date *</mat-label>
+            <input matInput type="date" [(ngModel)]="newMaint.service_date" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Service Center</mat-label>
+            <input matInput [(ngModel)]="newMaint.service_center">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Next Due Date</mat-label>
+            <input matInput type="date" [(ngModel)]="newMaint.next_service_due_date">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Next Due Odometer (KM)</mat-label>
+            <input matInput type="number" [(ngModel)]="newMaint.next_service_due_odometer">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Notes / Checklist</mat-label>
+          <textarea matInput [(ngModel)]="newMaint.notes" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="maintModalVisible = false">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!newMaint.vehicle_id || !newMaint.amount" (click)="saveMaintenance()">Save Maintenance</button>
+      </div>
+    </div>
+  </div>
+</div>

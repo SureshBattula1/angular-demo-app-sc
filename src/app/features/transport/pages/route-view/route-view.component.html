@@ -27,22 +27,42 @@
   </mat-card>
 
   <div class="view-stats-grid">
-    <mat-card class="stat-card stat-info"><mat-card-content>
-      <div class="stat-icon"><mat-icon>place</mat-icon></div>
-      <div class="stat-content"><div class="stat-value">{{ sortedStops.length }}</div><div class="stat-label">Stops</div></div>
-    </mat-card-content></mat-card>
-    <mat-card class="stat-card stat-success"><mat-card-content>
-      <div class="stat-icon"><mat-icon>groups</mat-icon></div>
-      <div class="stat-content"><div class="stat-value">{{ students.length }}</div><div class="stat-label">Students</div></div>
-    </mat-card-content></mat-card>
-    <mat-card class="stat-card stat-warning"><mat-card-content>
-      <div class="stat-icon"><mat-icon>payments</mat-icon></div>
-      <div class="stat-content"><div class="stat-value">₹{{ route.fare | number:'1.0-0' }}</div><div class="stat-label">Fare</div></div>
-    </mat-card-content></mat-card>
-    <mat-card class="stat-card"><mat-card-content>
-      <div class="stat-icon"><mat-icon>straighten</mat-icon></div>
-      <div class="stat-content"><div class="stat-value">{{ route.distance || '—' }}</div><div class="stat-label">Distance (km)</div></div>
-    </mat-card-content></mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students"><mat-icon>place</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ sortedStops.length }}</div>
+          <div class="stat-label">Stops</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers"><mat-icon>groups</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ students.length }}</div>
+          <div class="stat-label">Students</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections"><mat-icon>payments</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">₹{{ route.fare | number:'1.0-0' }}</div>
+          <div class="stat-label">Fare</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects"><mat-icon>straighten</mat-icon></div>
+        <div class="stat-details">
+          <div class="stat-value">{{ route.distance || '—' }}</div>
+          <div class="stat-label">Distance (km)</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <div class="view-details-grid">

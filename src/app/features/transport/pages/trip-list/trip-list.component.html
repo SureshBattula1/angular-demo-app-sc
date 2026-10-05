@@ -1,0 +1,320 @@
+<div class="view-container">
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">commute</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Fleet Trips & Daily Dispatch</h1>
+          <div class="view-meta">
+            <span><mat-icon>schedule</mat-icon> Daily Standing Schedules</span>
+            <span><mat-icon>sync_alt</mat-icon> Morning Pickup & Evening Drop</span>
+            <span><mat-icon>person_pin</mat-icon> Driver & Bus Roster</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Dispatch Active</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-stroked-button color="accent" (click)="loadTrips()" class="white-btn">
+            <mat-icon [class.spin]="loading">refresh</mat-icon> Refresh
+          </button>
+          <button mat-raised-button color="accent" (click)="openScheduleModal()">
+            <mat-icon>add_road</mat-icon> Schedule New Trip
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>commute</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ todayTrips.length }}</div>
+          <div class="stat-label">Today's Total Runs</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>moving</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ inTransitCount }}</div>
+          <div class="stat-label">In Transit Now</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>pending_actions</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ scheduledCount }}</div>
+          <div class="stat-label">Scheduled / Pending</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>task_alt</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ completedCount }}</div>
+          <div class="stat-label">Completed Successfully</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detail Card with Tabs, Search & Trips Table -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list_alt</mat-icon> Trip Dispatch Roster & Live Status
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Sub Tab Navigation -->
+      <mat-tab-group (selectedTabChange)="onTabChange($event.index)" class="trips-tabs">
+        <mat-tab label="Today's Trips ({{ todayTrips.length }})"></mat-tab>
+        <mat-tab label="Upcoming Trips ({{ upcomingTrips.length }})"></mat-tab>
+        <mat-tab label="Trip History ({{ historyTrips.length }})"></mat-tab>
+      </mat-tab-group>
+
+      <!-- Filter Toolbar -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <mat-icon>search</mat-icon>
+          <input type="text" [(ngModel)]="searchQuery" (input)="filterActiveTrips()" placeholder="Filter by route name, vehicle, or driver...">
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="center-spinner">
+        <mat-spinner diameter="36"></mat-spinner>
+      </div>
+
+      <!-- Trips Table -->
+      <div *ngIf="!loading" class="view-table-container">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Type</th>
+              <th>Schedule / Date</th>
+              <th>Vehicle</th>
+              <th>Assigned Driver</th>
+              <th>Status</th>
+              <th>Boarded</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of displayedTrips">
+              <td>
+                <div class="route-name">{{ t.route_name || 'Route #' + t.route_id }}</div>
+                <div class="route-code" *ngIf="t.route_number">{{ t.route_number }}</div>
+              </td>
+              <td>
+                <span class="type-badge" [class.pickup]="t.trip_type === 'Pickup'" [class.drop]="t.trip_type === 'Drop'">
+                  {{ t.trip_type }}
+                </span>
+              </td>
+              <td>
+                <div class="date-text" *ngIf="t.trip_date">{{ t.trip_date }}</div>
+                <span class="badge-daily" *ngIf="!t.trip_date">Daily Standing</span>
+                <div class="time-sub">{{ t.scheduled_start_time || 'Daily Run' }}</div>
+              </td>
+              <td>
+                <div class="clickable-badge" (click)="openChangeVehicleModal(t)" matTooltip="Click to change vehicle">
+                  <mat-icon>directions_bus</mat-icon>
+                  {{ t.vehicle_number || 'Assign Vehicle' }}
+                </div>
+              </td>
+              <td>
+                <div class="clickable-badge" (click)="openChangeDriverModal(t)" matTooltip="Click to change driver">
+                  <mat-icon>badge</mat-icon>
+                  {{ t.driver_name || 'Assign Driver' }}
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="t.status.toLowerCase().replace(' ', '-')">
+                  {{ t.status }}
+                </span>
+              </td>
+              <td>
+                <span class="roster-count">{{ t.boarded_students || 0 }} / {{ t.total_students || 0 }}</span>
+              </td>
+              <td class="text-right">
+                <div class="action-btns">
+                  <button *ngIf="t.status === 'Scheduled' || (t.status === 'Completed' && !t.trip_date)" mat-stroked-button color="primary" class="sm-btn" (click)="startTrip(t)">
+                    <mat-icon>play_arrow</mat-icon> {{ t.status === 'Completed' ? 'Restart' : 'Start' }}
+                  </button>
+                  <button *ngIf="t.status === 'Started' || t.status === 'In Progress'" mat-stroked-button color="accent" class="sm-btn" (click)="completeTrip(t)">
+                    <mat-icon>check</mat-icon> Complete
+                  </button>
+                  <button mat-icon-button color="primary" matTooltip="Boarding Roster" [routerLink]="['/transport/boarding']" [queryParams]="{ trip_id: t.id }">
+                    <mat-icon>how_to_reg</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent" matTooltip="Live GPS Tracking" [routerLink]="['/transport/tracking']" [queryParams]="{ trip_id: t.id }">
+                    <mat-icon>gps_fixed</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" matTooltip="Delete Trip" (click)="deleteTrip(t)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="displayedTrips.length === 0">
+              <td colspan="8" class="text-center py-6 text-muted">
+                No trips found in this category. Click "Schedule New Trip" to dispatch.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Schedule Trip Modal -->
+  <div class="modal-backdrop" *ngIf="scheduleModalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><mat-icon>add_road</mat-icon> Schedule Transit Trip</h3>
+        <button mat-icon-button (click)="scheduleModalVisible = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="info-alert">
+          <mat-icon>info</mat-icon>
+          <span>Daily standing trip: Once assigned, the driver manages this trip daily. No need to schedule individual trips every single day.</span>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Transit Route *</mat-label>
+          <mat-select [(ngModel)]="newTrip.route_id" required>
+            <mat-option *ngFor="let r of routes" [value]="r.id">
+              {{ r.route_name }} ({{ r.route_number }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Trip Type *</mat-label>
+            <mat-select [(ngModel)]="newTrip.trip_type" required>
+              <mat-option value="Pickup">Morning Pickup</mat-option>
+              <mat-option value="Drop">Evening Drop</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Scheduled Start Time</mat-label>
+            <input matInput type="time" [(ngModel)]="newTrip.scheduled_start_time">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Vehicle</mat-label>
+            <mat-select [(ngModel)]="newTrip.vehicle_id">
+              <mat-option [value]="null">-- Select Vehicle --</mat-option>
+              <mat-option *ngFor="let v of vehicles" [value]="v.id">
+                {{ v.vehicle_number }} ({{ v.vehicle_type }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Assigned Driver</mat-label>
+            <mat-select [(ngModel)]="newTrip.transport_driver_id">
+              <mat-option [value]="null">-- Select Driver --</mat-option>
+              <mat-option *ngFor="let d of drivers" [value]="d.id">
+                {{ d.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Specific Date (Optional - Leave blank for daily standing)</mat-label>
+          <input matInput type="date" [(ngModel)]="newTrip.trip_date">
+          <mat-hint>Leave empty to create a standing daily recurring trip.</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="scheduleModalVisible = false">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!newTrip.route_id || savingTrip" (click)="saveScheduleTrip()">
+          <mat-spinner diameter="16" *ngIf="savingTrip"></mat-spinner>
+          Confirm & Dispatch Trip
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Driver Modal -->
+  <div class="modal-backdrop" *ngIf="changeDriverModalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><mat-icon>badge</mat-icon> Change Trip Driver</h3>
+        <button mat-icon-button (click)="changeDriverModalVisible = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-instruction">Assign a replacement driver for this specific trip without altering route defaults:</p>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Select Driver</mat-label>
+          <mat-select [(ngModel)]="selectedNewDriverId">
+            <mat-option *ngFor="let d of drivers" [value]="d.id">
+              {{ d.name }} <span *ngIf="d.phone">({{ d.phone }})</span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="changeDriverModalVisible = false">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!selectedNewDriverId" (click)="confirmChangeDriver()">
+          Update Driver
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Vehicle Modal -->
+  <div class="modal-backdrop" *ngIf="changeVehicleModalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><mat-icon>directions_bus</mat-icon> Change Trip Vehicle</h3>
+        <button mat-icon-button (click)="changeVehicleModalVisible = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-instruction">Assign a replacement vehicle for this specific trip:</p>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Select Vehicle</mat-label>
+          <mat-select [(ngModel)]="selectedNewVehicleId">
+            <mat-option *ngFor="let v of vehicles" [value]="v.id">
+              {{ v.vehicle_number }} (Cap: {{ v.capacity }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="changeVehicleModalVisible = false">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!selectedNewVehicleId" (click)="confirmChangeVehicle()">
+          Update Vehicle
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

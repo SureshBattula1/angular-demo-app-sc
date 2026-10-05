@@ -13,13 +13,13 @@ import { TransportDriver } from '../../../../core/models/transport.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './driver-form.component.html',
-  styleUrls: ['../vehicle-form/vehicle-form.component.scss']
+  styleUrls: ['./driver-form.component.scss']
 })
 export class DriverFormComponent implements OnInit {
   form!: FormGroup;
   isEdit = false;
   saving = false;
-  branches: Array<{ id: string | number; name: string }> = [];
+  branches: { id: string | number; name: string }[] = [];
   private driverId: string | null = null;
 
   constructor(

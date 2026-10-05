@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { TableConfig, PaginationEvent, SortEvent, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
@@ -12,15 +17,17 @@ import { ErrorHandlerService } from '../../../../core/services/error-handler.ser
 @Component({
   selector: 'app-vehicle-list',
   standalone: true,
-  imports: [CommonModule, DataTableComponent],
-  template: `
-    <app-data-table [data]="rows" [config]="tableConfig" [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Vehicles'" [loading]="loading"
-      (actionClicked)="onAction($event)" (paginationChanged)="onPage($event)" (sortChanged)="onSort($event)"
-      (searchChanged)="onBasicSearch($event)" (advancedSearchChanged)="onAdvSearch($event)" (searchResetEvent)="onReset()">
-    </app-data-table>
-  `,
-  styles: [`:host { display: block; }`]
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    DataTableComponent
+  ],
+  templateUrl: './vehicle-list.component.html',
+  styleUrls: ['./vehicle-list.component.scss']
 })
 export class VehicleListComponent implements OnInit {
   loading = false;
@@ -43,59 +50,145 @@ export class VehicleListComponent implements OnInit {
       { icon: 'edit', label: 'Edit', color: 'primary', action: (r) => this.router.navigate(['/transport/vehicles/edit', r.id]), permission: 'transport.edit' },
       { icon: 'delete', label: 'Delete', color: 'warn', action: (r) => this.remove(r), permission: 'transport.delete' }
     ],
-    selectable: false, pagination: true, searchable: true, advancedSearch: true, responsive: true,
-    serverSide: true, totalCount: 0, pageSizeOptions: [10, 25, 50, 100], defaultPageSize: 25,
-    addButtonPermission: 'transport.create', primaryButtonLabel: 'ADD VEHICLE'
+    selectable: false,
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    responsive: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50, 100],
+    defaultPageSize: 25,
+    addButtonPermission: 'transport.create',
+    primaryButtonLabel: 'ADD VEHICLE'
   };
 
   advancedSearchConfig: AdvancedSearchConfig = {
-    title: 'Advanced Vehicle Search', width: '440px', showReset: true, showSaveSearch: false,
+    title: 'Advanced Vehicle Search',
+    width: '440px',
+    showReset: true,
+    showSaveSearch: false,
     fields: [
       { key: 'branch_id', label: 'Branch', type: 'select', icon: 'business', options: [] },
-      { key: 'status', label: 'Status', type: 'select', icon: 'info', options: [
-        { value: 'Active', label: 'Active' }, { value: 'Maintenance', label: 'Maintenance' }, { value: 'Inactive', label: 'Inactive' }
-      ] },
-      { key: 'vehicle_type', label: 'Type', type: 'select', icon: 'directions_bus', options: [
-        { value: 'Bus', label: 'Bus' }, { value: 'Van', label: 'Van' }, { value: 'Car', label: 'Car' }
-      ] }
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        icon: 'info',
+        options: [
+          { value: 'Active', label: 'Active' },
+          { value: 'Maintenance', label: 'Maintenance' },
+          { value: 'Inactive', label: 'Inactive' }
+        ]
+      },
+      {
+        key: 'vehicle_type',
+        label: 'Type',
+        type: 'select',
+        icon: 'directions_bus',
+        options: [
+          { value: 'Bus', label: 'Bus' },
+          { value: 'Van', label: 'Van' },
+          { value: 'Car', label: 'Car' }
+        ]
+      }
     ]
   };
 
-  constructor(private transport: TransportService, private branchService: BranchService, private router: Router, private errorHandler: ErrorHandlerService) {}
+  constructor(
+    private transport: TransportService,
+    private branchService: BranchService,
+    private router: Router,
+    private errorHandler: ErrorHandlerService
+  ) {}
 
-  ngOnInit(): void { this.loadBranches(); this.load(); }
+  ngOnInit(): void {
+    this.loadBranches();
+    this.load();
+  }
 
   private loadBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: (res) => {
         const f = this.advancedSearchConfig.fields.find(x => x.key === 'branch_id');
-        if (f) { f.options = (res.success && res.data) ? res.data.map(b => ({ value: b.id.toString(), label: b.name })) : []; }
-      }, error: () => {}
+        if (f) {
+          f.options = (res.success && res.data)
+            ? res.data.map(b => ({ value: b.id.toString(), label: b.name }))
+            : [];
+        }
+      },
+      error: () => {}
     });
   }
 
   load(): void {
     this.loading = true;
     this.transport.getVehicles({ ...this.filters }).subscribe({
-      next: (res) => { this.rows = res.data || []; if (res.meta) { this.tableConfig = { ...this.tableConfig, totalCount: res.meta.total }; } this.loading = false; },
-      error: (e) => { this.errorHandler.showError(e); this.loading = false; }
+      next: (res) => {
+        this.rows = res.data || [];
+        if (res.meta) {
+          this.tableConfig = { ...this.tableConfig, totalCount: res.meta.total };
+        }
+        this.loading = false;
+      },
+      error: (e) => {
+        this.errorHandler.showError(e);
+        this.loading = false;
+      }
     });
   }
 
-  onPage(e: PaginationEvent): void { this.filters = { ...this.filters, page: e.page + 1, per_page: e.pageSize }; this.load(); }
-  onSort(e: SortEvent): void {
-    const map: Record<string, string> = { 'vehicle_number': 'vehicles.vehicle_number', 'vehicle_type': 'vehicles.vehicle_type', 'capacity': 'vehicles.capacity', 'status': 'vehicles.status', 'branch.name': 'branches.name' };
-    this.filters = { ...this.filters, sort_by: map[e.field] || e.field, sort_direction: e.direction }; this.load();
+  onPage(e: PaginationEvent): void {
+    this.filters = { ...this.filters, page: e.page + 1, per_page: e.pageSize };
+    this.load();
   }
-  onBasicSearch(query: string): void { this.filters = { ...this.filters, search: query, page: 1 }; this.load(); }
-  onAdvSearch(e: SearchEvent): void { this.filters = { ...e.filters, search: e.query, page: 1 }; this.load(); }
-  onReset(): void { this.filters = {}; this.load(); }
-  onAction(e: { action: string; row: Vehicle | null }): void { if (e.action === 'add') { this.router.navigate(['/transport/vehicles/create']); } }
+
+  onSort(e: SortEvent): void {
+    const map: Record<string, string> = {
+      'vehicle_number': 'vehicles.vehicle_number',
+      'vehicle_type': 'vehicles.vehicle_type',
+      'capacity': 'vehicles.capacity',
+      'status': 'vehicles.status',
+      'branch.name': 'branches.name'
+    };
+    this.filters = { ...this.filters, sort_by: map[e.field] || e.field, sort_direction: e.direction };
+    this.load();
+  }
+
+  onBasicSearch(query: string): void {
+    this.filters = { ...this.filters, search: query, page: 1 };
+    this.load();
+  }
+
+  onAdvSearch(e: SearchEvent): void {
+    this.filters = { ...e.filters, search: e.query, page: 1 };
+    this.load();
+  }
+
+  onReset(): void {
+    this.filters = {};
+    this.load();
+  }
+
+  onAction(e: { action: string; row: Vehicle | null }): void {
+    if (e.action === 'add') {
+      this.router.navigate(['/transport/vehicles/create']);
+    }
+  }
 
   private remove(v: Vehicle): void {
-    if (!confirm(`Delete vehicle "${v.vehicle_number}"?`)) { return; }
+    if (!confirm(`Delete vehicle "${v.vehicle_number}"?`)) {
+      return;
+    }
     this.transport.deleteVehicle(v.id).subscribe({
-      next: (res) => { if (res.success) { this.errorHandler.showSuccess('Vehicle deleted'); this.load(); } else { this.errorHandler.showError(res.message || 'Failed'); } },
+      next: (res) => {
+        if (res.success) {
+          this.errorHandler.showSuccess('Vehicle deleted');
+          this.load();
+        } else {
+          this.errorHandler.showError(res.message || 'Failed');
+        }
+      },
       error: (e) => this.errorHandler.showError(e)
     });
   }

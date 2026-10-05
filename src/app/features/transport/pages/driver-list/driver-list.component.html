@@ -1,0 +1,94 @@
+<div class="view-container">
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">badge</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Transport Drivers Roster</h1>
+          <div class="view-meta">
+            <span><mat-icon>verified</mat-icon> Licensed Commercial Operators</span>
+            <span><mat-icon>assignment_ind</mat-icon> Daily Dispatch Assignments</span>
+            <span><mat-icon>health_and_safety</mat-icon> Safety Compliant</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> On-Duty Fleet</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="accent" routerLink="/transport/drivers/create">
+            <mat-icon>person_add</mat-icon> Add New Driver
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>badge</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ tableConfig.totalCount || rows.length }}</div>
+          <div class="stat-label">Total Registered Drivers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ rows.length }}</div>
+          <div class="stat-label">Active On-Duty</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>card_membership</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">Valid</div>
+          <div class="stat-label">License Compliance Tracked</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>commute</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">Dedicated</div>
+          <div class="stat-label">Route & Vehicle Pairings</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detail Card with Data Table -->
+  <mat-card class="detail-card">
+    <mat-card-content>
+      <app-data-table
+        [data]="rows"
+        [config]="tableConfig"
+        [title]="'Active Driver Directory'"
+        [loading]="loading"
+        (actionClicked)="onAction($event)"
+        (paginationChanged)="onPage($event)"
+        (sortChanged)="onSort($event)"
+        (searchChanged)="onSearch($event)"
+        (searchResetEvent)="onReset()">
+      </app-data-table>
+    </mat-card-content>
+  </mat-card>
+</div>
