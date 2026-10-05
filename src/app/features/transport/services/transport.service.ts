@@ -14,7 +14,9 @@ import {
   TransportFuelEntry,
   TransportMaintenanceLog,
   TransportFeeSummary,
-  TransportDashboardSummary
+  TransportDashboardSummary,
+  DriverDashboardData,
+  DriverAttendanceLog
 } from '../../../core/models/transport.model';
 
 @Injectable({ providedIn: 'root' })
@@ -225,5 +227,28 @@ export class TransportService {
   }
   deleteMaintenanceLog(id: string | number): Observable<ApiResponse> {
     return this.api.delete(`/transport-maintenance/${id}`);
+  }
+
+  // =========================================================================
+  // 12. Driver Portal (Scoped Endpoints for Driver Role)
+  // =========================================================================
+  getDriverDashboard(): Observable<ApiResponse<DriverDashboardData>> {
+    return this.api.get<DriverDashboardData>('/driver/dashboard');
+  }
+
+  driverClockIn(payload?: { remarks?: string }): Observable<ApiResponse> {
+    return this.api.post('/driver/clock-in', payload || {});
+  }
+
+  driverClockOut(payload?: { remarks?: string }): Observable<ApiResponse> {
+    return this.api.post('/driver/clock-out', payload || {});
+  }
+
+  getDriverAttendanceHistory(): Observable<ApiResponse<DriverAttendanceLog[]>> {
+    return this.api.get<DriverAttendanceLog[]>('/driver/attendance-history');
+  }
+
+  updateDriverTripLocation(tripId: string | number, payload: { latitude: number; longitude: number; speed?: number }): Observable<ApiResponse> {
+    return this.api.post(`/driver/trips/${tripId}/location`, payload);
   }
 }

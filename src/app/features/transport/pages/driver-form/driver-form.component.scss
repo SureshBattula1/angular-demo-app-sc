@@ -44,6 +44,45 @@
   margin-top: 8px;
 }
 
+.credentials-card-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--primary-color, #00897b);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .sec-icon {
+      color: var(--primary-color, #00897b);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .sec-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .sec-badge {
+      margin-left: auto;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+  }
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

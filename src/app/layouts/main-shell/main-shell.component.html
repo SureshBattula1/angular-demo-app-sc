@@ -12,7 +12,7 @@
 
 <div class="app-container" [class.with-impersonation-banner]="isImpersonating">
   <!-- Past academic year notice -->
-  <div *ngIf="isPastAcademicYear && !isStudentRole()" class="past-year-banner">
+  <div *ngIf="isPastAcademicYear && !isStudentRole() && !isDriverRole()" class="past-year-banner">
     <mat-icon>info</mat-icon>
     <span>You are viewing a past academic year ({{ selectedAcademicYearName }}). Some actions may be restricted.</span>
   </div>
@@ -46,7 +46,7 @@
     <span class="spacer"></span>
 
     <!-- Academic Year Selector -->
-    <mat-form-field appearance="outline" class="academic-year-selector" *ngIf="!isStudentRole()">
+    <mat-form-field appearance="outline" class="academic-year-selector" *ngIf="!isStudentRole() && !isDriverRole()">
       <mat-label>Academic Year</mat-label>
       <mat-select [value]="selectedAcademicYearId" (selectionChange)="onAcademicYearChange($event.value)">
         <mat-option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</mat-option>

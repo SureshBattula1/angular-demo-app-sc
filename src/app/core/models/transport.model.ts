@@ -4,13 +4,45 @@ export interface TransportDriver {
   id: string | number;
   branch_id: string | number;
   school_id?: string | number | null;
+  user_id?: string | number | null;
   name: string;
   phone?: string | null;
+  email?: string | null;
+  has_account?: boolean;
   license_number?: string | null;
   license_expiry?: string | null;
   address?: string | null;
   is_active?: boolean;
   branch?: { id: string | number | null; name: string | null; code?: string | null };
+  user?: { id: number; first_name: string; last_name: string; email: string; phone?: string; is_active: boolean };
+}
+
+export interface DriverDutyStatus {
+  clocked_in: boolean;
+  clock_in_time?: string | null;
+  clocked_out: boolean;
+  clock_out_time?: string | null;
+  total_hours: number;
+  status: string;
+}
+
+export interface DriverAttendanceLog {
+  id: string;
+  date: string;
+  status: string;
+  check_in?: string | null;
+  check_out?: string | null;
+  total_hours?: number;
+  remarks?: string | null;
+}
+
+export interface DriverDashboardData {
+  driver: TransportDriver;
+  vehicle: Vehicle | null;
+  route: TransportRoute | null;
+  stops: RouteStop[];
+  today_trips: TransportTrip[];
+  duty: DriverDutyStatus;
 }
 
 export type VehicleType = 'Bus' | 'Van' | 'Car';
@@ -156,6 +188,11 @@ export interface TripBoardingLog {
   scheduled_drop_time?: string;
   pickup_time?: string;
   drop_time?: string;
+  boarding_status?: string | null;
+  drop_status?: string | null;
+  student?: { id: string | number; first_name?: string; last_name?: string; admission_number?: string; avatar?: string } | null;
+  pickup_stop?: { id: string | number; stop_name?: string } | null;
+  drop_stop?: { id: string | number; stop_name?: string } | null;
 }
 
 export interface TransportExpense {

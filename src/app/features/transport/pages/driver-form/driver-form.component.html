@@ -70,6 +70,44 @@
           </mat-form-field>
         </div>
 
+        <!-- Portal & App Login Credentials -->
+        <div class="credentials-card-box">
+          <div class="section-title-row">
+            <mat-icon class="sec-icon">vpn_key</mat-icon>
+            <span class="sec-title">Driver App & Web Login Credentials</span>
+            <span class="sec-badge" *ngIf="hasExistingAccount">Account Linked</span>
+          </div>
+
+          <div class="checkbox-row" style="margin-top: 10px; margin-bottom: 16px;">
+            <mat-checkbox formControlName="create_account">
+              Enable System Login Access for this Driver
+            </mat-checkbox>
+          </div>
+
+          <div class="grid" *ngIf="form.get('create_account')?.value">
+            <mat-form-field appearance="outline">
+              <mat-label>Login Email Address</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="e.g. driver.ramesh@school.com">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="form.get('email')?.hasError('email')">Please enter a valid email address</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ isEdit ? 'New Password (Leave blank to keep existing)' : 'Password' }}</mat-label>
+              <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" placeholder="Min 6 characters">
+              <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <div style="display: flex; align-items: center; padding-bottom: 22px;">
+              <button mat-stroked-button type="button" color="accent" (click)="generatePassword()">
+                <mat-icon>auto_fix_high</mat-icon> Generate Password
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="checkbox-row">
           <mat-checkbox formControlName="is_active">Active On-Duty Driver</mat-checkbox>
         </div>

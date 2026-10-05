@@ -60,8 +60,12 @@ export class LoginComponent implements OnInit {
         if (response.success) {
           this.errorHandler.showSuccess('Login successful! Welcome back.');
 
-          // All roles (including Students) land on the role-based dashboard
-          this.router.navigate([this.returnUrl]);
+          // Driver role lands on dedicated Driver Portal, others on role dashboard
+          if (response.user?.role === 'Driver') {
+            this.router.navigate(['/transport/driver-portal']);
+          } else {
+            this.router.navigate([this.returnUrl]);
+          }
         } else {
           this.errorHandler.showError(response.message || 'Login failed');
         }

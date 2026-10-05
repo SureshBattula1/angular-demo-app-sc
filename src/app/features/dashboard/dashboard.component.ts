@@ -19,6 +19,7 @@ import { BranchService } from '../branches/services/branch.service';
 import { BranchService as BranchAccessService } from '../../core/services/branch.service';
 import { canShowBranchSelector, resolveDefaultBranchId } from '../../core/utils/branch-selection.util';
 import { ThemeService } from '../../core/services/theme.service';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -99,7 +100,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private dashboardService: DashboardService,
     private authService: AuthService,
     private branchService: BranchService,
-    private branchAccess: BranchAccessService
+    private branchAccess: BranchAccessService,
+    private router: Router
   ) {
     effect(() => {
       this.themeService.currentTheme();
@@ -145,6 +147,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private setUserRole(user: any): void {
     const role = user?.role?.trim() || '';
     this.userRole.set(role);
+
+    if (role === 'Driver') {
+      this.router.navigate(['/transport/driver-portal']);
+      return;
+    }
 
     console.log('Dashboard User Role Set:', role, 'for user:', user?.email);
 

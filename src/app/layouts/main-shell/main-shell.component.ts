@@ -98,6 +98,13 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'local_library', label: 'Library', route: '/library', permission: ['library.view', 'library.create'], permissionMode: 'any' },
     { icon: 'directions_bus', label: 'Transport', route: '/transport', permission: ['transport.view', 'transport.create'], permissionMode: 'any' },
     { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
+    {
+      icon: 'local_shipping',
+      label: 'Driver Portal',
+      route: '/transport/driver-portal',
+      roles: ['Driver', 'SuperAdmin', 'BranchAdmin'],
+      tooltip: 'My Bus, Route & Attendance'
+    },
     { icon: 'trending_up', label: 'Promotions', route: '/promotions', permission: ['students.promote', 'students.edit'], permissionMode: 'any' },
     { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'import.view' },
     { icon: 'settings', label: 'Settings', route: '/settings', permission: 'settings.view' }
@@ -179,7 +186,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
     this.checkImpersonationStatus();
 
     // Academic year context: subscribe to selected year and load list for switcher
-    if (!this.isStudentRole()) {
+    if (!this.isStudentRole() && !this.isDriverRole()) {
       this.academicYearContext.selectedYear$.subscribe(y => {
         this.selectedAcademicYearId = y?.id ?? null;
         this.selectedAcademicYearName = y?.name ?? '';
@@ -366,7 +373,7 @@ export class MainShellComponent implements OnInit, OnDestroy {
           this.selectedTheme = response.data.theme;
           this.applyTheme(response.data.theme);
           // Academic year: keep local selection on refresh; prefs apply only when nothing stored
-          if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+          if (!this.isStudentRole() && !this.isDriverRole() && this.academicYearContext.effectiveYearId() == null) {
             const rawAy = (response.data.additional_settings as Record<string, unknown>)?.['academic_year_id'];
             if (rawAy != null && String(rawAy) !== '') {
               this.academicYearContext.loadYearById(rawAy as string | number);
@@ -376,14 +383,14 @@ export class MainShellComponent implements OnInit, OnDestroy {
           }
         } else {
           this.loadThemeFromLocalStorage();
-          if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+          if (!this.isStudentRole() && !this.isDriverRole() && this.academicYearContext.effectiveYearId() == null) {
             this.academicYearContext.loadCurrent();
           }
         }
       },
       error: () => {
         this.loadThemeFromLocalStorage();
-        if (!this.isStudentRole() && this.academicYearContext.effectiveYearId() == null) {
+        if (!this.isStudentRole() && !this.isDriverRole() && this.academicYearContext.effectiveYearId() == null) {
           this.academicYearContext.loadCurrent();
         }
       }
@@ -749,10 +756,23 @@ export class MainShellComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Check if current user is a driver
+   */
+  isDriverRole(): boolean {
+    const user = this.authService.currentUser();
+    return user?.role === 'Driver';
+  }
+
+  /**
    * Same rule as the mobile drawer: a role menu stays visible even if the
    * assignment permission slug is missing from the cached permission list.
    */
   isMenuItemVisible(item: MenuItem): boolean {
+    // Drivers only see menus explicitly enabled for Driver role (their bus, route, and attendance hub)
+    if (this.isDriverRole()) {
+      return !!(item.roles && item.roles.includes('Driver'));
+    }
+
     if (item.public) {
       return true;
     }

@@ -1,0 +1,449 @@
+<div class="driver-portal-container">
+  <!-- ════════════════════════════════════════════════════════════════════════
+       1. Top Driver Profile & Duty Status Card
+       ════════════════════════════════════════════════════════════════════════ -->
+  <mat-card class="driver-hero-card">
+    <mat-card-content>
+      <div class="hero-layout">
+        <div class="driver-avatar-circle">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+
+        <div class="driver-meta">
+          <div class="greeting-row">
+            <span class="greeting-label">Fleet Operator Console</span>
+            <span class="live-clock"><mat-icon>schedule</mat-icon> {{ currentTime | date:'hh:mm:ss a' }}</span>
+          </div>
+
+          <h1 class="driver-name">{{ dashboardData?.driver?.name || 'Driver' }}</h1>
+
+          <div class="meta-pills">
+            <span class="meta-pill" *ngIf="dashboardData?.driver?.license_number">
+              <mat-icon>verified</mat-icon> Lic: {{ dashboardData?.driver?.license_number }}
+            </span>
+            <span class="meta-pill bus-pill" *ngIf="vehicle">
+              <mat-icon>directions_bus</mat-icon> Bus: {{ vehicle.vehicle_number }}
+            </span>
+            <span class="meta-pill route-pill" *ngIf="route">
+              <mat-icon>alt_route</mat-icon> {{ route.route_name }}
+            </span>
+            <span class="status-indicator" [class.on-duty]="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out">
+              <mat-icon>{{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'fiber_manual_record' : 'radio_button_unchecked' }}</mat-icon>
+              {{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'On Duty' : 'Off Duty' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Quick Duty Action Widget -->
+        <div class="duty-action-widget">
+          <div class="duty-stats-col" *ngIf="dashboardData?.duty?.clocked_in">
+            <span class="duty-lbl">Started Shift</span>
+            <span class="duty-val">{{ dashboardData?.duty?.clock_in_time }}</span>
+          </div>
+
+          <button mat-raised-button color="primary" class="duty-toggle-btn"
+                  *ngIf="!dashboardData?.duty?.clocked_in"
+                  (click)="clockIn()" [disabled]="clockingIn">
+            <mat-icon>login</mat-icon> Start Duty (Clock In)
+          </button>
+
+          <button mat-raised-button color="warn" class="duty-toggle-btn"
+                  *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out"
+                  (click)="clockOut()" [disabled]="clockingOut">
+            <mat-icon>logout</mat-icon> End Duty (Clock Out)
+          </button>
+
+          <div class="shift-completed-badge" *ngIf="dashboardData?.duty?.clocked_out">
+            <mat-icon>task_alt</mat-icon> Shift Completed ({{ dashboardData?.duty?.total_hours }}h)
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       2. Navigation Tabs
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="portal-nav-bar">
+    <button class="nav-tab" [class.active]="activeTab === 'bus-route'" (click)="setTab('bus-route')">
+      <mat-icon>directions_bus</mat-icon> My Bus & Route
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'trip-roster'" (click)="setTab('trip-roster')">
+      <mat-icon>commute</mat-icon> Today's Trip & Student Boarding
+      <span class="tab-badge" *ngIf="roster.length > 0">{{ roster.length }}</span>
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
+      <mat-icon>fact_check</mat-icon> Duty & Attendance Logs
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading your assigned vehicle, route, and schedule...</p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 1: My Bus & Route
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-pane" *ngIf="activeTab === 'bus-route' && !loading">
+    <div class="bus-route-grid">
+      <!-- Assigned Vehicle Specs Card -->
+      <mat-card class="content-card vehicle-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>directions_bus</mat-icon> Assigned Bus & Vehicle
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="vehicle; else noVehicle">
+            <div class="bus-highlight-box">
+              <div class="plate-number">{{ vehicle.vehicle_number }}</div>
+              <div class="bus-type-badge">{{ vehicle.vehicle_type }}</div>
+            </div>
+
+            <div class="spec-list">
+              <div class="spec-row">
+                <span class="label"><mat-icon>airline_seat_recline_extra</mat-icon> Seating Capacity</span>
+                <span class="value">{{ vehicle.capacity }} Seats</span>
+              </div>
+              <div class="spec-row" *ngIf="vehicle.make || vehicle.model">
+                <span class="label"><mat-icon>build</mat-icon> Make & Model</span>
+                <span class="value">{{ vehicle.make }} {{ vehicle.model }}</span>
+              </div>
+              <div class="spec-row">
+                <span class="label"><mat-icon>security</mat-icon> Insurance Status</span>
+                <span class="value compliance-chip" [class.valid]="vehicle.insurance_expiry">
+                  {{ vehicle.insurance_expiry ? 'Valid till ' + (vehicle.insurance_expiry | date:'mediumDate') : 'Verified' }}
+                </span>
+              </div>
+              <div class="spec-row">
+                <span class="label"><mat-icon>health_and_safety</mat-icon> Fitness Certificate</span>
+                <span class="value compliance-chip valid">Certified Safe</span>
+              </div>
+              <div class="spec-row">
+                <span class="label"><mat-icon>contact_phone</mat-icon> Transport Helpdesk</span>
+                <span class="value helpline-link">+91 90000 12345</span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noVehicle>
+            <div class="empty-placeholder">
+              <mat-icon>bus_alert</mat-icon>
+              <h3>No Vehicle Assigned</h3>
+              <p>Please contact your branch transport supervisor to assign a bus to your profile.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Assigned Route Card -->
+      <mat-card class="content-card route-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>alt_route</mat-icon> Assigned Transport Route
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="route; else noRoute">
+            <div class="route-header-summary">
+              <div class="route-name-title">{{ route.route_name }}</div>
+              <div class="route-metrics">
+                <span class="metric-chip"><mat-icon>place</mat-icon> {{ stops.length }} Ordered Stops</span>
+                <span class="metric-chip" *ngIf="route.total_distance_km"><mat-icon>timeline</mat-icon> {{ route.total_distance_km }} KM</span>
+                <span class="metric-chip" *ngIf="route.estimated_duration_minutes"><mat-icon>timer</mat-icon> ~{{ route.estimated_duration_minutes }} Mins</span>
+              </div>
+            </div>
+
+            <!-- Stop Timeline Sequence -->
+            <div class="stops-timeline">
+              <h4 class="timeline-title"><mat-icon>linear_scale</mat-icon> Daily Stop Schedule</h4>
+              <div class="timeline-item" *ngFor="let s of stops; let i = index">
+                <div class="timeline-seq">{{ s.sequence_no || (i + 1) }}</div>
+                <div class="timeline-content">
+                  <div class="stop-name-row">
+                    <span class="stop-title">{{ s.stop_name }}</span>
+                    <span class="stop-time" *ngIf="s.pickup_time"><mat-icon>wb_sunny</mat-icon> {{ s.pickup_time }}</span>
+                  </div>
+                  <div class="stop-sub" *ngIf="s.drop_time">
+                    <span class="drop-time"><mat-icon>nights_stay</mat-icon> Drop: {{ s.drop_time }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noRoute>
+            <div class="empty-placeholder">
+              <mat-icon>alt_route</mat-icon>
+              <h3>No Route Assigned</h3>
+              <p>Vehicle does not have an active route linked yet.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 2: Trip & Student Boarding Attendance
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-pane" *ngIf="activeTab === 'trip-roster' && !loading">
+    <!-- Trip Selector & Control Banner -->
+    <mat-card class="content-card trip-control-banner">
+      <mat-card-content>
+        <div class="trip-bar-row">
+          <div class="trip-selector-col">
+            <span class="trip-bar-lbl">Select Today's Trip:</span>
+            <div class="trip-pill-group">
+              <button *ngFor="let t of todayTrips"
+                      class="trip-pill"
+                      [class.active-trip]="selectedTripId === t.id"
+                      (click)="onTripChange(t.id)">
+                <mat-icon>{{ t.trip_type === 'Pickup' ? 'wb_sunny' : 'nights_stay' }}</mat-icon>
+                <span>{{ t.trip_type }} ({{ t.status }})</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Trip Controls -->
+          <div class="trip-actions-col" *ngIf="selectedTrip">
+            <button mat-raised-button color="primary" class="trip-btn"
+                    *ngIf="selectedTrip.status === 'Scheduled'"
+                    (click)="startTrip()">
+              <mat-icon>play_arrow</mat-icon> Start This Trip
+            </button>
+            <button mat-raised-button color="accent" class="trip-btn"
+                    *ngIf="selectedTrip.status === 'Started' || selectedTrip.status === 'In Progress'"
+                    (click)="completeTrip()">
+              <mat-icon>check_circle</mat-icon> Complete Trip
+            </button>
+            <span class="trip-badge-done" *ngIf="selectedTrip.status === 'Completed'">
+              <mat-icon>task_alt</mat-icon> Trip Finished
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Counters Grid -->
+    <div class="summary-counters-grid">
+      <mat-card class="counter-card total">
+        <mat-card-content>
+          <div class="count-num">{{ roster.length }}</div>
+          <div class="count-lbl">Assigned Students</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="counter-card boarded">
+        <mat-card-content>
+          <div class="count-num">{{ boardedCount }}</div>
+          <div class="count-lbl">Boarded Students</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="counter-card dropped">
+        <mat-card-content>
+          <div class="count-num">{{ droppedCount }}</div>
+          <div class="count-lbl">Dropped Students</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="counter-card pending">
+        <mat-card-content>
+          <div class="count-num">{{ pendingCount }}</div>
+          <div class="count-lbl">Pending Boarding</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Student Boarding Roster Card -->
+    <mat-card class="content-card roster-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>how_to_reg</mat-icon> Student Check-In & Boarding Verification
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Filter and Search Row -->
+        <div class="roster-toolbar">
+          <div class="search-box">
+            <mat-icon>search</mat-icon>
+            <input type="text" [(ngModel)]="studentSearch" (ngModelChange)="applyFilter()" placeholder="Search student name or admission no...">
+          </div>
+
+          <div class="filter-chips">
+            <button class="chip-btn" [class.active]="activeFilter === 'ALL'" (click)="setFilter('ALL')">All</button>
+            <button class="chip-btn" [class.active]="activeFilter === 'Pending'" (click)="setFilter('Pending')">Pending ({{ pendingCount }})</button>
+            <button class="chip-btn" [class.active]="activeFilter === 'Boarded'" (click)="setFilter('Boarded')">Boarded ({{ boardedCount }})</button>
+            <button class="chip-btn" [class.active]="activeFilter === 'Dropped'" (click)="setFilter('Dropped')">Dropped ({{ droppedCount }})</button>
+          </div>
+        </div>
+
+        <div class="roster-spinner" *ngIf="rosterLoading">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Refreshing roster...</span>
+        </div>
+
+        <!-- Student Cards List -->
+        <div class="students-list" *ngIf="!rosterLoading">
+          <div class="student-card-item" *ngFor="let item of filteredRoster">
+            <div class="student-avatar-box">
+              <mat-icon>person</mat-icon>
+            </div>
+
+            <div class="student-info">
+              <div class="student-name">{{ item.student?.first_name }} {{ item.student?.last_name }}</div>
+              <div class="student-sub">
+                <span>Adm: {{ item.student?.admission_number || 'N/A' }}</span>
+                <span class="dot">•</span>
+                <span class="stop-tag"><mat-icon>place</mat-icon> {{ item.pickup_stop?.stop_name || item.drop_stop?.stop_name || 'Assigned Stop' }}</span>
+              </div>
+            </div>
+
+            <div class="status-pill-box">
+              <span class="status-tag boarded" *ngIf="item.boarding_status === 'Boarded'">
+                <mat-icon>check_circle</mat-icon> Boarded {{ item.boarded_at | date:'shortTime' }}
+              </span>
+              <span class="status-tag dropped" *ngIf="item.drop_status === 'Dropped'">
+                <mat-icon>done_all</mat-icon> Dropped {{ item.dropped_at | date:'shortTime' }}
+              </span>
+              <span class="status-tag pending" *ngIf="item.boarding_status !== 'Boarded' && item.drop_status !== 'Dropped'">
+                <mat-icon>hourglass_empty</mat-icon> Pending
+              </span>
+            </div>
+
+            <!-- 1-Tap Action Buttons -->
+            <div class="student-action-btns">
+              <button mat-flat-button color="primary" class="action-btn"
+                      *ngIf="item.boarding_status !== 'Boarded'"
+                      (click)="markStudentBoarded(item)">
+                <mat-icon>login</mat-icon> Board
+              </button>
+
+              <button mat-stroked-button class="action-btn unboard-btn"
+                      *ngIf="item.boarding_status === 'Boarded' && item.drop_status !== 'Dropped'"
+                      (click)="unmarkStudentBoarded(item)">
+                <mat-icon>undo</mat-icon> Unmark
+              </button>
+
+              <button mat-flat-button color="accent" class="action-btn drop-btn"
+                      *ngIf="item.boarding_status === 'Boarded' && item.drop_status !== 'Dropped'"
+                      (click)="markStudentDropped(item)">
+                <mat-icon>logout</mat-icon> Drop
+              </button>
+            </div>
+          </div>
+
+          <div class="empty-roster" *ngIf="filteredRoster.length === 0">
+            <mat-icon>group_off</mat-icon>
+            <h3>No Students Found</h3>
+            <p *ngIf="studentSearch">No student matching "{{ studentSearch }}" in this trip filter.</p>
+            <p *ngIf="!studentSearch">No students assigned to this route trip yet.</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 3: Duty & Attendance Logs
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-pane" *ngIf="activeTab === 'attendance' && !loading">
+    <div class="duty-view-grid">
+      <!-- Today's Shift Card -->
+      <mat-card class="content-card duty-today-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>timer</mat-icon> Today's Shift & Duty Status
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="shift-hero-stats">
+            <div class="shift-stat-item">
+              <span class="stat-lbl">Clock In Time</span>
+              <span class="stat-val">{{ dashboardData?.duty?.clock_in_time || '--:--' }}</span>
+            </div>
+            <div class="shift-stat-item">
+              <span class="stat-lbl">Clock Out Time</span>
+              <span class="stat-val">{{ dashboardData?.duty?.clock_out_time || '--:--' }}</span>
+            </div>
+            <div class="shift-stat-item">
+              <span class="stat-lbl">Total Shift Hours</span>
+              <span class="stat-val highlight">{{ dashboardData?.duty?.total_hours || '0' }} hrs</span>
+            </div>
+          </div>
+
+          <div class="duty-controls-row">
+            <button mat-raised-button color="primary" class="duty-big-btn"
+                    *ngIf="!dashboardData?.duty?.clocked_in"
+                    (click)="clockIn()" [disabled]="clockingIn">
+              <mat-icon>login</mat-icon> Clock In for Today's Duty
+            </button>
+
+            <button mat-raised-button color="warn" class="duty-big-btn"
+                    *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out"
+                    (click)="clockOut()" [disabled]="clockingOut">
+              <mat-icon>logout</mat-icon> Clock Out & End Shift
+            </button>
+
+            <div class="shift-done-box" *ngIf="dashboardData?.duty?.clocked_out">
+              <mat-icon>check_circle</mat-icon>
+              <span>Today's duty completed successfully! Have a great rest.</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Past Attendance Logs Card -->
+      <mat-card class="content-card duty-history-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>history</mat-icon> Recent Shift & Attendance History
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="history-spinner" *ngIf="historyLoading">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Loading history...</span>
+          </div>
+
+          <div class="history-table-box" *ngIf="!historyLoading">
+            <table class="styled-table" *ngIf="attendanceHistory.length > 0; else noHistory">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Hours</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let h of attendanceHistory">
+                  <td class="date-cell">{{ h.date }}</td>
+                  <td>
+                    <span class="duty-status-badge present">{{ h.status | titlecase }}</span>
+                  </td>
+                  <td>{{ h.check_in || '--:--' }}</td>
+                  <td>{{ h.check_out || '--:--' }}</td>
+                  <td><strong>{{ h.total_hours || '0' }}h</strong></td>
+                  <td class="remarks-cell">{{ h.remarks || 'Standard Duty' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <ng-template #noHistory>
+              <div class="empty-placeholder">
+                <mat-icon>history_toggle_off</mat-icon>
+                <h3>No Past Records Yet</h3>
+                <p>Clock in today to start recording your shift logs.</p>
+              </div>
+            </ng-template>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

@@ -84,7 +84,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
     private errorHandler: ErrorHandlerService,
     private auth: AuthService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Non-admins are always in custom (view-only) mode
@@ -115,7 +115,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
           }
         });
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -234,7 +234,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
       st.total_students = (st.total_students || 0) + 1;
       const verified = isDrop ? log.status === 'Dropped' : log.status === 'Boarded';
       if (verified) { st.verified_students = (st.verified_students || 0) + 1; }
-      else          { st.pending_students  = (st.pending_students  || 0) + 1; }
+      else { st.pending_students = (st.pending_students || 0) + 1; }
     }
 
     this.routeStops = Array.from(stopMap.values()).sort((a, b) => a.sequence_no - b.sequence_no);
@@ -286,7 +286,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -553,10 +553,10 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
       result = result.filter((r) => {
         if (isDrop) {
           return (r.drop_stop_id && r.drop_stop_id == this.selectedStopId) ||
-                 (targetStop && r.drop_stop_name === targetStop.stop_name);
+            (targetStop && r.drop_stop_name === targetStop.stop_name);
         } else {
           return (r.pickup_stop_id && r.pickup_stop_id == this.selectedStopId) ||
-                 (targetStop && r.pickup_stop_name === targetStop.stop_name);
+            (targetStop && r.pickup_stop_name === targetStop.stop_name);
         }
       });
     }

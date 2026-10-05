@@ -1,5 +1,5 @@
 <div class="transport-shell">
-  <nav mat-tab-nav-bar [tabPanel]="tabPanel" class="transport-tabs" mat-stretch-tabs="false">
+  <nav mat-tab-nav-bar *ngIf="!isDriver" [tabPanel]="tabPanel" class="transport-tabs" mat-stretch-tabs="false">
     <a mat-tab-link routerLink="dashboard" routerLinkActive #dash="routerLinkActive" [active]="dash.isActive">
       <mat-icon>dashboard</mat-icon> Dashboard
     </a>

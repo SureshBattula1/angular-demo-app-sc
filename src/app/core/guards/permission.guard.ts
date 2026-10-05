@@ -29,6 +29,13 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     return true;
   }
 
+  // SPECIAL CASE: Allow drivers to access driver portal
+  const storedRole = user?.role || readStoredUserRole();
+  const isDriverRole = user?.role === 'Driver' || storedRole === 'Driver';
+  if (isDriverRole && state.url.includes('/transport/driver-portal')) {
+    return true;
+  }
+
   // If no permissions required, allow access
   if (!requiredPermissions) {
     return true;
@@ -41,7 +48,6 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
   // Get current user permissions
   const userPermissions = permissionService.userPermissions();
   const hasToken = authService.isLoggedIn();
-  const storedRole = user?.role || readStoredUserRole();
 
   // Hard reload (Access School / impersonation) hydrates the user on the next tick.
   // Allow the shell to render until permissions arrive instead of leaving a blank outlet.
@@ -76,6 +82,10 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     : permissionService.hasAnyPermission(permissions);
 
   if (!hasPermission) {
+    if (isDriverRole) {
+      router.navigate(['/transport/driver-portal']);
+      return false;
+    }
     // Don't redirect to dashboard if we're already there or it would cause loop
     if (route.url[0]?.path !== 'dashboard') {
       router.navigate(['/dashboard'], {

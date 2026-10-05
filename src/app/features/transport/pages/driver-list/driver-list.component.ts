@@ -35,6 +35,7 @@ export class DriverListComponent implements OnInit {
   tableConfig: TableConfig = {
     columns: [
       { key: 'name', header: 'Name', sortable: true, searchable: true },
+      { key: 'email', header: 'Login Email', width: '200px' },
       { key: 'phone', header: 'Phone', width: '150px' },
       { key: 'license_number', header: 'License No.', width: '150px' },
       { key: 'license_expiry', header: 'License Expiry', type: 'date', width: '150px' },

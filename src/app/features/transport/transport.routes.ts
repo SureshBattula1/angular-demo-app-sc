@@ -88,7 +88,8 @@ export const TRANSPORT_ROUTES: Routes = [
       { path: 'routes', loadComponent: () => import('./pages/route-list/route-list.component').then(m => m.RouteListComponent), canActivate: [permissionGuard], data: { permissions: 'transport.view' } },
       { path: 'routes/create', loadComponent: () => import('./pages/route-form/route-form.component').then(m => m.RouteFormComponent), canActivate: [permissionGuard], data: { permissions: 'transport.create' } },
       { path: 'routes/edit/:id', loadComponent: () => import('./pages/route-form/route-form.component').then(m => m.RouteFormComponent), canActivate: [permissionGuard], data: { permissions: 'transport.edit' } },
-      { path: 'routes/view/:id', loadComponent: () => import('./pages/route-view/route-view.component').then(m => m.RouteViewComponent), canActivate: [permissionGuard], data: { permissions: 'transport.view' } }
+      { path: 'routes/view/:id', loadComponent: () => import('./pages/route-view/route-view.component').then(m => m.RouteViewComponent), canActivate: [permissionGuard], data: { permissions: 'transport.view' } },
+      { path: 'driver-portal', loadComponent: () => import('./pages/driver-portal/driver-portal.component').then(m => m.DriverPortalComponent), canActivate: [permissionGuard] }
     ]
   }
 ];
