@@ -674,3 +674,459 @@
 
 .py-4 { padding-top: 16px; padding-bottom: 16px; }
 .text-center { text-align: center !important; }
+
+.driver-managed-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(33, 150, 243, 0.08);
+  border: 1px dashed rgba(33, 150, 243, 0.35);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: #1976d2;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 12px;
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. Driver Duty Shift Controls & Modals
+   ═══════════════════════════════════════════════════════════════════════════ */
+.driver-shift-widget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .active-shift-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .active-shift-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(46, 125, 50, 0.12);
+    border: 1px solid rgba(46, 125, 50, 0.35);
+    padding: 6px 14px;
+    border-radius: 24px;
+
+    .live-pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #2e7d32;
+      box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+      animation: shift-pulse 1.8s infinite;
+      flex-shrink: 0;
+    }
+
+    .shift-pill-details {
+      display: flex;
+      flex-direction: column;
+
+      .shift-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1b5e20;
+        line-height: 1.2;
+      }
+      .shift-meta {
+        font-size: 11px;
+        color: #4caf50;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .shift-action-btn {
+    border-radius: 20px;
+    height: 38px;
+    padding: 0 16px;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+  }
+
+  .start-shift-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+  }
+
+  .stop-shift-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+  }
+
+  .shift-logs-btn {
+    border-radius: 20px;
+    height: 38px;
+    border-color: var(--border-color, #cbd5e1);
+    color: var(--text-primary, #334155);
+    font-weight: 600;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.85);
+
+    mat-icon {
+      font-size: 16px;
+      margin-right: 4px;
+      color: #64748b;
+    }
+  }
+}
+
+@keyframes shift-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 7px rgba(46, 125, 50, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. Modal Dialog Styles (Start, Stop, History)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+  animation: fadeInBackdrop 0.2s ease;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-dialog {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+
+  &.shift-history-modal {
+    max-width: 780px;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+
+    .modal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .modal-icon-badge {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+
+        &.start-badge {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        &.stop-badge {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        &.history-badge {
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        mat-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .modal-subtitle {
+        margin: 2px 0 0 0;
+        font-size: 12px;
+        color: #64748b;
+      }
+    }
+
+    .close-btn {
+      color: #94a3b8;
+      &:hover { color: #334155; }
+    }
+  }
+
+  .modal-body {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 75vh;
+    overflow-y: auto;
+
+    .shift-active-summary {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+
+      .summary-pill {
+        font-size: 12px;
+        color: #334155;
+        .label {
+          color: #64748b;
+          margin-right: 4px;
+        }
+        strong {
+          color: #0f172a;
+        }
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: #64748b;
+        }
+
+        &.required::after {
+          content: '*';
+          color: #ef4444;
+          margin-left: 2px;
+        }
+      }
+
+      .form-control {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 9px 13px;
+        font-size: 14px;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+
+        &:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+      }
+
+      select.form-control {
+        cursor: pointer;
+        padding-right: 28px;
+      }
+
+      .form-hint {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 2px;
+      }
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+
+    button {
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .confirm-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 20px;
+      height: 38px;
+    }
+  }
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(20px) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Shift history table in modal */
+.shift-history-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  .shift-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+
+    thead tr {
+      background: #f1f5f9;
+      th {
+        padding: 10px 14px;
+        font-weight: 700;
+        color: #475569;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+      }
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      &:last-child { border-bottom: none; }
+      &:hover { background: #f8fafc; }
+
+      td {
+        padding: 12px 14px;
+        color: #1e293b;
+        white-space: nowrap;
+
+        .duty-type-pill {
+          display: inline-block;
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-weight: 600;
+          font-size: 11px;
+          padding: 2px 8px;
+          border-radius: 12px;
+        }
+
+        .status-chip {
+          display: inline-block;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+
+          &.completed {
+            background: #dcfce7;
+            color: #15803d;
+          }
+          &.pending {
+            background: #fef3c7;
+            color: #b45309;
+          }
+          &.active {
+            background: #e0e7ff;
+            color: #4338ca;
+          }
+        }
+
+        .notes-text {
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: inline-block;
+          color: #64748b;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+.empty-shift-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: #94a3b8;
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #64748b;
+  }
+}

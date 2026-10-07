@@ -36,8 +36,37 @@
             </button>
           </div>
         </div>
-        <!-- Read-only badge for non-admin users -->
-        <div class="mode-viewer-badge" *ngIf="!canToggleMode">
+        <!-- Driver Shift Control Widget (Visible for Driver) -->
+        <div class="driver-shift-widget" *ngIf="isDriver">
+          <!-- When active shift is running -->
+          <div class="active-shift-badge-container" *ngIf="activeShift">
+            <div class="active-shift-pill">
+              <span class="live-pulse-dot"></span>
+              <div class="shift-pill-details">
+                <span class="shift-name">ON DUTY: {{ activeShift.duty_type }}</span>
+                <span class="shift-meta">Started {{ activeShift.check_in_time_formatted }} • Odo: {{ activeShift.odometer_start }} km</span>
+              </div>
+            </div>
+            <button mat-raised-button color="warn" class="shift-action-btn stop-shift-btn" (click)="openStopShiftModal()">
+              <mat-icon>stop_circle</mat-icon> Stop Shift
+            </button>
+          </div>
+
+          <!-- When no active shift is running -->
+          <div class="no-shift-container" *ngIf="!activeShift">
+            <button mat-raised-button color="primary" class="shift-action-btn start-shift-btn" (click)="openStartShiftModal()">
+              <mat-icon>play_circle_filled</mat-icon> Start Shift
+            </button>
+          </div>
+
+          <!-- Shift Logs summary button -->
+          <button mat-stroked-button class="shift-logs-btn" (click)="openShiftHistoryModal()" matTooltip="View today's duty shift logs">
+            <mat-icon>history</mat-icon> Shifts ({{ todayShifts.length }})
+          </button>
+        </div>
+
+        <!-- Read-only badge for other non-admin, non-driver viewers -->
+        <div class="mode-viewer-badge" *ngIf="!canToggleMode && !isDriver">
           <mat-icon>visibility</mat-icon> View Only
         </div>
       </div>
@@ -122,10 +151,17 @@
         </button>
       </div>
 
-      <!-- Empty state -->
-      <div *ngIf="!selectedTripId" class="empty-state">
+      <!-- Empty state: No active trips -->
+      <div *ngIf="availableTrips.length === 0" class="empty-state">
+        <mat-icon class="large-icon">task_alt</mat-icon>
+        <h3>No Active Trips Available</h3>
+        <p>All scheduled trips for today are completed or no active trips are assigned.</p>
+      </div>
+
+      <!-- Empty state: Trip not selected -->
+      <div *ngIf="availableTrips.length > 0 && !selectedTripId" class="empty-state">
         <mat-icon class="large-icon">commute</mat-icon>
-        <h3>Select a Trip Above</h3>
+        <h3>Select an Active Trip Above</h3>
         <p>Choose an active or scheduled transit trip to load the route map and passenger manifest.</p>
       </div>
 
@@ -225,8 +261,8 @@
             <mat-icon>alt_route</mat-icon> No stops loaded for this trip.
           </div>
 
-          <!-- Stop Action Bar (Admin only) -->
-          <div class="stop-action-bar" *ngIf="canToggleMode && routeStops.length > 0">
+          <!-- Stop Action Bar (Only driver can update stops; other roles view live sync) -->
+          <div class="stop-action-bar" *ngIf="isDriver && routeStops.length > 0">
             <div class="stop-focus-info">
               <mat-icon class="focus-pin">location_on</mat-icon>
               <div>
@@ -236,23 +272,17 @@
               </div>
             </div>
             <div class="stop-buttons-cluster">
-              <button mat-raised-button color="primary" class="reach-board-btn"
-                [disabled]="markingStop"
-                (click)="markStopReached(focusedStop || currentStop)">
-                <mat-icon>{{ isDropTrip ? 'exit_to_app' : 'check_circle' }}</mat-icon>
-                <span *ngIf="!markingStop">
-                  {{ isDropTrip ? 'Mark Stop Reached & Drop All' : 'Mark Stop Reached & Board All' }}
-                  ({{ focusedStop?.pending_students ?? pendingCount }})
-                </span>
-                <span *ngIf="markingStop">Updating...</span>
-              </button>
-              <button mat-stroked-button color="accent" class="next-stop-btn"
+              <button mat-raised-button color="primary" class="next-stop-btn"
                 [disabled]="markingStop || !nextStop"
                 (click)="advanceToNextStop()"
                 matTooltip="Advance to next stop">
                 <mat-icon>skip_next</mat-icon> Next Stop &gt;&gt;
               </button>
             </div>
+          </div>
+          <div class="driver-managed-notice" *ngIf="!isDriver && routeStops.length > 0">
+            <mat-icon>info</mat-icon>
+            <span>Stop progress and verification are updated live by the assigned driver on duty.</span>
           </div>
         </div>
 
@@ -333,8 +363,8 @@
             </div>
           </div>
 
-          <!-- Live mode: Admin action -->
-          <div class="stop-action-bar" *ngIf="canToggleMode && currentStop">
+          <!-- Live mode: Driver action (Only driver can update stops) -->
+          <div class="stop-action-bar" *ngIf="isDriver && currentStop">
             <div class="stop-focus-info">
               <mat-icon class="focus-pin">gps_fixed</mat-icon>
               <div>
@@ -344,19 +374,16 @@
               </div>
             </div>
             <div class="stop-buttons-cluster">
-              <button mat-raised-button color="primary"
-                [disabled]="markingStop"
-                (click)="markStopReached(currentStop)">
-                <mat-icon>verified</mat-icon>
-                <span *ngIf="!markingStop">Confirm Arrival &amp; Auto-{{ isDropTrip ? 'Drop' : 'Board' }}</span>
-                <span *ngIf="markingStop">Updating...</span>
-              </button>
-              <button mat-stroked-button color="accent"
+              <button mat-raised-button color="primary" class="next-stop-btn"
                 [disabled]="markingStop || !nextStop"
                 (click)="advanceToNextStop()">
-                <mat-icon>skip_next</mat-icon> Next Stop
+                <mat-icon>skip_next</mat-icon> Next Stop &gt;&gt;
               </button>
             </div>
+          </div>
+          <div class="driver-managed-notice" *ngIf="!isDriver && currentStop">
+            <mat-icon>info</mat-icon>
+            <span>GPS stop arrival and passenger verification are managed live by the driver console.</span>
           </div>
         </div>
 
@@ -427,7 +454,7 @@
                   <th>Boarded</th>
                   <th>Dropped</th>
                   <th>Status</th>
-                  <th class="text-right" *ngIf="canToggleMode">Action</th>
+                  <th class="text-right" *ngIf="canManageBoarding">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -454,7 +481,7 @@
                   <td>
                     <span class="status-pill" [ngClass]="log.status.toLowerCase()">{{ log.status }}</span>
                   </td>
-                  <td class="text-right" *ngIf="canToggleMode">
+                  <td class="text-right" *ngIf="canManageBoarding">
                     <div class="btn-group">
                       <button *ngIf="log.status === 'Pending'" mat-flat-button color="primary"
                         class="action-btn" (click)="markBoarded(log)">
@@ -475,7 +502,7 @@
                   </td>
                 </tr>
                 <tr *ngIf="filteredRoster.length === 0">
-                  <td [colSpan]="canToggleMode ? 7 : 6" class="text-center text-muted py-4">
+                  <td [colSpan]="canManageBoarding ? 7 : 6" class="text-center text-muted py-4">
                     <mat-icon style="font-size:32px;opacity:.4;">people_outline</mat-icon>
                     <p>No students match the current filter.</p>
                   </td>
@@ -489,5 +516,210 @@
 
     </mat-card-content>
   </mat-card>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MODAL: START DUTY SHIFT
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="modal-backdrop" *ngIf="showStartShiftModal" (click)="closeStartShiftModal()">
+    <div class="modal-dialog shift-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge start-badge">
+            <mat-icon>timer</mat-icon>
+          </div>
+          <div>
+            <h3>Start Duty Shift</h3>
+            <p class="modal-subtitle">Record start odometer and select duty category to begin shift</p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeStartShiftModal()" class="close-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Odometer Reading (Km) -->
+        <div class="form-group">
+          <label class="form-label required">
+            <mat-icon>speed</mat-icon> Odometer Reading (Km)
+          </label>
+          <input type="number" class="form-control" [(ngModel)]="shiftStartData.odometer" placeholder="e.g. 45210" min="0" required />
+          <span class="form-hint">Enter the current vehicle dashboard odometer reading in kilometers</span>
+        </div>
+
+        <!-- Duty Type dropdown -->
+        <div class="form-group">
+          <label class="form-label required">
+            <mat-icon>assignment</mat-icon> Duty Type
+          </label>
+          <select class="form-control" [(ngModel)]="shiftStartData.duty_type" required>
+            <option value="Morning Shift">🌅 Morning Shift (Student Pickup)</option>
+            <option value="Afternoon Shift">🌇 Afternoon Shift (Student Drop)</option>
+            <option value="Evening Shift">🌙 Evening / Late Shift</option>
+            <option value="Fuel Refill / Importing">⛽ Fuel Importing / Refill</option>
+            <option value="Field Trip / Excursion">🚌 Trips &amp; Excursions</option>
+            <option value="Repairing &amp; Maintenance">🔧 Repairing &amp; Maintenance</option>
+            <option value="Inspection &amp; Cleaning">🧽 Inspection &amp; Cleaning</option>
+            <option value="Emergency Duty">🚨 Emergency / Relief Duty</option>
+            <option value="Special Duty">⭐ Special Duty</option>
+          </select>
+        </div>
+
+        <!-- Notes (Optional) -->
+        <div class="form-group">
+          <label class="form-label">
+            <mat-icon>notes</mat-icon> Notes (Optional)
+          </label>
+          <textarea class="form-control" [(ngModel)]="shiftStartData.notes" rows="2" placeholder="Vehicle condition, start station, or special route remarks..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-stroked-button (click)="closeStartShiftModal()" [disabled]="submittingShift">Cancel</button>
+        <button mat-raised-button color="primary" class="confirm-btn" [disabled]="shiftStartData.odometer === null || shiftStartData.odometer === undefined || !shiftStartData.duty_type || submittingShift" (click)="confirmStartShift()">
+          <mat-icon *ngIf="!submittingShift">play_arrow</mat-icon>
+          <mat-spinner *ngIf="submittingShift" diameter="18"></mat-spinner>
+          {{ submittingShift ? 'Starting...' : 'Start Shift' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MODAL: STOP / END DUTY SHIFT
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="modal-backdrop" *ngIf="showStopShiftModal" (click)="closeStopShiftModal()">
+    <div class="modal-dialog shift-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge stop-badge">
+            <mat-icon>stop_circle</mat-icon>
+          </div>
+          <div>
+            <h3>Stop / End Duty Shift</h3>
+            <p class="modal-subtitle">Confirm end odometer and shift completion status</p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeStopShiftModal()" class="close-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="activeShift">
+        <!-- Shift In-Progress Summary -->
+        <div class="shift-active-summary">
+          <div class="summary-pill"><span class="label">Duty:</span> <strong>{{ activeShift.duty_type }}</strong></div>
+          <div class="summary-pill"><span class="label">Started:</span> <strong>{{ activeShift.check_in_time_formatted }}</strong></div>
+          <div class="summary-pill"><span class="label">Start Odo:</span> <strong>{{ activeShift.odometer_start }} km</strong></div>
+        </div>
+
+        <!-- End Odometer Reading (Km) -->
+        <div class="form-group">
+          <label class="form-label required">
+            <mat-icon>speed</mat-icon> End Odometer Reading (Km)
+          </label>
+          <input type="number" class="form-control" [(ngModel)]="shiftStopData.odometer" placeholder="e.g. {{ (activeShift.odometer_start || 0) + 25 }}" min="0" required />
+          <span class="form-hint" *ngIf="shiftStopData.odometer && activeShift.odometer_start && shiftStopData.odometer >= activeShift.odometer_start">
+            Distance driven: {{ shiftStopData.odometer - activeShift.odometer_start }} km
+          </span>
+        </div>
+
+        <!-- Status dropdown: Completed or Pending -->
+        <div class="form-group">
+          <label class="form-label required">
+            <mat-icon>fact_check</mat-icon> Shift Status
+          </label>
+          <select class="form-control" [(ngModel)]="shiftStopData.status" required>
+            <option value="Completed">✅ Completed (Duty shift finished successfully)</option>
+            <option value="Pending">⏳ Pending (Handover / Follow-up pending)</option>
+          </select>
+        </div>
+
+        <!-- Notes (Optional) -->
+        <div class="form-group">
+          <label class="form-label">
+            <mat-icon>notes</mat-icon> Notes (Optional)
+          </label>
+          <textarea class="form-control" [(ngModel)]="shiftStopData.notes" rows="2" placeholder="Summary remarks, fuel filled, issues or delays noted..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-stroked-button (click)="closeStopShiftModal()" [disabled]="submittingShift">Cancel</button>
+        <button mat-raised-button color="warn" class="confirm-btn" [disabled]="shiftStopData.odometer === null || shiftStopData.odometer === undefined || !shiftStopData.status || submittingShift" (click)="confirmStopShift()">
+          <mat-icon *ngIf="!submittingShift">stop</mat-icon>
+          <mat-spinner *ngIf="submittingShift" diameter="18"></mat-spinner>
+          {{ submittingShift ? 'Stopping...' : 'Stop Shift' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MODAL: TODAY'S SHIFT LOGS
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="modal-backdrop" *ngIf="showShiftHistoryModal" (click)="closeShiftHistoryModal()">
+    <div class="modal-dialog shift-history-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge history-badge">
+            <mat-icon>history</mat-icon>
+          </div>
+          <div>
+            <h3>Today's Duty Shift Logs</h3>
+            <p class="modal-subtitle">Summary of all shifts recorded today (Total: {{ totalHoursToday }} hrs, {{ totalKmToday }} km driven)</p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeShiftHistoryModal()" class="close-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="shift-history-table-wrap" *ngIf="todayShifts.length > 0; else noShifts">
+          <table class="shift-table">
+            <thead>
+              <tr>
+                <th>Duty Type</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Hours</th>
+                <th>Odometer (Start → End)</th>
+                <th>Distance</th>
+                <th>Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of todayShifts">
+                <td><span class="duty-type-pill">{{ s.duty_type }}</span></td>
+                <td>{{ s.check_in_time_formatted }}</td>
+                <td>{{ s.check_out_time_formatted }}</td>
+                <td>{{ s.total_hours ? s.total_hours + ' hrs' : '—' }}</td>
+                <td>{{ s.odometer_start || '—' }} → {{ s.odometer_end || '—' }}</td>
+                <td><strong>{{ s.km_driven !== null && s.km_driven !== undefined ? s.km_driven + ' km' : '—' }}</strong></td>
+                <td>
+                  <span class="status-chip" [class.completed]="s.status === 'Completed'" [class.pending]="s.status === 'Pending'" [class.active]="s.status === 'In Progress'">
+                    {{ s.status }}
+                  </span>
+                </td>
+                <td><span class="notes-text">{{ s.remarks || '—' }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noShifts>
+          <div class="empty-shift-history">
+            <mat-icon>assignment_late</mat-icon>
+            <p>No duty shifts recorded today yet.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-raised-button color="primary" (click)="closeShiftHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
 </div>

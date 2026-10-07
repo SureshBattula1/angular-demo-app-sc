@@ -27,13 +27,44 @@ export interface DriverDutyStatus {
 }
 
 export interface DriverAttendanceLog {
-  id: string;
+  id: string | number;
+  duty_type?: string;
   date: string;
+  formatted_date?: string;
+  day?: string;
   status: string;
   check_in?: string | null;
   check_out?: string | null;
+  clock_in_time?: string | null;
+  clock_out_time?: string | null;
+  total_hours?: number;
+  odometer_start?: number | null;
+  odometer_end?: number | null;
+  km_driven?: number | null;
+  vehicle_number?: string | null;
+  remarks?: string | null;
+}
+
+export interface DriverShift {
+  id: string | number;
+  duty_type: string;
+  status: 'In Progress' | 'Completed' | 'Pending' | string;
+  check_in_time: string;
+  check_in_time_formatted?: string;
+  check_out_time?: string | null;
+  check_out_time_formatted?: string;
+  odometer_start?: number | null;
+  odometer_end?: number | null;
+  km_driven?: number | null;
   total_hours?: number;
   remarks?: string | null;
+}
+
+export interface DriverShiftStatusData {
+  active_shift: DriverShift | null;
+  today_shifts: DriverShift[];
+  total_km_today: number;
+  total_hours_today: number;
 }
 
 export interface DriverDashboardData {
@@ -72,6 +103,7 @@ export interface RouteStop {
   route_id?: string | number;
   sequence_no?: number;
   stop_name: string;
+  landmark?: string | null;
   pickup_time?: string | null;
   drop_time?: string | null;
   latitude?: number | null;
@@ -122,6 +154,7 @@ export interface StudentTransport {
   drop_time?: string | null;
   annual_fee?: number;
   monthly_fee?: number;
+  due_date?: string | null;
   status?: 'Active' | 'Inactive';
   student_name?: string;
   student_email?: string;
@@ -156,6 +189,7 @@ export interface TransportTrip {
   current_latitude?: number | null;
   current_longitude?: number | null;
   current_speed?: number | null;
+  current_stop_id?: string | number | null;
   last_gps_updated_at?: string | null;
   total_students?: number;
   boarded_students?: number;
@@ -182,6 +216,7 @@ export interface TripBoardingLog {
   status: BoardingStatus;
   student_name?: string;
   admission_no?: string;
+  admission_number?: string;
   class_name?: string;
   section_name?: string;
   pickup_stop_name?: string;

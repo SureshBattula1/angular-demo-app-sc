@@ -12,6 +12,8 @@ import {
 } from '../../../../core/models/transport.model';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 
+import { AuthService } from '../../../../core/services/auth.service';
+
 @Component({
   selector: 'app-trip-list',
   standalone: true,
@@ -32,6 +34,22 @@ export class TripListComponent implements OnInit {
   routes: TransportRoute[] = [];
   vehicles: Vehicle[] = [];
   drivers: TransportDriver[] = [];
+
+  get isDriver(): boolean {
+    return this.auth.currentUser()?.role === 'Driver';
+  }
+
+  get currentDriverId(): string | number | null {
+    const user = this.auth.currentUser();
+    if (!user) return null;
+    const match = this.drivers.find(d =>
+      (d.user_id && d.user_id === user.id) ||
+      (d.email && user.email && d.email.toLowerCase() === user.email.toLowerCase()) ||
+      (d.phone && user.phone && d.phone === user.phone) ||
+      (user.first_name && d.name && d.name.toLowerCase().includes(user.first_name.toLowerCase()))
+    );
+    return match ? match.id : (this.drivers[0]?.id || null);
+  }
 
   get inTransitCount(): number {
     return this.todayTrips.filter(t => t.status === 'Started' || t.status === 'In Progress').length;
@@ -63,7 +81,8 @@ export class TripListComponent implements OnInit {
 
   constructor(
     private transport: TransportService,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -74,7 +93,22 @@ export class TripListComponent implements OnInit {
   loadMetadata(): void {
     this.transport.getRoutes({ per_page: 100 }).subscribe({ next: (r) => (this.routes = r.data || []) });
     this.transport.getVehicles({ per_page: 100 }).subscribe({ next: (v) => (this.vehicles = v.data || []) });
-    this.transport.getDrivers({ per_page: 100 }).subscribe({ next: (d) => (this.drivers = d.data || []) });
+    this.transport.getDrivers({ per_page: 100 }).subscribe({
+      next: (d) => {
+        const allDrivers = d.data || [];
+        if (this.isDriver) {
+          const user = this.auth.currentUser();
+          const match = allDrivers.find(dr =>
+            (dr.user_id && dr.user_id === user?.id) ||
+            (dr.email && user?.email && dr.email.toLowerCase() === user.email.toLowerCase()) ||
+            (user?.first_name && dr.name && dr.name.toLowerCase().includes(user.first_name.toLowerCase()))
+          );
+          this.drivers = match ? [match] : allDrivers;
+        } else {
+          this.drivers = allDrivers;
+        }
+      }
+    });
   }
 
   loadTrips(): void {
@@ -84,10 +118,16 @@ export class TripListComponent implements OnInit {
     this.transport.getTrips({ per_page: 200 }).subscribe({
       next: (res) => {
         const all = res.data || [];
-        // Daily recurring trips (trip_date is null/empty) or trips specifically for today
-        this.todayTrips = all.filter((t) => !t.trip_date || t.trip_date === todayStr);
-        this.upcomingTrips = all.filter((t) => !!t.trip_date && t.trip_date > todayStr);
-        this.historyTrips = all.filter((t) => (!!t.trip_date && t.trip_date < todayStr) || (t.trip_date && t.status === 'Completed'));
+        if (this.isDriver) {
+          // Drivers see strictly today and future trips (no past data anywhere)
+          this.todayTrips = all.filter((t) => !t.trip_date || t.trip_date === todayStr);
+          this.upcomingTrips = all.filter((t) => !!t.trip_date && t.trip_date > todayStr);
+          this.historyTrips = [];
+        } else {
+          this.todayTrips = all.filter((t) => !t.trip_date || t.trip_date === todayStr);
+          this.upcomingTrips = all.filter((t) => !!t.trip_date && t.trip_date > todayStr);
+          this.historyTrips = all.filter((t) => (!!t.trip_date && t.trip_date < todayStr) || (t.trip_date && t.status === 'Completed'));
+        }
         this.filterActiveTrips();
         this.loading = false;
       },
@@ -122,12 +162,13 @@ export class TripListComponent implements OnInit {
   }
 
   openScheduleModal(): void {
+    const driverId = this.isDriver ? (this.currentDriverId || this.drivers[0]?.id || null) : (this.drivers[0]?.id || null);
     this.newTrip = {
       route_id: this.routes[0]?.id || '',
       trip_type: 'Pickup',
       trip_date: null,
       vehicle_id: this.vehicles[0]?.id || null,
-      transport_driver_id: this.drivers[0]?.id || null,
+      transport_driver_id: driverId,
       scheduled_start_time: '07:30'
     };
     this.scheduleModalVisible = true;

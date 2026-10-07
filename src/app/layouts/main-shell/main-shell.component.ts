@@ -98,13 +98,6 @@ export class MainShellComponent implements OnInit, OnDestroy {
     { icon: 'local_library', label: 'Library', route: '/library', permission: ['library.view', 'library.create'], permissionMode: 'any' },
     { icon: 'directions_bus', label: 'Transport', route: '/transport', permission: ['transport.view', 'transport.create'], permissionMode: 'any' },
     { icon: 'how_to_reg', label: 'Admissions', route: '/admissions', permission: ['admissions.view', 'admissions.create'], permissionMode: 'any' },
-    {
-      icon: 'local_shipping',
-      label: 'Driver Portal',
-      route: '/transport/driver-portal',
-      roles: ['Driver', 'SuperAdmin', 'BranchAdmin'],
-      tooltip: 'My Bus, Route & Attendance'
-    },
     { icon: 'trending_up', label: 'Promotions', route: '/promotions', permission: ['students.promote', 'students.edit'], permissionMode: 'any' },
     { icon: 'upload_file', label: 'Imports', route: '/imports', permission: 'import.view' },
     { icon: 'settings', label: 'Settings', route: '/settings', permission: 'settings.view' }
@@ -768,9 +761,9 @@ export class MainShellComponent implements OnInit, OnDestroy {
    * assignment permission slug is missing from the cached permission list.
    */
   isMenuItemVisible(item: MenuItem): boolean {
-    // Drivers only see menus explicitly enabled for Driver role (their bus, route, and attendance hub)
+    // Drivers see only Transport in sidebar navigation
     if (this.isDriverRole()) {
-      return !!(item.roles && item.roles.includes('Driver'));
+      return item.route === '/transport';
     }
 
     if (item.public) {

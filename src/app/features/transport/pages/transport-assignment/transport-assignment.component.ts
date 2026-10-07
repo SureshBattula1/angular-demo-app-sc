@@ -89,6 +89,7 @@ export class TransportAssignmentComponent implements OnInit {
   targetPickupStopId: string | number | null = null;
   targetDropStopId: string | number | null = null;
   targetAnnualFee: number | null = null;
+  targetDueDate: string | null = null;
   targetPickupTime: string | null = null;
   targetDropTime: string | null = null;
   submittingBulk = false;
@@ -103,6 +104,7 @@ export class TransportAssignmentComponent implements OnInit {
   editPickupStopId: string | number | null = null;
   editDropStopId: string | number | null = null;
   editAnnualFee: number | null = null;
+  editDueDate: string | null = null;
   editPickupTime: string | null = null;
   editDropTime: string | null = null;
   editStatus: 'Active' | 'Inactive' = 'Active';
@@ -409,8 +411,14 @@ export class TransportAssignmentComponent implements OnInit {
 
   onPickupStopChange(stopId: string | number | null): void {
     const stop = this.routeStops.find((s) => s.id === stopId);
-    if (stop && stop.pickup_time) {
-      this.targetPickupTime = stop.pickup_time;
+    if (stop) {
+      if (stop.pickup_time) {
+        this.targetPickupTime = stop.pickup_time;
+      }
+      const stationFare = (stop as any).fare ?? (stop as any).station_fee;
+      if (stationFare != null && !isNaN(Number(stationFare))) {
+        this.targetAnnualFee = Number(stationFare);
+      }
     }
   }
 
@@ -432,7 +440,8 @@ export class TransportAssignmentComponent implements OnInit {
       pickup_stop_id: this.targetPickupStopId,
       drop_stop_id: this.targetDropStopId,
       annual_fee: this.targetAnnualFee ?? 0,
-      monthly_fee: this.targetAnnualFee ?? 0
+      monthly_fee: this.targetAnnualFee ?? 0,
+      due_date: this.targetDueDate || null
     }).subscribe({
       next: (res) => {
         this.submittingBulk = false;
@@ -492,6 +501,7 @@ export class TransportAssignmentComponent implements OnInit {
       this.editPickupStopId = assignment.pickup_stop_id ?? null;
       this.editDropStopId = assignment.drop_stop_id ?? null;
       this.editAnnualFee = Number(assignment.annual_fee ?? assignment.monthly_fee ?? 0);
+      this.editDueDate = assignment.due_date ? String(assignment.due_date).substring(0, 10) : null;
       this.editStatus = (assignment.status as 'Active' | 'Inactive') || 'Active';
       this.editPickupTime = assignment.pickup_time || null;
       this.editDropTime = assignment.drop_time || null;
@@ -522,6 +532,19 @@ export class TransportAssignmentComponent implements OnInit {
     }
   }
 
+  onEditPickupStopChange(stopId: string | number | null): void {
+    const stop = this.editRouteStops.find((s) => s.id === stopId);
+    if (stop) {
+      if (stop.pickup_time) {
+        this.editPickupTime = stop.pickup_time;
+      }
+      const stationFare = (stop as any).fare ?? (stop as any).station_fee;
+      if (stationFare != null && !isNaN(Number(stationFare))) {
+        this.editAnnualFee = Number(stationFare);
+      }
+    }
+  }
+
   cancelInScreenEdit(): void {
     this.stationMode = 'bulk';
     this.editingAssignmentId = null;
@@ -537,6 +560,7 @@ export class TransportAssignmentComponent implements OnInit {
       drop_stop_id: this.editDropStopId,
       annual_fee: this.editAnnualFee ?? 0,
       monthly_fee: this.editAnnualFee ?? 0,
+      due_date: this.editDueDate || null,
       status: this.editStatus
     }).subscribe({
       next: (res) => {

@@ -149,7 +149,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.userRole.set(role);
 
     if (role === 'Driver') {
-      this.router.navigate(['/transport/driver-portal']);
+      this.router.navigate(['/transport/boarding']);
       return;
     }
 

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MaterialModule } from '../../../../shared/modules/material/material.module';
 import { TransportService } from '../../services/transport.service';
-import { TransportTrip, TripBoardingLog } from '../../../../core/models/transport.model';
+import { TransportTrip, TripBoardingLog, DriverShift } from '../../../../core/models/transport.model';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
@@ -48,11 +48,18 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
   get canToggleMode(): boolean {
     return this.auth.hasRole(['SuperAdmin', 'BranchAdmin']);
   }
+  /** Can manage passenger check-in, drops, and stops (Admin, Driver, or transport.edit permission) */
+  get canManageBoarding(): boolean {
+    return this.auth.hasRole(['SuperAdmin', 'BranchAdmin', 'Driver']) || this.auth.currentUser()?.role === 'Driver';
+  }
   get isSuperAdmin(): boolean {
     return this.auth.hasRole('SuperAdmin');
   }
   get currentUserRole(): string {
     return this.auth.currentUser()?.role ?? 'Unknown';
+  }
+  get isDriver(): boolean {
+    return this.auth.currentUser()?.role === 'Driver';
   }
 
   // ── Dual-Flow Mode ─────────────────────────────────────────────────────────
@@ -78,6 +85,18 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
   searchQuery = '';
   studentFilter: StudentFilter = 'current_stop';
 
+  // ── Driver Duty Shift Lifecycle ────────────────────────────────────────────
+  activeShift: DriverShift | null = null;
+  todayShifts: DriverShift[] = [];
+  totalKmToday = 0;
+  totalHoursToday = 0;
+  showStartShiftModal = false;
+  showStopShiftModal = false;
+  showShiftHistoryModal = false;
+  submittingShift = false;
+  shiftStartData = { odometer: null as number | null, duty_type: 'Morning Shift', notes: '' };
+  shiftStopData = { odometer: null as number | null, status: 'Completed', notes: '' };
+
   constructor(
     private transport: TransportService,
     private route: ActivatedRoute,
@@ -92,6 +111,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
       this.activeMode = 'custom';
     }
     this.loadAvailableTrips();
+    this.loadCurrentShift();
   }
 
   ngOnDestroy(): void {
@@ -101,15 +121,29 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
 
   // ── Trip Loading ───────────────────────────────────────────────────────────
   loadAvailableTrips(): void {
-    this.transport.getTrips({ per_page: 50 }).subscribe({
+    this.transport.getTrips({ per_page: 50, active_only: true }).subscribe({
       next: (res) => {
-        this.availableTrips = res.data || [];
+        const todayStr = new Date().toISOString().substring(0, 10);
+        // Exclude completed/cancelled trips and past dates: strictly active runs for today & future
+        this.availableTrips = (res.data || []).filter((t) => {
+          const isActive = t.status !== 'Completed' && t.status !== 'Cancelled';
+          const isTodayOrFuture = !t.trip_date || t.trip_date >= todayStr;
+          return isActive && isTodayOrFuture;
+        });
+
         this.route.queryParams.subscribe((params) => {
-          if (params['trip_id']) {
+          if (params['trip_id'] && this.availableTrips.some(t => t.id == params['trip_id'])) {
             this.selectedTripId = params['trip_id'];
-          } else if (this.availableTrips.length > 0 && !this.selectedTripId) {
-            this.selectedTripId = this.availableTrips[0].id;
+          } else if (this.availableTrips.length > 0) {
+            const stillValid = this.selectedTripId && this.availableTrips.some(t => t.id == this.selectedTripId);
+            if (!stillValid) {
+              this.selectedTripId = this.availableTrips[0].id;
+            }
+          } else {
+            this.selectedTripId = null;
+            this.activeTrip = null;
           }
+
           if (this.selectedTripId) {
             this.onTripSelected(this.selectedTripId);
           }
@@ -145,13 +179,29 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
 
   reloadData(): void {
     if (!this.selectedTripId) { this.loadAvailableTrips(); return; }
-    this.transport.getTrips({ per_page: 50 }).subscribe({
+    this.transport.getTrips({ per_page: 50, active_only: true }).subscribe({
       next: (res) => {
-        this.availableTrips = res.data || [];
+        const todayStr = new Date().toISOString().substring(0, 10);
+        this.availableTrips = (res.data || []).filter((t) => {
+          const isActive = t.status !== 'Completed' && t.status !== 'Cancelled';
+          const isTodayOrFuture = !t.trip_date || t.trip_date >= todayStr;
+          return isActive && isTodayOrFuture;
+        });
+
         const fresh = this.availableTrips.find((t) => t.id === this.selectedTripId);
-        if (fresh) this.activeTrip = { ...this.activeTrip!, ...fresh };
-        this.loadRoster(true);
-        if (this.activeMode === 'live') this.pollLiveTelemetry();
+        if (fresh) {
+          this.activeTrip = { ...this.activeTrip!, ...fresh };
+          this.loadRoster(true);
+          if (this.activeMode === 'live') this.pollLiveTelemetry();
+        } else {
+          // If the previously selected trip is now completed, switch to another active trip or clear
+          if (this.availableTrips.length > 0) {
+            this.onTripSelected(this.availableTrips[0].id);
+          } else {
+            this.selectedTripId = null;
+            this.activeTrip = null;
+          }
+        }
       },
       error: () => this.loadRoster(true)
     });
@@ -492,7 +542,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
   }
 
   markStopReached(stop?: RouteStopWithStatus): void {
-    if (!this.selectedTripId || !this.canToggleMode) return;
+    if (!this.selectedTripId || !this.canManageBoarding) return;
     const targetStop = stop || this.focusedStop || this.currentStop || this.routeStops[0];
     if (!targetStop) return;
 
@@ -513,7 +563,7 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
   }
 
   advanceToNextStop(): void {
-    if (!this.routeStops.length || !this.canToggleMode) return;
+    if (!this.routeStops.length || !this.canManageBoarding) return;
     const currentIndex = this.routeStops.findIndex((s) => s.id == this.currentStopId);
     if (currentIndex < this.routeStops.length - 1) {
       const next = this.routeStops[currentIndex + 1];
@@ -661,5 +711,108 @@ export class LiveBoardingComponent implements OnInit, OnDestroy {
     if (thisIdx < currIdx) return 'completed';
     if (thisIdx === currIdx) return 'current';
     return 'upcoming';
+  }
+
+  // ── Driver Shift Methods ─────────────────────────────────────────────────
+  loadCurrentShift(): void {
+    this.transport.getCurrentShift().subscribe({
+      next: (res) => {
+        if (res?.data) {
+          this.activeShift = res.data.active_shift;
+          this.todayShifts = res.data.today_shifts || [];
+          this.totalKmToday = res.data.total_km_today || 0;
+          this.totalHoursToday = res.data.total_hours_today || 0;
+          this.cdr.markForCheck();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  openStartShiftModal(): void {
+    const lastOdo = this.activeShift?.odometer_start || (this.todayShifts.length > 0 ? this.todayShifts[0]?.odometer_end : null);
+    this.shiftStartData = {
+      odometer: lastOdo ?? null,
+      duty_type: 'Morning Shift',
+      notes: ''
+    };
+    this.showStartShiftModal = true;
+  }
+
+  closeStartShiftModal(): void {
+    this.showStartShiftModal = false;
+  }
+
+  confirmStartShift(): void {
+    if (this.shiftStartData.odometer === null || this.shiftStartData.odometer === undefined || !this.shiftStartData.duty_type) {
+      this.errorHandler.showError('Please enter odometer reading and select a duty type.');
+      return;
+    }
+
+    this.submittingShift = true;
+    this.transport.startDriverShift({
+      odometer: Number(this.shiftStartData.odometer),
+      duty_type: this.shiftStartData.duty_type,
+      notes: this.shiftStartData.notes
+    }).subscribe({
+      next: (res) => {
+        this.submittingShift = false;
+        this.showStartShiftModal = false;
+        this.errorHandler.showSuccess(res.message || 'Duty shift started successfully!');
+        this.loadCurrentShift();
+      },
+      error: (err) => {
+        this.submittingShift = false;
+        this.errorHandler.showError(err);
+      }
+    });
+  }
+
+  openStopShiftModal(): void {
+    if (!this.activeShift) return;
+    const startOdo = this.activeShift.odometer_start ?? 0;
+    this.shiftStopData = {
+      odometer: startOdo > 0 ? startOdo + 15 : null,
+      status: 'Completed',
+      notes: ''
+    };
+    this.showStopShiftModal = true;
+  }
+
+  closeStopShiftModal(): void {
+    this.showStopShiftModal = false;
+  }
+
+  confirmStopShift(): void {
+    if (this.shiftStopData.odometer === null || this.shiftStopData.odometer === undefined || !this.shiftStopData.status) {
+      this.errorHandler.showError('Please enter end odometer reading and select a status.');
+      return;
+    }
+
+    this.submittingShift = true;
+    this.transport.stopDriverShift({
+      odometer: Number(this.shiftStopData.odometer),
+      status: this.shiftStopData.status,
+      notes: this.shiftStopData.notes
+    }).subscribe({
+      next: (res) => {
+        this.submittingShift = false;
+        this.showStopShiftModal = false;
+        this.errorHandler.showSuccess(res.message || 'Duty shift ended successfully!');
+        this.loadCurrentShift();
+      },
+      error: (err) => {
+        this.submittingShift = false;
+        this.errorHandler.showError(err);
+      }
+    });
+  }
+
+  openShiftHistoryModal(): void {
+    this.showShiftHistoryModal = true;
+  }
+
+  closeShiftHistoryModal(): void {
+    this.showShiftHistoryModal = false;
   }
 }

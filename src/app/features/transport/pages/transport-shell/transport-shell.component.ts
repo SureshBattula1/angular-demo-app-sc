@@ -20,7 +20,7 @@ export class TransportShellComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.isDriver && (this.router.url === '/transport' || this.router.url === '/transport/dashboard')) {
-      this.router.navigate(['/transport/driver-portal']);
+      this.router.navigate(['/transport/boarding']);
     }
   }
 }

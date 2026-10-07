@@ -60,9 +60,9 @@ export class LoginComponent implements OnInit {
         if (response.success) {
           this.errorHandler.showSuccess('Login successful! Welcome back.');
 
-          // Driver role lands on dedicated Driver Portal, others on role dashboard
+          // Driver role lands directly on Passenger Boarding, others on role dashboard
           if (response.user?.role === 'Driver') {
-            this.router.navigate(['/transport/driver-portal']);
+            this.router.navigate(['/transport/boarding']);
           } else {
             this.router.navigate([this.returnUrl]);
           }

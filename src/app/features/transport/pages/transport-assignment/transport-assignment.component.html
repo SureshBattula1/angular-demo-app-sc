@@ -592,6 +592,15 @@
                 </mat-form-field>
               </div>
 
+              <!-- Transport Fee Due Date -->
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Fee Due Date</mat-label>
+                  <input matInput type="date" [(ngModel)]="targetDueDate">
+                  <mat-hint>Due date assigned to the student's transport fee ledger</mat-hint>
+                </mat-form-field>
+              </div>
+
               <!-- Schedule Times -->
               <div class="form-row-two">
                 <mat-form-field appearance="outline" class="w-half">
@@ -673,7 +682,7 @@
             <div class="form-group">
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Pickup Stop</mat-label>
-                <mat-select [(ngModel)]="editPickupStopId">
+                <mat-select [(ngModel)]="editPickupStopId" (selectionChange)="onEditPickupStopChange($event.value)">
                   <mat-option [value]="null">-- Default Route Origin --</mat-option>
                   <mat-option *ngFor="let s of editRouteStops" [value]="s.id">
                     {{ s.stop_name }} <span *ngIf="s.pickup_time">({{ s.pickup_time }})</span>
@@ -701,6 +710,15 @@
                 <mat-label>Annual Transport Fee (₹)</mat-label>
                 <input matInput type="number" min="0" [(ngModel)]="editAnnualFee">
                 <span matSuffix class="field-suffix-tag">/ year</span>
+              </mat-form-field>
+            </div>
+
+            <!-- Fee Due Date -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Fee Due Date</mat-label>
+                <input matInput type="date" [(ngModel)]="editDueDate">
+                <mat-hint>Date by which transport fee must be paid</mat-hint>
               </mat-form-field>
             </div>
 
@@ -823,6 +841,7 @@
                 <th>Pickup Stop</th>
                 <th>Drop Stop</th>
                 <th>Annual Transport Fee</th>
+                <th>Due Date</th>
                 <th>Status</th>
                 <th class="text-right">Actions</th>
               </tr>
@@ -860,6 +879,13 @@
                   <span class="annual-badge">
                     ₹{{ (a.annual_fee ?? a.monthly_fee ?? 0).toLocaleString() }} / yr
                   </span>
+                </td>
+                <td>
+                  <span class="due-date-badge" *ngIf="a.due_date">
+                    <mat-icon class="calendar-icon">event</mat-icon>
+                    {{ a.due_date | date:'dd MMM yyyy' }}
+                  </span>
+                  <span class="text-muted" *ngIf="!a.due_date">—</span>
                 </td>
                 <td>
                   <span class="status-badge" [class.active]="a.status === 'Active'">

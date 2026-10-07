@@ -91,7 +91,7 @@
       <mat-tab-group (selectedTabChange)="onTabChange($event.index)" class="trips-tabs">
         <mat-tab label="Today's Trips ({{ todayTrips.length }})"></mat-tab>
         <mat-tab label="Upcoming Trips ({{ upcomingTrips.length }})"></mat-tab>
-        <mat-tab label="Trip History ({{ historyTrips.length }})"></mat-tab>
+        <mat-tab *ngIf="!isDriver" label="Trip History ({{ historyTrips.length }})"></mat-tab>
       </mat-tab-group>
 
       <!-- Filter Toolbar -->
@@ -239,12 +239,13 @@
 
           <mat-form-field appearance="outline" class="w-half">
             <mat-label>Assigned Driver</mat-label>
-            <mat-select [(ngModel)]="newTrip.transport_driver_id">
+            <mat-select [(ngModel)]="newTrip.transport_driver_id" [disabled]="isDriver">
               <mat-option [value]="null">-- Select Driver --</mat-option>
               <mat-option *ngFor="let d of drivers" [value]="d.id">
                 {{ d.name }}
               </mat-option>
             </mat-select>
+            <mat-hint *ngIf="isDriver">Auto-locked to your driver account</mat-hint>
           </mat-form-field>
         </div>
 

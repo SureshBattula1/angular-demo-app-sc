@@ -29,11 +29,15 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     return true;
   }
 
-  // SPECIAL CASE: Allow drivers to access driver portal
+  // Driver Portal Access: Driver role or transport.view permission
   const storedRole = user?.role || readStoredUserRole();
   const isDriverRole = user?.role === 'Driver' || storedRole === 'Driver';
-  if (isDriverRole && state.url.includes('/transport/driver-portal')) {
-    return true;
+  if (state.url.includes('/transport/driver-portal')) {
+    if (isDriverRole || permissionService.hasPermission('transport.view')) {
+      return true;
+    }
+    router.navigate(['/dashboard']);
+    return false;
   }
 
   // If no permissions required, allow access
@@ -83,7 +87,7 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
 
   if (!hasPermission) {
     if (isDriverRole) {
-      router.navigate(['/transport/driver-portal']);
+      router.navigate(['/transport/boarding']);
       return false;
     }
     // Don't redirect to dashboard if we're already there or it would cause loop

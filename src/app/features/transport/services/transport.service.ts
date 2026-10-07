@@ -16,7 +16,8 @@ import {
   TransportFeeSummary,
   TransportDashboardSummary,
   DriverDashboardData,
-  DriverAttendanceLog
+  DriverAttendanceLog,
+  DriverShiftStatusData
 } from '../../../core/models/transport.model';
 
 @Injectable({ providedIn: 'root' })
@@ -125,6 +126,7 @@ export class TransportService {
     drop_stop_id?: string | number | null;
     annual_fee?: number;
     monthly_fee?: number;
+    due_date?: string | null;
   }): Observable<ApiResponse> {
     return this.api.post('/transport-assignments/bulk', data);
   }
@@ -236,6 +238,18 @@ export class TransportService {
     return this.api.get<DriverDashboardData>('/driver/dashboard');
   }
 
+  getCurrentShift(): Observable<ApiResponse<DriverShiftStatusData>> {
+    return this.api.get<DriverShiftStatusData>('/driver/shift/current');
+  }
+
+  startDriverShift(payload: { odometer: number; duty_type: string; notes?: string; latitude?: number; longitude?: number }): Observable<ApiResponse> {
+    return this.api.post('/driver/shift/start', payload);
+  }
+
+  stopDriverShift(payload: { odometer: number; status: string; notes?: string }): Observable<ApiResponse> {
+    return this.api.post('/driver/shift/stop', payload);
+  }
+
   driverClockIn(payload?: { remarks?: string }): Observable<ApiResponse> {
     return this.api.post('/driver/clock-in', payload || {});
   }
@@ -246,6 +260,10 @@ export class TransportService {
 
   getDriverAttendanceHistory(): Observable<ApiResponse<DriverAttendanceLog[]>> {
     return this.api.get<DriverAttendanceLog[]>('/driver/attendance-history');
+  }
+
+  generateDriverTrip(payload: { trip_type: 'Pickup' | 'Drop' | 'Custom'; route_id?: string | number; vehicle_id?: string | number }): Observable<ApiResponse<TransportTrip>> {
+    return this.api.post<TransportTrip>('/driver/trips/generate', payload);
   }
 
   updateDriverTripLocation(tripId: string | number, payload: { latitude: number; longitude: number; speed?: number }): Observable<ApiResponse> {

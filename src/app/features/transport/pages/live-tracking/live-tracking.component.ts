@@ -50,14 +50,22 @@ export class LiveTrackingComponent implements OnInit, OnDestroy {
   }
 
   loadAvailableTrips(): void {
-    this.transport.getTrips({ per_page: 50 }).subscribe({
+    this.transport.getTrips({ per_page: 50, active_only: true }).subscribe({
       next: (res) => {
-        this.availableTrips = res.data || [];
+        const todayStr = new Date().toISOString().substring(0, 10);
+        this.availableTrips = (res.data || []).filter((t) => {
+          const isActive = t.status !== 'Completed' && t.status !== 'Cancelled';
+          const isTodayOrFuture = !t.trip_date || t.trip_date >= todayStr;
+          return isActive && isTodayOrFuture;
+        });
+
         this.route.queryParams.subscribe((params) => {
-          if (params['trip_id']) {
+          if (params['trip_id'] && this.availableTrips.some(t => t.id == params['trip_id'])) {
             this.selectedTripId = params['trip_id'];
           } else if (this.availableTrips.length > 0) {
             this.selectedTripId = this.availableTrips[0].id;
+          } else {
+            this.selectedTripId = null;
           }
           if (this.selectedTripId) {
             this.pollLiveTracking();
