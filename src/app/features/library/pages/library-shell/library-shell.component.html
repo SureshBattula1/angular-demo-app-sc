@@ -1,0 +1,38 @@
+<div class="library-shell-container">
+  <!-- Primary Module Navigation Tabs (matching transport-shell structure) -->
+  <nav mat-tab-nav-bar [tabPanel]="tabPanel" class="library-tabs" mat-stretch-tabs="false">
+    <a mat-tab-link routerLink="dashboard" routerLinkActive #dash="routerLinkActive" [active]="dash.isActive">
+      <mat-icon>dashboard</mat-icon> Dashboard
+    </a>
+    <a mat-tab-link routerLink="catalog" routerLinkActive #cat="routerLinkActive" [active]="cat.isActive">
+      <mat-icon>auto_stories</mat-icon> Catalog
+    </a>
+    <a mat-tab-link routerLink="inventory" routerLinkActive #inv="routerLinkActive" [active]="inv.isActive">
+      <mat-icon>inventory_2</mat-icon> Inventory
+    </a>
+    <a mat-tab-link routerLink="members" routerLinkActive #mem="routerLinkActive" [active]="mem.isActive">
+      <mat-icon>badge</mat-icon> Members
+    </a>
+    <a mat-tab-link routerLink="circulation" routerLinkActive #circ="routerLinkActive" [active]="circ.isActive">
+      <mat-icon>sync_alt</mat-icon> Circulation
+    </a>
+    <a mat-tab-link routerLink="reservations" routerLinkActive #res="routerLinkActive" [active]="res.isActive">
+      <mat-icon>bookmarks</mat-icon> Reservations
+    </a>
+    <a mat-tab-link routerLink="fines" routerLinkActive #fin="routerLinkActive" [active]="fin.isActive">
+      <mat-icon>payments</mat-icon> Fines
+    </a>
+    <a mat-tab-link routerLink="procurement" routerLinkActive #proc="routerLinkActive" [active]="proc.isActive">
+      <mat-icon>shopping_cart</mat-icon> Procurement
+    </a>
+    <a mat-tab-link routerLink="reports" routerLinkActive #rep="routerLinkActive" [active]="rep.isActive">
+      <mat-icon>assessment</mat-icon> Reports
+    </a>
+  </nav>
+
+  <mat-tab-nav-panel #tabPanel>
+    <div class="tab-body">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
+</div>

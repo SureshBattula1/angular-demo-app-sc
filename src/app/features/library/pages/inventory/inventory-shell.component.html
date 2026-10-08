@@ -1,0 +1,22 @@
+<div class="inventory-shell-container">
+  <nav mat-tab-nav-bar [tabPanel]="invPanel" class="sub-tabs" mat-stretch-tabs="false">
+    <a mat-tab-link routerLink="copies" routerLinkActive #cp="routerLinkActive" [active]="cp.isActive">
+      <mat-icon>content_copy</mat-icon> Book Copies
+    </a>
+    <a mat-tab-link routerLink="shelves" routerLinkActive #sh="routerLinkActive" [active]="sh.isActive">
+      <mat-icon>grid_view</mat-icon> Shelves & Racks
+    </a>
+    <a mat-tab-link routerLink="barcodes" routerLinkActive #bc="routerLinkActive" [active]="bc.isActive">
+      <mat-icon>qr_code</mat-icon> Barcode / QR Print
+    </a>
+    <a mat-tab-link routerLink="stock-verification" routerLinkActive #sv="routerLinkActive" [active]="sv.isActive">
+      <mat-icon>fact_check</mat-icon> Stock Verification
+    </a>
+  </nav>
+
+  <mat-tab-nav-panel #invPanel>
+    <div class="sub-body">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
+</div>

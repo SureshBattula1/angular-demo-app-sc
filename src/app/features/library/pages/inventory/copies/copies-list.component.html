@@ -1,0 +1,208 @@
+<div class="copies-page-container">
+  <app-data-table
+    [data]="copies"
+    [config]="tableConfig"
+    [title]="'Physical Book Copies Inventory'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (searchChanged)="onSearch($event)">
+  </app-data-table>
+
+  <!-- Generate / Add Copies Modal -->
+  <div class="modal-backdrop" *ngIf="showGenerateModal" (click)="closeGenerateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">add_box</mat-icon>
+          <div>
+            <h3>Generate Physical Book Copies</h3>
+            <p class="subtitle">Assigns unique Accession numbers & Barcodes automatically</p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeGenerateModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Select Book *</mat-label>
+          <mat-select [(ngModel)]="generateForm.book_id" placeholder="Choose book">
+            <mat-option *ngFor="let b of books" [value]="b.id">
+              {{ b.title }} ({{ b.author }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Generation Mode Toggle -->
+        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+          <button
+            type="button"
+            mat-stroked-button
+            [color]="generateForm.mode === 'auto' ? 'primary' : ''"
+            (click)="generateForm.mode = 'auto'">
+            <mat-icon>auto_fix_high</mat-icon> Auto-Generate Barcodes
+          </button>
+          <button
+            type="button"
+            mat-stroked-button
+            [color]="generateForm.mode === 'custom' ? 'primary' : ''"
+            (click)="generateForm.mode = 'custom'">
+            <mat-icon>barcode_reader</mat-icon> Scan / Custom Barcodes
+          </button>
+        </div>
+
+        <!-- Auto-generation options -->
+        <div *ngIf="generateForm.mode === 'auto'">
+          <div class="grid-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Number of Copies to Generate *</mat-label>
+              <input matInput type="number" min="1" max="100" [(ngModel)]="generateForm.count" placeholder="e.g. 5">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Assign Shelf / Rack</mat-label>
+              <mat-select [(ngModel)]="generateForm.shelf_id" placeholder="Optional shelf">
+                <mat-option [value]="null">-- None / Unassigned --</mat-option>
+                <mat-option *ngFor="let s of shelves" [value]="s.id">
+                  {{ s.code || ('Rack ' + s.rack_number) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="grid-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Barcode Prefix</mat-label>
+              <input matInput [(ngModel)]="generateForm.barcode_prefix" placeholder="e.g. BC">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Accession Prefix</mat-label>
+              <input matInput [(ngModel)]="generateForm.accession_prefix" placeholder="e.g. ACC-">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Custom / Scanned Barcodes options -->
+        <div *ngIf="generateForm.mode === 'custom'">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Scan or Enter Barcode Stickers (one per line) *</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              [(ngModel)]="generateForm.custom_barcodes"
+              placeholder="Scan barcodes with scanner gun or type stickers, e.g.:&#10;LIB-2024-001&#10;LIB-2024-002&#10;LIB-2024-003"></textarea>
+            <mat-hint>Each line represents 1 physical book copy with its unique barcode sticker</mat-hint>
+          </mat-form-field>
+
+          <div class="grid-2" style="margin-top: 12px;">
+            <mat-form-field appearance="outline">
+              <mat-label>Assign Shelf / Rack</mat-label>
+              <mat-select [(ngModel)]="generateForm.shelf_id" placeholder="Optional shelf">
+                <mat-option [value]="null">-- None / Unassigned --</mat-option>
+                <mat-option *ngFor="let s of shelves" [value]="s.id">
+                  {{ s.code || ('Rack ' + s.rack_number) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Accession Prefix</mat-label>
+              <input matInput [(ngModel)]="generateForm.accession_prefix" placeholder="e.g. ACC-">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <mat-form-field appearance="outline">
+            <mat-label>Initial Condition</mat-label>
+            <mat-select [(ngModel)]="generateForm.condition">
+              <mat-option value="New">New</mat-option>
+              <mat-option value="Good">Good</mat-option>
+              <mat-option value="Fair">Fair</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Purchase Price per Copy (₹)</mat-label>
+            <input matInput type="number" min="0" [(ngModel)]="generateForm.purchase_price" placeholder="e.g. 450">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Vendor / Supplier Name</mat-label>
+          <input matInput [(ngModel)]="generateForm.vendor_name" placeholder="e.g. Oxford Book Depot">
+        </mat-form-field>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeGenerateModal()" [disabled]="generating">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!generateForm.book_id || generating" (click)="submitGenerateCopies()">
+          <mat-spinner diameter="16" *ngIf="generating"></mat-spinner>
+          <mat-icon *ngIf="!generating">auto_fix_high</mat-icon>
+          <span *ngIf="!generating">Generate Copies with Barcodes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Condition & Status Update Modal -->
+  <div class="modal-backdrop" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">edit_note</mat-icon>
+          <div>
+            <h3>Update Copy Details</h3>
+            <p class="subtitle" *ngIf="selectedCopy">
+              Accession: <strong>{{ selectedCopy.accession_number }}</strong> · Barcode: <strong>{{ selectedCopy.barcode }}</strong>
+            </p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeEditModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Copy Condition</mat-label>
+          <mat-select [(ngModel)]="editForm.condition">
+            <mat-option value="New">New</mat-option>
+            <mat-option value="Good">Good</mat-option>
+            <mat-option value="Fair">Fair</mat-option>
+            <mat-option value="Damaged">Damaged</mat-option>
+            <mat-option value="Lost">Lost</mat-option>
+            <mat-option value="Weeded">Weeded</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Copy Status</mat-label>
+          <mat-select [(ngModel)]="editForm.status">
+            <mat-option value="Available">Available</mat-option>
+            <mat-option value="Issued">Issued</mat-option>
+            <mat-option value="Reserved">Reserved</mat-option>
+            <mat-option value="Maintenance">Maintenance</mat-option>
+            <mat-option value="Lost">Lost</mat-option>
+            <mat-option value="Weeded">Weeded</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Remarks / Notes</mat-label>
+          <textarea matInput [(ngModel)]="editForm.remarks" placeholder="Optional notes" rows="3"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeEditModal()">Cancel</button>
+        <button mat-flat-button color="primary" (click)="saveCopyDetails()">
+          <mat-icon>check</mat-icon> Update Copy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,181 @@
+<div class="reports-page-container">
+  <!-- Report Type Selector Bar -->
+  <div class="report-tabs-bar">
+    <button type="button" [class.active]="activeReport === 'circulation'" (click)="selectReport('circulation')">
+      <mat-icon>sync_alt</mat-icon> Circulation Analytics
+    </button>
+    <button type="button" [class.active]="activeReport === 'inventory'" (click)="selectReport('inventory')">
+      <mat-icon>inventory_2</mat-icon> Inventory & Asset Valuation
+    </button>
+    <button type="button" [class.active]="activeReport === 'fines'" (click)="selectReport('fines')">
+      <mat-icon>account_balance_wallet</mat-icon> Fines & Penalties Audit
+    </button>
+  </div>
+
+  <!-- Date Filter Bar (for date-based reports) -->
+  <div class="filter-bar-card" *ngIf="activeReport !== 'inventory'">
+    <div class="date-pickers">
+      <div class="field">
+        <label for="repStartDate">Start Date</label>
+        <input id="repStartDate" type="date" [(ngModel)]="startDate" class="input-ctrl" />
+      </div>
+      <div class="field">
+        <label for="repEndDate">End Date</label>
+        <input id="repEndDate" type="date" [(ngModel)]="endDate" class="input-ctrl" />
+      </div>
+      <button mat-flat-button color="primary" (click)="loadCurrentReport()">
+        <mat-icon>filter_alt</mat-icon> Apply Filter
+      </button>
+    </div>
+    <button mat-stroked-button (click)="exportCSV()">
+      <mat-icon>download</mat-icon> Export CSV
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-bar">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <!-- REPORT 1: CIRCULATION -->
+  <div *ngIf="activeReport === 'circulation' && reportData" class="report-content-flow">
+    <div class="summary-kpis">
+      <div class="kpi-card">
+        <span class="label">Total Issued Loans</span>
+        <span class="value">{{ reportData.summary?.total_loans }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Returned On Time</span>
+        <span class="value text-green">{{ reportData.summary?.returned_count }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Currently Out on Loan</span>
+        <span class="value text-blue">{{ reportData.summary?.active_count }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Late Fines Assessed</span>
+        <span class="value text-red">₹{{ reportData.summary?.total_fines | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="report-table-box">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Member</th>
+            <th>Borrower Type</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of reportData.data">
+            <td class="font-bold">{{ row.book?.title }}</td>
+            <td>{{ row.borrower?.first_name }} {{ row.borrower?.last_name }}</td>
+            <td><span class="type-pill">{{ row.borrower_type }}</span></td>
+            <td>{{ row.issue_date | date }}</td>
+            <td>{{ row.due_date | date }}</td>
+            <td>{{ row.return_date ? (row.return_date | date) : '-' }}</td>
+            <td><span class="status-badge" [class.returned]="row.status === 'Returned'" [class.active]="row.status === 'Issued'">{{ row.status }}</span></td>
+          </tr>
+          <tr *ngIf="reportData.data?.length === 0">
+            <td colspan="7" class="empty">No circulation records found in selected date range</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORT 2: INVENTORY & VALUATION -->
+  <div *ngIf="activeReport === 'inventory' && reportData" class="report-content-flow">
+    <div class="summary-kpis">
+      <div class="kpi-card">
+        <span class="label">Total Physical Copies</span>
+        <span class="value">{{ reportData.summary?.total_copies }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Total Collection Valuation</span>
+        <span class="value text-green">₹{{ reportData.summary?.total_valuation | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="report-table-box">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Accession #</th>
+            <th>Barcode</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Condition</th>
+            <th>Status</th>
+            <th>Valuation (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let copy of reportData.data">
+            <td class="font-bold text-teal">{{ copy.accession_number }}</td>
+            <td><span class="code-badge">{{ copy.barcode }}</span></td>
+            <td>{{ copy.book?.title }}</td>
+            <td>{{ copy.book?.category }}</td>
+            <td><span class="badge">{{ copy.condition }}</span></td>
+            <td><span class="badge">{{ copy.status }}</span></td>
+            <td class="font-bold">₹{{ (copy.purchase_price || 0) | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORT 3: FINES AUDIT -->
+  <div *ngIf="activeReport === 'fines' && reportData" class="report-content-flow">
+    <div class="summary-kpis">
+      <div class="kpi-card">
+        <span class="label">Total Assessed</span>
+        <span class="value text-red">₹{{ reportData.summary?.total_assessed | number:'1.2-2' }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Total Collected</span>
+        <span class="value text-green">₹{{ reportData.summary?.total_collected | number:'1.2-2' }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Total Waived</span>
+        <span class="value text-gray">₹{{ reportData.summary?.total_waived | number:'1.2-2' }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Outstanding Balance</span>
+        <span class="value text-amber">₹{{ reportData.summary?.pending_balance | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="report-table-box">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Fine Reason</th>
+            <th>Assessed</th>
+            <th>Paid Amount</th>
+            <th>Waived</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let f of reportData.data">
+            <td class="font-bold">{{ f.member?.first_name }} {{ f.member?.last_name }}</td>
+            <td>{{ f.type }}</td>
+            <td>₹{{ f.amount | number:'1.2-2' }}</td>
+            <td class="text-green">₹{{ f.paid_amount | number:'1.2-2' }}</td>
+            <td class="text-gray">₹{{ f.waived_amount | number:'1.2-2' }}</td>
+            <td><span class="badge">{{ f.status }}</span></td>
+            <td>{{ f.created_at | date }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

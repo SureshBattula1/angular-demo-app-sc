@@ -1,0 +1,125 @@
+<div class="fines-page-container">
+  <!-- Summary KPI Cards -->
+  <div class="fines-summary-row" *ngIf="summary">
+    <div class="fine-card red">
+      <div class="card-icon red">
+        <mat-icon>pending_actions</mat-icon>
+      </div>
+      <div class="card-text">
+        <span class="label">Pending Fines</span>
+        <span class="value">₹{{ summary.pending_total | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="fine-card green">
+      <div class="card-icon green">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="card-text">
+        <span class="label">Collected Fines</span>
+        <span class="value">₹{{ summary.collected_total | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="fine-card gray">
+      <div class="card-icon gray">
+        <mat-icon>handshake</mat-icon>
+      </div>
+      <div class="card-text">
+        <span class="label">Waived Fines</span>
+        <span class="value">₹{{ summary.waived_total | number:'1.2-2' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    [data]="fines"
+    [config]="tableConfig"
+    [title]="'Fine Ledger & Fee Collections'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)">
+  </app-data-table>
+
+  <!-- Collect Payment Modal -->
+  <div class="modal-backdrop" *ngIf="showPayModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">payments</mat-icon>
+          <div>
+            <h3>Collect Fine Payment</h3>
+            <p class="subtitle" *ngIf="selectedFine">
+              Member: <strong>{{ selectedFine.member?.first_name }} {{ selectedFine.member?.last_name }}</strong> · Outstanding: <strong>₹{{ selectedFine.amount }}</strong>
+            </p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closePayModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="payAmount">Amount to Collect (₹) *</label>
+          <input id="payAmount" type="number" [(ngModel)]="payAmount" class="input-ctrl" />
+        </div>
+
+        <div class="form-group">
+          <label for="payMethod">Payment Method *</label>
+          <select id="payMethod" [(ngModel)]="payMethod" class="input-ctrl">
+            <option value="Cash">Cash at Circulation Desk</option>
+            <option value="Online">Online / UPI / Card</option>
+            <option value="Fee Account">Student Fee Ledger Account</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="payRef">Transaction / Receipt Reference</label>
+          <input id="payRef" [(ngModel)]="payRef" placeholder="Receipt / transaction ID" class="input-ctrl" />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closePayModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!payAmount" (click)="submitPayment()">
+          <mat-icon>check</mat-icon> Confirm Receipt & Collect
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waive Fine Modal -->
+  <div class="modal-backdrop" *ngIf="showWaiveModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="warn">handshake</mat-icon>
+          <div>
+            <h3>Waive Fine Penalty</h3>
+            <p class="subtitle" *ngIf="selectedFine">
+              Member: <strong>{{ selectedFine.member?.first_name }} {{ selectedFine.member?.last_name }}</strong> · Amount: <strong>₹{{ selectedFine.amount }}</strong>
+            </p>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeWaiveModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="waiveReason">Official Justification / Reason for Waiver *</label>
+          <textarea id="waiveReason" [(ngModel)]="waiveReason" placeholder="Principal / Librarian approval reason..." class="input-ctrl" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeWaiveModal()">Cancel</button>
+        <button mat-flat-button color="warn" [disabled]="!waiveReason" (click)="submitWaiver()">
+          <mat-icon>check</mat-icon> Approve Waiver
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

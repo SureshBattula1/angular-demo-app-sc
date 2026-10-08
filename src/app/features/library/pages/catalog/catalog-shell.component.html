@@ -1,0 +1,13 @@
+<div class="catalog-shell-container">
+  <nav mat-tab-nav-bar [tabPanel]="catPanel" class="sub-tabs" mat-stretch-tabs="false">
+    <a mat-tab-link routerLink="books" routerLinkActive #b="routerLinkActive" [active]="b.isActive">
+      <mat-icon>menu_book</mat-icon> Books
+    </a>
+  </nav>
+
+  <mat-tab-nav-panel #catPanel>
+    <div class="sub-body">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-tab-nav-panel>
+</div>

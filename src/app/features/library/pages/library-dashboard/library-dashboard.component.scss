@@ -1,0 +1,315 @@
+:host {
+  display: block;
+}
+
+.view-container {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  button {
+    font-weight: 600;
+  }
+
+  .header-btn-light {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+  }
+}
+
+.loading-bar {
+  margin-bottom: 8px;
+}
+
+// ------------------- Statistics Grid (matching transport/students) -------------------
+.view-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+
+  .stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: var(--radius-lg, 12px);
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    mat-card-content {
+      padding: 16px 20px !important;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+  }
+
+  .warn-icon {
+    background: #fef3c7;
+    color: #b45309;
+    border-radius: var(--radius-md, 8px);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .red-icon {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: var(--radius-md, 8px);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .green-icon {
+    background: #d1fae5;
+    color: #047857;
+    border-radius: var(--radius-md, 8px);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .text-warn { color: #b45309 !important; }
+  .text-danger { color: #b91c1c !important; }
+  .text-success { color: #047857 !important; }
+}
+
+// ------------------- Details Cards Grid -------------------
+.dashboard-details-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 20px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-card {
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--white, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+
+  mat-card-content {
+    padding: 20px 24px !important;
+  }
+
+  .card-inner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      mat-icon {
+        color: var(--primary-color, #00897b);
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary, #0f172a);
+      }
+    }
+  }
+}
+
+// ------------------- Trend Table -------------------
+.trends-table-wrap {
+  overflow-x: auto;
+}
+
+.trend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--text-primary, #1e293b);
+  }
+
+  .text-center { text-align: center; }
+  .font-medium { font-weight: 500; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &.blue { background: #e0f2fe; color: #0284c7; }
+    &.green { background: #dcfce7; color: #166534; }
+  }
+
+  .progress-track {
+    width: 100%;
+    max-width: 160px;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+
+      &.issue { background: #0284c7; }
+      &.return { background: #16a34a; }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-secondary, #64748b);
+    padding: 32px 0;
+  }
+}
+
+// ------------------- Popular Books List -------------------
+.popular-books-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .popular-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    background: var(--background-hover, #f8fafc);
+    border-radius: 8px;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+
+    .rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-color, #00897b);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .book-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      .book-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-primary, #0f172a);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .book-meta {
+        font-size: 11px;
+        color: var(--text-secondary, #64748b);
+        margin-top: 2px;
+
+        .badge-cat {
+          background: #e2e8f0;
+          color: #475569;
+          padding: 1px 6px;
+          border-radius: 4px;
+        }
+      }
+    }
+
+    .borrow-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      .count {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--primary-color, #00897b);
+      }
+
+      .unit {
+        font-size: 10px;
+        color: var(--text-secondary, #64748b);
+        text-transform: uppercase;
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-secondary, #64748b);
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+
+    p { margin: 0; }
+  }
+}

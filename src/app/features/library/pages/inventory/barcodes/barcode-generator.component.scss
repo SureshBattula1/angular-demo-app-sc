@@ -1,0 +1,318 @@
+:host {
+  display: block;
+}
+
+.barcode-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header-card {
+  background: var(--card-background, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .icon-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color, #00897b) 0%, var(--primary-light, #4db6ac) 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 137, 123, 0.25);
+
+    mat-icon {
+      font-size: 26px;
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  .title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+  }
+
+  .subtitle {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+.filter-bar-card {
+  background: var(--card-background, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+
+  .search-box {
+    flex: 1;
+    min-width: 260px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gray-50, #f8fafc);
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 6px;
+    padding: 0 12px;
+
+    mat-icon {
+      color: var(--text-secondary, #64748b);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 13px;
+      color: var(--text-primary, #1e293b);
+    }
+  }
+
+  .select-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.loading-state,
+.empty-state-card {
+  background: var(--card-background, #ffffff);
+  border: 1px dashed var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary, #64748b);
+    max-width: 420px;
+  }
+}
+
+.copies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.copy-card {
+  background: var(--card-background, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 10px);
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light, #4db6ac);
+  }
+
+  &.selected {
+    border-color: var(--primary-color, #00897b);
+    background: rgba(0, 137, 123, 0.04);
+    box-shadow: 0 0 0 2px rgba(0, 137, 123, 0.3);
+  }
+
+  .card-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .accession-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-dark, #00695c);
+      background: rgba(0, 137, 123, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .checkbox-indicator {
+      color: var(--primary-color, #00897b);
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .barcode-visual {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .book-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .book-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary, #1e293b);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+
+      .meta-item {
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .condition-badge {
+        font-size: 10px;
+        font-weight: 600;
+        background: #e2e8f0;
+        color: #334155;
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+
+      .shelf-tag {
+        font-size: 10px;
+        font-weight: 600;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+    }
+  }
+}
+
+.printable-labels-sheet {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #print-sheet,
+  #print-sheet * {
+    visibility: visible;
+  }
+
+  #print-sheet {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12mm;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 10mm;
+  }
+
+  .label-badge {
+    border: 1px solid #000;
+    padding: 10px;
+    text-align: center;
+    page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .school-name {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .label-book-title {
+      font-size: 10px;
+      font-weight: 600;
+      max-width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin: 4px 0;
+    }
+
+    .label-barcode-svg {
+      margin: 4px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .label-acc {
+      font-size: 9px;
+      font-weight: 600;
+      color: #000;
+      margin-top: 2px;
+    }
+  }
+}

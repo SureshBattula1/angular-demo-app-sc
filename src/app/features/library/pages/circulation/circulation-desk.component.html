@@ -1,0 +1,186 @@
+<div class="circulation-page-container">
+  <!-- Desk Header Bar -->
+  <div class="circulation-header-card">
+    <div class="header-left">
+      <div class="icon-avatar">
+        <mat-icon>sync_alt</mat-icon>
+      </div>
+      <div>
+        <h2 class="title">Circulation Desk Workstation</h2>
+        <p class="subtitle">High-speed checkout, checkin, loan extensions, and overdue tracking</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desk Sub Navigation Tabs -->
+  <div class="desk-nav-bar">
+    <button type="button" [class.active]="activeTab === 'issue'" (click)="activeTab = 'issue'">
+      <mat-icon>login</mat-icon> Issue Station (Checkout)
+    </button>
+    <button type="button" [class.active]="activeTab === 'return'" (click)="activeTab = 'return'">
+      <mat-icon>logout</mat-icon> Return Station (Checkin)
+    </button>
+    <button type="button" [class.active]="activeTab === 'renew'" (click)="activeTab = 'renew'; loadActiveForRenew()">
+      <mat-icon>autorenew</mat-icon> Renewals & Extensions
+    </button>
+    <button type="button" [class.active]="activeTab === 'overdue'" (click)="activeTab = 'overdue'; loadOverdue()">
+      <mat-icon>warning</mat-icon> Overdue Loans Tracker
+    </button>
+  </div>
+
+  <!-- TAB 1: ISSUE STATION -->
+  <div class="station-container" *ngIf="activeTab === 'issue'">
+    <div class="desk-card">
+      <div class="card-title-row">
+        <div class="station-icon-badge issue">
+          <mat-icon>login</mat-icon>
+        </div>
+        <div>
+          <h3>Fast Checkout (Scan & Issue)</h3>
+          <p class="subtitle">Search or scan member ID, then scan physical book barcode for instant loan</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="issueBorrowerType">Borrower Type *</label>
+          <select id="issueBorrowerType" [(ngModel)]="issueForm.borrower_type" (change)="onBorrowerTypeChange()" class="input-ctrl">
+            <option value="Student">Student (14 Days Standard Loan)</option>
+            <option value="Teacher">Teacher / Staff (30 Days Extended Loan)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="issueMemberSearch">Search Member (Name, ID, or Admission #) *</label>
+          <div class="search-member-row">
+            <input
+              id="issueMemberSearch"
+              [(ngModel)]="memberSearchTerm"
+              (keyup.enter)="searchMembers()"
+              placeholder="Type admission #, emp ID, or name..."
+              class="input-ctrl" />
+            <button mat-flat-button color="primary" (click)="searchMembers()">Search</button>
+          </div>
+          <select *ngIf="memberOptions.length > 0" [(ngModel)]="issueForm.member_id" class="input-ctrl mt-2" aria-label="Selected Member">
+            <option *ngFor="let m of memberOptions" [value]="m.id">{{ m.first_name }} {{ m.last_name }} ({{ m.email }})</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="issueBarcode">Book Barcode or Accession # *</label>
+          <div class="barcode-scan-input">
+            <mat-icon>qr_code_2</mat-icon>
+            <input
+              id="issueBarcode"
+              [(ngModel)]="issueForm.barcode"
+              (keyup.enter)="issueBook()"
+              placeholder="Scan copy barcode or accession number..."
+              class="input-ctrl-lg" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="issueDueDate">Custom Due Date (Optional - defaults to policy)</label>
+          <input id="issueDueDate" type="date" [(ngModel)]="issueForm.due_date" class="input-ctrl" />
+        </div>
+
+        <div class="form-group">
+          <label for="issueRemarks">Remarks / Notes</label>
+          <input id="issueRemarks" [(ngModel)]="issueForm.remarks" placeholder="Optional notes" class="input-ctrl" />
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          [disabled]="!issueForm.member_id || !issueForm.barcode || submitting"
+          (click)="issueBook()">
+          <mat-icon>check_circle</mat-icon> Complete Checkout & Loan Book
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: RETURN STATION -->
+  <div class="station-container" *ngIf="activeTab === 'return'">
+    <div class="desk-card">
+      <div class="card-title-row">
+        <div class="station-icon-badge return">
+          <mat-icon>assignment_return</mat-icon>
+        </div>
+        <div>
+          <h3>Fast Checkin (Scan & Return)</h3>
+          <p class="subtitle">Scan the copy barcode to assess return, inspect condition, and record fines</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="returnBarcode">Book Copy Barcode or Accession # *</label>
+          <div class="barcode-scan-input">
+            <mat-icon>qr_code_scanner</mat-icon>
+            <input
+              id="returnBarcode"
+              [(ngModel)]="returnForm.barcode"
+              (keyup.enter)="returnBook()"
+              placeholder="Scan returned copy barcode..."
+              class="input-ctrl-lg" />
+            <button mat-flat-button color="primary" [disabled]="!returnForm.barcode || submitting" (click)="returnBook()">
+              Process Return
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="returnCondition">Physical Condition on Return</label>
+          <select id="returnCondition" [(ngModel)]="returnForm.copy_condition" class="input-ctrl">
+            <option value="Good">Good (Normal Wear)</option>
+            <option value="New">New / Pristine</option>
+            <option value="Fair">Fair</option>
+            <option value="Damaged">Damaged (Assess penalty)</option>
+            <option value="Lost">Lost (Assess replacement fee)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-row">
+            <input type="checkbox" id="collectFine" [(ngModel)]="returnForm.collect_fine" />
+            <label for="collectFine">Collect overdue fine immediately if applicable</label>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="returnForm.collect_fine">
+          <label for="returnPaymentMethod">Payment Collection Method</label>
+          <select id="returnPaymentMethod" [(ngModel)]="returnForm.payment_method" class="input-ctrl">
+            <option value="Cash">Cash at Circulation Desk</option>
+            <option value="Online">Online / Card Payment</option>
+            <option value="Fee Account">Charge to Student Fee Account Ledger</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: RENEW STATION -->
+  <div class="station-container" *ngIf="activeTab === 'renew'">
+    <app-data-table
+      [data]="activeLoans"
+      [config]="renewConfig"
+      [title]="'Active Loans Eligible for Renewal'"
+      [loading]="renewLoading"
+      (actionClicked)="onRenewAction($event)">
+    </app-data-table>
+  </div>
+
+  <!-- TAB 4: OVERDUE TRACKER -->
+  <div class="station-container" *ngIf="activeTab === 'overdue'">
+    <app-data-table
+      [data]="overdueLoans"
+      [config]="overdueConfig"
+      [title]="'Overdue Loans Tracker & Reminder Notices'"
+      [loading]="overdueLoading"
+      (actionClicked)="onOverdueAction($event)">
+    </app-data-table>
+  </div>
+</div>
