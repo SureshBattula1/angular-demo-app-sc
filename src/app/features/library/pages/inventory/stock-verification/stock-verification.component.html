@@ -1,0 +1,107 @@
+<div class="audit-page-container">
+  <!-- Page Header -->
+  <div class="page-header-card">
+    <div class="header-left">
+      <div class="icon-avatar">
+        <mat-icon>fact_check</mat-icon>
+      </div>
+      <div>
+        <h2 class="title">Physical Stock Verification Audit</h2>
+        <p class="subtitle">Conduct physical shelf inventory audits and reconcile missing or mislaid books</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button color="primary" *ngIf="!activeSession" (click)="startSession()">
+        <mat-icon>play_arrow</mat-icon> Start Audit Session
+      </button>
+      <button mat-flat-button color="warn" *ngIf="activeSession" (click)="completeSession()">
+        <mat-icon>check_circle</mat-icon> Finalize & Complete Audit
+      </button>
+    </div>
+  </div>
+
+  <!-- Active Audit Scanning Workstation -->
+  <div class="scanning-station-card" *ngIf="activeSession">
+    <div class="station-header">
+      <div class="status-indicator">
+        <span class="pulse-dot"></span>
+        <span class="session-name">Audit Active: <strong>{{ activeSession.session_title }}</strong></span>
+      </div>
+      <div class="session-badge">
+        <mat-icon>verified</mat-icon>
+        <span>Verified Copies: <strong>{{ activeSession.total_copies_checked }}</strong></span>
+      </div>
+    </div>
+
+    <div class="scanner-input-box">
+      <mat-icon class="scanner-icon">qr_code_scanner</mat-icon>
+      <input
+        #barcodeInput
+        [(ngModel)]="scanBarcode"
+        (keyup.enter)="onBarcodeScanned()"
+        placeholder="Scan barcode or enter accession number and press Enter..."
+        class="scan-field" />
+      <button mat-flat-button color="primary" [disabled]="!scanBarcode.trim()" (click)="onBarcodeScanned()">
+        Verify Item
+      </button>
+    </div>
+
+    <div class="recent-scans-box">
+      <h4>Recent Scanned & Verified Items</h4>
+      <div class="scan-history">
+        <div class="scan-row" *ngFor="let item of recentScans">
+          <div class="item-left">
+            <mat-icon class="icon-ok">check_circle</mat-icon>
+            <span class="barcode-badge">{{ item.barcode }}</span>
+            <span class="book-title">{{ item.title }}</span>
+          </div>
+          <span class="scan-time">{{ item.time | date:'mediumTime' }}</span>
+        </div>
+        <div *ngIf="recentScans.length === 0" class="empty-scans">
+          <mat-icon>barcode_reader</mat-icon>
+          <p>Scan a book barcode above to begin logging items into this audit</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Previous Sessions Table -->
+  <div class="past-sessions-card">
+    <div class="card-header-bar">
+      <h3>Previous Verification Audit Log</h3>
+    </div>
+    <div class="table-responsive">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Session Title</th>
+            <th>Date Started</th>
+            <th>Status</th>
+            <th>Verified Copies</th>
+            <th>Missing Copies</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of pastSessions">
+            <td class="font-bold">{{ s.session_title }}</td>
+            <td>{{ s.started_at | date:'medium' }}</td>
+            <td>
+              <span class="status-pill" [class.completed]="s.status === 'Completed'" [class.progress]="s.status === 'In Progress'">
+                {{ s.status }}
+              </span>
+            </td>
+            <td><strong class="text-teal">{{ s.total_copies_checked }}</strong></td>
+            <td>
+              <span [class.text-warn]="s.missing_count > 0" [class.text-green]="s.missing_count === 0">
+                {{ s.missing_count }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="pastSessions.length === 0">
+            <td colspan="5" class="empty-state">No previous verification sessions found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

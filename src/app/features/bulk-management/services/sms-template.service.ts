@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 import { Observable } from 'rxjs';
 
+import type { SmsTemplateModuleType } from '../utils/sms-template-module.util';
+
 export type SmsTemplateAudience = 'student' | 'teacher' | 'both';
 
 export type SmsBulkAudience = 'global' | 'teachers' | 'students';
@@ -12,6 +14,8 @@ export interface SmsTemplate {
   name: string;
   body: string;
   audience: SmsTemplateAudience;
+  /** Campaign notification type (holidays, exams, attendance, …). */
+  module_type?: SmsTemplateModuleType | null;
   is_active: boolean;
   /** Present on aggregated list API (`/branches/sms-templates`). */
   branch_name?: string;
@@ -19,9 +23,22 @@ export interface SmsTemplate {
   updated_at?: string;
 }
 
+export interface SmsTemplateTagDef {
+  key: string;
+  label: string;
+  hint: string;
+}
+
+export interface SmsTemplateTagGroup {
+  id: string;
+  label: string;
+  tags: SmsTemplateTagDef[];
+}
+
 export interface SmsTemplatesIndexData {
   templates: SmsTemplate[];
   allowed_tags: string[];
+  tag_catalog_by_module?: Record<string, SmsTemplateTagGroup[]>;
 }
 
 export interface SmsPreviewData {
@@ -93,6 +110,19 @@ export class SmsTemplateService {
     return this.api.get<SmsTemplatesIndexData>('/branches/sms-templates', params);
   }
 
+  tagCatalog(moduleType?: string): Observable<
+    ApiResponse<{
+      tag_catalog_by_module: Record<string, SmsTemplateTagGroup[]>;
+      groups_for_module: SmsTemplateTagGroup[];
+    }>
+  > {
+    const params: Record<string, string> = {};
+    if (moduleType) {
+      params['module_type'] = moduleType;
+    }
+    return this.api.get('/branches/sms-templates/tag-catalog', params);
+  }
+
   recipientOptions(
     branchId: string | number,
     channel: 'sms' | 'whatsapp' = 'sms'
@@ -119,6 +149,7 @@ export class SmsTemplateService {
       name: string;
       body: string;
       audience: SmsTemplateAudience;
+      module_type: SmsTemplateModuleType;
       is_active?: boolean;
     }
   ): Observable<ApiResponse<{ template: SmsTemplate }>> {
@@ -132,6 +163,7 @@ export class SmsTemplateService {
       name: string;
       body: string;
       audience: SmsTemplateAudience;
+      module_type?: SmsTemplateModuleType;
       is_active: boolean;
     }>
   ): Observable<ApiResponse<{ template: SmsTemplate }>> {

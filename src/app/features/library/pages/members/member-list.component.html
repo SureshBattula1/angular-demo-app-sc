@@ -1,0 +1,109 @@
+<div class="members-page-container">
+  <app-data-table
+    [data]="members"
+    [config]="tableConfig"
+    [title]="'Library Members (Students & Staff)'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (searchChanged)="onSearch($event)">
+  </app-data-table>
+
+  <!-- Member Profile Modal -->
+  <div class="modal-backdrop" *ngIf="showProfileModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="member-header-info">
+          <div class="avatar-circle">
+            {{ (selectedMember?.member?.first_name?.charAt(0) || '') + (selectedMember?.member?.last_name?.charAt(0) || '') }}
+          </div>
+          <div>
+            <h3>{{ selectedMember?.member?.first_name }} {{ selectedMember?.member?.last_name }}</h3>
+            <div class="sub-info">
+              <span class="role-badge">{{ selectedMember?.member?.role }}</span>
+              <span class="email-sub">{{ selectedMember?.member?.email }}</span>
+            </div>
+          </div>
+        </div>
+        <button mat-icon-button (click)="closeProfileModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Summary KPIs -->
+      <div class="member-kpis" *ngIf="selectedMember">
+        <div class="kpi-mini">
+          <span class="num">{{ selectedMember.summary.active_count }}</span>
+          <span class="lbl">Currently Borrowed</span>
+        </div>
+        <div class="kpi-mini" [class.warn]="selectedMember.summary.overdue_count > 0">
+          <span class="num">{{ selectedMember.summary.overdue_count }}</span>
+          <span class="lbl">Overdue Books</span>
+        </div>
+        <div class="kpi-mini" [class.warn]="selectedMember.summary.total_pending_fines > 0">
+          <span class="num">₹{{ selectedMember.summary.total_pending_fines | number:'1.2-2' }}</span>
+          <span class="lbl">Pending Fines</span>
+        </div>
+      </div>
+
+      <!-- Currently Active Loans -->
+      <div class="section-block">
+        <div class="section-title">
+          <mat-icon>auto_stories</mat-icon>
+          <h4>Currently Issued Books</h4>
+        </div>
+        <table class="mini-table" *ngIf="selectedMember?.active_loans?.length > 0; else noActive">
+          <thead>
+            <tr>
+              <th>Book Title</th>
+              <th>Due Date</th>
+              <th>Accession #</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let loan of selectedMember.active_loans">
+              <td class="font-bold">{{ loan.book?.title }}</td>
+              <td>{{ loan.due_date | date }}</td>
+              <td><span class="acc-tag">{{ loan.copy?.accession_number || '-' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noActive>
+          <div class="empty-notice">
+            <mat-icon>check_circle_outline</mat-icon>
+            <p>No books currently checked out</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Recent History -->
+      <div class="section-block">
+        <div class="section-title">
+          <mat-icon>history</mat-icon>
+          <h4>Borrowing History</h4>
+        </div>
+        <table class="mini-table" *ngIf="selectedMember?.loan_history?.length > 0; else noHistory">
+          <thead>
+            <tr>
+              <th>Book Title</th>
+              <th>Returned Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of selectedMember.loan_history">
+              <td>{{ h.book?.title }}</td>
+              <td>{{ h.return_date | date }}</td>
+              <td><span class="status-tag">{{ h.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noHistory>
+          <div class="empty-notice">
+            <p>No past circulation loans on record</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

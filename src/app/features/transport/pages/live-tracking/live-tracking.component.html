@@ -1,0 +1,240 @@
+<div class="view-container">
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">gps_fixed</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Live Fleet GPS Tracking & ETA</h1>
+          <div class="view-meta">
+            <span><mat-icon>my_location</mat-icon> Real-Time Geofence Stream</span>
+            <span><mat-icon>speed</mat-icon> Speed & Waypoint Telemetry</span>
+            <span><mat-icon>timer</mat-icon> Live Arrival Countdown</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> GPS Online</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-stroked-button color="accent" (click)="pollLiveTracking()" [disabled]="!selectedTripId || loading" class="white-btn">
+            <mat-icon [class.spin]="loading">refresh</mat-icon> Poll Signal
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>directions_bus</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ trackingData?.trip?.vehicle_number || (selectedTripId ? 'Assigned' : '—') }}</div>
+          <div class="stat-label">Active Tracked Vehicle</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>speed</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ trackingData?.telemetry?.speed || 0 }} km/h</div>
+          <div class="stat-label">Instantaneous Velocity</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>navigation</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ trackingData?.trip?.status || (selectedTripId ? 'Tracking' : '—') }}</div>
+          <div class="stat-label">Transit Mission Status</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>satellite_alt</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ trackingData?.telemetry?.last_updated ? 'Live Ping' : 'Ready' }}</div>
+          <div class="stat-label">Satellite Lock & Latency</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detail Card with Trip Selector and Radar View -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>map</mat-icon> Live Transit Corridor & Telemetry Console
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Trip Selector Strip -->
+      <div class="trip-selection-strip">
+        <mat-form-field appearance="outline" class="trip-selector">
+          <mat-label>Select Active Trip to Track</mat-label>
+          <mat-select [(ngModel)]="selectedTripId" (selectionChange)="onTripSelected($event.value)">
+            <mat-option *ngFor="let t of availableTrips" [value]="t.id">
+              {{ t.trip_date || 'Daily' }} - {{ t.route_name }} ({{ t.vehicle_number || 'No Vehicle' }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- No Trip Selected Prompt -->
+      <div *ngIf="!selectedTripId" class="empty-state">
+        <mat-icon class="large-icon">satellite_alt</mat-icon>
+        <h3>No Trip Selected for Tracking</h3>
+        <p>Choose an ongoing or scheduled trip above to observe live GPS telemetry and stop ETAs.</p>
+      </div>
+
+      <!-- Tracking View Canvas -->
+      <div *ngIf="selectedTripId && trackingData" class="tracking-grid">
+        <!-- Left: Telemetry & Interactive Transit Path Visualizer -->
+        <div class="map-column">
+          <!-- Telemetry Header Strip -->
+          <div class="telemetry-bar">
+            <div class="telemetry-item">
+              <span class="tele-lbl">Vehicle Number</span>
+              <span class="tele-val">{{ trackingData.trip?.vehicle_number || 'N/A' }}</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="tele-lbl">Driver</span>
+              <span class="tele-val">{{ trackingData.trip?.driver_name || 'Assigned Driver' }}</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="tele-lbl">Live GPS Ping</span>
+              <span class="signal-indicator">
+                <span class="pulse-dot"></span> Live ({{ trackingData.telemetry?.last_updated || 'Just now' }})
+              </span>
+            </div>
+          </div>
+
+          <!-- Radar Route Visualizer (Teal / Green Gradient Line) -->
+          <div class="radar-card">
+            <div class="radar-header">
+              <div class="radar-title">
+                <mat-icon>alt_route</mat-icon> Active Route Corridor Map
+              </div>
+              <div class="test-ping-tool">
+                <button mat-stroked-button color="primary" class="sm-ping-btn" (click)="simulateGpsPing()" matTooltip="Simulate GPS update for testing">
+                  <mat-icon>satellite</mat-icon> Test Driver Ping
+                </button>
+              </div>
+            </div>
+
+            <!-- SVG Visual Path Canvas -->
+            <div class="transit-canvas-box">
+              <svg class="transit-svg" viewBox="0 0 800 240" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00897b" />
+                    <stop offset="50%" stop-color="#4db6ac" />
+                    <stop offset="100%" stop-color="#4caf50" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Track Line -->
+                <path d="M 80,120 Q 240,60 400,120 T 720,120" fill="none" stroke="#e2e8f0" stroke-width="12" stroke-linecap="round" />
+                <path d="M 80,120 Q 240,60 400,120 T 720,120" fill="none" stroke="url(#routeGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="8 4" />
+
+                <!-- Stops Nodes along path -->
+                <circle cx="80" cy="120" r="14" fill="#00897b" />
+                <circle cx="80" cy="120" r="6" fill="#ffffff" />
+                <text x="80" y="160" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">Start Point</text>
+
+                <circle cx="240" cy="80" r="10" fill="#4db6ac" />
+                <circle cx="240" cy="80" r="4" fill="#ffffff" />
+                <text x="240" y="55" text-anchor="middle" font-size="11" fill="#475569">Way Stop 1</text>
+
+                <!-- Current Bus Position Marker (Animated) -->
+                <g [attr.transform]="busTransform">
+                  <circle cx="0" cy="0" r="22" fill="#00897b" fill-opacity="0.25">
+                    <animate attributeName="r" values="18;28;18" dur="2s" repeatCount="indefinite"/>
+                  </circle>
+                  <circle cx="0" cy="0" r="14" fill="#00897b" stroke="#ffffff" stroke-width="3" />
+                  <text x="0" y="4" text-anchor="middle" font-size="11" fill="#ffffff" font-family="Material Icons">directions_bus</text>
+                  <rect x="-35" y="-38" width="70" height="20" rx="4" fill="#004d40" />
+                  <text x="0" y="-24" text-anchor="middle" font-size="10" font-weight="bold" fill="#ffffff">BUS TRACKED</text>
+                </g>
+
+                <circle cx="480" cy="130" r="10" fill="#4db6ac" />
+                <circle cx="480" cy="130" r="4" fill="#ffffff" />
+                <text x="480" y="165" text-anchor="middle" font-size="11" fill="#475569">Way Stop 2</text>
+
+                <circle cx="720" cy="120" r="14" fill="#4caf50" />
+                <circle cx="720" cy="120" r="6" fill="#ffffff" />
+                <text x="720" y="160" text-anchor="middle" font-size="12" font-weight="600" fill="#1e293b">School Campus</text>
+              </svg>
+            </div>
+
+            <div class="radar-footer">
+              <span class="tele-coords">
+                <mat-icon>my_location</mat-icon>
+                Lat: {{ (trackingData.telemetry?.latitude || 12.9716) | number:'1.4-4' }},
+                Lng: {{ (trackingData.telemetry?.longitude || 77.5946) | number:'1.4-4' }}
+              </span>
+              <span class="tele-accuracy">
+                <mat-icon>verified</mat-icon> GPS Lock: High Precision
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Stop-by-Stop ETA Table -->
+        <div class="eta-column">
+          <div class="eta-card">
+            <div class="eta-card-header">
+              <div class="eta-card-title">
+                <mat-icon>schedule</mat-icon> Stop ETA Countdown
+              </div>
+            </div>
+
+            <div class="stop-list">
+              <div *ngFor="let s of trackingData.stops; let i = index" class="stop-item">
+                <div class="stop-seq-box">
+                  <span class="seq-num">{{ i + 1 }}</span>
+                  <div class="seq-line" *ngIf="i < trackingData.stops.length - 1"></div>
+                </div>
+
+                <div class="stop-body">
+                  <div class="stop-title-row">
+                    <span class="st-name">{{ s.stop_name }}</span>
+                    <span class="eta-pill" [class.arrived]="s.distance_km != null && s.distance_km < 0.2">
+                      {{ s.eta_text || (s.eta_minutes ? s.eta_minutes + ' min' : 'Scheduled') }}
+                    </span>
+                  </div>
+                  <div class="stop-meta-row">
+                    <span class="sched-time">Sched: {{ s.pickup_time || s.drop_time || 'Regular' }}</span>
+                    <span class="dist-away" *ngIf="s.distance_km != null">
+                      <mat-icon>straighten</mat-icon> {{ s.distance_km }} km away
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="!trackingData.stops || trackingData.stops.length === 0" class="empty-stops">
+                <p>No stops assigned to this route corridor.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

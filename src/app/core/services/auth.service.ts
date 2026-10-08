@@ -14,7 +14,7 @@ export interface User {
   last_name: string;
   email: string;
   phone?: string;
-  role: 'SuperAdmin' | 'BranchAdmin' | 'Teacher' | 'Student' | 'Parent' | 'Staff';
+  role: 'SuperAdmin' | 'BranchAdmin' | 'Teacher' | 'Student' | 'Parent' | 'Staff' | 'Driver';
   branch_id?: number;
   branch?: unknown;
   avatar?: string;
@@ -22,6 +22,7 @@ export interface User {
   last_login?: string;
   full_name?: string;
   permissions?: string[];
+  transportDriver?: unknown;
 }
 
 export interface LoginCredentials {
@@ -384,6 +385,13 @@ export class AuthService {
    */
   isAdmin(): boolean {
     return this.hasRole(['SuperAdmin', 'BranchAdmin']);
+  }
+
+  /**
+   * Check if user is driver
+   */
+  isDriver(): boolean {
+    return this.hasRole('Driver');
   }
 
   /**

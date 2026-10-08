@@ -9,7 +9,7 @@ export interface CampaignStatusOption {
 
 export interface CampaignListRow {
   id: number;
-  target_id: number;
+  target_id?: number | null;
   module: string;
   branch?: string;
   grade?: string;
@@ -115,6 +115,12 @@ export interface SectionFeeStructureSummary {
   structure_applies: boolean;
 }
 
+export interface SectionAssignmentSummary {
+  assignment_count: number;
+  has_new?: boolean;
+  subject_names?: string;
+}
+
 export interface EligibleTargetRow {
   grade: string;
   section: string;
@@ -123,6 +129,9 @@ export interface EligibleTargetRow {
   notification_status?: SectionNotificationStatus;
   campaign_id?: number;
   sent_count?: number;
+  assignment_count?: number;
+  subject_names?: string;
+  assignment_has_new?: boolean;
 }
 
 export type EligibleTargetsResponse = Omit<ApiResponse<EligibleTargetRow[]>, 'meta'> & {
@@ -139,6 +148,8 @@ export type EligibleTargetsResponse = Omit<ApiResponse<EligibleTargetRow[]>, 'me
     fee_due_dates?: string[];
     fee_by_section?: Record<string, SectionFeeSummary | SectionFeeStructureSummary>;
     assignment_status_keys?: string[];
+    assignment_by_section?: Record<string, SectionAssignmentSummary>;
+    published_assignment_count?: number;
   };
 };
 
@@ -212,8 +223,17 @@ export class NotificationCampaignService {
     return this.api.get(`/communications/notification-campaigns/${id}`);
   }
 
-  templates(branchId: string | number): Observable<ApiResponse<{ id: number; name: string; body: string; audience: string }[]>> {
-    return this.api.get('/communications/notification-campaigns/templates', { branch_id: branchId });
+  templates(
+    branchId: string | number,
+    module?: string
+  ): Observable<
+    ApiResponse<{ id: number; name: string; body: string; audience: string; module_type?: string | null }[]>
+  > {
+    const params: Record<string, unknown> = { branch_id: branchId };
+    if (module) {
+      params['module'] = module;
+    }
+    return this.api.get('/communications/notification-campaigns/templates', params);
   }
 
   classOptions(branchId: string | number): Observable<ApiResponse<{ grades: { grade: string; label: string; student_count: number; sections: { section: string; student_count: number }[] }[] }>> {
@@ -236,7 +256,69 @@ export class NotificationCampaignService {
     return this.api.get('/communications/notification-campaigns/fees-due-notify-meta', params);
   }
 
-  markedAttendance(branchId: string | number, date: string): Observable<ApiResponse<{ grade: string; section: string; class_name: string; student_count: number }[]>> {
+  sectionDeliveryStatus(
+    module: string,
+    branchId: string | number,
+    date?: string,
+    options?: {
+      exam_id?: string | number;
+      notify_mode?: ExamNotifyMode;
+      fee_notify_mode?: FeeNotifyMode;
+      fee_type?: string;
+      fee_structure_id?: string;
+    }
+  ): Observable<
+    ApiResponse<[]> & {
+      meta?: {
+        event_date?: string;
+        delivery_by_section?: Record<string, SectionDeliveryInfo>;
+      };
+    }
+  > {
+    const params: Record<string, unknown> = { module, branch_id: branchId };
+    if (date) {
+      params['date'] = date;
+    }
+    if (options?.exam_id) {
+      params['exam_id'] = options.exam_id;
+    }
+    if (options?.notify_mode) {
+      params['notify_mode'] = options.notify_mode;
+    }
+    if (options?.fee_notify_mode) {
+      params['fee_notify_mode'] = options.fee_notify_mode;
+    }
+    if (options?.fee_type) {
+      params['fee_type'] = options.fee_type;
+    }
+    if (options?.fee_structure_id) {
+      params['fee_structure_id'] = options.fee_structure_id;
+    }
+    return this.api.get('/communications/notification-campaigns/section-delivery-status', params);
+  }
+
+  markedAttendance(
+    branchId: string | number,
+    date: string
+  ): Observable<
+    ApiResponse<
+      {
+        grade: string;
+        section: string;
+        class_name: string;
+        student_count: number;
+        notification_status?: SectionNotificationStatus;
+        campaign_id?: number;
+        sent_count?: number;
+      }[]
+    > & {
+      meta?: {
+        event_date?: string;
+        delivery_by_section?: Record<string, SectionDeliveryInfo>;
+        attendance_by_section?: Record<string, SectionAttendanceSummary>;
+      };
+    }
+  > {
     return this.api.get('/communications/notification-campaigns/marked-attendance', { branch_id: branchId, date });
   }
 
@@ -277,18 +359,43 @@ export class NotificationCampaignService {
     return this.api.get<EligibleTargetRow[]>('/communications/notification-campaigns/eligible-targets', params) as Observable<EligibleTargetsResponse>;
   }
 
-  staffRecipientOptions(branchId: string | number): Observable<
+  staffRecipientOptions(
+    branchId: string | number,
+    date?: string,
+    module?: string
+  ): Observable<
     ApiResponse<{
       groups: {
         key: string;
         label: string;
-        people: { user_id: number; name: string; subtitle: string }[];
+        people: {
+          user_id: number;
+          name: string;
+          subtitle: string;
+          attendance_marked?: boolean;
+          present?: number;
+          absent?: number;
+          leave?: number;
+        }[];
       }[];
-    }>
+    }> & {
+      meta?: {
+        event_date?: string;
+        delivery_by_user?: Record<
+          string,
+          { notification_status?: SectionNotificationStatus; campaign_id?: number }
+        >;
+      };
+    }
   > {
-    return this.api.get('/communications/notification-campaigns/staff-recipient-options', {
-      branch_id: branchId
-    });
+    const params: Record<string, string | number> = { branch_id: branchId };
+    if (date) {
+      params['date'] = date;
+    }
+    if (module) {
+      params['module'] = module;
+    }
+    return this.api.get('/communications/notification-campaigns/staff-recipient-options', params);
   }
 
   preview(payload: Record<string, unknown>): Observable<ApiResponse<CampaignSample[]>> {
@@ -314,7 +421,19 @@ export class NotificationCampaignService {
 
   recipients(
     id: number | string,
-    params: { page?: number; per_page?: number; delivery_status?: string }
+    params: {
+      page?: number;
+      per_page?: number;
+      q?: string;
+      delivery_status?: string;
+      grade?: string;
+      section?: string;
+      status_key?: string;
+      viewed?: string;
+      liked?: string;
+      audience?: string;
+      team_role?: string;
+    }
   ): Observable<ApiResponse<any[]>> {
     return this.api.get(`/communications/notification-campaigns/${id}/recipients`, params);
   }

@@ -285,3 +285,33 @@ export interface StudentFormData {
   remarks?: string | null;
 }
 
+export interface StudentListRequest {
+  pagination?: {
+    page: number;
+    pageSize: number;
+  };
+  sort?: {
+    field: string;
+    direction: 'asc' | 'desc';
+  };
+  search?: {
+    query?: string;
+    filters?: Record<string, any>;
+  } | string;
+  [key: string]: any;
+}
+
+export interface StudentListResponse {
+  data: Student[];
+  total: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+  success?: boolean;
+  meta?: any;
+  [key: string]: any;
+}
+
+

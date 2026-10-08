@@ -15,21 +15,8 @@ import { IssueBookDialogComponent } from '../issue-book-dialog/issue-book-dialog
   selector: 'app-book-list',
   standalone: true,
   imports: [CommonModule, DataTableComponent],
-  template: `
-    <app-data-table
-      [data]="books"
-      [config]="tableConfig"
-      [advancedSearchConfig]="advancedSearchConfig"
-      [title]="'Library Books'"
-      [loading]="loading"
-      (actionClicked)="onAction($event)"
-      (paginationChanged)="onPaginationChange($event)"
-      (sortChanged)="onSortChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)"
-      (searchResetEvent)="onSearchReset()">
-    </app-data-table>
-  `,
-  styles: [`:host { display: block; }`]
+  templateUrl: './book-list.component.html',
+  styleUrls: ['./book-list.component.scss']
 })
 export class BookListComponent implements OnInit {
   loading = false;

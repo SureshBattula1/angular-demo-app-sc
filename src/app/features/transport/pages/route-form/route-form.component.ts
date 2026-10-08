@@ -6,7 +6,7 @@ import { MaterialModule } from '../../../../shared/modules/material/material.mod
 import { TransportService } from '../../services/transport.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
-import { RouteStop, TransportRoute } from '../../../../core/models/transport.model';
+import { RouteStop, TransportRoute, TransportStopMaster } from '../../../../core/models/transport.model';
 
 @Component({
   selector: 'app-route-form',
@@ -19,7 +19,8 @@ export class RouteFormComponent implements OnInit {
   form!: FormGroup;
   isEdit = false;
   saving = false;
-  branches: Array<{ id: string | number; name: string }> = [];
+  branches: { id: string | number; name: string }[] = [];
+  masterStops: TransportStopMaster[] = [];
   private routeId: string | null = null;
 
   constructor(
@@ -40,8 +41,18 @@ export class RouteFormComponent implements OnInit {
       stops: this.fb.array([])
     });
     this.loadBranches();
+    this.loadMasterStops();
     this.routeId = this.route.snapshot.paramMap.get('id');
     if (this.routeId) { this.isEdit = true; this.loadRoute(this.routeId); } else { this.addStop(); }
+  }
+
+  loadMasterStops(): void {
+    this.transport.getStops({ per_page: 500 }).subscribe({
+      next: (res) => {
+        this.masterStops = res.data || [];
+      },
+      error: () => {}
+    });
   }
 
   get stops(): FormArray { return this.form.get('stops') as FormArray; }
@@ -50,8 +61,31 @@ export class RouteFormComponent implements OnInit {
     return this.fb.group({
       stop_name: [s?.stop_name ?? '', Validators.required],
       pickup_time: [this.hm(s?.pickup_time)],
-      drop_time: [this.hm(s?.drop_time)]
+      drop_time: [this.hm(s?.drop_time)],
+      latitude: [s?.latitude ?? null],
+      longitude: [s?.longitude ?? null],
+      geofence_radius: [s?.geofence_radius ?? 50]
     });
+  }
+
+  onStopSelectionChange(index: number, selectedName: string): void {
+    const row = this.stops.at(index);
+    if (!row) return;
+
+    if (selectedName === '__custom__') {
+      row.patchValue({ stop_name: '' });
+      return;
+    }
+
+    const found = this.masterStops.find(m => m.stop_name === selectedName);
+    if (found) {
+      row.patchValue({
+        stop_name: found.stop_name,
+        latitude: found.latitude ?? null,
+        longitude: found.longitude ?? null,
+        geofence_radius: found.geofence_radius ?? 50
+      });
+    }
   }
 
   /** Normalise 'HH:mm:ss' -> 'HH:mm' for the time input. */

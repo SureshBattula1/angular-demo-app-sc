@@ -1,0 +1,206 @@
+<div class="view-container">
+  <!-- 1. Header Card (Signature Transport / Students pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">local_library</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Library Overview & Operations</h1>
+          <div class="view-meta">
+            <span><mat-icon>auto_stories</mat-icon> {{ summary?.total_titles || 0 }} Titles</span>
+            <span><mat-icon>menu_book</mat-icon> {{ summary?.total_copies || 0 }} Physical Copies</span>
+            <span><mat-icon>sync_alt</mat-icon> {{ summary?.issued_copies || 0 }} On Loan</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Live Circulation</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="accent" (click)="quickAction('circulation')">
+            <mat-icon>qr_code_scanner</mat-icon> Circulation Desk
+          </button>
+          <button mat-stroked-button class="header-btn-light" (click)="quickAction('catalog')">
+            <mat-icon>library_books</mat-icon> Books Catalog
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-bar">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <!-- 2. Statistics Cards Grid (Signature Transport / Students pattern) -->
+  <div class="view-stats-grid" *ngIf="summary">
+    <mat-card class="stat-card" (click)="quickAction('catalog')" style="cursor: pointer;">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>book</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.total_titles }}</div>
+          <div class="stat-label">Total Titles</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" (click)="quickAction('inventory')" style="cursor: pointer;">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.total_copies }}</div>
+          <div class="stat-label">Total Physical Copies</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" (click)="quickAction('circulation')" style="cursor: pointer;">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>sync_alt</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.issued_copies }}</div>
+          <div class="stat-label">Currently Issued</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon classes">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.available_copies }}</div>
+          <div class="stat-label">Available on Shelves</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon warn-icon">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value text-warn">{{ summary.overdue_copies }}</div>
+          <div class="stat-label">Overdue Loans</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.active_members }}</div>
+          <div class="stat-label">Active Borrowers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon red-icon">
+          <mat-icon>money_off</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value text-danger">₹{{ summary.pending_fines | number:'1.2-2' }}</div>
+          <div class="stat-label">Pending Fines</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon green-icon">
+          <mat-icon>payments</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value text-success">₹{{ summary.collected_fines | number:'1.2-2' }}</div>
+          <div class="stat-label">Collected Fines</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- 3. Details Analytics Grid -->
+  <div class="dashboard-details-grid">
+    <!-- Circulation Trend -->
+    <mat-card class="detail-card">
+      <mat-card-content>
+        <div class="card-inner-header">
+          <div class="card-title">
+            <mat-icon>trending_up</mat-icon>
+            <h3>Circulation Activity (Last 6 Months)</h3>
+          </div>
+        </div>
+        <div class="trends-table-wrap">
+          <table class="trend-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="text-center">Books Issued</th>
+                <th class="text-center">Books Returned</th>
+                <th>Activity Bar</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of trends">
+                <td class="font-medium">{{ t.label }}</td>
+                <td class="text-center"><span class="badge blue">{{ t.issues }}</span></td>
+                <td class="text-center"><span class="badge green">{{ t.returns }}</span></td>
+                <td>
+                  <div class="progress-track">
+                    <div class="progress-bar issue" [style.width.%]="t.issues * 10 > 100 ? 100 : t.issues * 10"></div>
+                    <div class="progress-bar return" [style.width.%]="t.returns * 10 > 100 ? 100 : t.returns * 10"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="trends.length === 0">
+                <td colspan="4" class="empty-state">No circulation activity in this period</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Most Borrowed Books -->
+    <mat-card class="detail-card">
+      <mat-card-content>
+        <div class="card-inner-header">
+          <div class="card-title">
+            <mat-icon>star</mat-icon>
+            <h3>Most Popular Books</h3>
+          </div>
+          <button mat-button color="primary" (click)="quickAction('catalog')">View All</button>
+        </div>
+        <div class="popular-books-list">
+          <div class="popular-item" *ngFor="let b of popularBooks; let i = index">
+            <div class="rank">{{ i + 1 }}</div>
+            <div class="book-info">
+              <span class="book-title">{{ b.title }}</span>
+              <span class="book-meta">by {{ b.author }} · <span class="badge-cat">{{ b.category }}</span></span>
+            </div>
+            <div class="borrow-stat">
+              <span class="count">{{ b.borrow_count }}</span>
+              <span class="unit">loans</span>
+            </div>
+          </div>
+          <div *ngIf="popularBooks.length === 0" class="empty-state">
+            <mat-icon>auto_stories</mat-icon>
+            <p>No borrowing records yet</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

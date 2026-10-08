@@ -15,11 +15,14 @@ import {
 } from '../../services/notification-campaign.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { BranchService } from '../../../branches/services/branch.service';
+import { BranchService as BranchAccessService } from '../../../../core/services/branch.service';
+import { canShowBranchSelector, resolveDefaultBranchId } from '../../../../core/utils/branch-selection.util';
 import { GradeService } from '../../../grades/services/grade.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { DoughnutChartComponent, DoughnutChartData } from '../../../../shared/components/charts/doughnut-chart/doughnut-chart.component';
 import { BarChartComponent, BarChartData } from '../../../../shared/components/charts/bar-chart/bar-chart.component';
 import { LineChartComponent, LineChartData } from '../../../../shared/components/charts/line-chart/line-chart.component';
+import { appendHubTeamFields } from '../../config/campaign-search.config';
 
 type HubTab = 'dashboard' | string;
 type DashboardPeriod = 'today' | 'week' | 'month' | 'custom' | 'all';
@@ -73,7 +76,8 @@ export class CampaignHubComponent implements OnInit {
     { id: 'exams', label: 'Exams', icon: 'assignment' },
     { id: 'fees', label: 'Fees', icon: 'payments' },
     { id: 'holidays', label: 'Holidays', icon: 'event' },
-    { id: 'assignments', label: 'Assignments', icon: 'assignment_turned_in' }
+    { id: 'assignments', label: 'Assignments', icon: 'assignment_turned_in' },
+    { id: 'custom', label: 'Custom', icon: 'edit_note' }
   ];
 
   activeTab: HubTab = 'dashboard';
@@ -106,6 +110,7 @@ export class CampaignHubComponent implements OnInit {
 
   dashboardBranchId = 'all';
   branches: { id: string | number; name: string }[] = [];
+  canSelectBranch = false;
   selectedPeriod = new FormControl<DashboardPeriod>('all');
   customFromDate = new FormControl<Date | null>(null);
   customToDate = new FormControl<Date | null>(null);
@@ -117,14 +122,14 @@ export class CampaignHubComponent implements OnInit {
       { key: 'branch', header: 'Branch', sortable: false },
       {
         key: 'class_display',
-        header: 'Class',
+        header: 'Scope',
         sortable: false,
-        width: '220px',
-        cellClass: () => 'cell-nowrap'
+        width: '280px',
+        cellClass: () => 'cell-wrap'
       },
       { key: 'event_date', header: 'Date', sortable: false, width: '130px' },
       { key: 'scheduled_at', header: 'Scheduled', sortable: false, width: '180px', pipe: 'datetime' },
-      { key: 'student_count', header: 'Students', sortable: false, width: '110px', align: 'center' },
+      { key: 'student_count', header: 'Recipients', sortable: false, width: '110px', align: 'center' },
       {
         key: 'status',
         header: 'Status',
@@ -149,14 +154,15 @@ export class CampaignHubComponent implements OnInit {
 
   advancedSearchConfig: AdvancedSearchConfig = {
     title: 'Advanced Notification Search',
-    width: '500px',
+    width: '420px',
     showReset: true,
     showSaveSearch: false,
-    fields: [
+    fields: appendHubTeamFields([
       {
         key: 'branch_id',
         label: 'Branch',
         type: 'select',
+        group: 'Campaign',
         placeholder: 'Select branch',
         icon: 'business',
         options: []
@@ -165,6 +171,7 @@ export class CampaignHubComponent implements OnInit {
         key: 'grade',
         label: 'Class',
         type: 'select',
+        group: 'Students',
         placeholder: 'Select class',
         icon: 'school',
         options: []
@@ -173,6 +180,7 @@ export class CampaignHubComponent implements OnInit {
         key: 'section',
         label: 'Section',
         type: 'select',
+        group: 'Students',
         placeholder: 'Select section',
         icon: 'class',
         options: [],
@@ -182,14 +190,123 @@ export class CampaignHubComponent implements OnInit {
         key: 'status',
         label: 'Status',
         type: 'select',
+        group: 'Campaign',
         icon: 'check_circle',
         options: [
           { value: 'pending', label: 'Pending' },
           { value: 'sent', label: 'Sent' }
         ]
       }
-    ]
+    ])
   };
+
+  private readonly customAdvancedSearchConfig: AdvancedSearchConfig = {
+    title: 'Search custom notifications',
+    width: '400px',
+    showReset: true,
+    showSaveSearch: false,
+    fields: appendHubTeamFields([
+      {
+        key: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        group: 'Campaign',
+        placeholder: 'All branches',
+        icon: 'business',
+        options: []
+      },
+      {
+        key: 'grade',
+        label: 'Class',
+        type: 'select',
+        group: 'Students',
+        placeholder: 'Any class',
+        icon: 'school',
+        options: []
+      },
+      {
+        key: 'section',
+        label: 'Section',
+        type: 'select',
+        group: 'Students',
+        placeholder: 'Any section',
+        icon: 'class',
+        options: [],
+        dependsOn: 'grade'
+      },
+      {
+        key: 'status',
+        label: 'Delivery status',
+        type: 'select',
+        group: 'Campaign',
+        placeholder: 'Any status',
+        icon: 'check_circle',
+        options: [
+          { value: 'pending', label: 'Pending / in progress' },
+          { value: 'sent', label: 'Sent' }
+        ]
+      }
+    ])
+  };
+
+  private readonly customTableConfig: TableConfig = {
+    columns: [
+      { key: 'branch', header: 'Branch', sortable: false },
+      {
+        key: 'class_display',
+        header: 'Scope',
+        sortable: false,
+        width: '280px',
+        cellClass: () => 'cell-wrap'
+      },
+      { key: 'scheduled_at', header: 'Sent / scheduled', sortable: false, width: '180px', pipe: 'datetime' },
+      {
+        key: 'student_count',
+        header: 'Recipients',
+        sortable: false,
+        width: '110px',
+        align: 'center'
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        type: 'badge',
+        width: '120px',
+        align: 'center',
+        cellClass: (row: CampaignListRow) => this.statusClass(this.rowDisplayStatus(row))
+      }
+    ],
+    actions: [{ icon: 'visibility', label: 'View', action: (row: CampaignListRow) => this.view(row) }],
+    pagination: true,
+    searchable: true,
+    advancedSearch: true,
+    serverSide: true,
+    totalCount: 0,
+    pageSizeOptions: [10, 25, 50],
+    defaultPageSize: 25,
+    showAddButton: true,
+    primaryButtonLabel: 'Schedule notification',
+    primaryButtonIcon: 'schedule_send'
+  };
+
+  get activeAdvancedSearchConfig(): AdvancedSearchConfig {
+    return this.activeTab === 'custom' ? this.customAdvancedSearchConfig : this.advancedSearchConfig;
+  }
+
+  /** Bound to data-table — updated on tab change / load (avoid getter object churn). */
+  activeListTableConfig: TableConfig = this.tableConfig;
+
+  get listTableKey(): string {
+    return this.activeTab === 'custom' ? 'custom' : 'module';
+  }
+
+  private refreshActiveListTableConfig(): void {
+    const base = this.activeTab === 'custom' ? this.customTableConfig : this.tableConfig;
+    this.activeListTableConfig = {
+      ...base,
+      totalCount: this.tableConfig.totalCount
+    };
+  }
 
   private page = 1;
   private perPage = 25;
@@ -200,6 +317,7 @@ export class CampaignHubComponent implements OnInit {
     private campaigns: NotificationCampaignService,
     private errorHandler: ErrorHandlerService,
     private branchService: BranchService,
+    private branchAccess: BranchAccessService,
     private gradeService: GradeService,
     private sectionService: SectionService,
     private router: Router,
@@ -214,25 +332,23 @@ export class CampaignHubComponent implements OnInit {
     } else {
       this.activeTab = 'dashboard';
     }
-    if (this.activeTab === 'custom') {
-      this.router.navigate(['/notification-campaigns/schedule', 'custom']);
-      return;
-    }
-
     this.dashboardPayload = this.emptyDashboardPayload();
     this.refreshDashboardView();
     this.loadBranches();
+    this.refreshActiveListTableConfig();
     // Fetch dashboard/list immediately — do not wait for modules metadata.
     this.load();
 
     this.campaigns.modules().subscribe({
       next: response => {
         const meta = response.meta || {};
-        const moduleTabs = Object.keys(response.data || {}).map(slug => ({
-          id: slug,
-          label: meta[slug]?.label || slug.charAt(0).toUpperCase() + slug.slice(1),
-          icon: MODULE_ICONS[slug] || 'campaign'
-        }));
+        const moduleTabs = Object.keys(response.data || {})
+          .filter(slug => slug !== 'teacher_attendance')
+          .map(slug => ({
+            id: slug,
+            label: meta[slug]?.label || slug.charAt(0).toUpperCase() + slug.slice(1),
+            icon: MODULE_ICONS[slug] || 'campaign'
+          }));
         this.tabs = [{ id: 'dashboard', label: 'Dashboard', icon: 'dashboard' }, ...moduleTabs];
         if (!this.tabs.some(item => item.id === this.activeTab)) {
           this.activeTab = 'dashboard';
@@ -252,12 +368,12 @@ export class CampaignHubComponent implements OnInit {
     if (!this.tabs.some(item => item.id === tab)) {
       return;
     }
-    if (tab === 'custom') {
-      this.router.navigate(['/notification-campaigns/schedule', 'custom']);
-      return;
-    }
     this.activeTab = tab as HubTab;
     this.page = 1;
+    this.rows = [];
+    this.tableConfig = { ...this.tableConfig, totalCount: 0 };
+    this.refreshActiveListTableConfig();
+    this.syncAdvancedSearchBranchContext();
     this.router.navigate([], { queryParams: { tab }, queryParamsHandling: 'merge' });
     this.cdr.markForCheck();
     this.load();
@@ -352,11 +468,15 @@ export class CampaignHubComponent implements OnInit {
             class_display: this.classSectionLabel(row),
             status: this.statusLabel(this.rowDisplayStatus(row))
           }));
-        this.tableConfig = { ...this.tableConfig, totalCount: total };
-        this.loading = false;
-        this.cdr.markForCheck();
-        queueMicrotask(() => this.dataTable?.updateServerData(this.rows, total));
-      },
+          this.tableConfig = { ...this.tableConfig, totalCount: total };
+          this.refreshActiveListTableConfig();
+          this.loading = false;
+          this.cdr.markForCheck();
+          queueMicrotask(() => {
+            this.dataTable?.updateServerData(this.rows, total);
+            this.cdr.markForCheck();
+          });
+        },
       error: error => {
         this.errorHandler.showError(error);
         this.loading = false;
@@ -751,34 +871,90 @@ export class CampaignHubComponent implements OnInit {
     };
   }
 
+  get showBranchSelector(): boolean {
+    return this.canSelectBranch;
+  }
+
   private loadBranches(): void {
     this.branchService.getBranches({ is_active: true }).subscribe({
       next: response => {
         this.branches = response.data || [];
-        this.refreshDashboardView();
-        const field = this.advancedSearchConfig.fields.find(item => item.key === 'branch_id');
-        if (field) {
-          field.options = this.branches.map(branch => ({
-            value: String(branch.id),
-            label: branch.name
-          }));
+        this.canSelectBranch = canShowBranchSelector({
+          can_select_branch: response.can_select_branch ?? this.branchAccess.canSelectBranch(),
+          user_branch_id: response.user_branch_id ?? this.branchAccess.getUserBranchId()
+        });
+        const branchOptions = this.branches.map(branch => ({
+          value: String(branch.id),
+          label: branch.name
+        }));
+        this.setBranchOptions(branchOptions);
+        if (!this.canSelectBranch) {
+          const locked = resolveDefaultBranchId(
+            {
+              can_select_branch: false,
+              user_branch_id: response.user_branch_id ?? this.branchAccess.getUserBranchId()
+            },
+            this.branches
+          );
+          if (locked) {
+            this.dashboardBranchId = locked;
+            this.filters = { ...this.filters, branch_id: locked };
+          }
         }
+        this.syncAdvancedSearchBranchContext();
+        this.refreshDashboardView();
+        this.load();
       }
     });
   }
 
+  private hubSearchConfigs(): AdvancedSearchConfig[] {
+    return [this.advancedSearchConfig, this.customAdvancedSearchConfig];
+  }
+
+  private setBranchOptions(options: { value: string; label: string }[]): void {
+    for (const config of this.hubSearchConfigs()) {
+      const field = config.fields.find(item => item.key === 'branch_id');
+      if (field) {
+        field.options = options;
+      }
+    }
+  }
+
   private setGradeOptions(options: { value: string; label: string; disabled?: boolean }[]): void {
-    const field = this.advancedSearchConfig.fields.find(item => item.key === 'grade');
-    if (field) {
-      field.options = options;
+    for (const config of this.hubSearchConfigs()) {
+      const field = config.fields.find(item => item.key === 'grade');
+      if (field) {
+        field.options = options;
+      }
     }
   }
 
   private setSectionOptions(options: { value: string; label: string; disabled?: boolean }[]): void {
-    const field = this.advancedSearchConfig.fields.find(item => item.key === 'section');
-    if (field) {
-      field.options = options;
+    for (const config of this.hubSearchConfigs()) {
+      const field = config.fields.find(item => item.key === 'section');
+      if (field) {
+        field.options = options;
+      }
     }
+  }
+
+  /** Keep class/section dropdowns in sync when switching tabs or after branch list load. */
+  private syncAdvancedSearchBranchContext(): void {
+    const branchFromFilters = this.filters['branch_id'];
+    this.selectedBranchId = branchFromFilters ? String(branchFromFilters) : null;
+    if (this.selectedBranchId) {
+      this.loadGrades(this.selectedBranchId);
+      const grade = this.filters['grade'];
+      if (grade) {
+        this.loadSections(this.selectedBranchId, String(grade));
+      } else {
+        this.setSectionOptions([]);
+      }
+      return;
+    }
+    this.setGradeOptions([]);
+    this.setSectionOptions([]);
   }
 
   private loadGrades(branchId: string | number): void {

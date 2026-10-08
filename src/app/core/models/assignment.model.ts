@@ -10,6 +10,13 @@ export const ASSIGNMENT_TYPES: AssignmentType[] = [
   'Other'
 ];
 
+export interface MyAssignmentSubmission {
+  status?: string;
+  submitted_at?: string | null;
+  submission_text?: string | null;
+  is_complete?: boolean;
+}
+
 export interface AssignmentAttachment {
   id?: string | number;
   file_name: string;
@@ -47,6 +54,33 @@ export interface Assignment {
   student_ids?: (string | number)[];
   branch_id?: string | number;
   branch?: { id: string | number; name?: string; code?: string } | null;
+  my_status?: string;
+  my_submission?: MyAssignmentSubmission | null;
+}
+
+export function isStudentAssignmentComplete(assignment: Assignment | null | undefined): boolean {
+  if (!assignment) {
+    return false;
+  }
+  if (assignment.my_submission?.is_complete) {
+    return true;
+  }
+  const status = (assignment.my_status || assignment.my_submission?.status || '').toLowerCase();
+  return ['submitted', 'graded', 'late'].includes(status);
+}
+
+export function studentMyStatusLabel(assignment: Assignment | null | undefined): string {
+  if (!assignment) {
+    return 'Pending';
+  }
+  if (isStudentAssignmentComplete(assignment)) {
+    return assignment.my_status === 'late' ? 'Late' : 'Done';
+  }
+  const key = (assignment.my_status || 'pending').toLowerCase();
+  if (key === 'pending') {
+    return 'Pending';
+  }
+  return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
 export interface AssignmentListItem extends Assignment {

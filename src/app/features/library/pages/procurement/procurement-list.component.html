@@ -1,0 +1,95 @@
+<div class="procurement-page-container">
+  <app-data-table
+    [data]="procurements"
+    [config]="tableConfig"
+    [title]="'Library Book Procurement & Acquisition Orders'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)">
+  </app-data-table>
+
+  <!-- New Purchase Order Modal -->
+  <div class="modal-backdrop" *ngIf="showNewPOModal">
+    <div class="modal-content lg">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">shopping_cart</mat-icon>
+          <h3>Create Book Purchase Order</h3>
+        </div>
+        <button mat-icon-button (click)="closeNewPOModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="poNumber">PO Number *</label>
+            <input id="poNumber" [(ngModel)]="newPO.po_number" placeholder="e.g. PO-2026-001" class="input-ctrl" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="poVendorName">Vendor / Publisher Name *</label>
+            <input id="poVendorName" [(ngModel)]="newPO.vendor_name" placeholder="Publisher / Distributor Name" class="input-ctrl" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="poOrderDate">Order Date *</label>
+            <input id="poOrderDate" type="date" [(ngModel)]="newPO.order_date" class="input-ctrl" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="poDeliveryDate">Expected Delivery Date</label>
+            <input id="poDeliveryDate" type="date" [(ngModel)]="newPO.delivery_date" class="input-ctrl" />
+          </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="line-items-section">
+          <div class="section-title-row">
+            <h4>Titles & Copies to Procure</h4>
+            <button mat-stroked-button color="primary" (click)="addLineItem()">
+              <mat-icon>add</mat-icon> Add Book Line
+            </button>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Title *</th>
+                <th>Author</th>
+                <th>ISBN</th>
+                <th>Qty *</th>
+                <th>Unit Price (₹) *</th>
+                <th>Line Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of newPO.items; let i = index">
+                <td><input [(ngModel)]="item.title" placeholder="Book Title" class="input-ctrl sm" aria-label="Book Title" /></td>
+                <td><input [(ngModel)]="item.author" placeholder="Author" class="input-ctrl sm" aria-label="Author" /></td>
+                <td><input [(ngModel)]="item.isbn" placeholder="ISBN" class="input-ctrl sm" aria-label="ISBN" /></td>
+                <td><input type="number" [(ngModel)]="item.quantity_ordered" class="input-ctrl sm w-60" aria-label="Quantity" /></td>
+                <td><input type="number" [(ngModel)]="item.unit_price" class="input-ctrl sm w-80" aria-label="Unit Price" /></td>
+                <td class="font-bold">₹{{ item.quantity_ordered * item.unit_price | number:'1.2-2' }}</td>
+                <td>
+                  <button mat-icon-button color="warn" (click)="removeLineItem(i)" [disabled]="newPO.items.length === 1" aria-label="Remove item">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeNewPOModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!newPO.po_number || !newPO.vendor_name" (click)="submitPO()">
+          <mat-icon>send</mat-icon> Submit Purchase Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

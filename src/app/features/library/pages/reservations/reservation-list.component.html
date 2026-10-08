@@ -1,0 +1,69 @@
+<div class="reservations-page-container">
+  <app-data-table
+    [data]="reservations"
+    [config]="tableConfig"
+    [title]="'Book Reservations & Holds Queue'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)">
+  </app-data-table>
+
+  <!-- Create Reservation Modal -->
+  <div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">bookmarks</mat-icon>
+          <h3>Place Book Reservation (Hold)</h3>
+        </div>
+        <button mat-icon-button (click)="closeModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="resBorrowerType">Borrower Type *</label>
+          <select id="resBorrowerType" [(ngModel)]="formData.borrower_type" (change)="onTypeChange()" class="input-ctrl">
+            <option value="Student">Student</option>
+            <option value="Teacher">Teacher / Staff</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="resMemberSearch">Member *</label>
+          <div class="search-row">
+            <input id="resMemberSearch" [(ngModel)]="memberSearch" (keyup.enter)="searchMembers()" placeholder="Search member name or ID..." class="input-ctrl" />
+            <button mat-flat-button color="primary" (click)="searchMembers()">Search</button>
+          </div>
+          <select *ngIf="memberList.length > 0" [(ngModel)]="formData.member_id" class="input-ctrl mt-2" aria-label="Select Member">
+            <option *ngFor="let m of memberList" [value]="m.id">{{ m.first_name }} {{ m.last_name }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="resBookSearch">Book Title *</label>
+          <div class="search-row">
+            <input id="resBookSearch" [(ngModel)]="bookSearch" (keyup.enter)="searchBooks()" placeholder="Search book title or author..." class="input-ctrl" />
+            <button mat-flat-button color="primary" (click)="searchBooks()">Search</button>
+          </div>
+          <select *ngIf="bookList.length > 0" [(ngModel)]="formData.book_id" class="input-ctrl mt-2" aria-label="Select Book">
+            <option *ngFor="let b of bookList" [value]="b.id">{{ b.title }} (by {{ b.author }})</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="resNotes">Notes / Special Instructions</label>
+          <input id="resNotes" [(ngModel)]="formData.notes" placeholder="Optional notes" class="input-ctrl" />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!formData.book_id || !formData.member_id" (click)="saveReservation()">
+          <mat-icon>check</mat-icon> Confirm Hold
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

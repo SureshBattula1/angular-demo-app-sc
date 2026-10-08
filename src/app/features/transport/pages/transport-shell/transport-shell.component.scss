@@ -1,0 +1,52 @@
+.transport-shell {
+  display: block;
+}
+
+.transport-tabs {
+  background: var(--card-background, #ffffff);
+  border-bottom: 1px solid #e2e8f0;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    padding: 0 16px;
+    height: 48px;
+    transition: color 0.15s ease, background 0.15s ease;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      color: var(--text-primary, #1e293b);
+      background: var(--gray-50, #f8fafc);
+    }
+
+    &.mdc-tab--active {
+      color: var(--primary-color, #00897b);
+      font-weight: 600;
+
+      mat-icon {
+        color: var(--primary-color, #00897b);
+      }
+    }
+  }
+}
+
+.tab-body {
+  padding: 16px 20px;
+}
+
+@media (max-width: 768px) {
+  .tab-body {
+    padding: 10px;
+  }
+}

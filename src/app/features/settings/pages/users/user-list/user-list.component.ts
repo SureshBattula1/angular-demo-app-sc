@@ -10,6 +10,7 @@ import { UserService } from '../../../services/user.service';
 import { RoleService } from '../../../services/role.service';
 import { BranchService } from '../../../../branches/services/branch.service';
 import { ErrorHandlerService } from '../../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../../shared/services/export.service';
 import { User } from '../../../../../core/models/user.model';
 
 @Component({
@@ -29,7 +30,8 @@ import { User } from '../../../../../core/models/user.model';
       (paginationChanged)="onPaginationChange($event)"
       (sortChanged)="onSortChange($event)"
       (searchChanged)="onSearchChange($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (exportClicked)="onExport($event)">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -112,6 +114,7 @@ export class UserListComponent implements OnInit {
     advancedSearch: true,
     filterable: true,
     exportable: true,
+    exportButtonPermission: 'users.view',
     selectable: false,
     responsive: true
   };
@@ -163,7 +166,8 @@ export class UserListComponent implements OnInit {
     private roleService: RoleService,
     private branchService: BranchService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
@@ -330,5 +334,19 @@ export class UserListComponent implements OnInit {
 
   createUser(): void {
     this.router.navigate(['/settings/users/create']);
+  }
+
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    this.errorHandler.showInfo(`Exporting as ${format.toUpperCase()}...`);
+    this.exportService.export(
+      {
+        endpoint: '/users/export',
+        filename: 'users'
+      },
+      {
+        format,
+        filters: this.exportService.buildExportFilters(this.currentFilters)
+      }
+    );
   }
 }

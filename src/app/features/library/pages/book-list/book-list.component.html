@@ -1,0 +1,14 @@
+<div class="book-list-container">
+  <app-data-table
+    [data]="books"
+    [config]="tableConfig"
+    [advancedSearchConfig]="advancedSearchConfig"
+    [title]="'Library Books Catalog'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (sortChanged)="onSortChange($event)"
+    (advancedSearchChanged)="onAdvancedSearchChange($event)"
+    (searchResetEvent)="onSearchReset()">
+  </app-data-table>
+</div>

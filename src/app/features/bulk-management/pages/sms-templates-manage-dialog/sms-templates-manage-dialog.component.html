@@ -3,7 +3,10 @@
     <mat-icon>description</mat-icon>
     <div>
       <h2>View &amp; edit templates</h2>
-      <p>SMS templates for the selected branch</p>
+      <p *ngIf="!scheduleModuleLabel">SMS templates for the selected branch</p>
+      <p *ngIf="scheduleModuleLabel">
+        Showing <strong>{{ scheduleModuleLabel }}</strong> templates for this schedule
+      </p>
     </div>
   </div>
   <button mat-icon-button type="button" aria-label="Close" (click)="close()">
@@ -24,12 +27,13 @@
     <span>Loading templates…</span>
   </div>
 
-  <p class="empty" *ngIf="!loading && templates.length === 0">
-    No active templates for this branch. Create one to use in campaigns.
+  <p class="empty" *ngIf="!loading && visibleTemplates.length === 0">
+    No active templates for this branch{{ scheduleModuleLabel ? (' (' + scheduleModuleLabel + ')') : '' }}.
+    Use <strong>New template</strong> above.
   </p>
 
-  <ul class="template-list" *ngIf="!loading && templates.length">
-    <li class="template-row" *ngFor="let t of templates">
+  <ul class="template-list" *ngIf="!loading && visibleTemplates.length">
+    <li class="template-row" *ngFor="let t of visibleTemplates">
       <div class="template-main">
         <span class="template-name">{{ t.name }}</span>
         <span class="template-meta">

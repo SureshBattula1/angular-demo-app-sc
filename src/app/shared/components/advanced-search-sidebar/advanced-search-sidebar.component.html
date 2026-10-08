@@ -1,14 +1,11 @@
-<!-- Backdrop Overlay -->
-<div class="sidebar-backdrop" 
-  *ngIf="isOpen" 
-  @fadeIn
-  (click)="close()">
-</div>
+<div class="sidebar-backdrop" [class.is-visible]="isOpen" (click)="close()" aria-hidden="true"></div>
 
-<!-- Sidebar -->
-<div class="advanced-search-sidebar" 
-  [@slideIn]="isOpen ? 'open' : 'closed'"
-  [style.width]="(config.width ?? '400px')">
+<div
+  *ngIf="config"
+  class="advanced-search-sidebar"
+  [class.is-open]="isOpen"
+  [style.width]="(config.width ?? '400px')"
+  [attr.aria-hidden]="!isOpen">
   
   <!-- Header -->
   <div class="sidebar-header">

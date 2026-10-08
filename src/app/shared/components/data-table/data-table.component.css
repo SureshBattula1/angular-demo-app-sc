@@ -34,12 +34,13 @@
 /* Row 2: Search on Left, Filters on Right */
 .header-row-2 {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: var(--spacing-md);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding-top: var(--spacing-sm);
   border-top: 1px solid var(--divider-color);
+  min-height: 52px;
 }
 
 .header-left {
@@ -241,7 +242,8 @@
 }
 
 .search-field {
-  width: 350px;
+  width: 100%;
+  max-width: 280px;
   flex-shrink: 0;
 }
 
@@ -271,13 +273,23 @@
    ======================================== */
 
 .table-wrapper {
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 100%;
+  max-height: min(560px, calc(100vh - 260px));
+  min-height: 200px;
   position: relative;
   border-radius: var(--radius-md);
+}
+
+.table-wrapper .mat-mdc-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--gray-50);
+  box-shadow: 0 1px 0 var(--divider-color);
 }
 
 .data-table {
@@ -857,9 +869,10 @@
   }
   
   .table-wrapper {
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: auto;
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    max-height: min(480px, calc(100vh - 220px));
     position: relative;
     width: 100%;
     border-radius: 0;

@@ -6,6 +6,7 @@ import {
   CreateAssignmentPayload,
   EligibleStudent,
   AssignmentRecipientPreview,
+  MyAssignmentSubmission,
   UpdateAssignmentPayload
 } from '../../../core/models/assignment.model';
 
@@ -46,6 +47,17 @@ export class AssignmentService {
     branch_id?: string | number | null;
   }): Observable<ApiResponse<EligibleStudent[]>> {
     return this.apiService.get<EligibleStudent[]>(`${this.ENDPOINT}/eligible-students`, params);
+  }
+
+  submitMyAssignment(
+    id: string | number,
+    submissionText?: string | null
+  ): Observable<ApiResponse<{ my_submission: MyAssignmentSubmission }>> {
+    const body: { submission_text?: string } = {};
+    if (submissionText != null && submissionText.trim() !== '') {
+      body.submission_text = submissionText.trim();
+    }
+    return this.apiService.post(`${this.ENDPOINT}/${id}/my-submission`, body);
   }
 
   previewRecipients(body: {

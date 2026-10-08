@@ -1,0 +1,91 @@
+<div class="barcode-page-container">
+  <!-- Header Bar -->
+  <div class="page-header-card">
+    <div class="header-left">
+      <div class="icon-avatar">
+        <mat-icon>qr_code_2</mat-icon>
+      </div>
+      <div>
+        <h2 class="title">Barcode & Accession Label Generator</h2>
+        <p class="subtitle">Select physical inventory copies to generate standardized printable barcode labels</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button color="primary" [disabled]="selectedCopies.length === 0" (click)="printLabels()">
+        <mat-icon>print</mat-icon> Print Selected Labels ({{ selectedCopies.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Action Filter Bar -->
+  <div class="filter-bar-card">
+    <div class="search-box">
+      <mat-icon>search</mat-icon>
+      <input [(ngModel)]="searchTerm" (keyup.enter)="loadCopies()" placeholder="Search title, barcode, accession number..." class="search-input" />
+    </div>
+    <button mat-flat-button color="primary" (click)="loadCopies()">Search</button>
+    <div class="select-actions">
+      <button mat-stroked-button (click)="selectAll()" [disabled]="copies.length === 0">Select All ({{ copies.length }})</button>
+      <button mat-button (click)="clearSelection()" [disabled]="selectedCopies.length === 0">Clear Selection</button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Loading copies...</span>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && copies.length === 0" class="empty-state-card">
+    <mat-icon>inventory_2</mat-icon>
+    <h3>No Physical Book Copies Found</h3>
+    <p>Generate copies in the Book Copies tab to automatically create unique Barcodes and Accession numbers.</p>
+    <button mat-raised-button color="primary" routerLink="/library/inventory/copies">
+      <mat-icon>add_box</mat-icon> Go to Book Copies to Generate
+    </button>
+  </div>
+
+  <!-- Copies Grid -->
+  <div class="copies-grid" *ngIf="!loading && copies.length > 0">
+    <button
+      type="button"
+      class="copy-card"
+      *ngFor="let copy of copies"
+      [class.selected]="isSelected(copy)"
+      (click)="toggleSelect(copy)">
+      <div class="card-top-row">
+        <span class="accession-badge">{{ copy.accession_number }}</span>
+        <div class="checkbox-indicator">
+          <mat-icon *ngIf="isSelected(copy)">check_box</mat-icon>
+          <mat-icon *ngIf="!isSelected(copy)">check_box_outline_blank</mat-icon>
+        </div>
+      </div>
+
+      <div class="barcode-visual">
+        <app-code128-barcode [code]="copy.barcode" [height]="36" [scale]="1.2" [showText]="true"></app-code128-barcode>
+      </div>
+
+      <div class="book-info">
+        <span class="book-title" [title]="copy.book?.title">{{ copy.book?.title }}</span>
+        <div class="meta-row">
+          <span class="meta-item">Copy #{{ copy.copy_number }}</span>
+          <span class="condition-badge">{{ copy.condition }}</span>
+          <span class="shelf-tag" *ngIf="copy.shelf">{{ copy.shelf.code || copy.shelf.rack_number }}</span>
+        </div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Print Sheet (Used for print styling) -->
+  <div class="printable-labels-sheet" id="print-sheet">
+    <div class="label-badge" *ngFor="let sc of selectedCopies">
+      <div class="school-name">SCHOOL LIBRARY</div>
+      <div class="label-book-title" [title]="sc.book?.title">{{ sc.book?.title }}</div>
+      <div class="label-barcode-svg">
+        <app-code128-barcode [code]="sc.barcode" [height]="38" [scale]="1.3" [showText]="true" [fontSize]="10"></app-code128-barcode>
+      </div>
+      <div class="label-acc">ACC: {{ sc.accession_number }}</div>
+    </div>
+  </div>
+</div>

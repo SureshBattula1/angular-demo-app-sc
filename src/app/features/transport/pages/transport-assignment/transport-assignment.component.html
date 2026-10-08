@@ -1,0 +1,928 @@
+<div class="view-container">
+  
+  <!-- 1. Header Card (Pattern from branches/view) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">directions_bus</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Transport Student Assignment</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>currency_rupee</mat-icon>
+              Annual Billing Plan
+            </span>
+            <span>
+              <mat-icon>alt_route</mat-icon>
+              {{ routes.length }} Active Routes
+            </span>
+            <span class="status-badge active">
+              <mat-icon>check_circle</mat-icon>
+              {{ allClassesSummary.coverage_percent }}% Coverage
+            </span>
+          </div>
+        </div>
+
+        <!-- Mode Toggle in Header (Workspace vs Directory) -->
+        <div class="header-view-actions">
+          <button
+            mat-flat-button
+            [class.active-header-btn]="activeView === 'workspace'"
+            class="header-toggle-btn"
+            (click)="activeView = 'workspace'">
+            <mat-icon>group_add</mat-icon>
+            Class Workspace
+          </button>
+          <button
+            mat-flat-button
+            [class.active-header-btn]="activeView === 'directory'"
+            class="header-toggle-btn"
+            (click)="activeView = 'directory'">
+            <mat-icon>badge</mat-icon>
+            Directory ({{ assignments.length }})
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- 2. Statistics Cards Grid (Pattern from branches/view: .view-stats-grid .stat-card) -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ allClassesSummary.total_students || 0 }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>directions_bus</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ allClassesSummary.assigned_count || 0 }}</div>
+          <div class="stat-label">Assigned Passengers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>person_add</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ allClassesSummary.unassigned_count || 0 }}</div>
+          <div class="stat-label">Pending Assignment</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>alt_route</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ routes.length || 0 }}</div>
+          <div class="stat-label">Active Routes</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 1: CLASS-BASED ASSIGNMENT WORKSPACE                              -->
+  <!-- ===================================================================== -->
+  <div *ngIf="activeView === 'workspace'" class="workspace-wrapper">
+    
+    <!-- 3. Class / Grade Cards Strip (Patterned after branch facilities & stat badges) -->
+    <mat-card class="class-selector-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>school</mat-icon>
+          Select Class / Grade
+        </mat-card-title>
+        <div class="card-subtitle-note">Click a class card to filter student checklist below</div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="class-cards-strip">
+          
+          <!-- ALL CLASSES CARD -->
+          <div
+            class="class-summary-card all-card"
+            [class.selected]="selectedGrade === ''"
+            (click)="selectClassCard('')">
+            <div class="card-top">
+              <div class="card-icon-avatar all-icon">
+                <mat-icon>dashboard</mat-icon>
+              </div>
+              <span class="active-indicator" *ngIf="selectedGrade === ''">
+                <mat-icon>check_circle</mat-icon>
+              </span>
+            </div>
+            <div class="card-title">All Classes</div>
+            <div class="card-metric-row">
+              <span class="metric-assigned">{{ allClassesSummary.assigned_count }} Assigned</span>
+              <span class="metric-total">/ {{ allClassesSummary.total_students }}</span>
+            </div>
+            <div class="mini-progress-bar">
+              <div
+                class="progress-fill"
+                [style.width.%]="allClassesSummary.coverage_percent">
+              </div>
+            </div>
+            <div class="card-footer-text">
+              <span>{{ allClassesSummary.coverage_percent }}%</span>
+              <span class="unassigned-pill">{{ allClassesSummary.unassigned_count }} Free</span>
+            </div>
+          </div>
+
+          <!-- INDIVIDUAL GRADE CARDS -->
+          <div
+            *ngFor="let card of classCards"
+            class="class-summary-card"
+            [class.selected]="selectedGrade === card.grade_value"
+            (click)="selectClassCard(card.grade_value)">
+            <div class="card-top">
+              <div class="card-icon-avatar">
+                {{ card.label.substring(0, 3) }}
+              </div>
+              <span class="active-indicator" *ngIf="selectedGrade === card.grade_value">
+                <mat-icon>check_circle</mat-icon>
+              </span>
+            </div>
+            <div class="card-title">{{ card.label }}</div>
+            <div class="card-metric-row">
+              <span class="metric-assigned">{{ card.assigned_count }} Assigned</span>
+              <span class="metric-total">/ {{ card.total_students }}</span>
+            </div>
+            <div class="mini-progress-bar">
+              <div
+                class="progress-fill"
+                [style.width.%]="card.coverage_percent"
+                [class.high]="card.coverage_percent >= 50"
+                [class.med]="card.coverage_percent > 0 && card.coverage_percent < 50"
+                [class.none]="card.coverage_percent === 0">
+              </div>
+            </div>
+            <div class="card-footer-text">
+              <span>{{ card.coverage_percent }}%</span>
+              <span class="unassigned-pill" *ngIf="card.unassigned_count > 0">
+                {{ card.unassigned_count }} Free
+              </span>
+              <span class="fully-assigned-pill" *ngIf="card.total_students > 0 && card.unassigned_count === 0">
+                All Assigned
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- 4. Dual-Pane Master Detail (Patterned after .view-details-grid) -->
+    <div class="workspace-dual-pane">
+      
+      <!-- LEFT PANE: STUDENT CHECKLIST -->
+      <mat-card class="detail-card roster-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>checklist</mat-icon>
+            Students Roster & Checklist
+          </mat-card-title>
+          <div class="roster-badge" *ngIf="selectedCount > 0">
+            {{ selectedCount }} Selected
+          </div>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <!-- Section filter chips -->
+          <div class="section-chips-row" *ngIf="sections.length > 0">
+            <span class="chips-label">Section:</span>
+            <button
+              type="button"
+              class="section-chip-btn"
+              [class.active]="selectedSection === ''"
+              (click)="selectSection('')">
+              All Sections
+            </button>
+            <button
+              *ngFor="let sec of sections"
+              type="button"
+              class="section-chip-btn"
+              [class.active]="selectedSection === sec.value"
+              (click)="selectSection(sec.value)">
+              {{ sec.label }}
+            </button>
+          </div>
+
+          <!-- Search & Status Row -->
+          <div class="search-filter-row">
+            <div class="search-input-wrapper">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="custom-search-input"
+                placeholder="Search student by name, admission no, roll no..."
+                [(ngModel)]="studentSearch"
+                (input)="onSearchChange()">
+              <button
+                *ngIf="studentSearch"
+                type="button"
+                class="clear-search-btn"
+                (click)="studentSearch = ''; onSearchChange()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="status-toggle-group">
+              <button
+                type="button"
+                class="status-toggle-btn"
+                [class.active]="statusFilter === 'all'"
+                (click)="setStatusFilter('all')">
+                All ({{ allLoadedStudents.length }})
+              </button>
+              <button
+                type="button"
+                class="status-toggle-btn unassigned-tab"
+                [class.active]="statusFilter === 'unassigned'"
+                (click)="setStatusFilter('unassigned')">
+                <mat-icon class="btn-icon">person_add</mat-icon>
+                Unassigned ({{ allClassesSummary.unassigned_count }})
+              </button>
+              <button
+                type="button"
+                class="status-toggle-btn assigned-tab"
+                [class.active]="statusFilter === 'assigned'"
+                (click)="setStatusFilter('assigned')">
+                <mat-icon class="btn-icon">check</mat-icon>
+                Assigned ({{ allClassesSummary.assigned_count }})
+              </button>
+            </div>
+          </div>
+
+          <!-- Selection Action Bar -->
+          <div class="selection-action-bar">
+            <div class="checklist-toggle-wrapper">
+              <label class="custom-checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="isAllSelected()"
+                  [indeterminate]="isPartiallySelected()"
+                  [disabled]="unassignedInView.length === 0"
+                  (change)="toggleSelectAll($event.target.checked)">
+                <span class="custom-checkbox-text">
+                  <strong>Select All Unassigned</strong> in view ({{ unassignedInView.length }})
+                </span>
+              </label>
+            </div>
+
+            <div class="selected-pill-group" *ngIf="selectedCount > 0">
+              <span class="count-badge">
+                <mat-icon>done_all</mat-icon> {{ selectedCount }} Selected
+              </span>
+              <button type="button" class="clear-selection-btn" (click)="deselectAll()">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- In-Screen Quick Unassign Warning Banner -->
+          <div class="in-screen-alert-banner warning" *ngIf="unassignTarget">
+            <div class="alert-content">
+              <mat-icon class="alert-icon">warning</mat-icon>
+              <div>
+                <div class="alert-title">Confirm Removal of Transport Assignment</div>
+                <div class="alert-desc">
+                  Are you sure you want to unassign student from transport?
+                </div>
+              </div>
+            </div>
+            <div class="alert-actions">
+              <button type="button" class="btn-cancel" (click)="cancelUnassign()">Cancel</button>
+              <button
+                type="button"
+                class="btn-danger"
+                [disabled]="deletingAssignment"
+                (click)="confirmUnassign()">
+                <mat-spinner diameter="14" *ngIf="deletingAssignment"></mat-spinner>
+                <span>{{ deletingAssignment ? 'Removing...' : 'Yes, Remove' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-state-box" *ngIf="loadingStudents">
+            <mat-spinner diameter="36"></mat-spinner>
+            <span>Loading students...</span>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state-card" *ngIf="!loadingStudents && displayedStudents.length === 0">
+            <div class="empty-icon-circle">
+              <mat-icon>person_search</mat-icon>
+            </div>
+            <h3>No Students Found</h3>
+            <p>No students match your selected class, section, status, or search query.</p>
+            <button
+              type="button"
+              class="reset-filters-btn"
+              (click)="selectedGrade = ''; selectedSection = ''; studentSearch = ''; statusFilter = 'all'; applyStudentFilters()">
+              Reset Filters
+            </button>
+          </div>
+
+          <!-- Student Roster List -->
+          <div class="student-roster-list" *ngIf="!loadingStudents && displayedStudents.length > 0">
+            <div
+              *ngFor="let s of displayedStudents"
+              class="student-row-card"
+              [class.is-selected]="s.selected"
+              [class.is-assigned]="s.is_assigned"
+              (click)="toggleStudent(s)">
+              
+              <!-- Checkbox column -->
+              <div class="checkbox-col" (click)="$event.stopPropagation()">
+                <input
+                  *ngIf="!s.is_assigned"
+                  type="checkbox"
+                  class="row-checkbox"
+                  [(ngModel)]="s.selected"
+                  (change)="toggleStudent(s)">
+                <span
+                  *ngIf="s.is_assigned"
+                  class="assigned-lock-icon"
+                  title="Already assigned to transport.">
+                  <mat-icon>check_circle</mat-icon>
+                </span>
+              </div>
+
+              <!-- Avatar -->
+              <div class="student-avatar" [class.assigned-avatar]="s.is_assigned">
+                {{ s.full_name.substring(0, 2).toUpperCase() }}
+              </div>
+
+              <!-- Student Bio Details -->
+              <div class="student-details-col">
+                <div class="student-name-line">
+                  <span class="student-name">{{ s.full_name }}</span>
+                  <span class="class-tag">{{ s.class_name || 'Class' }} <span *ngIf="s.section_name">- {{ s.section_name }}</span></span>
+                </div>
+                <div class="student-meta-line">
+                  <span class="meta-item" *ngIf="s.admission_number">
+                    <mat-icon class="meta-icon">tag</mat-icon> Adm: {{ s.admission_number }}
+                  </span>
+                  <span class="meta-item" *ngIf="s.roll_number">
+                    <mat-icon class="meta-icon">badge</mat-icon> Roll: {{ s.roll_number }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Transport Status & Route Info -->
+              <div class="student-status-col">
+                <!-- Case A: Student Already Taken / Assigned -->
+                <div class="assigned-status-block" *ngIf="s.is_assigned">
+                  <div class="status-badge active">
+                    <mat-icon>directions_bus</mat-icon>
+                    <span>{{ s.assigned_route_name || 'Assigned' }}</span>
+                  </div>
+                  <div class="stop-time-line">
+                    <span class="stop-text">
+                      <mat-icon class="pin-icon">place</mat-icon>
+                      {{ s.assigned_stop_name || 'Designated Stop' }}
+                    </span>
+                    <span class="annual-fee-tag" *ngIf="s.annual_fee">
+                      ₹{{ s.annual_fee }}/yr
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Case B: Student Unassigned / Ready to Assign -->
+                <div class="unassigned-status-block" *ngIf="!s.is_assigned">
+                  <span class="status-badge ready-badge">
+                    <mat-icon>radio_button_unchecked</mat-icon>
+                    <span>Ready for Transport</span>
+                  </span>
+                  <span class="not-taken-hint">Check to assign route</span>
+                </div>
+              </div>
+
+              <!-- In-Line Row Actions -->
+              <div class="student-actions-col" (click)="$event.stopPropagation()">
+                <!-- Action for Unassigned: Quick Single Assign -->
+                <button
+                  *ngIf="!s.is_assigned"
+                  mat-stroked-button
+                  color="primary"
+                  class="quick-assign-btn"
+                  title="Assign only this student"
+                  (click)="quickAssignStudent(s)">
+                  <mat-icon>edit_note</mat-icon>
+                  Assign
+                </button>
+
+                <!-- Actions for Already Assigned: Edit On-Screen or Unassign -->
+                <div class="assigned-actions-group" *ngIf="s.is_assigned">
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    title="Edit assignment in right panel"
+                    (click)="openInScreenEdit(s)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    title="Unassign student"
+                    (click)="promptUnassign(s)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- RIGHT PANE: IN-SCREEN INTERACTIVE ASSIGNMENT STATION -->
+      <mat-card class="detail-card station-card" [class.edit-mode]="stationMode === 'edit'">
+        
+        <!-- Header -->
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>{{ stationMode === 'edit' ? 'edit_calendar' : 'alt_route' }}</mat-icon>
+            {{ stationMode === 'edit' ? 'Edit Transport Assignment' : 'Transport Assignment Station' }}
+          </mat-card-title>
+          <button
+            *ngIf="stationMode === 'edit'"
+            mat-icon-button
+            class="close-edit-btn"
+            (click)="cancelInScreenEdit()"
+            title="Cancel Edit">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-card-header>
+
+        <mat-card-content>
+          
+          <!-- ============================================================== -->
+          <!-- MODE 1: BULK / CHECKLIST ASSIGNMENT STATION                    -->
+          <!-- ============================================================== -->
+          <div *ngIf="stationMode === 'bulk'">
+            
+            <!-- Idle prompt when 0 students selected -->
+            <div class="station-idle-box" *ngIf="selectedCount === 0">
+              <div class="idle-illustration">
+                <mat-icon>how_to_reg</mat-icon>
+              </div>
+              <h3>No Students Selected</h3>
+              <p>
+                Check one or more unassigned students from the list on the left, or click
+                <strong>"Select All Unassigned"</strong> to configure their transport route and annual fee.
+              </p>
+              <div class="idle-features-list">
+                <div class="idle-feature-item">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Class-wide or custom multi-student assignment</span>
+                </div>
+                <div class="idle-feature-item">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Direct master stop allocation with timetable</span>
+                </div>
+                <div class="idle-feature-item">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Flat Annual Transport Fee per student</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form content when 1+ selected -->
+            <div class="station-form-body" *ngIf="selectedCount > 0">
+              
+              <!-- Selected Batch Summary -->
+              <div class="selected-batch-summary">
+                <div class="batch-title-row">
+                  <span class="batch-badge">
+                    <mat-icon>people</mat-icon>
+                    {{ selectedCount }} Students Selected
+                  </span>
+                  <button type="button" class="deselect-text-btn" (click)="deselectAll()">Deselect All</button>
+                </div>
+                <div class="student-chips-container">
+                  <span *ngFor="let st of selectedStudents.slice(0, 6)" class="student-chip">
+                    {{ st.full_name }}
+                    <mat-icon class="remove-chip-icon" (click)="removeSelectedStudent(st)">close</mat-icon>
+                  </span>
+                  <span *ngIf="selectedCount > 6" class="student-chip more-chip">
+                    +{{ selectedCount - 6 }} more
+                  </span>
+                </div>
+              </div>
+
+              <!-- Route Selector -->
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Target Route *</mat-label>
+                  <mat-select
+                    [(ngModel)]="targetRouteId"
+                    (selectionChange)="onRouteChange($event.value)"
+                    required>
+                    <mat-option *ngFor="let r of routes" [value]="r.id">
+                      <strong>{{ r.route_name }}</strong> ({{ r.route_number }}) - Annual: ₹{{ r.fare }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Pickup Stop Dropdown -->
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Pickup Stop</mat-label>
+                  <mat-select
+                    [(ngModel)]="targetPickupStopId"
+                    (selectionChange)="onPickupStopChange($event.value)"
+                    [disabled]="!targetRouteId || routeStops.length === 0">
+                    <mat-option [value]="null">-- Default Route Origin --</mat-option>
+                    <mat-option *ngFor="let stop of routeStops" [value]="stop.id">
+                      {{ stop.sequence_no ? stop.sequence_no + '. ' : '' }}{{ stop.stop_name }}
+                      <span *ngIf="stop.pickup_time">({{ stop.pickup_time }})</span>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Drop Stop Dropdown -->
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Drop Stop</mat-label>
+                  <mat-select
+                    [(ngModel)]="targetDropStopId"
+                    (selectionChange)="onDropStopChange($event.value)"
+                    [disabled]="!targetRouteId || routeStops.length === 0">
+                    <mat-option [value]="null">-- Default Route Destination --</mat-option>
+                    <mat-option *ngFor="let stop of routeStops" [value]="stop.id">
+                      {{ stop.sequence_no ? stop.sequence_no + '. ' : '' }}{{ stop.stop_name }}
+                      <span *ngIf="stop.drop_time">({{ stop.drop_time }})</span>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Annual Transport Fee (₹ / Year) -->
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Annual Transport Fee (₹ / Year) *</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="0"
+                    [(ngModel)]="targetAnnualFee"
+                    placeholder="e.g. 15000">
+                  <span matSuffix class="field-suffix-tag">/ student / year</span>
+                </mat-form-field>
+              </div>
+
+              <!-- Transport Fee Due Date -->
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>Fee Due Date</mat-label>
+                  <input matInput type="date" [(ngModel)]="targetDueDate">
+                  <mat-hint>Due date assigned to the student's transport fee ledger</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <!-- Schedule Times -->
+              <div class="form-row-two">
+                <mat-form-field appearance="outline" class="w-half">
+                  <mat-label>Pickup Time</mat-label>
+                  <input matInput type="text" [(ngModel)]="targetPickupTime" placeholder="07:30:00">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-half">
+                  <mat-label>Drop Time</mat-label>
+                  <input matInput type="text" [(ngModel)]="targetDropTime" placeholder="16:00:00">
+                </mat-form-field>
+              </div>
+
+              <!-- Live Cost & Capacity Summary Card (detail-row pattern) -->
+              <div class="summary-details-box">
+                <div class="detail-row">
+                  <span class="detail-label">Selected Students:</span>
+                  <span class="detail-value"><strong>{{ selectedCount }}</strong></span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Annual Fee / Student:</span>
+                  <span class="detail-value"><strong>₹{{ (targetAnnualFee || 0).toLocaleString() }} / yr</strong></span>
+                </div>
+                <div class="detail-row total-revenue-row">
+                  <span class="detail-label">Total Annual Revenue:</span>
+                  <span class="detail-value total-val">₹{{ totalAnnualPlannedRevenue.toLocaleString() }} / yr</span>
+                </div>
+              </div>
+
+              <!-- Primary Submit Button -->
+              <button
+                mat-raised-button
+                color="primary"
+                class="w-full submit-main-btn"
+                [disabled]="selectedCount === 0 || !targetRouteId || submittingBulk"
+                (click)="submitBulkAssignment()">
+                <mat-spinner diameter="18" *ngIf="submittingBulk"></mat-spinner>
+                <mat-icon *ngIf="!submittingBulk">verified</mat-icon>
+                <span>Assign {{ selectedCount }} Students (Annual ₹{{ (targetAnnualFee || 0).toLocaleString() }})</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ============================================================== -->
+          <!-- MODE 2: IN-SCREEN SINGLE STUDENT EDIT STATION (NO MODAL)       -->
+          <!-- ============================================================== -->
+          <div *ngIf="stationMode === 'edit'" class="edit-form-wrapper">
+            
+            <!-- Student Banner -->
+            <div class="edit-student-banner">
+              <div class="banner-avatar">
+                {{ editingStudentName.substring(0, 2).toUpperCase() }}
+              </div>
+              <div class="banner-text">
+                <div class="banner-name">{{ editingStudentName }}</div>
+                <div class="banner-meta">
+                  <span *ngIf="editingAdmissionNo">Adm: {{ editingAdmissionNo }}</span>
+                  <span *ngIf="editingClassName"> | Class: {{ editingClassName }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Route Selector -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Assigned Route *</mat-label>
+                <mat-select
+                  [(ngModel)]="editRouteId"
+                  (selectionChange)="onEditRouteChange($event.value)"
+                  required>
+                  <mat-option *ngFor="let r of routes" [value]="r.id">
+                    {{ r.route_name }} ({{ r.route_number }}) - Fare: ₹{{ r.fare }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <!-- Pickup Stop -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Pickup Stop</mat-label>
+                <mat-select [(ngModel)]="editPickupStopId" (selectionChange)="onEditPickupStopChange($event.value)">
+                  <mat-option [value]="null">-- Default Route Origin --</mat-option>
+                  <mat-option *ngFor="let s of editRouteStops" [value]="s.id">
+                    {{ s.stop_name }} <span *ngIf="s.pickup_time">({{ s.pickup_time }})</span>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <!-- Drop Stop -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Drop Stop</mat-label>
+                <mat-select [(ngModel)]="editDropStopId">
+                  <mat-option [value]="null">-- Default Route Destination --</mat-option>
+                  <mat-option *ngFor="let s of editRouteStops" [value]="s.id">
+                    {{ s.stop_name }} <span *ngIf="s.drop_time">({{ s.drop_time }})</span>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <!-- Annual Fee -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Annual Transport Fee (₹)</mat-label>
+                <input matInput type="number" min="0" [(ngModel)]="editAnnualFee">
+                <span matSuffix class="field-suffix-tag">/ year</span>
+              </mat-form-field>
+            </div>
+
+            <!-- Fee Due Date -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Fee Due Date</mat-label>
+                <input matInput type="date" [(ngModel)]="editDueDate">
+                <mat-hint>Date by which transport fee must be paid</mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Status -->
+            <div class="form-group">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Assignment Status</mat-label>
+                <mat-select [(ngModel)]="editStatus">
+                  <mat-option value="Active">Active (Boarding Allowed)</mat-option>
+                  <mat-option value="Inactive">Inactive (Suspended)</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <!-- Edit Action Buttons -->
+            <div class="edit-actions-row">
+              <button mat-button (click)="cancelInScreenEdit()">
+                Cancel
+              </button>
+              <button
+                mat-raised-button
+                color="primary"
+                [disabled]="!editRouteId || savingEdit"
+                (click)="saveInScreenEdit()">
+                <mat-spinner diameter="16" *ngIf="savingEdit"></mat-spinner>
+                <mat-icon *ngIf="!savingEdit">save</mat-icon>
+                <span>Save Changes</span>
+              </button>
+            </div>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: TRANSPORT PASSENGER DIRECTORY                                 -->
+  <!-- ===================================================================== -->
+  <div *ngIf="activeView === 'directory'" class="directory-wrapper">
+    <mat-card class="detail-card directory-main-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>badge</mat-icon>
+          Transport Passenger Directory
+        </mat-card-title>
+        <div class="directory-actions">
+          <button mat-button (click)="loadAssignments()">
+            <mat-icon [class.spin]="loadingAssignments">refresh</mat-icon>
+            Refresh Roster
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="activeView = 'workspace'">
+            <mat-icon>add_circle_outline</mat-icon>
+            Assign New Students
+          </button>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Top Search Bar -->
+        <div class="directory-search-wrapper">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            type="text"
+            class="directory-search-input"
+            placeholder="Search passenger by student name, admission no, class, route, or stop..."
+            [(ngModel)]="assignmentSearch"
+            (input)="filterDirectoryAssignments()">
+          <button
+            *ngIf="assignmentSearch"
+            type="button"
+            class="clear-search-btn"
+            (click)="assignmentSearch = ''; filterDirectoryAssignments()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- In-Screen Quick Unassign Warning Banner -->
+        <div class="in-screen-alert-banner warning" *ngIf="unassignTarget">
+          <div class="alert-content">
+            <mat-icon class="alert-icon">warning</mat-icon>
+            <div>
+              <div class="alert-title">Confirm Removal of Transport Assignment</div>
+              <div class="alert-desc">
+                Are you sure you want to remove transport assignment for this student?
+              </div>
+            </div>
+          </div>
+          <div class="alert-actions">
+            <button type="button" class="btn-cancel" (click)="cancelUnassign()">Cancel</button>
+            <button
+              type="button"
+              class="btn-danger"
+              [disabled]="deletingAssignment"
+              (click)="confirmUnassign()">
+              <mat-spinner diameter="14" *ngIf="deletingAssignment"></mat-spinner>
+              <span>{{ deletingAssignment ? 'Removing...' : 'Yes, Remove Assignment' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state-box" *ngIf="loadingAssignments">
+          <mat-spinner diameter="36"></mat-spinner>
+          <span>Loading transport passenger directory...</span>
+        </div>
+
+        <!-- Table View -->
+        <div class="table-responsive" *ngIf="!loadingAssignments">
+          <table class="passenger-table">
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Class & Adm No</th>
+                <th>Assigned Route</th>
+                <th>Pickup Stop</th>
+                <th>Drop Stop</th>
+                <th>Annual Transport Fee</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of filteredAssignments">
+                <td>
+                  <div class="student-cell">
+                    <div class="cell-avatar">
+                      {{ (a.student_name || 'ST').substring(0, 2).toUpperCase() }}
+                    </div>
+                    <div>
+                      <div class="student-cell-name">{{ a.student_name }}</div>
+                      <div class="cell-sub">{{ a.student_email || '' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="class-cell-tag">{{ a.class_name || 'N/A' }} {{ a.section_name || '' }}</div>
+                  <div class="cell-sub" *ngIf="a.admission_no">Adm: {{ a.admission_no }}</div>
+                </td>
+                <td>
+                  <div class="route-cell-title">{{ a.route_name }}</div>
+                  <div class="cell-sub">{{ a.route_number }} <span *ngIf="a.vehicle_number">({{ a.vehicle_number }})</span></div>
+                </td>
+                <td>
+                  <div class="stop-name">{{ a.pickup_stop_name || a.stop_name || 'Route Origin' }}</div>
+                  <div class="cell-sub" *ngIf="a.pickup_time">{{ a.pickup_time }}</div>
+                </td>
+                <td>
+                  <div class="stop-name">{{ a.drop_stop_name || a.stop_name || 'Route End' }}</div>
+                  <div class="cell-sub" *ngIf="a.drop_time">{{ a.drop_time }}</div>
+                </td>
+                <td>
+                  <span class="annual-badge">
+                    ₹{{ (a.annual_fee ?? a.monthly_fee ?? 0).toLocaleString() }} / yr
+                  </span>
+                </td>
+                <td>
+                  <span class="due-date-badge" *ngIf="a.due_date">
+                    <mat-icon class="calendar-icon">event</mat-icon>
+                    {{ a.due_date | date:'dd MMM yyyy' }}
+                  </span>
+                  <span class="text-muted" *ngIf="!a.due_date">—</span>
+                </td>
+                <td>
+                  <span class="status-badge" [class.active]="a.status === 'Active'">
+                    <mat-icon>circle</mat-icon>
+                    {{ a.status || 'Active' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <div class="table-actions-cell">
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      title="Edit assignment in workspace"
+                      (click)="activeView = 'workspace'; openInScreenEdit(a)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      title="Unassign student"
+                      (click)="promptUnassign(a)">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredAssignments.length === 0">
+                <td colspan="8" class="empty-table-cell">
+                  <mat-icon class="empty-table-icon">search_off</mat-icon>
+                  <div class="empty-table-text">No passenger records found matching your search.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

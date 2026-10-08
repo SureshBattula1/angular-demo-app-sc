@@ -97,6 +97,62 @@ export function notificationListSubtitle(item: AppNotification): string {
   return '';
 }
 
+export type InboxFilterSlug =
+  | 'all'
+  | 'today'
+  | 'unread'
+  | 'attendance'
+  | 'assignments'
+  | 'exams'
+  | 'fees'
+  | 'holidays'
+  | 'custom';
+
+export interface InboxFilterChip {
+  slug: InboxFilterSlug;
+  label: string;
+  icon: string;
+}
+
+export const INBOX_FILTER_CHIPS: InboxFilterChip[] = [
+  { slug: 'all', label: 'All', icon: 'inbox' },
+  { slug: 'today', label: 'Today', icon: 'today' },
+  { slug: 'unread', label: 'Unread', icon: 'mark_email_unread' },
+  { slug: 'attendance', label: 'Attendance', icon: 'fact_check' },
+  { slug: 'assignments', label: 'Assignments', icon: 'assignment_turned_in' },
+  { slug: 'exams', label: 'Exams', icon: 'assignment' },
+  { slug: 'fees', label: 'Fees', icon: 'payments' },
+  { slug: 'holidays', label: 'Holidays', icon: 'event' },
+  { slug: 'custom', label: 'Others', icon: 'mail' }
+];
+
+export function inboxFilterLabel(slug: InboxFilterSlug): string {
+  return INBOX_FILTER_CHIPS.find(c => c.slug === slug)?.label ?? 'All';
+}
+
+export function inboxFilterToParams(slug: InboxFilterSlug): Record<string, string> {
+  switch (slug) {
+    case 'today':
+      return { status: 'all', period: 'today' };
+    case 'unread':
+      return { status: 'unread' };
+    case 'attendance':
+      return { status: 'all', module: 'attendance' };
+    case 'assignments':
+      return { status: 'all', module: 'assignments' };
+    case 'exams':
+      return { status: 'all', module: 'exams' };
+    case 'fees':
+      return { status: 'all', module: 'fees' };
+    case 'holidays':
+      return { status: 'all', module: 'holidays' };
+    case 'custom':
+      return { status: 'all', module: 'custom' };
+    default:
+      return { status: 'all' };
+  }
+}
+
 export type NotificationCategoryFilter = 'all' | 'campaign' | 'message' | 'assignment' | 'attendance';
 
 export function notificationCategorySource(filter: NotificationCategoryFilter): string | null {

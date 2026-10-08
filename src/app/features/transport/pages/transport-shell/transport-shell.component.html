@@ -1,0 +1,62 @@
+<div class="transport-shell">
+  <ng-container *ngIf="!isDriver">
+    <nav mat-tab-nav-bar [tabPanel]="tabPanel" class="transport-tabs" mat-stretch-tabs="false">
+      <a mat-tab-link routerLink="dashboard" routerLinkActive #dash="routerLinkActive" [active]="dash.isActive">
+        <mat-icon>dashboard</mat-icon> Dashboard
+      </a>
+      <a mat-tab-link routerLink="students" routerLinkActive #stu="routerLinkActive" [active]="stu.isActive">
+        <mat-icon>school</mat-icon> Students
+      </a>
+      <a mat-tab-link routerLink="routes" routerLinkActive #r="routerLinkActive" [active]="r.isActive">
+        <mat-icon>alt_route</mat-icon> Routes
+      </a>
+      <a mat-tab-link routerLink="stops" routerLinkActive #stp="routerLinkActive" [active]="stp.isActive">
+        <mat-icon>place</mat-icon> Stops
+      </a>
+      <a mat-tab-link routerLink="assignments" routerLinkActive #asg="routerLinkActive" [active]="asg.isActive">
+        <mat-icon>swap_horiz</mat-icon> Assignments
+      </a>
+      <a mat-tab-link routerLink="trips" routerLinkActive #trp="routerLinkActive" [active]="trp.isActive">
+        <mat-icon>commute</mat-icon> Trips
+      </a>
+      <a mat-tab-link routerLink="boarding" routerLinkActive #brd="routerLinkActive" [active]="brd.isActive">
+        <mat-icon>how_to_reg</mat-icon> Boarding
+      </a>
+      <a mat-tab-link routerLink="tracking" routerLinkActive #trk="routerLinkActive" [active]="trk.isActive">
+        <mat-icon>gps_fixed</mat-icon> Live Tracking
+      </a>
+      <a mat-tab-link routerLink="drivers" routerLinkActive #d="routerLinkActive" [active]="d.isActive">
+        <mat-icon>badge</mat-icon> Drivers
+      </a>
+      <a mat-tab-link routerLink="vehicles" routerLinkActive #v="routerLinkActive" [active]="v.isActive">
+        <mat-icon>directions_bus</mat-icon> Vehicles
+      </a>
+      <a mat-tab-link routerLink="finance" routerLinkActive #fin="routerLinkActive" [active]="fin.isActive">
+        <mat-icon>payments</mat-icon> Finance
+      </a>
+    </nav>
+
+    <mat-tab-nav-panel #tabPanel>
+      <div class="tab-body">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-tab-nav-panel>
+  </ng-container>
+
+  <div class="driver-shell-wrapper" *ngIf="isDriver">
+    <nav mat-tab-nav-bar [tabPanel]="driverPanel" class="transport-tabs driver-tabs" mat-stretch-tabs="false">
+      <a mat-tab-link routerLink="boarding" routerLinkActive #brd="routerLinkActive" [active]="brd.isActive">
+        <mat-icon>how_to_reg</mat-icon> Passenger Boarding
+      </a>
+      <a mat-tab-link routerLink="trips" routerLinkActive #trp="routerLinkActive" [active]="trp.isActive">
+        <mat-icon>commute</mat-icon> Trips
+      </a>
+    </nav>
+
+    <mat-tab-nav-panel #driverPanel>
+      <div class="tab-body driver-shell-body">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-tab-nav-panel>
+  </div>
+</div>

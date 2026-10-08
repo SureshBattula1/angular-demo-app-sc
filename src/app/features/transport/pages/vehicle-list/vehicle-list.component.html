@@ -1,0 +1,96 @@
+<div class="view-container">
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">directions_bus</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">School Vehicle Fleet</h1>
+          <div class="view-meta">
+            <span><mat-icon>gps_fixed</mat-icon> GPS Tracked Fleet</span>
+            <span><mat-icon>verified</mat-icon> Fitness & Insurance Monitored</span>
+            <span><mat-icon>airline_seat_recline_normal</mat-icon> Capacity Management</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Fleet Active</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="accent" routerLink="/transport/vehicles/create">
+            <mat-icon>add</mat-icon> Register New Vehicle
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>directions_bus</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ tableConfig.totalCount || rows.length }}</div>
+          <div class="stat-label">Total Fleet Vehicles</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ rows.length }}</div>
+          <div class="stat-label">Active On Road</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>airline_seat_recline_normal</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">High Cap</div>
+          <div class="stat-label">Seating Allocation Standard</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>build</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">Service Ready</div>
+          <div class="stat-label">Routine Maintenance Logs</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detail Card with Data Table -->
+  <mat-card class="detail-card">
+    <mat-card-content>
+      <app-data-table
+        [data]="rows"
+        [config]="tableConfig"
+        [advancedSearchConfig]="advancedSearchConfig"
+        [title]="'Fleet Vehicle Directory'"
+        [loading]="loading"
+        (actionClicked)="onAction($event)"
+        (paginationChanged)="onPage($event)"
+        (sortChanged)="onSort($event)"
+        (searchChanged)="onBasicSearch($event)"
+        (advancedSearchChanged)="onAdvSearch($event)"
+        (searchResetEvent)="onReset()">
+      </app-data-table>
+    </mat-card-content>
+  </mat-card>
+</div>

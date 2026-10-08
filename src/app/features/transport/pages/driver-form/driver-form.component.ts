@@ -13,13 +13,15 @@ import { TransportDriver } from '../../../../core/models/transport.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './driver-form.component.html',
-  styleUrls: ['../vehicle-form/vehicle-form.component.scss']
+  styleUrls: ['./driver-form.component.scss']
 })
 export class DriverFormComponent implements OnInit {
   form!: FormGroup;
   isEdit = false;
   saving = false;
-  branches: Array<{ id: string | number; name: string }> = [];
+  hidePassword = true;
+  hasExistingAccount = false;
+  branches: { id: string | number; name: string }[] = [];
   private driverId: string | null = null;
 
   constructor(
@@ -32,6 +34,9 @@ export class DriverFormComponent implements OnInit {
       branch_id: [null, Validators.required],
       name: ['', [Validators.required, Validators.maxLength(255)]],
       phone: ['', Validators.maxLength(20)],
+      email: ['', [Validators.email]],
+      password: [''],
+      create_account: [true],
       license_number: ['', Validators.maxLength(60)],
       license_expiry: [null],
       address: [''],
@@ -40,6 +45,16 @@ export class DriverFormComponent implements OnInit {
     this.loadBranches();
     this.driverId = this.route.snapshot.paramMap.get('id');
     if (this.driverId) { this.isEdit = true; this.loadDriver(this.driverId); }
+  }
+
+  generatePassword(): void {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$!';
+    let pwd = 'Drv@';
+    for (let i = 0; i < 6; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    this.form.patchValue({ password: pwd, create_account: true });
+    this.hidePassword = false;
   }
 
   private loadBranches(): void {
@@ -53,7 +68,18 @@ export class DriverFormComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           const d = res.data as TransportDriver;
-          this.form.patchValue({ branch_id: d.branch?.id ?? d.branch_id, name: d.name, phone: d.phone, license_number: d.license_number, license_expiry: d.license_expiry ? new Date(d.license_expiry) : null, address: d.address, is_active: d.is_active });
+          this.hasExistingAccount = !!(d.user_id || d.has_account || d.user);
+          this.form.patchValue({
+            branch_id: d.branch?.id ?? d.branch_id,
+            name: d.name,
+            phone: d.phone,
+            email: d.email || d.user?.email || '',
+            create_account: this.hasExistingAccount,
+            license_number: d.license_number,
+            license_expiry: d.license_expiry ? new Date(d.license_expiry) : null,
+            address: d.address,
+            is_active: d.is_active
+          });
           this.form.get('branch_id')?.disable();
         }
       }, error: (e) => this.errorHandler.showError(e)
@@ -64,6 +90,12 @@ export class DriverFormComponent implements OnInit {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving = true;
     const payload = this.form.getRawValue();
+
+    // If password is blank on edit, omit it
+    if (this.isEdit && !payload.password) {
+      delete payload.password;
+    }
+
     const done = (m: string) => { this.saving = false; this.errorHandler.showSuccess(m); this.router.navigate(['/transport/drivers']); };
     const fail = (e: unknown) => { this.errorHandler.showError(e); this.saving = false; };
     if (this.isEdit && this.driverId) {

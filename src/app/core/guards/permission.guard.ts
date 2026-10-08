@@ -29,6 +29,17 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     return true;
   }
 
+  // Driver Portal Access: Driver role or transport.view permission
+  const storedRole = user?.role || readStoredUserRole();
+  const isDriverRole = user?.role === 'Driver' || storedRole === 'Driver';
+  if (state.url.includes('/transport/driver-portal')) {
+    if (isDriverRole || permissionService.hasPermission('transport.view')) {
+      return true;
+    }
+    router.navigate(['/dashboard']);
+    return false;
+  }
+
   // If no permissions required, allow access
   if (!requiredPermissions) {
     return true;
@@ -41,7 +52,6 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
   // Get current user permissions
   const userPermissions = permissionService.userPermissions();
   const hasToken = authService.isLoggedIn();
-  const storedRole = user?.role || readStoredUserRole();
 
   // Hard reload (Access School / impersonation) hydrates the user on the next tick.
   // Allow the shell to render until permissions arrive instead of leaving a blank outlet.
@@ -49,8 +59,16 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     return true;
   }
 
-  // School SuperAdmin always has dashboard; assignments follow the mobile role menu.
-  if (storedRole === 'SuperAdmin' && permissions.some(p => p === 'dashboard.view' || p.startsWith('assignments.'))) {
+  // School SuperAdmin: dashboard, assignments, notification campaigns.
+  if (
+    storedRole === 'SuperAdmin' &&
+    permissions.some(
+      p =>
+        p === 'dashboard.view' ||
+        p.startsWith('assignments.') ||
+        p.startsWith('notifications.')
+    )
+  ) {
     return true;
   }
 
@@ -68,6 +86,10 @@ export const permissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot, st
     : permissionService.hasAnyPermission(permissions);
 
   if (!hasPermission) {
+    if (isDriverRole) {
+      router.navigate(['/transport/boarding']);
+      return false;
+    }
     // Don't redirect to dashboard if we're already there or it would cause loop
     if (route.url[0]?.path !== 'dashboard') {
       router.navigate(['/dashboard'], {

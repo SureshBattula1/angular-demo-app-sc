@@ -1,0 +1,241 @@
+/* =========================================================================
+   TRANSPORT DASHBOARD - BRANCHES/VIEW PATTERN
+   Core card structures, header cards, and stat grids inherit from view-pages.css
+   ========================================================================= */
+
+.header-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  margin-left: auto;
+  flex-wrap: wrap;
+
+  .header-btn-light {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--white);
+    border-radius: var(--radius-md);
+    &:hover { background: rgba(255, 255, 255, 0.25); }
+  }
+
+  .header-btn-accent {
+    border-radius: var(--radius-md);
+    font-weight: 600;
+  }
+}
+
+.loading-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.view-stats-grid .stat-card {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .stat-icon.capacity {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+  }
+
+  .active-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-left: 4px;
+  }
+}
+
+/* Operations Quick Jump (Facility item pattern) */
+.quick-nav-card {
+  margin-bottom: var(--spacing-lg, 24px);
+
+  .quick-chips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--spacing-md, 12px);
+    padding: var(--spacing-xs, 4px) 0;
+  }
+
+  .quick-chip-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+    padding: 12px 16px;
+    border-radius: var(--radius-md, 8px);
+    background: var(--gray-100);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all var(--transition-normal);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--primary-color);
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(0, 137, 123, 0.08), rgba(0, 137, 123, 0.14));
+      border-color: var(--primary-light);
+      color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+}
+
+/* Trips Table Detail Card */
+.trips-table-card {
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md, 16px);
+  }
+
+  .header-link-btn {
+    margin-left: auto;
+  }
+}
+
+.empty-state-box {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-secondary);
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--gray-400);
+    margin-bottom: 8px;
+  }
+
+  h3 { margin: 0 0 6px 0; color: var(--text-primary); font-size: 16px; font-weight: 600; }
+  p { margin: 0 0 16px 0; font-size: 13px; }
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead tr {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  th {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--gray-200);
+    &:hover { background: var(--gray-50); }
+  }
+
+  td {
+    padding: 10px 14px;
+    vertical-align: middle;
+  }
+}
+
+.route-name { font-weight: 600; color: var(--text-primary); }
+.route-sub { font-size: 11px; color: var(--text-secondary); }
+
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  mat-icon { font-size: 13px; width: 13px; height: 13px; }
+
+  &.pickup {
+    background: rgba(var(--primary-rgb, 0, 137, 123), 0.12);
+    color: var(--primary-dark);
+  }
+
+  &.drop {
+    background: rgba(244, 67, 54, 0.12);
+    color: var(--error-dark);
+  }
+}
+
+.vehicle-no { font-weight: 600; color: var(--text-primary); }
+.driver-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  .inline-icon { font-size: 13px; width: 13px; height: 13px; }
+}
+
+.progress-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .progress-track {
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+
+  .btn-sm {
+    height: 28px;
+    line-height: 28px;
+    padding: 0 8px;
+    font-size: 11px;
+    mat-icon { font-size: 14px; width: 14px; height: 14px; margin-right: 2px; }
+  }
+}
+
+.text-right { text-align: right; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }

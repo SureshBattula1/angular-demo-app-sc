@@ -62,49 +62,18 @@
 
   <div class="layout">
     <aside class="sidebar" *ngIf="activeTab === 'inbox'">
-      <p class="sidebar__title">Browse</p>
-      <nav class="category-nav" aria-label="Notification categories">
+      <p class="sidebar__title">Filter</p>
+      <nav class="category-nav" aria-label="Notification filters">
         <button
           type="button"
-          *ngFor="let cat of categoryOptions"
+          *ngFor="let chip of inboxFilterChips"
           class="category-nav__item"
-          [class.active]="categoryFilter === cat.key"
-          (click)="setCategory(cat.key)">
-          <mat-icon>{{ cat.icon }}</mat-icon>
-          <span>{{ cat.label }}</span>
+          [class.active]="inboxFilter === chip.slug"
+          (click)="setInboxFilter(chip.slug)">
+          <mat-icon>{{ chip.icon }}</mat-icon>
+          <span>{{ chip.label }}</span>
         </button>
       </nav>
-
-      <p class="sidebar__title sidebar__title--spaced">Status</p>
-      <div class="status-chips" role="group" aria-label="Read status">
-        <button
-          type="button"
-          *ngFor="let st of statusOptions"
-          class="status-chip"
-          [class.active]="statusFilter === st.key"
-          (click)="setStatus(st.key)">
-          {{ st.label }}
-        </button>
-      </div>
-
-      <p class="sidebar__title sidebar__title--spaced" *ngIf="moduleOptions.length">Campaign type</p>
-      <div class="module-chips" *ngIf="moduleOptions.length">
-        <button
-          type="button"
-          class="module-chip"
-          [class.active]="moduleFilter === 'all'"
-          (click)="setModuleFilter('all')">
-          All types
-        </button>
-        <button
-          type="button"
-          *ngFor="let mod of moduleOptions"
-          class="module-chip"
-          [class.active]="moduleFilter === mod"
-          (click)="setModuleFilter(mod)">
-          {{ moduleLabel(mod) }}
-        </button>
-      </div>
     </aside>
 
     <main class="main-panel">
@@ -146,6 +115,18 @@
             <mat-icon>close</mat-icon>
           </button>
         </mat-form-field>
+      </div>
+
+      <div class="inbox-filter-chips" *ngIf="activeTab === 'inbox'" role="group" aria-label="Quick filters">
+        <button
+          type="button"
+          *ngFor="let chip of inboxFilterChips"
+          class="inbox-filter-chip"
+          [class.active]="inboxFilter === chip.slug"
+          (click)="setInboxFilter(chip.slug)">
+          <mat-icon>{{ chip.icon }}</mat-icon>
+          {{ chip.label }}
+        </button>
       </div>
 
       <section class="inbox-panel">
@@ -223,7 +204,7 @@
             </article>
           </ng-container>
 
-          <div class="notif-load-more" *ngIf="inboxHasMore && !searchText && moduleFilter === 'all'">
+          <div class="notif-load-more" *ngIf="inboxHasMore && !searchText">
             <button mat-stroked-button type="button" class="btn-sm" (click)="loadMoreInbox()" [disabled]="loadingMore">
               <mat-spinner *ngIf="loadingMore" diameter="18"></mat-spinner>
               <span *ngIf="!loadingMore">Load older notifications</span>

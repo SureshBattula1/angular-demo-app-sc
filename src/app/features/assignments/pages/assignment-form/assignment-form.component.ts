@@ -10,6 +10,8 @@ import { SubjectService } from '../../../subjects/services/subject.service';
 import { SectionService } from '../../../sections/services/section.service';
 import { BranchService } from '../../../branches/services/branch.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { BranchService as BranchAccessService } from '../../../../core/services/branch.service';
+import { canShowBranchSelector } from '../../../../core/utils/branch-selection.util';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
 import { FileUploadService } from '../../../../core/services/file-upload.service';
 import { MediaUrlService } from '../../../../core/services/media-url.service';
@@ -42,6 +44,7 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
   private sectionService = inject(SectionService);
   private branchService = inject(BranchService);
   private authService = inject(AuthService);
+  private branchAccess = inject(BranchAccessService);
   private errorHandler = inject(ErrorHandlerService);
   private fileUploadService = inject(FileUploadService);
   private mediaUrl = inject(MediaUrlService);
@@ -384,7 +387,10 @@ export class AssignmentFormComponent implements OnInit, OnDestroy {
     this.branchService.getBranches().subscribe({
       next: response => {
         this.branches = response.data || [];
-        this.showBranchSelector = this.branches.length > 1;
+        this.showBranchSelector = canShowBranchSelector({
+          can_select_branch: response.can_select_branch ?? this.branchAccess.canSelectBranch(),
+          user_branch_id: response.user_branch_id ?? this.branchAccess.getUserBranchId()
+        });
         const currentBranchId = this.form.controls.branch_id.value;
         if (this.isEditMode && currentBranchId) {
           this.syncBranchSelection(String(currentBranchId));
