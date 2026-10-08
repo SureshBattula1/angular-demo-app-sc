@@ -19,6 +19,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   hidePassword = true;
   returnUrl = '/dashboard';
+  currentYear = new Date().getFullYear();
 
   constructor(
     private fb: FormBuilder,
@@ -58,7 +59,13 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         if (response.success) {
           this.errorHandler.showSuccess('Login successful! Welcome back.');
-          this.router.navigate([this.returnUrl]);
+
+          // Driver role lands directly on Passenger Boarding, others on role dashboard
+          if (response.user?.role === 'Driver') {
+            this.router.navigate(['/transport/boarding']);
+          } else {
+            this.router.navigate([this.returnUrl]);
+          }
         } else {
           this.errorHandler.showError(response.message || 'Login failed');
         }

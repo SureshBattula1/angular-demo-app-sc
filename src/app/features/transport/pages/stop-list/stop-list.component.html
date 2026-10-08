@@ -1,0 +1,214 @@
+<div class="view-container">
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">place</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Transit Stops & Pickup Points</h1>
+          <div class="view-meta">
+            <span><mat-icon>my_location</mat-icon> GPS Geofencing Active</span>
+            <span><mat-icon>hub</mat-icon> Master Bus Stops Catalog</span>
+            <span><mat-icon>business</mat-icon> Multi-Branch Supported</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Live Map Sync</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button mat-raised-button color="accent" (click)="openCreateModal()">
+            <mat-icon>add_location_alt</mat-icon> Add New Stop
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Grid -->
+  <div class="view-stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>place</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stops.length }}</div>
+          <div class="stat-label">Total Registered Stops</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>radar</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">50m Radius</div>
+          <div class="stat-label">Smart Geofence Standard</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ filteredStops.length }}</div>
+          <div class="stat-label">Active Pickup Points</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>satellite_alt</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">GPS Ready</div>
+          <div class="stat-label">Lat/Lng Telemetry</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detail Card with Search & Stops Table -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>explore</mat-icon> Stops Directory & Geofence Coordinates
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Filter Bar -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <mat-icon>search</mat-icon>
+          <input type="text" [(ngModel)]="searchQuery" (input)="filterStops()" placeholder="Search stops by name or landmark...">
+        </div>
+        <button mat-stroked-button color="primary" (click)="loadStops()">
+          <mat-icon>refresh</mat-icon> Refresh
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="center-spinner">
+        <mat-spinner diameter="36"></mat-spinner>
+      </div>
+
+      <!-- Stops Table -->
+      <div *ngIf="!loading" class="view-table-container">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Stop Name</th>
+              <th>Landmark</th>
+              <th>GPS Coordinates</th>
+              <th>Geofence</th>
+              <th>Branch</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of filteredStops">
+              <td>
+                <div class="stop-name-cell">
+                  <mat-icon class="pin-icon">location_on</mat-icon>
+                  <strong>{{ s.stop_name }}</strong>
+                </div>
+              </td>
+              <td>{{ s.landmark || '—' }}</td>
+              <td>
+                <span class="coord-badge" *ngIf="s.latitude != null && s.longitude != null">
+                  {{ s.latitude | number:'1.4-4' }}, {{ s.longitude | number:'1.4-4' }}
+                </span>
+                <span class="text-muted" *ngIf="s.latitude == null">—</span>
+              </td>
+              <td>
+                <span class="radius-pill">{{ s.geofence_radius || 50 }}m</span>
+              </td>
+              <td>{{ s.branch_name || 'Main Campus' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="s.is_active !== false" [class.inactive]="s.is_active === false">
+                  {{ s.is_active !== false ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <button mat-icon-button color="primary" (click)="openEditModal(s)" matTooltip="Edit Stop">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="deleteStop(s)" matTooltip="Delete Stop">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredStops.length === 0">
+              <td colspan="7" class="text-center py-6 text-muted">
+                No stops found matching your search. Click "Add New Stop" to register a transit stop.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Add/Edit Modal (Lightweight Inline Dialog Backdrop) -->
+  <div class="modal-backdrop" *ngIf="modalVisible">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>
+          <mat-icon>{{ editingStopId ? 'edit_location' : 'add_location_alt' }}</mat-icon>
+          {{ editingStopId ? 'Edit Transit Stop' : 'Add New Transit Stop' }}
+        </h3>
+        <button mat-icon-button (click)="closeModal()"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full" *ngIf="branches.length > 0">
+          <mat-label>Branch *</mat-label>
+          <mat-select [(ngModel)]="form.branch_id" required>
+            <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Stop Name *</mat-label>
+          <input matInput [(ngModel)]="form.stop_name" placeholder="e.g. City Center Junction" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Landmark (Optional)</mat-label>
+          <input matInput [(ngModel)]="form.landmark" placeholder="e.g. Opposite Metro Pillar 128">
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Latitude</mat-label>
+            <input matInput type="number" [(ngModel)]="form.latitude" placeholder="e.g. 12.9716">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-half">
+            <mat-label>Longitude</mat-label>
+            <input matInput type="number" [(ngModel)]="form.longitude" placeholder="e.g. 77.5946">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Geofence Radius (Meters)</mat-label>
+          <input matInput type="number" [(ngModel)]="form.geofence_radius" placeholder="50">
+        </mat-form-field>
+      </div>
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">Cancel</button>
+        <button mat-raised-button color="primary" [disabled]="!form.stop_name || saving" (click)="saveStop()">
+          <mat-spinner diameter="16" *ngIf="saving"></mat-spinner>
+          {{ editingStopId ? 'Save Changes' : 'Create Stop' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

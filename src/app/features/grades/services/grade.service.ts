@@ -15,14 +15,19 @@ export class GradeService {
 
   /**
    * Get all grades
+   * If branch_id is provided, uses /classes/grades endpoint which supports branch filtering
    */
   getGrades(params?: Record<string, unknown>): Observable<GradeListResponse> {
-    return this.apiService.get<Grade[]>(`${this.ENDPOINT}/grades`, params).pipe(
+    // Use /classes/grades endpoint if branch_id is provided (supports branch filtering)
+    const endpoint = (params && params['branch_id']) ? `${this.ENDPOINT}/grades` : this.GRADE_ENDPOINT;
+    
+    return this.apiService.get<Grade[]>(endpoint, params).pipe(
       map(response => ({
         success: response.success,
         data: response.data || [],
         count: response.data?.length || 0,
-        total: response.data?.length || 0
+        total: response.data?.length || 0,
+        meta: response.meta || undefined
       }))
     );
   }
@@ -30,8 +35,8 @@ export class GradeService {
   /**
    * Get single grade by value
    */
-  getGrade(gradeValue: string): Observable<ApiResponse<Grade>> {
-    return this.apiService.get<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`);
+  getGrade(gradeValue: string, params?: Record<string, unknown>): Observable<ApiResponse<Grade>> {
+    return this.apiService.get<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`, params);
   }
 
   /**
@@ -44,15 +49,15 @@ export class GradeService {
   /**
    * Update existing grade
    */
-  updateGrade(gradeValue: string, data: GradeFormData): Observable<ApiResponse<Grade>> {
-    return this.apiService.put<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`, data);
+  updateGrade(gradeValue: string, data: GradeFormData, params?: Record<string, unknown>): Observable<ApiResponse<Grade>> {
+    return this.apiService.put<Grade>(`${this.GRADE_ENDPOINT}/${gradeValue}`, data, params);
   }
 
   /**
    * Delete grade
    */
-  deleteGrade(gradeValue: string): Observable<ApiResponse> {
-    return this.apiService.delete(`${this.GRADE_ENDPOINT}/${gradeValue}`);
+  deleteGrade(gradeValue: string, params?: Record<string, unknown>): Observable<ApiResponse> {
+    return this.apiService.delete(`${this.GRADE_ENDPOINT}/${gradeValue}`, params);
   }
 
   /**

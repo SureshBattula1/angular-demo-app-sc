@@ -12,11 +12,10 @@
         <button mat-raised-button 
           color="primary"
           class="primary-action-btn"
-          *ngIf="config.showAddButton !== false"
+          *ngIf="shouldShowAddButton()"
           (click)="onAdd()">
-          <mat-icon>add</mat-icon>
-           {{ (title || 'ITEM').toUpperCase() }}
-          <!-- <mat-icon>keyboard_arrow_down</mat-icon> -->
+          <mat-icon>{{ config.primaryButtonIcon || 'add' }}</mat-icon>
+          {{ getPrimaryButtonLabel() }}
         </button>
         
         <!-- View Toggle (Mobile) -->
@@ -24,13 +23,15 @@
           <button mat-icon-button 
             [class.active]="viewMode === 'list'"
             (click)="viewMode = 'list'"
-            matTooltip="List View">
+            matTooltip="List View"
+            matTooltipPosition="below">
             <mat-icon>list</mat-icon>
           </button>
           <button mat-icon-button 
             [class.active]="viewMode === 'card'"
             (click)="viewMode = 'card'"
-            matTooltip="Card View">
+            matTooltip="Card View"
+            matTooltipPosition="below">
             <mat-icon>grid_view</mat-icon>
           </button>
         </div>
@@ -42,7 +43,7 @@
       <!-- Left Side: Search Section -->
       <div class="search-section" *ngIf="config.searchable">
         <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Search in table...</mat-label>
+          <mat-label>Search...</mat-label>
           <input matInput 
             #searchInput
             placeholder="Search in table..." 
@@ -55,22 +56,16 @@
       
       <!-- Right Side: Filter Info and Export -->
       <div class="filter-actions-block">
-        <div class="filter-info" *ngIf="config.filterable">
-          <button mat-stroked-button class="add-filter-btn" (click)="openAdvancedSearch()">
-            <mat-icon>add</mat-icon>
-            ADD FILTER
-          </button>
-          <span class="member-count" *ngIf="data.length > 0">
-            {{ data.length }} (100%) of {{ data.length }} {{ title.toLowerCase() || 'items' }}
-          </span>
-        </div>
-        
-
         <!-- Advanced Search Button -->
         <button mat-icon-button 
           *ngIf="advancedSearchConfig"
           class="advanced-search-btn"
           matTooltip="Advanced Search"
+          matTooltipPosition="below"
+          [matBadge]="getActiveFilterCount()"
+          [matBadgeHidden]="getActiveFilterCount() === 0"
+          matBadgeColor="warn"
+          matBadgeSize="small"
           (click)="openAdvancedSearch()">
           <mat-icon>tune</mat-icon>
         </button>
@@ -79,26 +74,44 @@
         <button mat-icon-button 
           class="reset-btn"
           matTooltip="Clear All Filters"
+          matTooltipPosition="below"
           (click)="resetAllFilters()"
           [disabled]="!hasActiveFilters()">
           <mat-icon>refresh</mat-icon>
         </button>
         <!-- Export Button -->
-        <button mat-icon-button 
-          *ngIf="config.exportable"
-          class="export-btn-icon"
-          matTooltip="Export Data"
-          (click)="onExport('csv')">
-          <mat-icon>download</mat-icon>
-        </button>
+        <app-export-button
+          *ngIf="shouldShowExportButton()"
+          (export)="onExport($event)"
+          [disabled]="loading"
+          [loading]="false">
+        </app-export-button>
       </div>
     </div>
   </div>
   
  
   
+  <!-- No Data Message -->
+  <div class="no-data-container" *ngIf="!loading && dataSource && dataSource.data && dataSource.data.length === 0 && viewMode === 'list'">
+    <div class="no-data-content">
+      <mat-icon class="no-data-icon">inbox</mat-icon>
+      <h3>No Data Found</h3>
+      <p *ngIf="searchQuery || hasActiveFilters()">
+        No results match your search criteria. Try adjusting your filters.
+      </p>
+      <p *ngIf="!searchQuery && !hasActiveFilters()">
+        No {{ title.toLowerCase() || 'records' }} available yet.
+      </p>
+      <button mat-raised-button color="primary" *ngIf="shouldShowAddButton()" (click)="onAdd()">
+        <mat-icon>{{ config.primaryButtonIcon || 'add' }}</mat-icon>
+        {{ getPrimaryButtonEmptyStateLabel() }}
+      </button>
+    </div>
+  </div>
+
   <!-- Table View (Desktop/Tablet) -->
-  <div class="table-wrapper" *ngIf="viewMode === 'list'">
+  <div class="table-wrapper" *ngIf="viewMode === 'list' && dataSource && dataSource.data && dataSource.data.length > 0">
     <table mat-table [dataSource]="dataSource" matSort class="data-table">
       
       <!-- Selection Column -->
@@ -118,14 +131,16 @@
           </mat-checkbox>
         </td>
       </ng-container>
-      
+       
       <!-- Dynamic Columns -->
       <ng-container *ngFor="let column of config.columns" [matColumnDef]="column.key">
         <th mat-header-cell 
           *matHeaderCellDef 
-          [mat-sort-header]="column.sortable ? column.key : ''"
+          mat-sort-header
+          [disabled]="column.sortable === false"
           [style.width]="column.width"
-          [style.text-align]="column.align || 'left'">
+          [style.text-align]="column.align || 'left'"
+          (click)="onHeaderClick(column)">
           <div class="header-content">
             {{ column.header }}
           </div>
@@ -147,6 +162,14 @@
               {{ getCellValue(row, column) }}
             </span>
             
+            <span *ngIf="column.type === 'number'">
+              {{ getCellValue(row, column) }}
+            </span>
+            
+            <span *ngIf="column.type === 'date'">
+              {{ getCellValue(row, column) }}
+            </span>
+            
             <span *ngIf="column.type === 'badge'" class="badge">
               {{ getCellValue(row, column) }}
             </span>
@@ -155,6 +178,12 @@
               [src]="getCellValue(row, column)" 
               class="avatar"
               [alt]="row.name || 'Avatar'">
+            
+            <img *ngIf="column.type === 'image'" 
+              [src]="getCellValue(row, column)" 
+              class="cell-image"
+              [alt]="row.name || 'Image'"
+              onerror="this.onerror=null; this.src='/assets/images/placeholder.png';">
           </ng-container>
         </td>
       </ng-container>
@@ -165,11 +194,11 @@
         <td mat-cell *matCellDef="let row" class="actions-column">
           <div class="action-buttons">
             <button mat-icon-button 
-              *ngFor="let action of config.actions"
+              *ngFor="let action of getVisibleActions(row)"
               [matTooltip]="action.label"
-              [color]="action.color"
-              (click)="onActionClick(action, row); $event.stopPropagation()"
-              [hidden]="action.show && !action.show(row)">
+              matTooltipPosition="above"
+              [attr.data-color]="action.color"
+              (click)="onActionClick(action, row); $event.stopPropagation()">
               <mat-icon>{{ action.icon }}</mat-icon>
             </button>
           </div>
@@ -187,16 +216,35 @@
   
   <!-- Card View (Mobile) -->
   <div class="card-view" *ngIf="viewMode === 'card'">
-    <mat-card *ngFor="let row of dataSource.data" class="data-card" (click)="onRowClick(row)">
+    <!-- No Data Message for Card View -->
+    <div class="no-data-container" *ngIf="!loading && dataSource && dataSource.data && dataSource.data.length === 0">
+      <div class="no-data-content">
+        <mat-icon class="no-data-icon">inbox</mat-icon>
+        <h3>No Data Found</h3>
+        <p *ngIf="searchQuery || hasActiveFilters()">
+          No results match your search criteria. Try adjusting your filters.
+        </p>
+        <p *ngIf="!searchQuery && !hasActiveFilters()">
+          No {{ title.toLowerCase() || 'records' }} available yet.
+        </p>
+        <button mat-raised-button color="primary" *ngIf="shouldShowAddButton()" (click)="onAdd()">
+          <mat-icon>add</mat-icon>
+          Add {{ title || 'Item' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <mat-card *ngFor="let row of dataSource && dataSource.data ? dataSource.data : []" class="data-card" (click)="onRowClick(row)">
       <mat-card-content>
         <div class="card-field" *ngFor="let column of config.columns">
           <span class="field-label">{{ column.header }}:</span>
-          <span class="field-value">{{ getCellValue(row, column) }}</span>
+          <span class="field-value" [class.number-value]="column.type === 'number'">{{ getCellValue(row, column) }}</span>
         </div>
       </mat-card-content>
-      <mat-card-actions *ngIf="config.actions">
+      <mat-card-actions *ngIf="config.actions && getVisibleActions(row).length > 0">
         <button mat-button 
-          *ngFor="let action of config.actions"
+          *ngFor="let action of getVisibleActions(row)"
           (click)="onActionClick(action, row); $event.stopPropagation()">
           <mat-icon>{{ action.icon }}</mat-icon>
           {{ action.label }}
@@ -205,14 +253,15 @@
     </mat-card>
   </div>
   
-  <!-- Pagination -->
+  <!-- Pagination (shown when pagination is enabled) -->
   <mat-paginator 
-    *ngIf="config.pagination !== false"
+    *ngIf="config.pagination !== false && dataSource"
     [pageSize]="pageSize"
     [pageSizeOptions]="pageSizeOptions"
-    [length]="config.serverSide ? totalCount : dataSource.data.length"
+    [length]="totalCount"
     [pageIndex]="currentPage"
     [disabled]="loading"
+    [hidePageSize]="false"
     showFirstLastButtons>
   </mat-paginator>
   
@@ -230,6 +279,7 @@
     (searchApplied)="onAdvancedSearchApplied($event)"
     (searchReset)="onSearchReset()"
     (searchSaved)="onSearchSaved($event)"
+    (fieldValueChanged)="onFieldValueChanged($event)"
     (closed)="closeAdvancedSearch()">
   </app-advanced-search-sidebar>
 </div>

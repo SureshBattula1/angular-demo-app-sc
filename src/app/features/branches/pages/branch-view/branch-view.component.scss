@@ -1,353 +1,122 @@
-@use '../../../../../styles/assets/variables' as *;
+/* Component-specific overrides only - Main styles in global view-pages.css */
 
-.branch-view-container {
-  padding: var(--spacing-lg);
-  max-width: 1400px;
-  margin: 0 auto;
+/* Branch-specific status color overrides */
+.status-badge.active {
+  background: var(--success-color) !important;
 }
 
-.action-bar {
+.status-badge.inactive {
+  background: var(--gray-500) !important;
+}
+
+.status-badge.underconstruction {
+  background: var(--warning-color) !important;
+}
+
+.status-badge.maintenance {
+  background: var(--info-color) !important;
+}
+
+.status-badge.closed {
+  background: var(--error-color) !important;
+}
+
+/* Facilities & Features - Branch-specific styling */
+.facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+}
+
+.facility-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
-  
-  .action-buttons {
-    display: flex;
-    gap: var(--spacing-sm);
-    
-    button mat-icon {
-      margin-right: var(--spacing-xs);
-    }
-  }
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  transition: all var(--transition-normal);
 }
 
-.header-card {
-  margin-bottom: var(--spacing-lg);
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: var(--white);
-  
-  .branch-header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-    
-    .branch-logo {
-      flex-shrink: 0;
-      width: 80px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      .logo-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        color: var(--white);
-      }
-    }
-    
-    .branch-info {
-      flex: 1;
-      
-      .branch-name {
-        font-size: 32px;
-        font-weight: 600;
-        margin: 0 0 var(--spacing-sm) 0;
-        color: var(--white);
-      }
-      
-      .branch-meta {
-        display: flex;
-        gap: var(--spacing-lg);
-        flex-wrap: wrap;
-        
-        span {
-          display: flex;
-          align-items: center;
-          gap: var(--spacing-xs);
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.9);
-          
-          mat-icon {
-            font-size: 18px;
-            width: 18px;
-            height: 18px;
-          }
-        }
-        
-        .status-badge {
-          padding: 4px 12px;
-          border-radius: var(--radius-full);
-          background: rgba(255, 255, 255, 0.2);
-          font-weight: 500;
-          
-          mat-icon {
-            font-size: 12px;
-            width: 12px;
-            height: 12px;
-          }
-        }
-      }
-    }
-    
-    .status-toggle {
-      flex-shrink: 0;
-    }
-  }
+.facility-item mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: var(--gray-500);
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  
-  .stat-card {
-    mat-card-content {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      padding: var(--spacing-lg);
-    }
-    
-    .stat-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      mat-icon {
-        font-size: 32px;
-        width: 32px;
-        height: 32px;
-        color: var(--white);
-      }
-      
-      &.students {
-        background: linear-gradient(135deg, #42a5f5, #1976d2);
-      }
-      
-      &.teachers {
-        background: linear-gradient(135deg, #66bb6a, #388e3c);
-      }
-      
-      &.departments {
-        background: linear-gradient(135deg, #ffa726, #f57c00);
-      }
-      
-      &.capacity {
-        background: linear-gradient(135deg, #ab47bc, #7b1fa2);
-      }
-    }
-    
-    .stat-details {
-      flex: 1;
-      
-      .stat-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--text-primary);
-        line-height: 1.2;
-      }
-      
-      .stat-label {
-        font-size: 14px;
-        color: var(--text-secondary);
-        margin-top: 4px;
-      }
-    }
-  }
+.facility-item span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--spacing-md);
-  
-  .detail-card {
-    mat-card-header {
-      mat-card-title {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        color: var(--primary-color);
-        font-size: 18px;
-        font-weight: 600;
-        
-        mat-icon {
-          color: var(--primary-color);
-        }
-      }
-    }
-    
-    mat-card-content {
-      padding-top: var(--spacing-md);
-    }
-    
-    .detail-row {
-      display: flex;
-      padding: var(--spacing-sm) 0;
-      border-bottom: 1px solid var(--divider-color);
-      
-      &:last-child {
-        border-bottom: none;
-      }
-      
-      .detail-label {
-        flex: 0 0 160px;
-        font-weight: 500;
-        color: var(--text-secondary);
-      }
-      
-      .detail-value {
-        flex: 1;
-        color: var(--text-primary);
-        
-        a {
-          color: var(--primary-color);
-          text-decoration: none;
-          
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-      }
-    }
-  }
+.facility-item.active {
+  background: linear-gradient(135deg, rgba(0, 137, 123, 0.1), rgba(0, 137, 123, 0.15));
+  border: 1px solid var(--primary-light);
 }
 
-.facilities-card {
+.facility-item.active mat-icon {
+  color: var(--success-color);
+}
+
+.facility-item.active span {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Responsive for facilities */
+@media (max-width: 768px) {
   .facilities-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: var(--spacing-sm);
-    
-    .facility-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-xs);
-      padding: var(--spacing-sm);
-      border-radius: var(--radius-sm);
-      background: var(--gray-100);
-      
-      mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-        color: var(--text-secondary);
-      }
-      
-      span {
-        font-size: 13px;
-        color: var(--text-secondary);
-      }
-      
-      &.active {
-        background: var(--success-light);
-        background: rgba(76, 175, 80, 0.1);
-        
-        mat-icon {
-          color: var(--success-color);
-        }
-        
-        span {
-          color: var(--success-dark);
-          font-weight: 500;
-        }
-      }
-    }
-  }
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  
-  p {
-    margin-top: var(--spacing-md);
-    color: var(--text-secondary);
-  }
-}
-
-.status-active {
-  background: rgba(76, 175, 80, 0.2) !important;
-}
-
-.status-inactive {
-  background: rgba(158, 158, 158, 0.2) !important;
-}
-
-.status-construction {
-  background: rgba(255, 152, 0, 0.2) !important;
-}
-
-.status-maintenance {
-  background: rgba(33, 150, 243, 0.2) !important;
-}
-
-.status-closed {
-  background: rgba(244, 67, 54, 0.2) !important;
-}
-
-// Responsive
-@media (max-width: $breakpoint-md) {
-  .branch-view-container {
-    padding: var(--spacing-md);
   }
   
-  .header-card .branch-header {
+  .facility-item {
+    padding: var(--spacing-sm);
     flex-direction: column;
     text-align: center;
-    
-    .branch-info {
-      .branch-name {
-        font-size: 24px;
-      }
-      
-      .branch-meta {
-        justify-content: center;
-      }
-    }
   }
   
-  .details-grid {
-    grid-template-columns: 1fr;
+  .facility-item mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
   
-  .stats-grid {
+  .facility-item span {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .facilities-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  .action-bar {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    
-    .action-buttons {
-      width: 100%;
-      
-      button {
-        flex: 1;
-      }
-    }
-  }
 }
 
-@media (max-width: $breakpoint-sm) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .facilities-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
+/* Branch Logo Styling */
+.branch-logo-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+  border: 3px solid var(--primary-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
 
+.branch-logo-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  width: 100%;
+  height: 100%;
+}

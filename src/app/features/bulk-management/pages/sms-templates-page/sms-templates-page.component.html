@@ -1,0 +1,17 @@
+<div class="sms-templates-page" *ngIf="branches.length > 0 || loading; else noBranches">
+  <app-data-table
+    [data]="templates"
+    [config]="tableConfig"
+    [advancedSearchConfig]="advancedSearchConfig"
+    [title]="'SMS Templates'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)">
+  </app-data-table>
+</div>
+
+<ng-template #noBranches>
+  <div class="sms-templates-empty">
+    <p class="branch-hint" *ngIf="!loading">No branches available for your account.</p>
+  </div>
+</ng-template>

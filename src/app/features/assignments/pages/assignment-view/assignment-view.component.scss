@@ -1,0 +1,149 @@
+:host {
+  display: block;
+}
+
+.loading-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 240px;
+}
+
+.view-action-bar button {
+  min-height: 44px;
+}
+
+.status-draft {
+  background: var(--warning-color) !important;
+}
+
+.status-due {
+  background: var(--error-color) !important;
+}
+
+.status-published {
+  background: var(--success-color) !important;
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--white);
+
+  mat-icon {
+    color: var(--white);
+  }
+}
+
+.stat-icon--primary {
+  background: var(--primary-color);
+}
+
+.stat-icon--accent {
+  background: var(--accent-color);
+}
+
+.stat-icon--info {
+  background: var(--info-color);
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.stat-value {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.prose {
+  margin: 0;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.detail-card h4 {
+  margin: var(--spacing-md) 0 var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.attachments-card {
+  margin-top: var(--spacing-md);
+}
+
+.student-submission-card {
+  .full-width {
+    width: 100%;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .completion-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    background: rgba(76, 175, 80, 0.15);
+    color: #2e7d32;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+}
+
+.attachment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  :host ::ng-deep .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  :host ::ng-deep .view-name {
+    font-size: 22px;
+  }
+
+  :host ::ng-deep .view-action-bar,
+  :host ::ng-deep .view-action-bar .action-buttons {
+    width: 100%;
+  }
+
+  :host ::ng-deep .view-action-bar .action-buttons button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  :host ::ng-deep .view-details-grid {
+    grid-template-columns: 1fr;
+  }
+}

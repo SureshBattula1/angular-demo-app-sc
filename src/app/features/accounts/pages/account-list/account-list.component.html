@@ -1,0 +1,209 @@
+<div class="page-container">
+  <!-- Toolbar Navigation -->
+  <mat-card class="view-header-card">
+    <mat-toolbar class="accounts-toolbar">
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'dashboard'"
+        (click)="switchTab('dashboard')">
+        <mat-icon>dashboard</mat-icon>
+        <span>Dashboard</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'income'"
+        (click)="switchTab('income')">
+        <mat-icon class="income-icon">arrow_downward</mat-icon>
+        <span>Income</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'expenses'"
+        (click)="switchTab('expenses')">
+        <mat-icon class="expense-icon">arrow_upward</mat-icon>
+        <span>Expenses</span>
+      </button>
+
+      <button 
+        mat-button 
+        class="toolbar-menu-item" 
+        [class.active]="activeTab === 'categories'"
+        (click)="switchTab('categories')">
+        <mat-icon>category</mat-icon>
+        <span>Categories</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <!-- Dashboard Tab -->
+  <div *ngIf="activeTab === 'dashboard' && isTabLoaded('dashboard')" class="dashboard-container">
+    <!-- Filters Row: Branch + Financial Year -->
+    <div class="filters-container">
+      <mat-form-field appearance="outline" class="branch-filter">
+        <mat-label>
+          <mat-icon>business</mat-icon>
+          Branch
+        </mat-label>
+        <mat-select [(ngModel)]="dashboardBranch" (selectionChange)="onDashboardFilterChange()">
+          <mat-option value="">All Branches</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="branch.id">
+            {{ branch.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Date Range Selector -->
+      <div class="date-range-selector">
+        <mat-button-toggle-group [formControl]="dashboardPeriod" (change)="onDashboardFilterChange()" class="period-toggle">
+          <mat-button-toggle value="today">
+            <mat-icon>today</mat-icon>
+            <span class="toggle-label">Today</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="week">
+            <mat-icon>view_week</mat-icon>
+            <span class="toggle-label">Week</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="month">
+            <mat-icon>calendar_month</mat-icon>
+            <span class="toggle-label">Month</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="custom">
+            <mat-icon>date_range</mat-icon>
+            <span class="toggle-label">Custom</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    <!-- Custom Date Range (shown only when custom selected) -->
+    <div class="custom-range-row" *ngIf="dashboardPeriod.value === 'custom'">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>From Date</mat-label>
+        <input matInput [matDatepicker]="dashboardFromPicker" [formControl]="dashboardCustomFrom" (dateChange)="onDashboardCustomRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="dashboardFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dashboardFromPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>To Date</mat-label>
+        <input matInput [matDatepicker]="dashboardToPicker" [formControl]="dashboardCustomTo" (dateChange)="onDashboardCustomRangeChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="dashboardToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dashboardToPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Loading State (when filter changes) -->
+    <div *ngIf="dashboardLoading" class="dashboard-loading-state">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <mat-card class="dashboard-stats" *ngIf="!dashboardLoading">
+      <h2>Financial Overview</h2>
+      <div class="stats-grid">
+        <mat-card class="stat-card income-stat" (click)="switchTab('income')">
+          <mat-icon>arrow_downward</mat-icon>
+          <div class="stat-content">
+            <h3>Total Income</h3>
+            <p class="amount">₹{{ dashboardStats.total_income | number:'1.2-2' }}</p>
+            <span class="count">{{ incomeCount }} Transactions</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card expense-stat" (click)="switchTab('expenses')">
+          <mat-icon>arrow_upward</mat-icon>
+          <div class="stat-content">
+            <h3>Total Expenses</h3>
+            <p class="amount">₹{{ dashboardStats.total_expense | number:'1.2-2' }}</p>
+            <span class="count">{{ expenseCount }} Transactions</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card balance-stat">
+          <mat-icon>account_balance</mat-icon>
+          <div class="stat-content">
+            <h3>Net Balance</h3>
+            <p class="amount" [class.positive]="dashboardStats.net_balance >= 0" [class.negative]="dashboardStats.net_balance < 0">
+              ₹{{ dashboardStats.net_balance | number:'1.2-2' }}
+            </p>
+            <span class="count">Current Period</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card category-stat" (click)="switchTab('categories')">
+          <mat-icon>category</mat-icon>
+          <div class="stat-content">
+            <h3>Categories</h3>
+            <p class="amount">{{ dashboardStats.category_count }}</p>
+            <span class="count">Active Categories</span>
+          </div>
+        </mat-card>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Income Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'income' && isTabLoaded('income')"
+    #incomeTable
+    [data]="incomeTransactions"
+    [config]="incomeTableConfig"
+    [advancedSearchConfig]="transactionSearchConfig"
+    [title]="'Income Transactions'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (searchChanged)="onIncomeBasicSearch($event)"
+    (paginationChanged)="onIncomePaginationChange($event)"
+    (sortChanged)="onIncomeSortChange($event)"
+    (advancedSearchChanged)="onIncomeSearch($event)"
+    (searchResetEvent)="onIncomeSearchReset()">
+  </app-data-table>
+
+  <!-- Expenses Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'expenses' && isTabLoaded('expenses')"
+    #expensesTable
+    [data]="expenseTransactions"
+    [config]="expensesTableConfig"
+    [advancedSearchConfig]="transactionSearchConfig"
+    [title]="'Expense Transactions'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (searchChanged)="onExpenseBasicSearch($event)"
+    (paginationChanged)="onExpensePaginationChange($event)"
+    (sortChanged)="onExpenseSortChange($event)"
+    (advancedSearchChanged)="onExpenseSearch($event)"
+    (searchResetEvent)="onExpenseSearchReset()">
+  </app-data-table>
+
+  <!-- Categories Tab - Lazy Loaded -->
+  <app-data-table
+    *ngIf="activeTab === 'categories' && isTabLoaded('categories')"
+    #categoriesTable
+    [data]="categories"
+    [config]="categoriesTableConfig"
+    [advancedSearchConfig]="categorySearchConfig"
+    [title]="'Account Categories'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (rowClicked)="onRowClick($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (exportClicked)="onExport($event)"
+    (searchChanged)="onCategoryBasicSearch($event)"
+    (paginationChanged)="onCategoryPaginationChange($event)"
+    (sortChanged)="onCategorySortChange($event)"
+    (advancedSearchChanged)="onCategorySearch($event)"
+    (searchResetEvent)="onCategorySearchReset()">
+  </app-data-table>
+</div>
+

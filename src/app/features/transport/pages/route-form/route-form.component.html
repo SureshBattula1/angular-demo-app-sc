@@ -1,0 +1,132 @@
+<div class="view-container">
+  <div class="view-action-bar">
+    <button mat-button (click)="cancel()"><mat-icon>arrow_back</mat-icon> Back to Routes</button>
+  </div>
+
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">alt_route</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ isEdit ? 'Edit Transit Route' : 'Create Transit Route' }}</h1>
+          <div class="view-meta">
+            <span><mat-icon>route</mat-icon> Route Configuration</span>
+            <span><mat-icon>pin_drop</mat-icon> Master Waypoints Sync</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Editor</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Form Detail Card -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>edit_note</mat-icon> Route Particulars & Transit Stops
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="form-body">
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Branch</mat-label>
+            <mat-select formControlName="branch_id">
+              <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+            </mat-select>
+            <mat-error>Branch is required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Route Number</mat-label>
+            <input matInput formControlName="route_number" maxlength="50" placeholder="e.g. RT-01">
+            <mat-error>Route number is required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Route Name</mat-label>
+            <input matInput formControlName="route_name" maxlength="255" placeholder="e.g. North Campus Express">
+            <mat-error>Route name is required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Fare (₹)</mat-label>
+            <input matInput type="number" min="0" formControlName="fare">
+            <mat-error>Fare is required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Distance (km)</mat-label>
+            <input matInput type="number" min="0" formControlName="distance">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Estimated Time (min)</mat-label>
+            <input matInput type="number" min="0" formControlName="estimated_time">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Description / Route Instructions</mat-label>
+          <textarea matInput rows="2" formControlName="description"></textarea>
+        </mat-form-field>
+
+        <!-- Stops editor -->
+        <div class="stops-section" formArrayName="stops">
+          <div class="stops-head">
+            <div>
+              <h3>Route Transit Stops</h3>
+              <p class="stops-sub">Select stops from the master catalog to automatically attach GPS coordinates and geofences.</p>
+            </div>
+            <button mat-stroked-button color="primary" type="button" (click)="addStop()">
+              <mat-icon>add_location_alt</mat-icon> Add Stop
+            </button>
+          </div>
+          <div class="stop-row" *ngFor="let s of stops.controls; let i = index" [formGroupName]="i">
+            <span class="seq">{{ i + 1 }}</span>
+
+            <mat-form-field appearance="outline" class="stop-select">
+              <mat-label>Select Master Stop</mat-label>
+              <mat-select (selectionChange)="onStopSelectionChange(i, $event.value)">
+                <mat-option *ngFor="let ms of masterStops" [value]="ms.stop_name">
+                  {{ ms.stop_name }} <span *ngIf="ms.landmark" class="sub-landmark">({{ ms.landmark }})</span>
+                </mat-option>
+                <mat-option value="__custom__"><em>+ Custom Stop Name...</em></mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="stop-name">
+              <mat-label>Stop name *</mat-label>
+              <input matInput formControlName="stop_name" placeholder="Stop name" required>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="stop-time">
+              <mat-label>Pickup</mat-label>
+              <input matInput type="time" formControlName="pickup_time">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="stop-time">
+              <mat-label>Drop</mat-label>
+              <input matInput type="time" formControlName="drop_time">
+            </mat-form-field>
+
+            <button mat-icon-button color="warn" type="button" (click)="removeStop(i)" matTooltip="Remove stop">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <p class="no-stops" *ngIf="!stops.length">No stops added yet. Click "Add Stop" to assign transit stops.</p>
+        </div>
+
+        <div class="checkbox-row">
+          <mat-checkbox formControlName="is_active">Active Route</mat-checkbox>
+        </div>
+
+        <div class="form-actions">
+          <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+            <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Create' }} Route
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

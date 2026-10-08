@@ -1,0 +1,205 @@
+<div class="fee-type-form-container">
+  <mat-card class="form-card" *ngIf="!loading">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'category' }}</mat-icon>
+        {{ isEditMode ? 'Edit Fee Type' : 'Add New Fee Type' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode ? 'Update fee type information' : 'Create a new fee type for your institution' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <form [formGroup]="feeTypeForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>info</mat-icon>
+            Basic Information
+          </h3>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Fee Type Name *</mat-label>
+              <mat-icon matPrefix>label</mat-icon>
+              <input matInput 
+                formControlName="name" 
+                placeholder="e.g., Tuition Fee, Library Fee, Sports Fee"
+                (blur)="generateCode()">
+              <mat-hint>Enter a descriptive name for this fee type</mat-hint>
+              <mat-error *ngIf="feeTypeForm.get('name')?.hasError('required')">
+                Fee type name is required
+              </mat-error>
+              <mat-error *ngIf="feeTypeForm.get('name')?.hasError('maxlength')">
+                Name cannot exceed 255 characters
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Fee Code *</mat-label>
+              <mat-icon matPrefix>tag</mat-icon>
+              <input matInput 
+                formControlName="code" 
+                placeholder="e.g., TUITION, LIBRARY"
+                maxlength="50"
+                style="text-transform: uppercase;">
+              <mat-hint>Unique identifier (auto-generated)</mat-hint>
+              <mat-error *ngIf="feeTypeForm.get('code')?.hasError('required')">
+                Code is required
+              </mat-error>
+              <mat-error *ngIf="feeTypeForm.get('code')?.hasError('maxlength')">
+                Code cannot exceed 50 characters
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Branch *</mat-label>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-select formControlName="branch_id" placeholder="Select branch">
+                <mat-option *ngFor="let branch of branches" [value]="branch.id">
+                  {{ branch.name }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Select the branch for this fee type</mat-hint>
+              <mat-error *ngIf="feeTypeForm.get('branch_id')?.hasError('required')">
+                Branch is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field-half">
+              <mat-label>Academic Year *</mat-label>
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-select formControlName="academic_year_id" placeholder="Select academic year">
+                <mat-option *ngFor="let ay of academicYears" [value]="ay.id">
+                  {{ ay.name }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Select the academic year for this fee type</mat-hint>
+              <mat-error *ngIf="feeTypeForm.get('academic_year_id')?.hasError('required')">
+                Academic year is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field-full">
+              <mat-label>Description</mat-label>
+              <mat-icon matPrefix>description</mat-icon>
+              <textarea 
+                matInput 
+                formControlName="description" 
+                rows="4"
+                placeholder="Provide additional details about this fee type (optional)"
+                maxlength="500">
+              </textarea>
+              <mat-hint align="end">
+                {{ feeTypeForm.get('description')?.value?.length || 0 }}/500
+              </mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Fee Type Settings -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <mat-icon>settings</mat-icon>
+            Fee Type Configuration
+          </h3>
+          
+          <div class="settings-grid">
+            <!-- Is Mandatory -->
+            <div class="setting-card">
+              <div class="setting-content">
+                <div class="setting-icon-wrapper mandatory">
+                  <mat-icon>check_circle</mat-icon>
+                </div>
+                <div class="setting-info">
+                  <h4>Mandatory Fee</h4>
+                  <p>This fee is required for all students</p>
+                </div>
+              </div>
+              <mat-slide-toggle 
+                formControlName="is_mandatory" 
+                color="primary"
+                class="setting-toggle">
+              </mat-slide-toggle>
+            </div>
+
+            <!-- Is Refundable -->
+            <div class="setting-card">
+              <div class="setting-content">
+                <div class="setting-icon-wrapper refundable">
+                  <mat-icon>currency_exchange</mat-icon>
+                </div>
+                <div class="setting-info">
+                  <h4>Refundable</h4>
+                  <p>This fee can be refunded to students</p>
+                </div>
+              </div>
+              <mat-slide-toggle 
+                formControlName="is_refundable" 
+                color="primary"
+                class="setting-toggle">
+              </mat-slide-toggle>
+            </div>
+
+            <!-- Is Active -->
+            <div class="setting-card">
+              <div class="setting-content">
+                <div class="setting-icon-wrapper active">
+                  <mat-icon>toggle_on</mat-icon>
+                </div>
+                <div class="setting-info">
+                  <h4>Active Status</h4>
+                  <p>Fee type is active and available for use</p>
+                </div>
+              </div>
+              <mat-slide-toggle 
+                formControlName="is_active" 
+                color="primary"
+                class="setting-toggle">
+              </mat-slide-toggle>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <!-- Form Actions -->
+    <mat-card-actions align="end">
+      <button 
+        mat-button 
+        type="button" 
+        (click)="onCancel()"
+        [disabled]="submitting">
+        <mat-icon>close</mat-icon>
+        Cancel
+      </button>
+      
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit"
+        (click)="onSubmit()"
+        [disabled]="submitting || feeTypeForm.invalid">
+        <mat-spinner *ngIf="submitting" diameter="20" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!submitting">{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon>
+        {{ submitting ? 'Saving...' : (isEditMode ? 'Update Fee Type' : 'Create Fee Type') }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+  <p>Loading fee type information...</p>
+</div>

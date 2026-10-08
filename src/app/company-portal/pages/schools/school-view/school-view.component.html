@@ -1,0 +1,199 @@
+<div class="view-container" *ngIf="!isLoading && school">
+  <!-- Action Bar -->
+  <div class="view-action-bar">
+    <button mat-button (click)="onBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to List
+    </button>
+    <div class="action-buttons">
+      <button 
+        mat-raised-button 
+        color="accent" 
+        (click)="openUserSelection()">
+        <mat-icon>login</mat-icon>
+        Access School
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        Edit
+      </button>
+      <button 
+        mat-raised-button 
+        color="warn" 
+        (click)="onDelete()">
+        <mat-icon>delete</mat-icon>
+        Delete
+      </button>
+      <mat-slide-toggle 
+        [checked]="school.status === 'Active'" 
+        (change)="toggleStatus()"
+        color="primary"
+        style="margin-left: auto;">
+        {{ school.status === 'Active' ? 'Active' : 'Inactive' }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">{{ getSchoolIcon() }}</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ school.name }}</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>qr_code</mat-icon>
+              {{ school.code }}
+            </span>
+            <span *ngIf="school.company">
+              <mat-icon>business</mat-icon>
+              {{ school.company.name }}
+            </span>
+            <span class="status-badge" [class]="getStatusClass(school.status)">
+              <mat-icon>circle</mat-icon>
+              {{ school.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Cards -->
+  <div class="view-stats-grid" *ngIf="stats || school.branches_count !== undefined">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon branches">
+          <mat-icon>business</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ school.branches_count || 0 }}</div>
+          <div class="stat-label">Total Branches</div>
+          <div class="stat-sub-label" *ngIf="school.active_branches_count">
+            {{ school.active_branches_count }} active
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ school.total_students || 0 }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ school.total_teachers || 0 }}</div>
+          <div class="stat-label">Total Teachers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" *ngIf="stats && stats.total_departments">
+      <mat-card-content>
+        <div class="stat-icon departments">
+          <mat-icon>apartment</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.total_departments || 0 }}</div>
+          <div class="stat-label">Departments</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Details Sections -->
+  <div class="view-details-grid">
+    <!-- Basic Information -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Basic Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-row">
+          <span class="detail-label">School Name:</span>
+          <span class="detail-value">{{ school.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Code:</span>
+          <span class="detail-value">{{ school.code }}</span>
+        </div>
+        <div class="detail-row" *ngIf="school.company">
+          <span class="detail-label">Company:</span>
+          <span class="detail-value">{{ school.company.name }}</span>
+        </div>
+        <div class="detail-row" *ngIf="school.main_branch">
+          <span class="detail-label">Main Branch:</span>
+          <span class="detail-value">{{ school.main_branch.name }}</span>
+        </div>
+        <div class="detail-row" *ngIf="school.created_at">
+          <span class="detail-label">Created:</span>
+          <span class="detail-value">{{ school.created_at | date }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Branches List -->
+    <mat-card class="detail-card" *ngIf="school.branches && school.branches.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>business</mat-icon>
+          Branches
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="branches-list">
+          <div class="branch-item" *ngFor="let branch of school.branches">
+            <mat-icon>store</mat-icon>
+            <div class="branch-info">
+              <span class="branch-name">{{ branch.name }}</span>
+              <span class="branch-code">{{ branch.code }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Settings -->
+    <mat-card class="detail-card" *ngIf="school.settings">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>settings</mat-icon>
+          Settings
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="settings-display">
+          <pre>{{ school.settings | json }}</pre>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="view-loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Loading school details...</p>
+</div>
+

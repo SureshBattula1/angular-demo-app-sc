@@ -2,10 +2,11 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableConfig, SearchEvent } from '../../../../shared/components/data-table/data-table.interface';
+import { TableConfig, SearchEvent, PaginationEvent, SortEvent } from '../../../../shared/components/data-table/data-table.interface';
 import { AdvancedSearchConfig } from '../../../../shared/components/advanced-search-sidebar/search-field.interface';
 import { AccountService } from '../../services/account.service';
 import { ErrorHandlerService } from '../../../../core/services/error-handler.service';
+import { ExportService } from '../../../../shared/services/export.service';
 import { Transaction } from '../../../../core/models/account.model';
 
 @Component({
@@ -24,7 +25,10 @@ import { Transaction } from '../../../../core/models/account.model';
       (rowClicked)="onRowClick($event)"
       (selectionChanged)="onSelectionChange($event)"
       (exportClicked)="onExport($event)"
-      (advancedSearchChanged)="onAdvancedSearchChange($event)">
+      (paginationChanged)="onPaginationChange($event)"
+      (sortChanged)="onSortChange($event)"
+      (advancedSearchChanged)="onAdvancedSearchChange($event)"
+      (searchResetEvent)="onSearchReset()">
     </app-data-table>
   `,
   styles: [`:host { display: block; }`]
@@ -51,7 +55,8 @@ export class IncomeListComponent implements OnInit {
     actions: [
       { icon: 'visibility', label: 'View Details', action: (row) => this.viewTransaction(row) },
       { icon: 'edit', label: 'Edit', color: 'primary', action: (row) => this.editTransaction(row) },
-      { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row) }
+      { icon: 'check_circle', label: 'Approve', color: 'accent', action: (row) => this.approveTransaction(row), show: (row) => (row?.status ?? '') === 'Pending' },
+      { icon: 'download', label: 'Download Receipt', color: 'primary', action: (row) => this.downloadReceipt(row) }
     ],
     selectable: true,
     pagination: true,
@@ -59,7 +64,7 @@ export class IncomeListComponent implements OnInit {
     advancedSearch: true,
     exportable: true,
     responsive: true,
-    serverSide: false,
+    serverSide: true,
     totalCount: 0,
     pageSizeOptions: [10, 25, 50, 100],
     defaultPageSize: 25
@@ -111,7 +116,8 @@ export class IncomeListComponent implements OnInit {
   constructor(
     private accountService: AccountService,
     private router: Router,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private exportService: ExportService
   ) {}
   
   ngOnInit(): void {
@@ -124,9 +130,13 @@ export class IncomeListComponent implements OnInit {
     
     this.accountService.getTransactions(this.currentFilters).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.transactions = response.data;
-          this.tableConfig.totalCount = response.data.length;
+        if (response.success) {
+          this.transactions = response.data || [];
+          if (response.meta) {
+            this.tableConfig = { ...this.tableConfig, totalCount: response.meta.total };
+          } else {
+            this.tableConfig = { ...this.tableConfig, totalCount: this.transactions.length };
+          }
         }
         this.loading = false;
       },
@@ -135,6 +145,24 @@ export class IncomeListComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+  
+  onPaginationChange(event: PaginationEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      page: event.page + 1,
+      per_page: event.pageSize
+    };
+    this.loadTransactions();
+  }
+  
+  onSortChange(event: SortEvent): void {
+    this.currentFilters = {
+      ...this.currentFilters,
+      sort_by: event.field,
+      sort_direction: event.direction
+    };
+    this.loadTransactions();
   }
   
   loadCategories(): void {
@@ -147,7 +175,6 @@ export class IncomeListComponent implements OnInit {
           }
         }
       },
-      error: (error) => console.error('Error loading categories:', error)
     });
   }
   
@@ -155,7 +182,17 @@ export class IncomeListComponent implements OnInit {
     this.currentFilters = {
       ...this.currentFilters,
       ...event.filters,
-      search: event.query
+      search: event.query,
+      page: 1
+    };
+    this.loadTransactions();
+  }
+
+  onSearchReset(): void {
+    this.currentFilters = {
+      type: 'Income',
+      page: 1,
+      per_page: this.tableConfig.defaultPageSize ?? 25
     };
     this.loadTransactions();
   }
@@ -177,7 +214,8 @@ export class IncomeListComponent implements OnInit {
   }
   
   viewTransaction(transaction: Transaction): void {
-    this.router.navigate(['/accounts/transactions/view', transaction.id]);
+    // No dedicated view page; the transaction form (edit route) displays all details.
+    this.router.navigate(['/accounts/transactions/edit', transaction.id]);
   }
   
   editTransaction(transaction: Transaction): void {
@@ -188,6 +226,27 @@ export class IncomeListComponent implements OnInit {
     }
   }
   
+  downloadReceipt(transaction: Transaction): void {
+    if (transaction.status !== 'Approved') {
+      this.errorHandler.showWarning('Receipt is only available for approved transactions.');
+      return;
+    }
+    this.errorHandler.showInfo('Preparing receipt PDF...');
+    this.accountService.downloadTransactionReceipt(transaction.id).subscribe({
+      next: (blob: Blob) => {
+        const fileName = (transaction.transaction_number ? `income-receipt-${transaction.transaction_number}` : `income-receipt-${transaction.id}`).replace(/[#\s]/g, '-') + '.pdf';
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.errorHandler.showSuccess('Receipt downloaded.');
+      },
+      error: (err) => this.errorHandler.showError(err)
+    });
+  }
+
   approveTransaction(transaction: Transaction): void {
     if (transaction.status !== 'Pending') {
       this.errorHandler.showWarning('Transaction is already ' + transaction.status);
@@ -209,8 +268,24 @@ export class IncomeListComponent implements OnInit {
     }
   }
   
-  onExport(format: string): void {
-    this.errorHandler.showInfo(`Export income as ${format} - Feature coming soon`);
+  onExport(format: 'excel' | 'pdf' | 'csv'): void {
+    // Show loading message
+    this.errorHandler.showInfo(`Exporting income transactions as ${format.toUpperCase()}...`);
+    
+    // Call export service with current filters and type
+    this.exportService.export(
+      {
+        endpoint: '/transactions/export',
+        filename: 'income_transactions'
+      },
+      {
+        format: format,
+        filters: {
+          ...this.currentFilters,
+          type: 'Income'  // Ensure we export income transactions only
+        }
+      }
+    );
   }
 }
 

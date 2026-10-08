@@ -1,0 +1,61 @@
+<div class="shelves-page-container">
+  <app-data-table
+    [data]="shelves"
+    [config]="tableConfig"
+    [title]="'Library Shelves & Racks'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)">
+  </app-data-table>
+
+  <!-- Add/Edit Shelf Modal -->
+  <div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">{{ editItem ? 'edit' : 'grid_view' }}</mat-icon>
+          <h3>{{ editItem ? 'Edit Shelf' : 'Add New Shelf / Rack' }}</h3>
+        </div>
+        <button mat-icon-button (click)="closeModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="flex-1">
+            <mat-label>Rack Number *</mat-label>
+            <input matInput [(ngModel)]="formData.rack_number" placeholder="e.g. Rack A" required />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="flex-1">
+            <mat-label>Shelf Number</mat-label>
+            <input matInput [(ngModel)]="formData.shelf_number" placeholder="e.g. Shelf 1" />
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="flex-1">
+            <mat-label>Floor</mat-label>
+            <input matInput [(ngModel)]="formData.floor" placeholder="e.g. 1st Floor" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="flex-1">
+            <mat-label>Room / Section</mat-label>
+            <input matInput [(ngModel)]="formData.room" placeholder="e.g. Room 204" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Shelf Capacity (Books) *</mat-label>
+          <input matInput type="number" [(ngModel)]="formData.capacity" required />
+        </mat-form-field>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!formData.rack_number" (click)="saveShelf()">
+          <mat-icon>check</mat-icon> Save Shelf
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

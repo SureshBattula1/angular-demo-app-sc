@@ -1,0 +1,317 @@
+<div class="view-container hub-page">
+  <mat-card class="view-header-card hub-toolbar-card">
+    <mat-toolbar class="module-toolbar">
+      <button
+        mat-button
+        type="button"
+        class="toolbar-menu-item"
+        *ngFor="let tab of tabs"
+        [class.active]="activeTab === tab.id"
+        (click)="switchTab(tab.id)">
+        <mat-icon>{{ tab.icon }}</mat-icon>
+        <span>{{ tab.label }}</span>
+      </button>
+    </mat-toolbar>
+  </mat-card>
+
+  <ng-container *ngIf="activeTab === 'dashboard'">
+    <mat-card class="view-header-card hub-hero-card">
+      <mat-card-content>
+        <div class="view-header">
+          <div class="view-avatar">
+            <mat-icon class="avatar-icon">notifications_active</mat-icon>
+          </div>
+          <div class="view-info">
+            <h1 class="view-name">Notification campaigns</h1>
+            <div class="view-meta">
+              <span>
+                <mat-icon>business</mat-icon>
+                {{ selectedBranchLabel }}
+              </span>
+              <span>
+                <mat-icon>campaign</mat-icon>
+                {{ cachedTotals.campaigns | number }} campaigns
+              </span>
+              <span>
+                <mat-icon>groups</mat-icon>
+                {{ cachedTotals.recipients | number }} recipients
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="dashboard-filters">
+      <mat-form-field
+        appearance="outline"
+        class="branch-filter compact-field"
+        subscriptSizing="dynamic"
+        *ngIf="showBranchSelector">
+        <mat-label>Branch</mat-label>
+        <mat-select [(ngModel)]="dashboardBranchId" (selectionChange)="onDashboardBranchChange()">
+          <mat-option value="all">All branches</mat-option>
+          <mat-option *ngFor="let branch of branches" [value]="'' + branch.id">{{ branch.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <span class="branch-lock-chip" *ngIf="!showBranchSelector && selectedBranchLabel">
+        <mat-icon>business</mat-icon>
+        {{ selectedBranchLabel }}
+      </span>
+
+      <mat-button-toggle-group [formControl]="selectedPeriod" class="period-toggle" (change)="onPeriodChange()">
+        <mat-button-toggle value="all">All time</mat-button-toggle>
+        <mat-button-toggle value="today">Today</mat-button-toggle>
+        <mat-button-toggle value="week">Week</mat-button-toggle>
+        <mat-button-toggle value="month">Month</mat-button-toggle>
+        <mat-button-toggle value="custom">Custom</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="custom-range-row" *ngIf="selectedPeriod.value === 'custom'">
+      <mat-form-field appearance="outline" class="date-field compact-field" subscriptSizing="dynamic">
+        <mat-label>From</mat-label>
+        <input matInput [matDatepicker]="fromPicker" [formControl]="customFromDate" (dateChange)="onCustomRangeChange()" />
+        <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #fromPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="date-field compact-field" subscriptSizing="dynamic">
+        <mat-label>To</mat-label>
+        <input matInput [matDatepicker]="toPicker" [formControl]="customToDate" (dateChange)="onCustomRangeChange()" />
+        <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+        <mat-datepicker #toPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <div class="alert-banner" *ngIf="!dashboardCoreLoading && cachedTotals.failed > 0">
+      <mat-icon>warning_amber</mat-icon>
+      <div class="alert-text">
+        <strong>{{ cachedTotals.failed | number }} campaign(s) need attention</strong>
+        <span>Review failed or partial deliveries.</span>
+      </div>
+      <button mat-stroked-button type="button" color="warn" (click)="openModuleWithMostFailures()">
+        Review module
+      </button>
+    </div>
+
+    <div class="dashboard-content" *ngIf="dashboardPayload">
+      <div class="stats-grid" [class.is-refreshing]="dashboardCoreLoading">
+        <div class="stat-card primary">
+          <div class="card-icon"><mat-icon>campaign</mat-icon></div>
+          <div class="card-content">
+            <div class="stat-value">{{ cachedTotals.campaigns | number }}</div>
+            <div class="stat-label">Total campaigns</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="card-icon"><mat-icon>check_circle</mat-icon></div>
+          <div class="card-content">
+            <div class="stat-value">{{ cachedTotals.sent | number }}</div>
+            <div class="stat-label">Sent</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="card-icon"><mat-icon>schedule</mat-icon></div>
+          <div class="card-content">
+            <div class="stat-value">{{ cachedTotals.pending | number }}</div>
+            <div class="stat-label">Pending</div>
+          </div>
+        </div>
+        <div class="stat-card info">
+          <div class="card-icon"><mat-icon>groups</mat-icon></div>
+          <div class="card-content">
+            <div class="stat-value">{{ cachedTotals.recipients | number }}</div>
+            <div class="stat-label">Recipients</div>
+          </div>
+        </div>
+        <div class="stat-card accent">
+          <div class="card-icon"><mat-icon>trending_up</mat-icon></div>
+          <div class="card-content">
+            <div class="stat-value">{{ deliveryRatePercent }}%</div>
+            <div class="stat-label">Delivery rate</div>
+            <div class="stat-subtext">Sent vs in-flight + failed</div>
+          </div>
+        </div>
+        <div class="stat-card danger" *ngIf="cachedTotals.failed > 0">
+          <div class="card-icon"><mat-icon>error_outline</mat-icon></div>
+          <div class="card-content">
+            <div class="stat-value">{{ cachedTotals.failed | number }}</div>
+            <div class="stat-label">Failed / partial</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid" *ngIf="showCharts">
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>pie_chart</mat-icon>
+              Status overview
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <app-doughnut-chart
+              *ngIf="statusChart"
+              [data]="statusChart"
+              [height]="'240px'"
+              [responsive]="true"
+              [showLegend]="true">
+            </app-doughnut-chart>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>bar_chart</mat-icon>
+              By module
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <app-bar-chart
+              *ngIf="moduleBarChart"
+              [data]="moduleBarChart"
+              [height]="'260px'"
+              [responsive]="true"
+              [showLegend]="true">
+            </app-bar-chart>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="chart-card chart-card--wide" *ngIf="showCharts">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>show_chart</mat-icon>
+            Activity (last 7 days)
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-placeholder" *ngIf="dashboardExtrasLoading">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span>Loading activity…</span>
+          </div>
+          <app-line-chart
+            *ngIf="!dashboardExtrasLoading && activityLineChart"
+            [data]="activityLineChart"
+            [height]="'260px'"
+            [responsive]="true"
+            [showLegend]="true">
+          </app-line-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="module-section-title">
+        <h2>Modules</h2>
+        <p>Schedule or open campaign lists by type</p>
+      </div>
+
+      <div class="module-grid">
+        <mat-card class="module-card" *ngFor="let card of moduleCards; trackBy: trackModuleCard" [ngClass]="card.theme">
+          <mat-card-header>
+            <div class="module-card-head">
+              <div class="module-icon-wrap">
+                <mat-icon>{{ card.icon }}</mat-icon>
+              </div>
+              <mat-card-title>{{ card.label }}</mat-card-title>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="module-hero-metric">
+              <span class="metric-value">{{ card.stats.recipients | number }}</span>
+              <span class="metric-label">Recipients</span>
+            </div>
+            <div class="module-chips">
+              <span class="chip">{{ card.stats.campaigns }} campaigns</span>
+              <span class="chip sent">{{ card.stats.sent }} sent</span>
+              <span class="chip pending" *ngIf="card.stats.pending">{{ card.stats.pending }} pending</span>
+              <span class="chip failed" *ngIf="card.stats.failed">{{ card.stats.failed }} failed</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-label">
+                <span>Sent progress</span>
+                <span>{{ moduleSentProgress(card.stats) }}%</span>
+              </div>
+              <mat-progress-bar mode="determinate" [value]="moduleSentProgress(card.stats)"></mat-progress-bar>
+            </div>
+            <div class="module-actions">
+              <button mat-stroked-button type="button" (click)="switchTab(card.key)">Open list</button>
+              <button mat-flat-button color="primary" type="button" (click)="scheduleModule(card.key)">
+                <mat-icon>schedule_send</mat-icon>
+                Schedule
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="recent-card">
+        <mat-card-header>
+          <mat-card-title>Recent campaigns</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="recent-table-wrap">
+          <div class="chart-placeholder" *ngIf="dashboardExtrasLoading && recentRows.length === 0">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span>Loading recent campaigns…</span>
+          </div>
+          <p class="recent-empty" *ngIf="!dashboardExtrasLoading && recentRows.length === 0">No campaigns yet for this filter.</p>
+          <table mat-table *ngIf="recentRows.length" [dataSource]="recentRows" class="recent-table">
+            <ng-container matColumnDef="module">
+              <th mat-header-cell *matHeaderCellDef>Module</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-icon class="row-module-icon">{{ moduleIcon(row.module) }}</mat-icon>
+                {{ moduleLabel(row.module) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="branch">
+              <th mat-header-cell *matHeaderCellDef>Branch</th>
+              <td mat-cell *matCellDef="let row">{{ row.branch_name || '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="scheduled">
+              <th mat-header-cell *matHeaderCellDef>Scheduled</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.scheduled_at ? (row.scheduled_at | date:'medium') : '—' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill" [ngClass]="statusClass(row.status)">
+                  {{ campaignStatusLabel(row.status) }}
+                </span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="recipients">
+              <th mat-header-cell *matHeaderCellDef>Recipients</th>
+              <td mat-cell *matCellDef="let row">{{ row.recipient_count | number }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button type="button" aria-label="View" (click)="viewRecent(row)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="['module', 'branch', 'scheduled', 'status', 'recipients', 'actions']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['module', 'branch', 'scheduled', 'status', 'recipients', 'actions']"></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+
+  <app-data-table
+    *ngIf="activeTab !== 'dashboard'"
+    [attr.data-list-key]="listTableKey"
+    [data]="rows"
+    [config]="activeListTableConfig"
+    [title]="activeTab === 'custom' ? 'Custom notifications' : (activeTab | titlecase)"
+    [loading]="loading"
+    [advancedSearchConfig]="activeAdvancedSearchConfig"
+    (actionClicked)="onAction($event)"
+    (advancedSearchChanged)="onAdvancedSearch($event)"
+    (searchFieldChanged)="onSearchFieldChanged($event)"
+    (searchResetEvent)="onSearchReset()"
+    (paginationChanged)="onPagination($event)">
+  </app-data-table>
+</div>

@@ -41,17 +41,24 @@
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Branch *</mat-label>
               <mat-select formControlName="branch_id">
+                <mat-option *ngIf="branches.length === 0" disabled>
+                  Loading branches...
+                </mat-option>
                 <mat-option *ngFor="let branch of branches" [value]="branch.id">
                   {{ branch.name }} ({{ branch.code }})
                 </mat-option>
               </mat-select>
               <mat-icon matPrefix>business_center</mat-icon>
+              <mat-hint *ngIf="branches.length > 0">{{ branches.length }} branches available</mat-hint>
+              <mat-hint *ngIf="branches.length === 0">No branches found. Please contact administrator.</mat-hint>
               <mat-error *ngIf="departmentForm.get('branch_id')?.invalid">{{ getErrorMessage('branch_id') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field-half">
               <mat-label>Established Date *</mat-label>
-              <input matInput type="date" formControlName="established_date">
+              <input matInput [matDatepicker]="establishedDatePicker" formControlName="established_date" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="establishedDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #establishedDatePicker></mat-datepicker>
               <mat-icon matPrefix>event</mat-icon>
               <mat-error *ngIf="departmentForm.get('established_date')?.invalid">{{ getErrorMessage('established_date') }}</mat-error>
             </mat-form-field>

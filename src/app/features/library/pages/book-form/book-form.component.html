@@ -1,0 +1,619 @@
+<div class="book-form-page">
+  <!-- Top Banner / Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button type="button" (click)="cancel()" class="back-btn" matTooltip="Back to Catalog">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <div class="breadcrumb">Library / Catalog / {{ isEdit ? 'Edit Book' : 'New Book' }}</div>
+        <h1>
+          <mat-icon>{{ isEdit ? 'edit_note' : 'menu_book' }}</mat-icon>
+          {{ isEdit ? 'Edit Book Record' : 'Add New Book' }}
+        </h1>
+        <p class="subtitle">Fill in bibliographic data, dynamic catalog masters, copy counts, and shelf placement.</p>
+      </div>
+    </div>
+    <div class="header-right" *ngIf="loadingMasters">
+      <span class="loading-masters-badge">
+        <mat-spinner diameter="16"></mat-spinner> Loading masters...
+      </span>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="44"></mat-spinner>
+    <p>Loading book data...</p>
+  </div>
+
+  <div class="form-container" *ngIf="!loading">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="book-form">
+
+      <!-- SECTION 1: Core Identification -->
+      <section class="form-section">
+        <div class="section-header">
+          <mat-icon>badge</mat-icon>
+          <div>
+            <h3>Basic Information</h3>
+            <p>Branch ownership, title, and standard identifier</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Branch *</mat-label>
+            <mat-select formControlName="branch_id">
+              <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('branch_id')?.hasError('required')">Branch is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col-span-2">
+            <mat-label>Book Title *</mat-label>
+            <input matInput formControlName="title" placeholder="e.g. Introduction to Algorithms" maxlength="255">
+            <mat-error *ngIf="form.get('title')?.hasError('required')">Title is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>ISBN (10 / 13)</mat-label>
+            <input matInput formControlName="isbn" placeholder="e.g. 978-0262033848" maxlength="50">
+            <mat-icon matSuffix>qr_code</mat-icon>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Dynamic Catalog Masters (Categories, Authors, Publishers, Subjects) -->
+      <section class="form-section highlight-section">
+        <div class="section-header">
+          <mat-icon>category</mat-icon>
+          <div>
+            <h3>Catalog Masters & Classification</h3>
+            <p>Dynamic dropdowns linked with library masters. Select or create new entities on the fly.</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <!-- CATEGORY DYNAMIC DROPDOWN -->
+          <div class="field-with-quick-add">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Category *</mat-label>
+              <mat-select formControlName="category_id" (selectionChange)="onCategorySelect($event.value)" placeholder="Select category">
+                <mat-option [value]="'__NEW__'" class="quick-add-option">
+                  <mat-icon>add_circle</mat-icon>
+                  <strong>+ Create New Category</strong>
+                </mat-option>
+                <mat-divider></mat-divider>
+                <mat-option [value]="null">-- None / Clear --</mat-option>
+                <mat-option *ngFor="let c of categories" [value]="c.id">
+                  {{ c.name }} <span *ngIf="c.code" class="opt-tag">({{ c.code }})</span>
+                </mat-option>
+              </mat-select>
+              <button mat-icon-button matSuffix type="button" (click)="$event.stopPropagation(); openQuickAdd('category')" matTooltip="Quick add Category" class="quick-add-btn">
+                <mat-icon>add</mat-icon>
+              </button>
+              <mat-error *ngIf="form.get('category_id')?.hasError('required')">Category is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- AUTHOR DYNAMIC DROPDOWN -->
+          <div class="field-with-quick-add">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Author *</mat-label>
+              <mat-select formControlName="author_id" (selectionChange)="onAuthorSelect($event.value)" placeholder="Select author">
+                <mat-option [value]="'__NEW__'" class="quick-add-option">
+                  <mat-icon>add_circle</mat-icon>
+                  <strong>+ Create New Author</strong>
+                </mat-option>
+                <mat-divider></mat-divider>
+                <mat-option [value]="null">-- None / Clear --</mat-option>
+                <mat-option *ngFor="let a of authors" [value]="a.id">
+                  {{ a.name }} <span *ngIf="a.nationality" class="opt-tag">({{ a.nationality }})</span>
+                </mat-option>
+              </mat-select>
+              <button mat-icon-button matSuffix type="button" (click)="$event.stopPropagation(); openQuickAdd('author')" matTooltip="Quick add Author" class="quick-add-btn">
+                <mat-icon>add</mat-icon>
+              </button>
+              <mat-error *ngIf="form.get('author_id')?.hasError('required')">Author is required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- PUBLISHER DYNAMIC DROPDOWN -->
+          <div class="field-with-quick-add">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Publisher</mat-label>
+              <mat-select formControlName="publisher_id" (selectionChange)="onPublisherSelect($event.value)" placeholder="Select publisher">
+                <mat-option [value]="'__NEW__'" class="quick-add-option">
+                  <mat-icon>add_circle</mat-icon>
+                  <strong>+ Create New Publisher</strong>
+                </mat-option>
+                <mat-divider></mat-divider>
+                <mat-option [value]="null">-- None / Clear --</mat-option>
+                <mat-option *ngFor="let p of publishers" [value]="p.id">
+                  {{ p.name }}
+                </mat-option>
+              </mat-select>
+              <button mat-icon-button matSuffix type="button" (click)="$event.stopPropagation(); openQuickAdd('publisher')" matTooltip="Quick add Publisher" class="quick-add-btn">
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <!-- SUBJECTS DYNAMIC MULTI-SELECT -->
+          <div class="field-with-quick-add">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Subjects</mat-label>
+              <mat-select formControlName="subject_ids" multiple (selectionChange)="onSubjectSelect($event.value)" placeholder="Select subjects">
+                <mat-option [value]="'__NEW__'" class="quick-add-option">
+                  <mat-icon>add_circle</mat-icon>
+                  <strong>+ Create New Subject</strong>
+                </mat-option>
+                <mat-divider></mat-divider>
+                <mat-option *ngFor="let s of subjects" [value]="s.id">
+                  {{ s.name }} <span *ngIf="s.code" class="opt-tag">({{ s.code }})</span>
+                </mat-option>
+              </mat-select>
+              <button mat-icon-button matSuffix type="button" (click)="$event.stopPropagation(); openQuickAdd('subject')" matTooltip="Quick add Subject" class="quick-add-btn">
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Classification & Publishing Details -->
+      <section class="form-section">
+        <div class="section-header">
+          <mat-icon>auto_stories</mat-icon>
+          <div>
+            <h3>Publication & Classification</h3>
+            <p>Language, year, edition, and standard library indexing codes</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <!-- LANGUAGE DROPDOWN -->
+          <mat-form-field appearance="outline">
+            <mat-label>Language *</mat-label>
+            <mat-select formControlName="language">
+              <mat-option *ngFor="let lang of languages" [value]="lang">{{ lang }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('language')?.hasError('required')">Language is required</mat-error>
+          </mat-form-field>
+
+          <!-- PUBLISHED YEAR -->
+          <mat-form-field appearance="outline">
+            <mat-label>Published Year</mat-label>
+            <input matInput [matDatepicker]="yearPicker" formControlName="published_year_date" readonly placeholder="Select year">
+            <mat-datepicker-toggle matSuffix [for]="yearPicker"></mat-datepicker-toggle>
+            <mat-datepicker #yearPicker startView="multi-year" (yearSelected)="onYearSelected($event, yearPicker)"></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Edition</mat-label>
+            <input matInput formControlName="edition" placeholder="e.g. 3rd Edition">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Number of Pages</mat-label>
+            <input matInput type="number" formControlName="pages" min="1" placeholder="e.g. 450">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>DDC Code (Dewey Decimal)</mat-label>
+            <input matInput formControlName="ddc_code" placeholder="e.g. 005.133">
+            <mat-icon matSuffix>tag</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Call Number</mat-label>
+            <input matInput formControlName="call_number" placeholder="e.g. QA76.73 .P98">
+            <mat-icon matSuffix>pin</mat-icon>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- SECTION 4: Inventory & Physical Placement -->
+      <section class="form-section">
+        <div class="section-header">
+          <mat-icon>shelves</mat-icon>
+          <div>
+            <h3>Inventory & Barcode Configuration</h3>
+            <p>Assign total copies, shelves, and configure physical barcodes & accession numbers</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Total Copies *</mat-label>
+            <input matInput type="number" min="1" formControlName="total_copies">
+            <mat-icon matSuffix>copy_all</mat-icon>
+            <mat-error *ngIf="form.get('total_copies')?.hasError('required') || form.get('total_copies')?.hasError('min')">
+              Must be at least 1 copy
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Available Copies</mat-label>
+            <input matInput type="number" min="0" formControlName="available_copies" placeholder="Defaults to total copies">
+            <mat-icon matSuffix>check_circle</mat-icon>
+          </mat-form-field>
+
+          <!-- DYNAMIC SHELF / RACK DROPDOWN -->
+          <div class="field-with-quick-add">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Default Shelf / Rack</mat-label>
+              <mat-select formControlName="shelf_id" (selectionChange)="onShelfSelect($event.value)" placeholder="Select shelf">
+                <mat-option [value]="'__NEW__'" class="quick-add-option">
+                  <mat-icon>add_circle</mat-icon>
+                  <strong>+ Create New Shelf</strong>
+                </mat-option>
+                <mat-divider></mat-divider>
+                <mat-option [value]="null">-- None / Clear --</mat-option>
+                <mat-option *ngFor="let s of shelves" [value]="s.id">
+                  {{ s.code || ('Rack ' + s.rack_number + (s.shelf_number ? '-' + s.shelf_number : '')) }}
+                  <span *ngIf="s.room || s.floor" class="opt-tag">({{ s.floor || '' }} {{ s.room || '' }})</span>
+                </mat-option>
+              </mat-select>
+              <button mat-icon-button matSuffix type="button" (click)="$event.stopPropagation(); openQuickAdd('shelf')" matTooltip="Quick add Shelf" class="quick-add-btn">
+                <mat-icon>add</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Location Text / Details</mat-label>
+            <input matInput formControlName="location" placeholder="e.g. Rack A, Shelf 2">
+            <mat-icon matSuffix>place</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- COPIES & BARCODES CONFIGURATION PANEL -->
+        <div class="copies-config-panel">
+          <div class="config-panel-header">
+            <div class="panel-title-group">
+              <mat-icon class="panel-icon">qr_code_2</mat-icon>
+              <div>
+                <h4>Physical Copies & Barcode Generator</h4>
+                <p>Choose whether to auto-generate standardized barcodes or scan/enter physical barcode stickers</p>
+              </div>
+            </div>
+
+            <!-- MODE SELECTOR BUTTONS -->
+            <div class="mode-toggle-group">
+              <button
+                type="button"
+                class="mode-btn"
+                [class.active]="copiesMode === 'auto'"
+                (click)="onCopiesModeChange('auto')">
+                <mat-icon>auto_fix_high</mat-icon> Auto-Generate Barcodes
+              </button>
+              <button
+                type="button"
+                class="mode-btn"
+                [class.active]="copiesMode === 'custom'"
+                (click)="onCopiesModeChange('custom')">
+                <mat-icon>barcode_reader</mat-icon> Scan / Custom Barcodes
+              </button>
+            </div>
+          </div>
+
+          <!-- AUTO-GENERATE MODE -->
+          <div *ngIf="copiesMode === 'auto'" class="auto-mode-container">
+            <div class="prefix-inputs-row">
+              <div class="prefix-field">
+                <label for="barcodePrefixInput">Barcode Prefix</label>
+                <input
+                  id="barcodePrefixInput"
+                  type="text"
+                  [(ngModel)]="barcodePrefix"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="e.g. BC"
+                  class="custom-text-input" />
+                <span class="field-hint">e.g. BC, LIB, SCH</span>
+              </div>
+
+              <div class="prefix-field">
+                <label for="accessionPrefixInput">Accession Prefix</label>
+                <input
+                  id="accessionPrefixInput"
+                  type="text"
+                  [(ngModel)]="accessionPrefix"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="e.g. ACC-"
+                  class="custom-text-input" />
+                <span class="field-hint">e.g. ACC-, BOOK-</span>
+              </div>
+            </div>
+
+            <div class="auto-preview-box">
+              <div class="preview-label">
+                <mat-icon>preview</mat-icon> Real-time Generated Barcodes Preview (First {{ autoCopiesPreview.length }} copies):
+              </div>
+              <div class="preview-chips-grid">
+                <div class="preview-copy-card" *ngFor="let p of autoCopiesPreview">
+                  <div class="card-head">
+                    <span class="chip-num">Copy #{{ p.copyNum }}</span>
+                    <span class="chip-acc">{{ p.accession }}</span>
+                  </div>
+                  <div class="chip-barcode-svg">
+                    <app-code128-barcode [code]="p.barcode" [height]="26" [scale]="0.9" [showText]="true" [fontSize]="9"></app-code128-barcode>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CUSTOM / SCANNED BARCODES MODE -->
+          <div *ngIf="copiesMode === 'custom'" class="custom-mode-container">
+            <div class="custom-toolbar">
+              <span class="scan-hint">
+                <mat-icon>info</mat-icon> Scan barcode sticker or enter custom numbers. Press Enter to jump to next copy.
+              </span>
+              <div class="toolbar-actions">
+                <button type="button" mat-stroked-button color="primary" (click)="autofillEmptyBarcodes()">
+                  <mat-icon>auto_fix_normal</mat-icon> Fill Empty with Sequence
+                </button>
+                <button type="button" mat-flat-button color="primary" (click)="addCustomCopy()">
+                  <mat-icon>add</mat-icon> Add Copy Row
+                </button>
+              </div>
+            </div>
+
+            <div class="copies-table-wrapper">
+              <table class="custom-copies-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th style="min-width: 170px;">Physical Barcode Sticker *</th>
+                    <th style="min-width: 150px;">Accession Number</th>
+                    <th style="min-width: 150px;">Shelf / Location</th>
+                    <th style="width: 110px;">Condition</th>
+                    <th style="width: 100px;">Price (₹)</th>
+                    <th style="width: 48px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let copy of customCopies; let idx = index">
+                    <td class="text-center font-bold">{{ copy.copy_number }}</td>
+                    <td>
+                      <div class="barcode-input-wrapper">
+                        <mat-icon class="input-icon">barcode_reader</mat-icon>
+                        <input
+                          [id]="'copy-barcode-' + idx"
+                          type="text"
+                          [(ngModel)]="copy.barcode"
+                          [ngModelOptions]="{standalone: true}"
+                          (keyup.enter)="onBarcodeFieldEnter(idx + 1)"
+                          placeholder="Scan or type barcode..."
+                          class="table-text-input" />
+                      </div>
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="copy.accession_number"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="ACC-..."
+                        class="table-text-input" />
+                    </td>
+                    <td>
+                      <select
+                        [(ngModel)]="copy.shelf_id"
+                        [ngModelOptions]="{standalone: true}"
+                        class="table-select-input">
+                        <option [ngValue]="null">-- Default Shelf --</option>
+                        <option *ngFor="let s of shelves" [ngValue]="s.id">
+                          {{ s.code || ('Rack ' + s.rack_number) }}
+                        </option>
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        [(ngModel)]="copy.condition"
+                        [ngModelOptions]="{standalone: true}"
+                        class="table-select-input">
+                        <option value="New">New</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Damaged">Damaged</option>
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        [(ngModel)]="copy.purchase_price"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="₹"
+                        class="table-text-input" />
+                    </td>
+                    <td class="text-center">
+                      <button
+                        type="button"
+                        mat-icon-button
+                        color="warn"
+                        [disabled]="customCopies.length <= 1"
+                        (click)="removeCustomCopy(idx)"
+                        matTooltip="Delete copy">
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: Description & Status -->
+      <section class="form-section">
+        <div class="section-header">
+          <mat-icon>description</mat-icon>
+          <div>
+            <h3>Additional Details</h3>
+            <p>Summary and catalog active status</p>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Book Summary / Description</mat-label>
+          <textarea matInput rows="3" formControlName="description" placeholder="Short synopsis or syllabus reference notes..."></textarea>
+        </mat-form-field>
+
+        <div class="status-toggle">
+          <mat-slide-toggle formControlName="is_active" color="primary">
+            Active in Catalog (Available for Circulation & Search)
+          </mat-slide-toggle>
+        </div>
+      </section>
+
+      <!-- FORM ACTIONS -->
+      <div class="form-actions">
+        <button mat-button type="button" (click)="cancel()" [disabled]="saving">
+          Cancel
+        </button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="saving" class="submit-btn">
+          <mat-spinner diameter="18" *ngIf="saving"></mat-spinner>
+          <mat-icon *ngIf="!saving">{{ isEdit ? 'save' : 'add' }}</mat-icon>
+          <span>{{ isEdit ? 'Update Book' : 'Create Book' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- INLINE QUICK-ADD MODAL -->
+  <div class="quick-add-overlay" *ngIf="quickAddType" (click)="closeQuickAdd()">
+    <div class="quick-add-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <mat-icon color="primary">add_circle</mat-icon>
+          <div>
+            <h3>Create New {{ quickAddTitle }}</h3>
+            <p>Quickly register master item to select directly in this book</p>
+          </div>
+        </div>
+        <button mat-icon-button type="button" (click)="closeQuickAdd()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="quickAddForm" (ngSubmit)="saveQuickAdd()" class="modal-body">
+        <!-- 1. CATEGORY FIELDS -->
+        <ng-container *ngIf="quickAddType === 'category'">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Category Name *</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Computer Science" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Category Code</mat-label>
+            <input matInput formControlName="code" placeholder="e.g. CS01">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="2" formControlName="description" placeholder="Optional category scope"></textarea>
+          </mat-form-field>
+        </ng-container>
+
+        <!-- 2. AUTHOR FIELDS -->
+        <ng-container *ngIf="quickAddType === 'author'">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Author Name *</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Robert C. Martin" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nationality</mat-label>
+            <input matInput formControlName="nationality" placeholder="e.g. American">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Birth Year</mat-label>
+            <input matInput type="number" formControlName="born_year" placeholder="e.g. 1952">
+          </mat-form-field>
+        </ng-container>
+
+        <!-- 3. PUBLISHER FIELDS -->
+        <ng-container *ngIf="quickAddType === 'publisher'">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Publisher Name *</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Pearson Education" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Contact Person</mat-label>
+            <input matInput formControlName="contact_person" placeholder="e.g. John Doe">
+          </mat-form-field>
+
+          <div class="grid-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" placeholder="+91 ...">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="contact@pearson.com">
+            </mat-form-field>
+          </div>
+        </ng-container>
+
+        <!-- 4. SHELF / RACK FIELDS -->
+        <ng-container *ngIf="quickAddType === 'shelf'">
+          <div class="grid-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Rack Number *</mat-label>
+              <input matInput formControlName="rack_number" placeholder="e.g. R1" required>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Shelf Number</mat-label>
+              <input matInput formControlName="shelf_number" placeholder="e.g. S3">
+            </mat-form-field>
+          </div>
+
+          <div class="grid-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Floor</mat-label>
+              <input matInput formControlName="floor" placeholder="e.g. 2nd Floor">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Room</mat-label>
+              <input matInput formControlName="room" placeholder="e.g. Hall A">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Capacity (Books)</mat-label>
+            <input matInput type="number" formControlName="capacity" min="1" placeholder="50">
+          </mat-form-field>
+        </ng-container>
+
+        <!-- 5. SUBJECT FIELDS -->
+        <ng-container *ngIf="quickAddType === 'subject'">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Subject Name *</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Data Structures" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Subject Code</mat-label>
+            <input matInput formControlName="code" placeholder="e.g. SUB-DS">
+          </mat-form-field>
+        </ng-container>
+
+        <div class="modal-actions">
+          <button mat-button type="button" (click)="closeQuickAdd()" [disabled]="savingQuickAdd">
+            Cancel
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="savingQuickAdd">
+            <mat-spinner diameter="16" *ngIf="savingQuickAdd"></mat-spinner>
+            <span *ngIf="!savingQuickAdd">Save & Select</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.result-name-link {
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    text-decoration: underline;
+  }
+}

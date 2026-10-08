@@ -1,14 +1,11 @@
-<!-- Backdrop Overlay -->
-<div class="sidebar-backdrop" 
-  *ngIf="isOpen" 
-  @fadeIn
-  (click)="close()">
-</div>
+<div class="sidebar-backdrop" [class.is-visible]="isOpen" (click)="close()" aria-hidden="true"></div>
 
-<!-- Sidebar -->
-<div class="advanced-search-sidebar" 
-  [@slideIn]="isOpen ? 'open' : 'closed'"
-  [style.width]="(config.width ?? '400px')">
+<div
+  *ngIf="config"
+  class="advanced-search-sidebar"
+  [class.is-open]="isOpen"
+  [style.width]="(config.width ?? '400px')"
+  [attr.aria-hidden]="!isOpen">
   
   <!-- Header -->
   <div class="sidebar-header">
@@ -62,13 +59,15 @@
           <!-- Date Picker -->
           <mat-form-field appearance="outline" *ngIf="field.type === 'date'">
             <mat-label>{{ field.label }}</mat-label>
+            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
             <input matInput 
+              [id]="'date_' + field.key"
               [matDatepicker]="picker"
               [formControlName]="field.key"
-              [required]="field.required || false">
+              [required]="field.required || false"
+              [placeholder]="field.placeholder || 'MM/DD/YYYY'">
             <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
             <mat-datepicker #picker></mat-datepicker>
-            <mat-icon matPrefix *ngIf="field.icon">{{ field.icon }}</mat-icon>
             <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
           </mat-form-field>
           
@@ -142,7 +141,7 @@
     <div class="footer-actions">
       <button mat-stroked-button 
         (click)="onReset()" 
-        *ngIf="config?.showReset !== false"
+        *ngIf="config.showReset !== false"
         class="reset-btn">
         <mat-icon>refresh</mat-icon>
         Reset

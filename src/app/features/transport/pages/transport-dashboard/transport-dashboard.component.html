@@ -1,0 +1,250 @@
+<div class="view-container">
+  
+  <!-- 1. Header Card (Pattern from branches/view) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">dashboard</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">Transit & Fleet Overview</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>directions_bus</mat-icon>
+              {{ summary?.vehicles_count || 0 }} Fleet Vehicles
+            </span>
+            <span>
+              <mat-icon>alt_route</mat-icon>
+              {{ summary?.routes_count || 0 }} Active Routes
+            </span>
+            <span class="status-badge" [class.active]="(summary?.active_trips_count || 0) > 0">
+              <mat-icon>circle</mat-icon>
+              {{ summary?.active_trips_count || 0 }} Trips in Transit
+            </span>
+          </div>
+        </div>
+
+        <div class="header-action-buttons">
+          <button mat-button (click)="loadDashboard()" [disabled]="loading" class="header-btn-light">
+            <mat-icon [class.spin]="loading">refresh</mat-icon> Refresh
+          </button>
+          <button mat-raised-button color="accent" routerLink="/transport/trips" class="header-btn-accent">
+            <mat-icon>add_road</mat-icon> Manage Trips
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !summary" class="loading-state-box">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Loading transit analytics...</span>
+  </div>
+
+  <!-- 2. Statistics Cards Grid (Pattern from branches/view) -->
+  <div class="view-stats-grid" *ngIf="summary">
+    <mat-card class="stat-card" routerLink="/transport/students">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.students_count || 0 }}</div>
+          <div class="stat-label">Students Transported</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" routerLink="/transport/routes">
+      <mat-card-content>
+        <div class="stat-icon subjects">
+          <mat-icon>alt_route</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.routes_count || 0 }}</div>
+          <div class="stat-label">Active Routes</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" routerLink="/transport/vehicles">
+      <mat-card-content>
+        <div class="stat-icon teachers">
+          <mat-icon>directions_bus</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.vehicles_count || 0 }}</div>
+          <div class="stat-label">Fleet Vehicles</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" routerLink="/transport/drivers">
+      <mat-card-content>
+        <div class="stat-icon sections">
+          <mat-icon>badge</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ summary.drivers_count || 0 }}</div>
+          <div class="stat-label">Verified Drivers</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card" routerLink="/transport/trips">
+      <mat-card-content>
+        <div class="stat-icon capacity">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">
+            {{ summary.today_trips_count || 0 }}
+            <small class="active-badge" *ngIf="summary.active_trips_count > 0">
+              ({{ summary.active_trips_count }} Live)
+            </small>
+          </div>
+          <div class="stat-label">Today's Trips</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- 3. Operations Quick Jump Navigation (Patterned after branch facilities) -->
+  <mat-card class="detail-card quick-nav-card" *ngIf="summary">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>navigation</mat-icon>
+        Operations Quick Jump
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="quick-chips-grid">
+        <a class="quick-chip-item" routerLink="/transport/trips">
+          <mat-icon>local_shipping</mat-icon>
+          <span>Daily Trips</span>
+        </a>
+        <a class="quick-chip-item" routerLink="/transport/boarding">
+          <mat-icon>how_to_reg</mat-icon>
+          <span>Boarding Check</span>
+        </a>
+        <a class="quick-chip-item" routerLink="/transport/tracking">
+          <mat-icon>my_location</mat-icon>
+          <span>Live GPS Track</span>
+        </a>
+        <a class="quick-chip-item" routerLink="/transport/assignments">
+          <mat-icon>swap_horiz</mat-icon>
+          <span>Assign Students</span>
+        </a>
+        <a class="quick-chip-item" routerLink="/transport/stops">
+          <mat-icon>place</mat-icon>
+          <span>Stops Master</span>
+        </a>
+        <a class="quick-chip-item" routerLink="/transport/finance">
+          <mat-icon>payments</mat-icon>
+          <span>Fuel & Expenses</span>
+        </a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- 4. Today's Dispatched Trips Table (Detail Card Pattern) -->
+  <mat-card class="detail-card trips-table-card" *ngIf="summary">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>commute</mat-icon>
+        Today's Trips Live Dispatch Roster
+      </mat-card-title>
+      <button mat-button color="primary" routerLink="/transport/trips" class="header-link-btn">
+        View All Trips <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Empty state -->
+      <div *ngIf="!summary.today_trips || summary.today_trips.length === 0" class="empty-state-box">
+        <mat-icon class="empty-icon">directions_bus_filled</mat-icon>
+        <h3>No trips scheduled for today</h3>
+        <p>Schedule trips for morning pickup or evening drop routes.</p>
+        <button mat-raised-button color="primary" routerLink="/transport/trips">
+          <mat-icon>add</mat-icon> Create Today's Trip
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="summary.today_trips && summary.today_trips.length > 0" class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Trip Type</th>
+              <th>Vehicle & Driver</th>
+              <th>Scheduled Time</th>
+              <th>Status</th>
+              <th>Boarding Progress</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let trip of summary.today_trips">
+              <td>
+                <div class="route-name">{{ trip.route_name || 'Route #' + trip.route_id }}</div>
+                <div class="route-sub" *ngIf="trip.route_number">{{ trip.route_number }}</div>
+              </td>
+              <td>
+                <span class="type-pill" [class.pickup]="trip.trip_type === 'Pickup'" [class.drop]="trip.trip_type === 'Drop'">
+                  <mat-icon>{{ trip.trip_type === 'Pickup' ? 'flight_land' : 'flight_takeoff' }}</mat-icon>
+                  {{ trip.trip_type }}
+                </span>
+              </td>
+              <td>
+                <div class="vehicle-no">{{ trip.vehicle_number || 'Unassigned' }}</div>
+                <div class="driver-name" *ngIf="trip.driver_name">
+                  <mat-icon class="inline-icon">person</mat-icon> {{ trip.driver_name }}
+                </div>
+              </td>
+              <td>
+                <div class="time-text">{{ trip.scheduled_start_time || 'N/A' }}</div>
+              </td>
+              <td>
+                <span class="status-badge" [class.active]="trip.status === 'Started' || trip.status === 'In Progress' || trip.status === 'Completed'">
+                  <mat-icon>circle</mat-icon>
+                  {{ trip.status }}
+                </span>
+              </td>
+              <td style="min-width: 160px;">
+                <div class="progress-bar-container">
+                  <div class="progress-info">
+                    <span>{{ trip.boarded_students || 0 }} / {{ trip.total_students || 0 }}</span>
+                    <small>{{ getPercent(trip.boarded_students, trip.total_students) }}%</small>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="getPercent(trip.boarded_students, trip.total_students)"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="text-right">
+                <div class="action-buttons">
+                  <button *ngIf="trip.status === 'Scheduled'" mat-stroked-button color="primary" class="btn-sm" (click)="startTrip(trip)">
+                    <mat-icon>play_arrow</mat-icon> Start
+                  </button>
+                  <button *ngIf="trip.status === 'Started' || trip.status === 'In Progress'" mat-raised-button color="primary" class="btn-sm" (click)="completeTrip(trip)">
+                    <mat-icon>check_circle</mat-icon> Done
+                  </button>
+                  <button mat-icon-button color="primary" matTooltip="Boarding Roster" (click)="goToBoarding(trip.id)">
+                    <mat-icon>fact_check</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent" matTooltip="Live Tracking" (click)="goToTracking(trip.id)">
+                    <mat-icon>location_on</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>

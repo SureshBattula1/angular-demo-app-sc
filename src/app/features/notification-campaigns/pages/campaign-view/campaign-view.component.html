@@ -1,0 +1,396 @@
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
+
+<div class="view-container" *ngIf="!loading && campaign">
+  <div class="view-action-bar">
+    <button mat-button type="button" class="back-btn" (click)="back()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to list
+    </button>
+    <button
+      mat-stroked-button
+      type="button"
+      *ngIf="(campaign.failed_count || 0) > 0 && !isInProgress()"
+      (click)="retryFailed()">
+      <mat-icon>replay</mat-icon>
+      Retry failed
+    </button>
+  </div>
+
+  <mat-card class="details-card" *ngIf="isInProgress()">
+    <mat-card-content>
+      <div class="stat-label">{{ campaignStatusLabel(progress?.status || campaign.status) }}</div>
+      <div class="stat-bar"><span [style.width.%]="progressPercent()"></span></div>
+      <div class="stat-hint">
+        {{ progress?.sent_count ?? campaign.sent_count ?? 0 }} sent ·
+        {{ progress?.pending_count ?? 0 }} pending
+        <span *ngIf="(progress?.expected_recipient_count || campaign.expected_recipient_count) && (progress?.status === 'materializing' || campaign.status === 'materializing')">
+          · {{ progress?.materialized_count ?? campaign.recipient_count ?? 0 }} /
+          {{ progress?.expected_recipient_count || campaign.expected_recipient_count }} prepared
+        </span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">{{ moduleIcon(campaign.module) }}</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ moduleLabel(campaign.module) }} notification</h1>
+          <div class="view-meta">
+            <span>
+              <mat-icon>business</mat-icon>
+              {{ campaign.branch || '—' }}
+            </span>
+            <span>
+              <mat-icon>event</mat-icon>
+              {{ campaign.event_date ? (campaign.event_date | date:'mediumDate') : '—' }}
+            </span>
+            <span *ngIf="campaign.scheduled_at">
+              <mat-icon>schedule</mat-icon>
+              {{ formatScheduledAt(campaign.scheduled_at) }}
+            </span>
+            <span class="status-badge" [ngClass]="campaignStatusClass(campaign.status)">
+              <mat-icon>circle</mat-icon>
+              {{ campaignStatusLabel(campaign.status) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="view-stats-grid delivery-stats">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-recipients">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ campaign.recipient_count || 0 }}</div>
+          <div class="stat-label">Recipients</div>
+          <div class="stat-hint">Total scheduled</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-sent">
+          <mat-icon>send</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ campaign.sent_count || 0 }}</div>
+          <div class="stat-label">Sent</div>
+          <div class="stat-hint">{{ statRate(campaign.sent_count, campaign.recipient_count) }}% of recipients</div>
+          <div class="stat-bar"><span [style.width.%]="statRate(campaign.sent_count, campaign.recipient_count)"></span></div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-failed">
+          <mat-icon>error_outline</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ campaign.failed_count || 0 }}</div>
+          <div class="stat-label">Failed</div>
+          <div class="stat-hint">{{ statRate(campaign.failed_count, campaign.recipient_count) }}% of recipients</div>
+          <div class="stat-bar stat-bar--warn"><span [style.width.%]="statRate(campaign.failed_count, campaign.recipient_count)"></span></div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-viewed">
+          <mat-icon>visibility</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ campaign.viewed_count || 0 }}</div>
+          <div class="stat-label">Viewed</div>
+          <div class="stat-hint">{{ statRate(campaign.viewed_count, campaign.sent_count) }}% of sent</div>
+          <div class="stat-bar stat-bar--info"><span [style.width.%]="statRate(campaign.viewed_count, campaign.sent_count)"></span></div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon stat-liked">
+          <mat-icon>thumb_up</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ campaign.liked_count || 0 }}</div>
+          <div class="stat-label">Liked</div>
+          <div class="stat-hint">{{ statRate(campaign.liked_count, campaign.sent_count) }}% of sent</div>
+          <div class="stat-bar stat-bar--accent"><span [style.width.%]="statRate(campaign.liked_count, campaign.sent_count)"></span></div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="details-grid">
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Campaign details
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>hub</mat-icon>
+              <span>Module</span>
+            </div>
+            <div class="detail-value">{{ moduleLabel(campaign.module) }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>business</mat-icon>
+              <span>Branch</span>
+            </div>
+            <div class="detail-value">{{ campaign.branch || '—' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>event</mat-icon>
+              <span>Event date</span>
+            </div>
+            <div class="detail-value">{{ campaign.event_date ? (campaign.event_date | date:'mediumDate') : '—' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>schedule</mat-icon>
+              <span>Scheduled at</span>
+            </div>
+            <div class="detail-value">{{ campaign.scheduled_at ? formatScheduledAt(campaign.scheduled_at) : '—' }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <mat-icon>class</mat-icon>
+              <span>Class sections</span>
+            </div>
+            <div class="detail-value">{{ campaign.target_count || (campaign.targets?.length || 0) }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="details-card" *ngIf="campaign.targets?.length">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>school</mat-icon>
+          Class sections
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="target-list">
+          <div class="target-row" *ngFor="let target of campaign.targets">
+            <div class="target-main">
+              <strong>{{ targetClassLabel(target) }}</strong>
+              <span class="target-meta">{{ target.student_count || 0 }} students</span>
+            </div>
+            <div class="target-stats">
+              <span class="pill" [ngClass]="campaignStatusClass(target.status)">{{ campaignStatusLabel(target.status) }}</span>
+              <span class="target-count">Sent {{ target.sent_count || 0 }} · Failed {{ target.failed_count || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="details-card recipients-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>groups</mat-icon>
+        Recipients
+        <span class="count-badge">{{ recipientTotal || campaign.recipient_count || 0 }}</span>
+      </mat-card-title>
+      <mat-card-subtitle *ngIf="recipientTotal || campaign.recipient_count">
+        {{ campaign.sent_count || 0 }} sent · {{ campaign.viewed_count || 0 }} viewed · {{ campaign.liked_count || 0 }} liked
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="empty-hint" *ngIf="!recipientTotal && !recipientsLoading && !(campaign.recipient_count > 0)">
+        No recipients recorded for this campaign.
+      </p>
+
+      <div class="recipients-toolbar desktop-table" *ngIf="recipientTotal || campaign.recipient_count || hasRecipientFilters()">
+        <mat-form-field appearance="outline" class="recipient-search">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            [(ngModel)]="recipientSearch"
+            (ngModelChange)="applyRecipientFilter($event)"
+            placeholder="Student, class, team, status…" />
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+        <span class="recipient-toolbar-spacer"></span>
+        <span class="recipient-filter-count">{{ filteredRecipientCountLabel() }}</span>
+        <div class="recipient-filter-actions">
+          <button
+            mat-icon-button
+            type="button"
+            class="recipient-advanced-btn"
+            matTooltip="Advanced search"
+            matTooltipPosition="below"
+            [matBadge]="recipientActiveFilterCount()"
+            [matBadgeHidden]="recipientActiveFilterCount() === 0"
+            matBadgeColor="warn"
+            matBadgeSize="small"
+            (click)="openRecipientAdvancedSearch()">
+            <mat-icon>tune</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            matTooltip="Clear filters"
+            matTooltipPosition="below"
+            [disabled]="!hasRecipientFilters()"
+            (click)="resetRecipientFilters()">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="recipients-table-wrap desktop-table" *ngIf="recipientTotal || campaign.recipient_count || hasRecipientFilters()">
+        <div class="recipients-table-scroll" [class.is-loading]="recipientsLoading">
+          <div class="recipients-table-loading" *ngIf="recipientsLoading">
+            <mat-spinner diameter="32"></mat-spinner>
+          </div>
+        <table mat-table [dataSource]="recipientDataSource" class="recipients-table">
+          <ng-container matColumnDef="student">
+            <th mat-header-cell *matHeaderCellDef>Student</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="student-cell">
+                <span class="student-avatar">{{ studentInitial(row.student_name) }}</span>
+                <span class="student-name">{{ row.student_name }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="class">
+            <th mat-header-cell *matHeaderCellDef>Class</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="class-line">{{ recipientClassLine(row) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="status-tag" [ngClass]="statusKeyClass(row.status_key)">
+                {{ statusKeyLabel(row.status_key) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="delivery">
+            <th mat-header-cell *matHeaderCellDef>Delivery</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="delivery-tag" [ngClass]="deliveryStatusClass(row.delivery_status)">
+                {{ row.delivery_status || '—' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="viewed">
+            <th mat-header-cell *matHeaderCellDef class="cell-center">Viewed</th>
+            <td mat-cell *matCellDef="let row" class="cell-center">
+              <span
+                class="engagement-badge"
+                [class.is-active]="row.viewed"
+                [matTooltip]="row.viewed ? 'Viewed' : 'Not viewed yet'">
+                <mat-icon>{{ row.viewed ? 'visibility' : 'visibility_off' }}</mat-icon>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="liked">
+            <th mat-header-cell *matHeaderCellDef class="cell-center">Liked</th>
+            <td mat-cell *matCellDef="let row" class="cell-center">
+              <span
+                class="engagement-badge"
+                [class.is-active]="row.liked"
+                [matTooltip]="row.liked ? 'Liked' : 'Not liked yet'">
+                <mat-icon>{{ row.liked ? 'thumb_up' : 'thumb_up_off_alt' }}</mat-icon>
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="recipientColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: recipientColumns" class="recipient-row"></tr>
+        </table>
+        </div>
+
+        <mat-paginator
+          #recipientPaginator
+          class="recipients-paginator"
+          [length]="recipientTotal"
+          [pageIndex]="recipientPage - 1"
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [pageSize]="recipientPageSize"
+          (page)="onRecipientPage($event)"
+          showFirstLastButtons
+          aria-label="Recipients pages">
+        </mat-paginator>
+      </div>
+
+      <div class="recipient-cards mobile-cards" *ngIf="recipientTotal || campaign.recipient_count || hasRecipientFilters()">
+        <div class="recipients-toolbar mobile-toolbar">
+          <mat-form-field appearance="outline" class="recipient-search mobile-search">
+            <mat-label>Search</mat-label>
+            <input matInput [(ngModel)]="recipientSearch" (ngModelChange)="applyRecipientFilter($event)" />
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+          <button
+            mat-icon-button
+            type="button"
+            [matBadge]="recipientActiveFilterCount()"
+            [matBadgeHidden]="recipientActiveFilterCount() === 0"
+            matBadgeColor="warn"
+            matBadgeSize="small"
+            (click)="openRecipientAdvancedSearch()">
+            <mat-icon>tune</mat-icon>
+          </button>
+        </div>
+
+        <article class="recipient-card" *ngFor="let row of recipientDataSource.data">
+          <div class="recipient-head">
+            <div class="student-cell">
+              <span class="student-avatar">{{ studentInitial(row.student_name) }}</span>
+              <strong>{{ row.student_name }}</strong>
+            </div>
+            <span class="delivery-tag" [ngClass]="deliveryStatusClass(row.delivery_status)">{{ row.delivery_status || '—' }}</span>
+          </div>
+          <div class="recipient-meta">
+            <span class="class-line">{{ recipientClassLine(row) }}</span>
+          </div>
+          <div class="recipient-tags">
+            <span class="status-tag" [ngClass]="statusKeyClass(row.status_key)">{{ statusKeyLabel(row.status_key) }}</span>
+            <span class="engagement-badge" [class.is-active]="row.viewed"><mat-icon>visibility</mat-icon></span>
+            <span class="engagement-badge" [class.is-active]="row.liked"><mat-icon>thumb_up</mat-icon></span>
+          </div>
+        </article>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <app-advanced-search-sidebar
+    [isOpen]="recipientAdvancedOpen"
+    [config]="recipientAdvancedSearchConfig"
+    (searchApplied)="onRecipientAdvancedSearch($event)"
+    (searchReset)="onRecipientAdvancedReset()"
+    (fieldValueChanged)="onRecipientAdvancedFieldChange($event)"
+    (closed)="closeRecipientAdvancedSearch()">
+  </app-advanced-search-sidebar>
+</div>

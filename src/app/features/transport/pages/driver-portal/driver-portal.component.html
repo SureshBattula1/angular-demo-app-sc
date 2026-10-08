@@ -1,0 +1,930 @@
+<div class="driver-portal-container">
+  <!-- ════════════════════════════════════════════════════════════════════════
+       1. Top Driver Profile & Duty Status Card
+       ════════════════════════════════════════════════════════════════════════ -->
+  <mat-card class="driver-hero-card">
+    <mat-card-content>
+      <div class="hero-layout">
+        <div class="driver-avatar-circle">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+
+        <div class="driver-meta">
+          <div class="greeting-row">
+            <span class="greeting-label">Fleet Operator Console</span>
+            <span class="live-clock"><mat-icon>schedule</mat-icon> {{ currentTime | date:'hh:mm:ss a' }}</span>
+          </div>
+
+          <h1 class="driver-name">{{ dashboardData?.driver?.name || 'Driver' }}</h1>
+
+          <div class="meta-pills">
+            <span class="meta-pill" *ngIf="dashboardData?.driver?.license_number">
+              <mat-icon>verified</mat-icon> Lic: {{ dashboardData?.driver?.license_number }}
+            </span>
+            <span class="meta-pill bus-pill" *ngIf="vehicle">
+              <mat-icon>directions_bus</mat-icon> Bus: {{ vehicle.vehicle_number }}
+            </span>
+            <span class="meta-pill route-pill" *ngIf="route">
+              <mat-icon>alt_route</mat-icon> {{ route.route_name }}
+            </span>
+            <span class="status-indicator"
+              [class.on-duty]="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out">
+              <mat-icon>{{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'fiber_manual_record' : 'radio_button_unchecked' }}</mat-icon>
+              {{ dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out ? 'On Duty' : 'Off Duty' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Quick Duty Action Widget -->
+        <div class="duty-action-widget">
+          <div class="duty-stats-col" *ngIf="dashboardData?.duty?.clocked_in">
+            <span class="duty-lbl">Started Shift</span>
+            <span class="duty-val">{{ dashboardData?.duty?.clock_in_time }}</span>
+          </div>
+
+          <button mat-raised-button color="primary" class="duty-toggle-btn"
+            *ngIf="!dashboardData?.duty?.clocked_in"
+            (click)="openDutyModal('in')" [disabled]="submittingDuty">
+            <mat-icon>login</mat-icon> Start Duty (Clock In)
+          </button>
+
+          <button mat-raised-button color="warn" class="duty-toggle-btn"
+            *ngIf="dashboardData?.duty?.clocked_in && !dashboardData?.duty?.clocked_out"
+            (click)="openDutyModal('out')" [disabled]="submittingDuty">
+            <mat-icon>logout</mat-icon> End Duty (Clock Out)
+          </button>
+
+          <div class="shift-completed-badge" *ngIf="dashboardData?.duty?.clocked_out">
+            <mat-icon>task_alt</mat-icon> Shift Completed ({{ dashboardData?.duty?.total_hours }}h)
+            <button mat-button class="re-duty-btn" (click)="openDutyModal('in')">Start New Shift</button>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       2. Redesigned 2 Navigation Tabs
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="portal-nav-bar">
+    <button class="nav-tab" [class.active]="activeTab === 'profile-duty'" (click)="setTab('profile-duty')">
+      <mat-icon>fact_check</mat-icon> My Bus, Route &amp; Duty Attendance Logs
+      <span class="tab-badge" *ngIf="attendanceHistory.length > 0">{{ attendanceHistory.length }}</span>
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'boarding'" (click)="setTab('boarding')">
+      <mat-icon>how_to_reg</mat-icon> Boarding Generation &amp; Live Trip Execution
+      <span class="tab-badge pulse" *ngIf="roster.length > 0">{{ roster.length }}</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading your assigned vehicle, route, and schedule...</p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 1: My Bus, Route & Duty Attendance Logs
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-pane" *ngIf="activeTab === 'profile-duty' && !loading">
+    <!-- Vehicle & Route Specs Cards -->
+    <div class="bus-route-grid">
+      <!-- Assigned Vehicle Specs Card -->
+      <mat-card class="content-card vehicle-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>directions_bus</mat-icon> Assigned Bus &amp; Vehicle
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="vehicle; else noVehicle">
+            <div class="bus-highlight-box">
+              <div class="plate-number">{{ vehicle.vehicle_number }}</div>
+              <div class="bus-type-badge">{{ vehicle.vehicle_type }}</div>
+            </div>
+
+            <div class="spec-list">
+              <div class="spec-row">
+                <span class="label"><mat-icon>airline_seat_recline_extra</mat-icon> Seating Capacity</span>
+                <span class="value font-semibold">{{ vehicle.capacity }} Seats</span>
+              </div>
+              <div class="spec-row" *ngIf="vehicle.make || vehicle.model">
+                <span class="label"><mat-icon>build</mat-icon> Make &amp; Model</span>
+                <span class="value">{{ vehicle.make }} {{ vehicle.model }}</span>
+              </div>
+              <div class="spec-row">
+                <span class="label"><mat-icon>security</mat-icon> Insurance Status</span>
+                <span class="value compliance-chip" [class.valid]="vehicle.insurance_expiry">
+                  {{ vehicle.insurance_expiry ? 'Valid till ' + (vehicle.insurance_expiry | date:'mediumDate') : 'Verified' }}
+                </span>
+              </div>
+              <div class="spec-row">
+                <span class="label"><mat-icon>health_and_safety</mat-icon> Fitness Certificate</span>
+                <span class="value compliance-chip valid">Certified Safe</span>
+              </div>
+              <div class="spec-row">
+                <span class="label"><mat-icon>contact_phone</mat-icon> Transport Helpdesk</span>
+                <span class="value helpline-link">+91 90000 12345</span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noVehicle>
+            <div class="empty-placeholder">
+              <mat-icon>bus_alert</mat-icon>
+              <h3>No Vehicle Assigned</h3>
+              <p>Please contact your branch transport supervisor to assign a bus to your profile.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Assigned Route Specs & Summary -->
+      <mat-card class="content-card route-specs-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>info</mat-icon> Route Specifications
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="route; else noRouteSpecs">
+            <div class="detail-row"><span class="detail-label">Route Name</span><span class="detail-value font-semibold">{{ route.route_name }}</span></div>
+            <div class="detail-row"><span class="detail-label">Route Number</span><span class="detail-value">{{ route.route_number || 'N/A' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Total Distance</span><span class="detail-value">{{ route.total_distance_km || route.distance ? (route.total_distance_km || route.distance) + ' km' : '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Estimated Time</span><span class="detail-value">{{ route.estimated_duration_minutes || route.estimated_time ? (route.estimated_duration_minutes || route.estimated_time) + ' min' : '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Monthly Fare</span><span class="detail-value">₹{{ route.fare | number:'1.2-2' }}</span></div>
+            <div class="detail-row" *ngIf="route.description"><span class="detail-label">Description</span><span class="detail-value">{{ route.description }}</span></div>
+          </div>
+          <ng-template #noRouteSpecs>
+            <div class="empty-placeholder">
+              <mat-icon>alt_route</mat-icon>
+              <h3>No Route Linked</h3>
+              <p>No route has been assigned to your vehicle yet.</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- ════════════ DUTY DAYS & ATTENDANCE LOGS DATATABLE ════════════ -->
+    <div class="duty-attendance-section mt-4">
+      <!-- Signature Header Card -->
+      <mat-card class="view-header-card">
+        <mat-card-content>
+          <div class="view-header">
+            <div class="view-avatar">
+              <mat-icon class="avatar-icon">fact_check</mat-icon>
+            </div>
+            <div class="view-info">
+              <h2 class="view-name">Driver Duty Days &amp; Attendance Logs</h2>
+              <div class="view-meta">
+                <span><mat-icon>today</mat-icon> Shift History</span>
+                <span><mat-icon>speed</mat-icon> Odometer Logs</span>
+                <span><mat-icon>hourglass_bottom</mat-icon> Total Hours Worked</span>
+                <span class="status-badge active"><mat-icon>verified</mat-icon> Verified Records</span>
+              </div>
+            </div>
+            <button mat-icon-button (click)="loadAttendanceHistory()" matTooltip="Refresh Attendance Logs">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- 4 KPI Stat Cards Grid -->
+      <div class="view-stats-grid">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon students"><mat-icon>calendar_month</mat-icon></div>
+            <div class="stat-details">
+              <div class="stat-value">{{ totalDutyDays }}</div>
+              <div class="stat-label">Duty Days</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon teachers"><mat-icon>timelapse</mat-icon></div>
+            <div class="stat-details">
+              <div class="stat-value">{{ totalDutyHours }}h</div>
+              <div class="stat-label">Total Hours</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon subjects"><mat-icon>speed</mat-icon></div>
+            <div class="stat-details">
+              <div class="stat-value">{{ totalKmDriven }} km</div>
+              <div class="stat-label">Distance Driven</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-icon sections"><mat-icon>av_timer</mat-icon></div>
+            <div class="stat-details">
+              <div class="stat-value">{{ avgDutyHours }}h</div>
+              <div class="stat-label">Avg Shift Hours</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Main Duty Logs DataTable Card -->
+      <mat-card class="detail-card view-full-width mt-4">
+        <mat-card-header class="datatable-header-strip">
+          <div class="datatable-title-group">
+            <mat-icon>list_alt</mat-icon>
+            <h3>Duty Days &amp; Shift Register ({{ filteredAttendance.length }})</h3>
+          </div>
+
+          <div class="datatable-controls">
+            <!-- Filter Pills -->
+            <div class="filter-pills-row">
+              <button mat-button class="filter-chip" [class.active]="attendanceStatusFilter === 'ALL'"
+                (click)="setAttendanceStatusFilter('ALL')">All</button>
+              <button mat-button class="filter-chip" [class.active]="attendanceStatusFilter === 'PRESENT'"
+                (click)="setAttendanceStatusFilter('PRESENT')">Present</button>
+              <button mat-button class="filter-chip" [class.active]="attendanceStatusFilter === 'LATE'"
+                (click)="setAttendanceStatusFilter('LATE')">Late</button>
+              <button mat-button class="filter-chip" [class.active]="attendanceStatusFilter === 'HALF_DAY'"
+                (click)="setAttendanceStatusFilter('HALF_DAY')">Half Day</button>
+            </div>
+
+            <!-- Search -->
+            <div class="search-box">
+              <mat-icon>search</mat-icon>
+              <input type="text" [(ngModel)]="attendanceSearch" (ngModelChange)="applyAttendanceFilter()"
+                placeholder="Search date, day or remarks…">
+            </div>
+          </div>
+        </mat-card-header>
+
+        <mat-divider></mat-divider>
+
+        <mat-card-content>
+          <div class="attendance-loading" *ngIf="historyLoading">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span>Loading shift logs...</span>
+          </div>
+
+          <div class="view-table-container" *ngIf="!historyLoading">
+            <table mat-table [dataSource]="filteredAttendance" class="view-table modern-datatable">
+              <!-- Date & Day -->
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date &amp; Day</th>
+                <td mat-cell *matCellDef="let a">
+                  <div class="date-cell">
+                    <span class="primary-date">{{ a.formatted_date || a.date }}</span>
+                    <span class="day-subtitle" *ngIf="a.day">{{ a.day }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Shift In -->
+              <ng-container matColumnDef="check_in">
+                <th mat-header-cell *matHeaderCellDef>Shift In</th>
+                <td mat-cell *matCellDef="let a">
+                  <span class="time-badge in" *ngIf="a.check_in || a.clock_in_time">
+                    <mat-icon>login</mat-icon> {{ a.check_in || a.clock_in_time }}
+                  </span>
+                  <span class="text-muted" *ngIf="!a.check_in && !a.clock_in_time">—</span>
+                </td>
+              </ng-container>
+
+              <!-- Shift Out -->
+              <ng-container matColumnDef="check_out">
+                <th mat-header-cell *matHeaderCellDef>Shift Out</th>
+                <td mat-cell *matCellDef="let a">
+                  <span class="time-badge out" *ngIf="a.check_out || a.clock_out_time">
+                    <mat-icon>logout</mat-icon> {{ a.check_out || a.clock_out_time }}
+                  </span>
+                  <span class="badge in-progress" *ngIf="!a.check_out && !a.clock_out_time">In Progress</span>
+                </td>
+              </ng-container>
+
+              <!-- Total Hours -->
+              <ng-container matColumnDef="total_hours">
+                <th mat-header-cell *matHeaderCellDef>Total Hours</th>
+                <td mat-cell *matCellDef="let a">
+                  <span class="hours-chip" [class.highlight]="a.total_hours > 0">
+                    <mat-icon>schedule</mat-icon> {{ a.total_hours || 0 }}h
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Odometer Km -->
+              <ng-container matColumnDef="km_driven">
+                <th mat-header-cell *matHeaderCellDef>Distance Driven</th>
+                <td mat-cell *matCellDef="let a">
+                  <span *ngIf="a.km_driven !== null && a.km_driven !== undefined" class="km-badge">
+                    <mat-icon>speed</mat-icon> {{ a.km_driven }} km
+                  </span>
+                  <span class="text-muted" *ngIf="a.km_driven === null || a.km_driven === undefined">—</span>
+                </td>
+              </ng-container>
+
+              <!-- Duty Status -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Duty Status</th>
+                <td mat-cell *matCellDef="let a">
+                  <span class="status-pill" [ngClass]="(a.status || 'present').toLowerCase()">
+                    {{ a.status || 'Present' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Remarks -->
+              <ng-container matColumnDef="remarks">
+                <th mat-header-cell *matHeaderCellDef>Remarks</th>
+                <td mat-cell *matCellDef="let a">
+                  <span class="remarks-text">{{ a.remarks || 'Standard Shift' }}</span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="dutyColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: dutyColumns;"></tr>
+            </table>
+
+            <div class="empty-placeholder" *ngIf="filteredAttendance.length === 0">
+              <mat-icon>event_busy</mat-icon>
+              <h3>No Shift Records Found</h3>
+              <p>Your recorded duty entries will appear here once clocked in/out.</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Configured Route Stops Directory -->
+      <mat-card class="detail-card view-full-width mt-4" *ngIf="sortedStops.length > 0">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>place</mat-icon> Configured Stops Directory ({{ sortedStops.length }} Stops)
+          </mat-card-title>
+        </mat-card-header>
+        <mat-divider></mat-divider>
+        <mat-card-content>
+          <div class="view-table-container">
+            <table mat-table [dataSource]="sortedStops" class="view-table">
+              <ng-container matColumnDef="seq">
+                <th mat-header-cell *matHeaderCellDef>#</th>
+                <td mat-cell *matCellDef="let s"><span class="seq-pill">{{ s.sequence_no }}</span></td>
+              </ng-container>
+              <ng-container matColumnDef="stop_name">
+                <th mat-header-cell *matHeaderCellDef>Stop Name</th>
+                <td mat-cell *matCellDef="let s"><span class="table-primary">{{ s.stop_name }}</span></td>
+              </ng-container>
+              <ng-container matColumnDef="landmark">
+                <th mat-header-cell *matHeaderCellDef>Landmark</th>
+                <td mat-cell *matCellDef="let s">{{ s.landmark || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="pickup">
+                <th mat-header-cell *matHeaderCellDef>Pickup Time</th>
+                <td mat-cell *matCellDef="let s">
+                  <span class="time-badge"><mat-icon>wb_sunny</mat-icon> {{ s.pickup_time || '—' }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="drop">
+                <th mat-header-cell *matHeaderCellDef>Drop Time</th>
+                <td mat-cell *matCellDef="let s">
+                  <span class="time-badge drop"><mat-icon>nights_stay</mat-icon> {{ s.drop_time || '—' }}</span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="stopColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: stopColumns;"></tr>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Assigned Students Directory Preview -->
+      <mat-card class="detail-card view-full-width mt-4" *ngIf="assignedStudents.length > 0">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>groups</mat-icon> Assigned Students Directory ({{ assignedStudents.length }})
+          </mat-card-title>
+        </mat-card-header>
+        <mat-divider></mat-divider>
+        <mat-card-content>
+          <div class="view-table-container">
+            <table mat-table [dataSource]="assignedStudents" class="view-table">
+              <ng-container matColumnDef="student">
+                <th mat-header-cell *matHeaderCellDef>Student</th>
+                <td mat-cell *matCellDef="let s"><span class="table-primary">{{ s.student_name || '—' }}</span></td>
+              </ng-container>
+              <ng-container matColumnDef="pickup">
+                <th mat-header-cell *matHeaderCellDef>Pickup Stop</th>
+                <td mat-cell *matCellDef="let s">{{ s.pickup_stop_name || s.stop_name || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="drop">
+                <th mat-header-cell *matHeaderCellDef>Drop Stop</th>
+                <td mat-cell *matCellDef="let s">{{ s.drop_stop_name || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="fee">
+                <th mat-header-cell *matHeaderCellDef>Monthly Fee</th>
+                <td mat-cell *matCellDef="let s">₹{{ s.monthly_fee | number:'1.2-2' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let s">
+                  <span class="status-pill boarded">{{ s.status || 'Active' }}</span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="studentColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: studentColumns;"></tr>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       TAB 2: Boarding Generation & Live Trip Execution (Mirrored from /transport/boarding)
+       ════════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-pane" *ngIf="activeTab === 'boarding' && !loading">
+
+    <!-- Signature Header Card -->
+    <mat-card class="view-header-card">
+      <mat-card-content>
+        <div class="view-header">
+          <div class="view-avatar">
+            <mat-icon class="avatar-icon">how_to_reg</mat-icon>
+          </div>
+          <div class="view-info">
+            <h1 class="view-name">Passenger Boarding &amp; Drop Verification</h1>
+            <div class="view-meta">
+              <span><mat-icon>verified_user</mat-icon> Stop-Level Check-In</span>
+              <span><mat-icon>directions_bus</mat-icon> Real-time Manifest</span>
+              <span><mat-icon>alt_route</mat-icon> Auto-Verification</span>
+              <span class="role-badge">
+                <mat-icon>badge</mat-icon> Driver Console
+              </span>
+              <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Live Session</span>
+            </div>
+          </div>
+
+          <!-- Trip Generation Action -->
+          <div class="trip-gen-action">
+            <button mat-raised-button color="primary" class="gen-trip-btn" (click)="openGenerateTripModal()">
+              <mat-icon>add_circle</mat-icon> Generate Trip Run
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Stats Grid -->
+    <div class="view-stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon students"><mat-icon>groups</mat-icon></div>
+          <div class="stat-details">
+            <div class="stat-value">{{ roster.length }}</div>
+            <div class="stat-label">Total Passengers</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon teachers"><mat-icon>check_circle</mat-icon></div>
+          <div class="stat-details">
+            <div class="stat-value">{{ boardedCount }}</div>
+            <div class="stat-label">Confirmed Boarded</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon subjects"><mat-icon>where_to_vote</mat-icon></div>
+          <div class="stat-details">
+            <div class="stat-value">{{ droppedCount }}</div>
+            <div class="stat-label">Safely Dropped</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon sections"><mat-icon>pending</mat-icon></div>
+          <div class="stat-details">
+            <div class="stat-value">{{ pendingCount }}</div>
+            <div class="stat-label">Pending</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Main Boarding Workspace Card -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>departure_board</mat-icon> Route Stop Map &amp; Passenger Boarding
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Trip Selection Strip -->
+        <div class="trip-selection-strip">
+          <mat-form-field appearance="outline" class="trip-selector">
+            <mat-label>Select Active Trip Run</mat-label>
+            <mat-select [(ngModel)]="selectedTripId" (selectionChange)="onTripChange($event.value)">
+              <mat-option *ngFor="let t of todayTrips" [value]="t.id">
+                {{ t.trip_date || 'Daily' }} — {{ t.route_name || route?.route_name }} ({{ t.trip_type }}) [{{ t.status }}]
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div *ngIf="selectedTrip" class="active-trip-meta-chips">
+            <span class="chip-item"><mat-icon>directions_bus</mat-icon> {{ selectedTrip.vehicle_number || vehicle?.vehicle_number || 'Fleet' }}</span>
+            <span class="chip-item"><mat-icon>person</mat-icon> {{ selectedTrip.driver_name || dashboardData?.driver?.name || 'Driver' }}</span>
+            <span class="chip-item"><mat-icon>schedule</mat-icon> {{ selectedTrip.scheduled_start_time || 'Daily Run' }}</span>
+            <span class="chip-item status {{ selectedTrip.status | lowercase }}">{{ selectedTrip.status }}</span>
+          </div>
+
+          <!-- Trip Start / Complete Controls -->
+          <div class="trip-action-buttons" *ngIf="selectedTrip">
+            <button mat-raised-button color="primary" class="trip-action-btn"
+              *ngIf="selectedTrip.status === 'Scheduled'" (click)="startTrip()">
+              <mat-icon>play_arrow</mat-icon> Start Trip
+            </button>
+            <button mat-raised-button color="accent" class="trip-action-btn"
+              *ngIf="selectedTrip.status === 'Started' || selectedTrip.status === 'In Progress'" (click)="completeTrip()">
+              <mat-icon>check_circle</mat-icon> Complete Trip
+            </button>
+            <span class="chip-done" *ngIf="selectedTrip.status === 'Completed'">
+              <mat-icon>task_alt</mat-icon> Trip Finished
+            </span>
+          </div>
+
+          <button mat-icon-button matTooltip="Refresh trip data" (click)="loadRoster()" class="refresh-btn">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+
+        <!-- Empty state when no trip -->
+        <div *ngIf="!selectedTripId" class="empty-state">
+          <mat-icon class="large-icon">commute</mat-icon>
+          <h3>No Active Trip Selected</h3>
+          <p>Choose an active or scheduled transit trip above, or click "Generate Trip Run" to create one.</p>
+          <button mat-raised-button color="primary" (click)="openGenerateTripModal()" class="mt-2">
+            <mat-icon>add_circle</mat-icon> Generate Trip Now
+          </button>
+        </div>
+
+        <!-- Active Trip Workspace -->
+        <div *ngIf="selectedTripId && selectedTrip">
+          <!-- Bus Location Banner -->
+          <div class="bus-location-banner">
+            <div class="location-badge-icon"><mat-icon>directions_bus</mat-icon></div>
+            <div class="location-details">
+              <div class="loc-subtitle">BUS LOCATION</div>
+              <div class="loc-title">{{ busLocationSummary }}</div>
+              <div class="loc-meta">
+                <span><strong>Vehicle:</strong> {{ selectedTrip.vehicle_number || vehicle?.vehicle_number || 'Fleet' }}</span>
+                <span><strong>Driver:</strong> {{ selectedTrip.driver_name || dashboardData?.driver?.name || 'On-Duty' }}</span>
+                <span *ngIf="nextStop"><strong>Next ETA:</strong> {{ nextStop.pickup_time || nextStop.drop_time || 'In Transit' }}</span>
+              </div>
+            </div>
+            <div class="progress-box">
+              <div class="progress-label">
+                <span>Route Progress</span>
+                <strong>{{ completedStopsCount }} / {{ routeStops.length }} ({{ tripProgressPercent }}%)</strong>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" [style.width.%]="tripProgressPercent"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ════════════ ROUTE STOP MAP — BOARDING STATUS OVERVIEW ════════════ -->
+          <div class="custom-handling-section">
+            <div class="section-subhead">
+              <div class="subhead-title">
+                <mat-icon>map</mat-icon>
+                Route Stop Map — Boarding Status Overview
+              </div>
+              <button mat-button class="sm-btn" (click)="clearStopFilter()">
+                Show All ({{ roster.length }})
+              </button>
+            </div>
+
+            <!-- Stop Timeline Cards -->
+            <div class="custom-route-map" *ngIf="routeStops.length > 0">
+              <div class="route-connector-line"></div>
+              <div
+                *ngFor="let stop of routeStops; let i = index; let last = last"
+                class="route-stop-node"
+                [class.is-completed]="stopStatusLabel(stop) === 'completed'"
+                [class.is-current]="stopStatusLabel(stop) === 'current'"
+                [class.is-upcoming]="stopStatusLabel(stop) === 'upcoming'"
+                [class.is-selected]="stop.id == selectedStopId && filterByStopOnly"
+                (click)="selectStop(stop.id)">
+
+                <!-- Stop dot indicator -->
+                <div class="stop-dot">
+                  <mat-icon *ngIf="stopStatusLabel(stop) === 'completed'">check_circle</mat-icon>
+                  <mat-icon *ngIf="stopStatusLabel(stop) === 'current'">directions_bus</mat-icon>
+                  <span *ngIf="stopStatusLabel(stop) === 'upcoming'">{{ stop.sequence_no }}</span>
+                </div>
+
+                <!-- Stop info card -->
+                <div class="stop-info-card">
+                  <div class="stop-badges-row">
+                    <span class="seq-badge">#{{ stop.sequence_no }}</span>
+                    <span class="state-tag completed" *ngIf="stopStatusLabel(stop) === 'completed'">Done</span>
+                    <span class="state-tag current" *ngIf="stopStatusLabel(stop) === 'current'">Current</span>
+                    <span class="state-tag upcoming" *ngIf="stopStatusLabel(stop) === 'upcoming'">Upcoming</span>
+                  </div>
+                  <div class="stop-name">{{ stop.stop_name }}</div>
+                  <div class="stop-landmark" *ngIf="stop.landmark">{{ stop.landmark }}</div>
+                  <div class="stop-time" *ngIf="stop.pickup_time || stop.drop_time">
+                    <mat-icon>schedule</mat-icon>{{ stop.pickup_time || stop.drop_time }}
+                  </div>
+                  <!-- Boarding status bar -->
+                  <div class="stop-boarding-bar">
+                    <div class="bar-track">
+                      <div class="bar-fill boarded"
+                        [style.width.%]="stop.total_students ? ((stop.verified_students || 0) / stop.total_students) * 100 : 0">
+                      </div>
+                    </div>
+                    <div class="bar-labels">
+                      <span class="ok">✓ {{ stop.verified_students || 0 }}</span>
+                      <span class="pending">⧖ {{ stop.pending_students || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Connector line between stops (not last) -->
+                <div class="inter-stop-line" *ngIf="!last"></div>
+              </div>
+            </div>
+
+            <!-- No stops state -->
+            <div *ngIf="routeStops.length === 0 && !rosterLoading" class="mini-empty">
+              <mat-icon>alt_route</mat-icon> No stops loaded for this trip.
+            </div>
+
+            <!-- Stop Action Bar with Next Stop Progression & Direct Selection -->
+            <div class="stop-action-bar" *ngIf="routeStops.length > 0">
+              <div class="stop-focus-info">
+                <mat-icon class="focus-pin">location_on</mat-icon>
+                <div>
+                  <span class="focus-lbl">Action Target:</span>
+                  <strong class="focus-name">{{ focusedStop?.stop_name || currentStop?.stop_name || 'Route Origin' }}</strong>
+                  <span class="focus-count">({{ focusedStop?.pending_students ?? pendingCount }} Pending)</span>
+                </div>
+              </div>
+
+              <!-- Next Stop Selection Dropdown -->
+              <div class="direct-stop-selector" *ngIf="routeStops.length > 1">
+                <mat-form-field appearance="outline" class="stop-dropdown">
+                  <mat-label>Jump to Route Stop</mat-label>
+                  <mat-select [value]="currentStopId" (selectionChange)="jumpToStop($event.value)">
+                    <mat-option *ngFor="let s of routeStops" [value]="s.id">
+                      #{{ s.sequence_no }} {{ s.stop_name }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="stop-buttons-cluster">
+                <button mat-raised-button color="primary" class="next-stop-btn"
+                  [disabled]="markingStop || !nextStop"
+                  (click)="advanceToNextStop()"
+                  matTooltip="Advance to next stop">
+                  <mat-icon>skip_next</mat-icon> Next Stop &gt;&gt;
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ════════════ STUDENT PASSENGER MANIFEST ════════════ -->
+          <div class="roster-section">
+            <div class="roster-header">
+              <div class="roster-title">
+                <mat-icon>people_alt</mat-icon>
+                Passenger Manifest
+                <span class="roster-count-badge">{{ filteredRoster.length }}</span>
+              </div>
+
+              <!-- Filter pills -->
+              <div class="filter-pills">
+                <button mat-button class="filter-pill" [class.active-pill]="studentFilter === 'current_stop'"
+                  (click)="setStudentFilter('current_stop')">
+                  <mat-icon>place</mat-icon> Current Stop ({{ currentStop?.total_students || 0 }})
+                </button>
+                <button mat-button class="filter-pill" [class.active-pill]="studentFilter === 'ALL'"
+                  (click)="setStudentFilter('ALL')">
+                  All ({{ roster.length }})
+                </button>
+                <button mat-button class="filter-pill pending-pill" [class.active-pill]="studentFilter === 'Pending'"
+                  (click)="setStudentFilter('Pending')">
+                  Pending ({{ pendingCount }})
+                </button>
+                <button mat-button class="filter-pill boarded-pill" [class.active-pill]="studentFilter === 'Boarded'"
+                  (click)="setStudentFilter('Boarded')">
+                  Boarded ({{ boardedCount }})
+                </button>
+                <button mat-button class="filter-pill dropped-pill" [class.active-pill]="studentFilter === 'Dropped'"
+                  (click)="setStudentFilter('Dropped')">
+                  Dropped ({{ droppedCount }})
+                </button>
+              </div>
+
+              <!-- Search -->
+              <div class="search-input">
+                <mat-icon>search</mat-icon>
+                <input type="text" [(ngModel)]="studentSearch" (ngModelChange)="applyFilter()"
+                  placeholder="Search student name or admission no…">
+              </div>
+            </div>
+
+            <!-- Context banner -->
+            <div class="roster-context-banner" *ngIf="studentFilter === 'current_stop' && currentStop">
+              <mat-icon>location_on</mat-icon>
+              Showing passengers for current stop:
+              <strong>{{ currentStop.stop_name }}</strong>
+              <span class="context-next" *ngIf="nextStop"> → Next: {{ nextStop.stop_name }}</span>
+            </div>
+
+            <!-- Loading spinner -->
+            <div *ngIf="rosterLoading" class="center-spinner">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+
+            <!-- Table -->
+            <div *ngIf="!rosterLoading" class="view-table-container">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Designated Stop</th>
+                    <th>Boarded</th>
+                    <th>Dropped</th>
+                    <th>Status</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let log of filteredRoster">
+                    <td>
+                      <div class="s-name">{{ getStudentName(log) }}</div>
+                      <div class="s-adm" *ngIf="getStudentAdmissionNo(log)">
+                        {{ getStudentAdmissionNo(log) }}
+                      </div>
+                    </td>
+                    <td>{{ log.class_name || '—' }} {{ log.section_name || '' }}</td>
+                    <td>
+                      <div class="stop-title">
+                        <mat-icon class="sm-pin">place</mat-icon>
+                        {{ log.pickup_stop_name || log.drop_stop_name || 'Standard Stop' }}
+                      </div>
+                    </td>
+                    <td>
+                      <span *ngIf="log.boarded_at" class="time-stamp">{{ log.boarded_at | slice:11:16 }}</span>
+                      <span *ngIf="!log.boarded_at" class="text-muted">—</span>
+                    </td>
+                    <td>
+                      <span *ngIf="log.dropped_at" class="time-stamp">{{ log.dropped_at | slice:11:16 }}</span>
+                      <span *ngIf="!log.dropped_at" class="text-muted">—</span>
+                    </td>
+                    <td>
+                      <span class="status-pill" [ngClass]="(log.status || log.boarding_status || 'pending').toLowerCase()">
+                        {{ log.status || log.boarding_status }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <div class="btn-group">
+                        <button *ngIf="log.boarding_status === 'Pending' || log.boarding_status === 'Not Boarded' || !log.boarding_status"
+                          mat-flat-button color="primary" class="action-btn" (click)="markStudentBoarded(log)">
+                          <mat-icon>check</mat-icon> Board
+                        </button>
+                        <button *ngIf="log.boarding_status === 'Boarded'" mat-stroked-button
+                          class="action-btn undo-btn" (click)="unmarkStudentBoarded(log)">
+                          <mat-icon>undo</mat-icon> Unmark
+                        </button>
+                        <button *ngIf="log.boarding_status === 'Boarded' && log.drop_status !== 'Dropped'" mat-flat-button color="accent"
+                          class="action-btn" (click)="markStudentDropped(log)">
+                          <mat-icon>exit_to_app</mat-icon> Drop
+                        </button>
+                        <span *ngIf="log.drop_status === 'Dropped'" class="completed-check">
+                          <mat-icon>task_alt</mat-icon> Done
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredRoster.length === 0">
+                    <td colspan="7" class="text-center text-muted py-4">
+                      <mat-icon style="font-size:32px;opacity:.4;">people_outline</mat-icon>
+                      <p>No students match the current filter.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div><!-- end active trip workspace -->
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     MODAL 1: Duty Shift Clock-In / Clock-Out
+     ════════════════════════════════════════════════════════════════════════ -->
+<div class="portal-modal-backdrop" *ngIf="showDutyModal" (click)="closeDutyModal()">
+  <div class="portal-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <mat-icon>{{ dutyActionType === 'in' ? 'login' : 'logout' }}</mat-icon>
+        <h3>{{ dutyActionType === 'in' ? 'Start Shift (Clock In)' : 'End Shift (Clock Out)' }}</h3>
+      </div>
+      <button mat-icon-button (click)="closeDutyModal()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-desc">
+        {{ dutyActionType === 'in'
+          ? 'Record your shift start time and starting odometer reading.'
+          : 'Record your shift completion and final odometer reading.' }}
+      </p>
+
+      <div class="form-group">
+        <label>Odometer Reading (Km)</label>
+        <input type="number" [(ngModel)]="odometerInput" placeholder="e.g. 15420">
+      </div>
+
+      <div class="form-group">
+        <label>Duty Remarks / Notes (Optional)</label>
+        <textarea [(ngModel)]="dutyRemarksInput" rows="3" placeholder="e.g. Morning school transit run, bus fueled"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button mat-button (click)="closeDutyModal()">Cancel</button>
+      <button mat-raised-button [color]="dutyActionType === 'in' ? 'primary' : 'warn'"
+        [disabled]="submittingDuty" (click)="submitDutyAction()">
+        <mat-icon>{{ dutyActionType === 'in' ? 'login' : 'logout' }}</mat-icon>
+        {{ submittingDuty ? 'Saving...' : (dutyActionType === 'in' ? 'Confirm Clock In' : 'Confirm Clock Out') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     MODAL 2: Generate New Trip Run
+     ════════════════════════════════════════════════════════════════════════ -->
+<div class="portal-modal-backdrop" *ngIf="showGenerateTripModal" (click)="closeGenerateTripModal()">
+  <div class="portal-modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <mat-icon>add_road</mat-icon>
+        <h3>Generate Trip Run</h3>
+      </div>
+      <button mat-icon-button (click)="closeGenerateTripModal()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-desc">
+        Generate a new transit run for route <strong>{{ route?.route_name }}</strong> and bus <strong>{{ vehicle?.vehicle_number }}</strong>.
+      </p>
+
+      <div class="form-group">
+        <label>Select Trip Type</label>
+        <div class="trip-type-selector">
+          <label class="radio-card" [class.selected]="newTripType === 'Pickup'">
+            <input type="radio" name="tripType" value="Pickup" [(ngModel)]="newTripType">
+            <mat-icon>wb_sunny</mat-icon>
+            <div class="radio-info">
+              <strong>Morning Pickup</strong>
+              <span>Students board from stops to school</span>
+            </div>
+          </label>
+          <label class="radio-card" [class.selected]="newTripType === 'Drop'">
+            <input type="radio" name="tripType" value="Drop" [(ngModel)]="newTripType">
+            <mat-icon>nights_stay</mat-icon>
+            <div class="radio-info">
+              <strong>Afternoon Drop</strong>
+              <span>Students drop from school to stops</span>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button mat-button (click)="closeGenerateTripModal()">Cancel</button>
+      <button mat-raised-button color="primary" [disabled]="generatingTrip" (click)="generateTrip()">
+        <mat-icon>check_circle</mat-icon>
+        {{ generatingTrip ? 'Generating...' : 'Confirm & Create Trip' }}
+      </button>
+    </div>
+  </div>
+</div>

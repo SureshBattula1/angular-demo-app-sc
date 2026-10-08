@@ -1,8 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { ApiService, ApiResponse } from '../../../core/services/api.service';
 import {
   AccountCategory,
+  AccountCategoryFormData,
   Transaction,
   AccountDashboard,
   TransactionFormData
@@ -14,6 +17,8 @@ import {
 export class AccountService {
   private readonly ENDPOINT = '/accounts';
   private readonly TRANSACTION_ENDPOINT = '/transactions';
+  private readonly apiUrl = environment.apiUrl || 'http://localhost:8000/api';
+  private http = inject(HttpClient);
 
   constructor(private apiService: ApiService) {}
 
@@ -32,6 +37,41 @@ export class AccountService {
   }
 
   /**
+   * Get single account category
+   */
+  getCategory(id: string | number): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.get<AccountCategory>(`${this.ENDPOINT}/categories/${id}`);
+  }
+
+  /**
+   * Create new account category
+   */
+  createCategory(data: AccountCategoryFormData): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.post<AccountCategory>(`${this.ENDPOINT}/categories`, data);
+  }
+
+  /**
+   * Update account category
+   */
+  updateCategory(id: string | number, data: Partial<AccountCategoryFormData>): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.put<AccountCategory>(`${this.ENDPOINT}/categories/${id}`, data);
+  }
+
+  /**
+   * Delete account category
+   */
+  deleteCategory(id: string | number): Observable<ApiResponse> {
+    return this.apiService.delete(`${this.ENDPOINT}/categories/${id}`);
+  }
+
+  /**
+   * Toggle category status
+   */
+  toggleCategoryStatus(id: string | number): Observable<ApiResponse<AccountCategory>> {
+    return this.apiService.put<AccountCategory>(`${this.ENDPOINT}/categories/${id}/toggle-status`, {});
+  }
+
+  /**
    * Get all transactions
    */
   getTransactions(params?: Record<string, unknown>): Observable<ApiResponse<Transaction[]>> {
@@ -41,7 +81,7 @@ export class AccountService {
   /**
    * Get single transaction
    */
-  getTransaction(id: number): Observable<ApiResponse<Transaction>> {
+  getTransaction(id: string | number): Observable<ApiResponse<Transaction>> {
     return this.apiService.get<Transaction>(`${this.TRANSACTION_ENDPOINT}/${id}`);
   }
 
@@ -55,29 +95,40 @@ export class AccountService {
   /**
    * Update transaction
    */
-  updateTransaction(id: number, data: Partial<TransactionFormData>): Observable<ApiResponse<Transaction>> {
+  updateTransaction(id: string | number, data: Partial<TransactionFormData>): Observable<ApiResponse<Transaction>> {
     return this.apiService.put<Transaction>(`${this.TRANSACTION_ENDPOINT}/${id}`, data);
   }
 
   /**
    * Delete transaction
    */
-  deleteTransaction(id: number): Observable<ApiResponse> {
+  deleteTransaction(id: string | number): Observable<ApiResponse> {
     return this.apiService.delete(`${this.TRANSACTION_ENDPOINT}/${id}`);
   }
 
   /**
    * Approve transaction
    */
-  approveTransaction(id: number): Observable<ApiResponse<Transaction>> {
+  approveTransaction(id: string | number): Observable<ApiResponse<Transaction>> {
     return this.apiService.post<Transaction>(`${this.TRANSACTION_ENDPOINT}/${id}/approve`, {});
   }
 
   /**
    * Reject transaction
    */
-  rejectTransaction(id: number): Observable<ApiResponse> {
+  rejectTransaction(id: string | number): Observable<ApiResponse> {
     return this.apiService.post(`${this.TRANSACTION_ENDPOINT}/${id}/reject`, {});
+  }
+
+  /**
+   * Download transaction receipt as PDF (approved transactions only)
+   */
+  downloadTransactionReceipt(id: string | number): Observable<Blob> {
+    const url = `${this.apiUrl.replace(/\/$/, '')}${this.TRANSACTION_ENDPOINT}/${id}/receipt`;
+    return this.http.get(url, {
+      responseType: 'blob',
+      withCredentials: true
+    });
   }
 }
 

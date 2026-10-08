@@ -1,0 +1,60 @@
+<mat-card class="view-header-card">
+  <div class="view-header">
+    <div class="view-avatar">
+      <!-- Show profile picture if exists, otherwise show initials -->
+      <img *ngIf="showProfilePicture" 
+           [src]="profilePictureUrl" 
+           [alt]="getFullName()"
+           class="teacher-profile-avatar"
+           (load)="onImageLoad()"
+           (error)="onImageError()">
+      <mat-icon *ngIf="!showProfilePicture" class="avatar-icon">person</mat-icon>
+    </div>
+    <div class="view-info">
+      <h1 class="view-name">{{ getFullName() }}</h1>
+      <div class="view-meta">
+        <span>
+          <mat-icon>badge</mat-icon>
+          {{ teacher.employee_id }}
+        </span>
+        <span>
+          <mat-icon>work</mat-icon>
+          {{ teacher.designation }}
+        </span>
+        <span *ngIf="teacher.department">
+          <mat-icon>apartment</mat-icon>
+          {{ teacher.department.name }}
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toolbar Navigation -->
+  <mat-toolbar class="teacher-toolbar">
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'info'"
+      (click)="onMenuClick('info')">
+      <mat-icon>person</mat-icon>
+      <span>Teacher Info</span>
+    </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'attendance'"
+      (click)="onMenuClick('attendance')">
+      <mat-icon>analytics</mat-icon>
+      <span>Attendance Analytics</span>
+    </button>
+    <button 
+      mat-button 
+      class="toolbar-menu-item" 
+      [class.active]="activeMenu === 'leaves'"
+      (click)="onMenuClick('leaves')">
+      <mat-icon>event_busy</mat-icon>
+      <span>Leaves</span>
+    </button>
+  </mat-toolbar>
+</mat-card>
+

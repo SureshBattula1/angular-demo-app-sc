@@ -1,0 +1,50 @@
+<div class="author-page-container">
+  <app-data-table
+    [data]="authors"
+    [config]="tableConfig"
+    [title]="'Book Authors'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (searchChanged)="onSearch($event)">
+  </app-data-table>
+
+  <!-- Add/Edit Author Modal -->
+  <div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">{{ editItem ? 'edit' : 'person_add' }}</mat-icon>
+          <h3>{{ editItem ? 'Edit Author' : 'Add New Author' }}</h3>
+        </div>
+        <button mat-icon-button (click)="closeModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Author Name *</mat-label>
+          <input matInput [(ngModel)]="formData.name" placeholder="e.g. Robert C. Martin" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Nationality</mat-label>
+          <input matInput [(ngModel)]="formData.nationality" placeholder="e.g. American" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Biography</mat-label>
+          <textarea matInput [(ngModel)]="formData.biography" placeholder="Short biography / background" rows="3"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!formData.name" (click)="saveAuthor()">
+          <mat-icon>check</mat-icon> Save Author
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+<!-- Loading State -->
+<div class="attendance-loading" *ngIf="isLoading">
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading attendance data...</p>
+  </div>
+</div>
+
+<!-- Compact Filters & Stats Section -->
+<div class="attendance-compact-header" *ngIf="!isLoading">
+  <!-- Quick Stats Bar -->
+  <div class="quick-stats-bar">
+    <div class="stat-item present">
+      <mat-icon>check_circle</mat-icon>
+      <div class="stat-content">
+        <span class="stat-value">{{ attendanceStats.present }}</span>
+        <span class="stat-label">Present</span>
+      </div>
+    </div>
+    <div class="stat-item absent">
+      <mat-icon>cancel</mat-icon>
+      <div class="stat-content">
+        <span class="stat-value">{{ attendanceStats.absent }}</span>
+        <span class="stat-label">Absent</span>
+      </div>
+    </div>
+    <div class="stat-item late">
+      <mat-icon>schedule</mat-icon>
+      <div class="stat-content">
+        <span class="stat-value">{{ attendanceStats.late }}</span>
+        <span class="stat-label">Late</span>
+      </div>
+    </div>
+    <div class="stat-item excused">
+      <mat-icon>event_available</mat-icon>
+      <div class="stat-content">
+        <span class="stat-value">{{ attendanceStats.excused }}</span>
+        <span class="stat-label">Excused</span>
+      </div>
+    </div>
+    <div class="stat-item total">
+      <mat-icon>trending_up</mat-icon>
+      <div class="stat-content">
+        <span class="stat-value">{{ attendanceStats.percentage }}%</span>
+        <span class="stat-label">Rate</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Compact Filters Row -->
+  <div class="compact-filters">
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Period</mat-label>
+      <mat-select [(ngModel)]="filterPreset" (selectionChange)="onFilterPresetChange($event.value)">
+        <mat-option value="this_week">This Week</mat-option>
+        <mat-option value="this_month">This Month</mat-option>
+        <mat-option value="last_month">Last Month</mat-option>
+        <mat-option value="last_3_months">Last 3 Months</mat-option>
+        <mat-option value="custom">Custom</mat-option>
+      </mat-select>
+    </mat-form-field>
+    
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select [(ngModel)]="statusFilter" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="Present">Present</mat-option>
+        <mat-option value="Absent">Absent</mat-option>
+        <mat-option value="Late">Late</mat-option>
+        <mat-option value="Excused">Excused</mat-option>
+      </mat-select>
+    </mat-form-field>
+    
+    <mat-form-field appearance="outline" class="filter-field" *ngIf="filterPreset === 'custom'">
+      <mat-label>Start Date</mat-label>
+      <input matInput [matDatepicker]="startPicker" [(ngModel)]="filterStartDate" (dateChange)="onDateRangeChange()">
+      <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+      <mat-datepicker #startPicker></mat-datepicker>
+    </mat-form-field>
+    
+    <mat-form-field appearance="outline" class="filter-field" *ngIf="filterPreset === 'custom'">
+      <mat-label>End Date</mat-label>
+      <input matInput [matDatepicker]="endPicker" [(ngModel)]="filterEndDate" (dateChange)="onDateRangeChange()">
+      <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+      <mat-datepicker #endPicker></mat-datepicker>
+    </mat-form-field>
+    
+    <button mat-icon-button matTooltip="Advanced Search" class="advanced-search-btn">
+      <mat-icon>search</mat-icon>
+    </button>
+  </div>
+</div>
+
+<!-- Monthly Calendar View -->
+<div class="attendance-monthly-calendars" *ngIf="!isLoading && filteredAttendance.length > 0">
+  <div class="month-calendar" *ngFor="let month of getMonthsFromAttendance()">
+    <div class="month-header">
+      <h4>{{ month.monthName }} {{ month.year }}</h4>
+      <div class="month-stats">
+        <span class="mini-stat present">{{ month.stats.present }}P</span>
+        <span class="mini-stat absent">{{ month.stats.absent }}A</span>
+        <span class="mini-stat late">{{ month.stats.late }}L</span>
+        <span class="mini-stat excused">{{ month.stats.excused }}E</span>
+      </div>
+    </div>
+    
+    <div class="calendar-grid">
+      <!-- Weekday Headers -->
+      <div class="weekday-header">Sun</div>
+      <div class="weekday-header">Mon</div>
+      <div class="weekday-header">Tue</div>
+      <div class="weekday-header">Wed</div>
+      <div class="weekday-header">Thu</div>
+      <div class="weekday-header">Fri</div>
+      <div class="weekday-header">Sat</div>
+      
+      <!-- Empty cells for offset -->
+      <div class="calendar-cell empty" *ngFor="let empty of month.emptyStart"></div>
+      
+      <!-- Days with attendance data -->
+      <div class="calendar-cell" 
+           *ngFor="let day of month.days"
+           [class.has-attendance]="day.attendance"
+           [class.status-present]="day.attendance?.status === 'Present'"
+           [class.status-absent]="day.attendance?.status === 'Absent'"
+           [class.status-late]="day.attendance?.status === 'Late'"
+           [class.status-excused]="day.attendance?.status === 'Excused'"
+           [class.is-today]="day.isToday"
+           [matTooltip]="getAttendanceTooltip(day)"
+           matTooltipPosition="above">
+        <div class="day-number">{{ day.date }}</div>
+        <mat-icon *ngIf="day.attendance" class="status-icon">
+          {{ getAttendanceStatusIcon(day.attendance.status) }}
+        </mat-icon>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No Attendance Message -->
+<div class="no-attendance" *ngIf="!isLoading && filteredAttendance.length === 0">
+  <mat-icon>calendar_today</mat-icon>
+  <p>No attendance records found for the selected period.</p>
+</div>

@@ -1,0 +1,55 @@
+<div class="publisher-page-container">
+  <app-data-table
+    [data]="publishers"
+    [config]="tableConfig"
+    [title]="'Book Publishers'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (searchChanged)="onSearch($event)">
+  </app-data-table>
+
+  <!-- Add/Edit Publisher Modal -->
+  <div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">{{ editItem ? 'edit' : 'business' }}</mat-icon>
+          <h3>{{ editItem ? 'Edit Publisher' : 'Add New Publisher' }}</h3>
+        </div>
+        <button mat-icon-button (click)="closeModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Publisher Name *</mat-label>
+          <input matInput [(ngModel)]="formData.name" placeholder="e.g. O'Reilly Media" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Contact Person</mat-label>
+          <input matInput [(ngModel)]="formData.contact_person" placeholder="e.g. John Doe" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Email Address</mat-label>
+          <input matInput type="email" [(ngModel)]="formData.email" placeholder="contact@oreilly.com" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Phone Number</mat-label>
+          <input matInput [(ngModel)]="formData.phone" placeholder="+1-555-0199" />
+        </mat-form-field>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!formData.name" (click)="savePublisher()">
+          <mat-icon>check</mat-icon> Save Publisher
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

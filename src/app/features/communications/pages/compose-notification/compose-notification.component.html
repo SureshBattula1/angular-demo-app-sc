@@ -1,0 +1,144 @@
+<div class="compose-page">
+  <header class="compose-hero">
+    <button mat-icon-button type="button" (click)="cancel()" aria-label="Back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div>
+      <h1>Compose notification</h1>
+      <p>Send a custom in-app notification to students and/or branch team.</p>
+    </div>
+  </header>
+
+  <form class="compose-card" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" maxlength="255" placeholder="e.g. Homework reminder" />
+      <mat-error *ngIf="form.controls.title.hasError('required')">Title is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Message</mat-label>
+      <textarea
+        matInput
+        rows="5"
+        formControlName="description"
+        placeholder="Write a clear message"></textarea>
+      <mat-error *ngIf="form.controls.description.hasError('required')">Message is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Optional note</mat-label>
+      <textarea matInput rows="2" formControlName="optional_description"></textarea>
+    </mat-form-field>
+
+    <section class="audience-card">
+      <div class="audience-card__head">
+        <h2>Class sections</h2>
+        <span class="hint">{{ selectedSectionKeys.size }} selected</span>
+      </div>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Search class or section</mat-label>
+        <input matInput [(ngModel)]="sectionSearch" [ngModelOptions]="{ standalone: true }" />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <div class="list-toolbar" *ngIf="filteredSections.length">
+        <mat-checkbox
+          [checked]="allFilteredSectionsSelected"
+          [indeterminate]="someFilteredSectionsSelected"
+          (change)="toggleAllFilteredSections($event.checked)">
+          Select all shown
+        </mat-checkbox>
+      </div>
+      <div class="section-list" *ngIf="!loadingSections; else sectionsLoading">
+        <p class="empty" *ngIf="allSections.length === 0">No class sections found for this branch.</p>
+        <label class="section-row" *ngFor="let row of filteredSections">
+          <mat-checkbox
+            [checked]="isSectionSelected(row)"
+            (change)="toggleSection(row, $event.checked)"></mat-checkbox>
+          <span class="section-row__label">{{ row.label }}</span>
+          <span class="section-row__meta" *ngIf="row.studentCount != null">{{ row.studentCount }} students</span>
+        </label>
+      </div>
+      <ng-template #sectionsLoading>
+        <div class="loading-inline"><mat-spinner diameter="24"></mat-spinner> Loading sections…</div>
+      </ng-template>
+    </section>
+
+    <section class="audience-card">
+      <mat-checkbox formControlName="include_students">Send to students</mat-checkbox>
+      <div class="nested" *ngIf="form.controls.include_students.value">
+        <mat-radio-group formControlName="student_audience_mode" class="mode-row">
+          <mat-radio-button value="all">All students in selected sections</mat-radio-button>
+          <mat-radio-button value="custom">Custom selection</mat-radio-button>
+        </mat-radio-group>
+        <ng-container *ngIf="form.controls.student_audience_mode.value === 'custom'">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Search students</mat-label>
+            <input matInput [(ngModel)]="studentSearch" [ngModelOptions]="{ standalone: true }" />
+          </mat-form-field>
+          <div class="loading-inline" *ngIf="loadingStudents"><mat-spinner diameter="22"></mat-spinner> Loading students…</div>
+          <p class="empty" *ngIf="!loadingStudents && selectedSectionKeys.size === 0">Select at least one class section.</p>
+          <div class="student-list" *ngIf="!loadingStudents && filteredStudents.length">
+            <label class="section-row" *ngFor="let s of filteredStudents">
+              <mat-checkbox
+                [checked]="isStudentSelected(s.id)"
+                (change)="toggleStudent(s.id, $event.checked)"></mat-checkbox>
+              <span class="section-row__label">{{ s.name }}</span>
+              <span class="section-row__meta">Class {{ s.grade }} · {{ s.section }}</span>
+            </label>
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
+    <section class="audience-card">
+      <mat-checkbox formControlName="include_staff" (change)="$event.checked && loadStaff()">Send to branch team</mat-checkbox>
+      <div class="nested" *ngIf="form.controls.include_staff.value">
+        <mat-radio-group formControlName="staff_audience_mode" class="mode-row">
+          <mat-radio-button value="all">All branch team</mat-radio-button>
+          <mat-radio-button value="custom">Custom selection</mat-radio-button>
+        </mat-radio-group>
+        <div class="loading-inline" *ngIf="loadingStaff"><mat-spinner diameter="22"></mat-spinner> Loading branch team…</div>
+        <app-staff-group-picker
+          *ngIf="!loadingStaff && form.controls.staff_audience_mode.value === 'custom'"
+          label="Branch team members"
+          [people]="staffPeopleFlat"
+          [(selectedIds)]="selectedStaffIds">
+        </app-staff-group-picker>
+      </div>
+    </section>
+
+    <section class="audience-card">
+      <h2>Attachments</h2>
+      <app-file-upload
+        [uploadPath]="attachmentUploadPath"
+        [config]="{ multiple: true, maxFiles: 15, maxSize: 10, showPreview: false }"
+        label="Add files"
+        icon="attach_file"
+        (uploadSuccess)="onAttachmentUploaded($event)">
+      </app-file-upload>
+      <ul class="attachment-list" *ngIf="attachments.length">
+        <li *ngFor="let file of attachments; let i = index">
+          <mat-icon>insert_drive_file</mat-icon>
+          <span>{{ file.original_name || file.file_name }}</span>
+          <button mat-icon-button type="button" (click)="removeAttachment(i)" aria-label="Remove">
+            <mat-icon>close</mat-icon>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <p class="validation-hint" *ngIf="!canSubmit() && form.touched">
+      Enable students and/or branch team and complete the required selections.
+    </p>
+
+    <footer class="compose-actions">
+      <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting">Cancel</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="submitting || !canSubmit()">
+        <mat-spinner *ngIf="submitting" diameter="18"></mat-spinner>
+        <span *ngIf="!submitting">Send notification</span>
+        <span *ngIf="submitting">Sending…</span>
+      </button>
+    </footer>
+  </form>
+</div>

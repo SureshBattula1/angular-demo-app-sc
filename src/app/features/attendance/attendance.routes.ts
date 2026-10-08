@@ -8,6 +8,11 @@ export const ATTENDANCE_ROUTES: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'dashboard',
+    loadComponent: () => import('./pages/attendance-dashboard/attendance-dashboard.component').then(m => m.AttendanceDashboardComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'mark',
     loadComponent: () => import('./pages/attendance-form/attendance-form.component').then(m => m.AttendanceFormComponent),
     canActivate: [authGuard]

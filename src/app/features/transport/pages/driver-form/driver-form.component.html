@@ -1,0 +1,124 @@
+<div class="view-container">
+  <div class="view-action-bar">
+    <button mat-button (click)="cancel()"><mat-icon>arrow_back</mat-icon> Back to Drivers</button>
+  </div>
+
+  <!-- Header Card (Signature branches/view pattern) -->
+  <mat-card class="view-header-card">
+    <mat-card-content>
+      <div class="view-header">
+        <div class="view-avatar">
+          <mat-icon class="avatar-icon">badge</mat-icon>
+        </div>
+        <div class="view-info">
+          <h1 class="view-name">{{ isEdit ? 'Edit Driver Details' : 'Register New Driver' }}</h1>
+          <div class="view-meta">
+            <span><mat-icon>verified</mat-icon> Commercial Licensing</span>
+            <span><mat-icon>assignment_ind</mat-icon> Fleet Operator Profile</span>
+            <span class="status-badge active"><mat-icon>fiber_manual_record</mat-icon> Active Profile</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Form Detail Card -->
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>person</mat-icon> Driver Credentials & Personal Particulars
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="form-body">
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Branch</mat-label>
+            <mat-select formControlName="branch_id">
+              <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+            </mat-select>
+            <mat-error>Branch is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Driver Full Name *</mat-label>
+            <input matInput formControlName="name" maxlength="255" placeholder="e.g. Ramesh Kumar">
+            <mat-error>Name is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contact Phone</mat-label>
+            <input matInput formControlName="phone" maxlength="20" placeholder="e.g. +91 98765 43210">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Commercial License Number</mat-label>
+            <input matInput formControlName="license_number" maxlength="60" placeholder="e.g. DL-0420110012345">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>License Expiry Date</mat-label>
+            <input matInput [matDatepicker]="lp" formControlName="license_expiry" readonly>
+            <mat-datepicker-toggle matSuffix [for]="lp"></mat-datepicker-toggle>
+            <mat-datepicker #lp></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Residential Address</mat-label>
+            <input matInput formControlName="address" placeholder="e.g. Flat 204, Green Heights">
+          </mat-form-field>
+        </div>
+
+        <!-- Portal & App Login Credentials -->
+        <div class="credentials-card-box">
+          <div class="section-title-row">
+            <mat-icon class="sec-icon">vpn_key</mat-icon>
+            <span class="sec-title">Driver App & Web Login Credentials</span>
+            <span class="sec-badge" *ngIf="hasExistingAccount">Account Linked</span>
+          </div>
+
+          <div class="checkbox-row" style="margin-top: 10px; margin-bottom: 16px;">
+            <mat-checkbox formControlName="create_account">
+              Enable System Login Access for this Driver
+            </mat-checkbox>
+          </div>
+
+          <div class="grid" *ngIf="form.get('create_account')?.value">
+            <mat-form-field appearance="outline">
+              <mat-label>Login Email Address</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="e.g. driver.ramesh@school.com">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="form.get('email')?.hasError('email')">Please enter a valid email address</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>{{ isEdit ? 'New Password (Leave blank to keep existing)' : 'Password' }}</mat-label>
+              <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" placeholder="Min 6 characters">
+              <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+                <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <div style="display: flex; align-items: center; padding-bottom: 22px;">
+              <button mat-stroked-button type="button" color="accent" (click)="generatePassword()">
+                <mat-icon>auto_fix_high</mat-icon> Generate Password
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <mat-checkbox formControlName="is_active">Active On-Duty Driver</mat-checkbox>
+        </div>
+
+        <div class="form-actions">
+          <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+            <mat-icon>save</mat-icon> {{ isEdit ? 'Update' : 'Create' }} Driver
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

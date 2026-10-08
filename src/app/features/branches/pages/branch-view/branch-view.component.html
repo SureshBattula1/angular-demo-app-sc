@@ -1,37 +1,60 @@
-<div class="branch-view-container" *ngIf="!isLoading && branch">
+<div class="view-container" *ngIf="!isLoading && branch">
   <!-- Action Bar -->
-  <div class="action-bar">
+  <div class="view-action-bar">
     <button mat-button (click)="onBack()">
       <mat-icon>arrow_back</mat-icon>
       Back to List
     </button>
     <div class="action-buttons">
-      <button mat-raised-button color="primary" (click)="onEdit()">
+      <button 
+        *ngIf="canEdit"
+        mat-raised-button 
+        color="primary" 
+        (click)="onEdit()">
         <mat-icon>edit</mat-icon>
         Edit
       </button>
-      <button mat-raised-button color="warn" (click)="onDelete()">
+      <button 
+        *ngIf="canDelete"
+        mat-raised-button 
+        color="warn" 
+        (click)="onDelete()">
         <mat-icon>delete</mat-icon>
         Delete
       </button>
+      <mat-slide-toggle 
+        *ngIf="canEdit"
+        [checked]="branch.is_active" 
+        (change)="toggleStatus()"
+        color="primary"
+        style="margin-left: auto;">
+        {{ branch.is_active ? 'Active' : 'Inactive' }}
+      </mat-slide-toggle>
     </div>
   </div>
 
   <!-- Header Card -->
-  <mat-card class="header-card">
+  <mat-card class="view-header-card">
     <mat-card-content>
-      <div class="branch-header">
-        <div class="branch-logo">
-          <mat-icon class="logo-icon">{{ getBranchTypeIcon(branch.branch_type) }}</mat-icon>
+      <div class="view-header">
+        <div class="view-avatar">
+          <!-- Show logo if exists, otherwise show icon -->
+          <img *ngIf="showLogo" 
+               [src]="getLogoUrl()" 
+               [alt]="branch.name + ' logo'" 
+               class="branch-logo-avatar"
+               (error)="onImageError($event)"
+               (load)="onImageLoad()">
+          <mat-icon *ngIf="!showLogo" class="avatar-icon">{{ getBranchTypeIcon(branch.branch_type) }}</mat-icon>
         </div>
-        <div class="branch-info">
-          <h1 class="branch-name">{{ branch.name }}</h1>
-          <div class="branch-meta">
-            <span class="branch-code">
+        <div class="view-info">
+          <h1 class="view-name">{{ branch.name }}</h1>
+          <div class="view-meta">
+            <span>
               <mat-icon>qr_code</mat-icon>
               {{ branch.code }}
             </span>
-            <span class="branch-type">
+            <span>
               <mat-icon>category</mat-icon>
               {{ branch.branch_type }}
             </span>
@@ -41,20 +64,12 @@
             </span>
           </div>
         </div>
-        <div class="status-toggle">
-          <mat-slide-toggle 
-            [checked]="branch.is_active" 
-            (change)="toggleStatus()"
-            color="primary">
-            {{ branch.is_active ? 'Active' : 'Inactive' }}
-          </mat-slide-toggle>
-        </div>
       </div>
     </mat-card-content>
   </mat-card>
 
   <!-- Statistics Cards -->
-  <div class="stats-grid" *ngIf="stats">
+  <div class="view-stats-grid" *ngIf="stats">
     <mat-card class="stat-card">
       <mat-card-content>
         <div class="stat-icon students">
@@ -105,7 +120,7 @@
   </div>
 
   <!-- Details Sections -->
-  <div class="details-grid">
+  <div class="view-details-grid">
     <!-- Basic Information -->
     <mat-card class="detail-card">
       <mat-card-header>
@@ -301,11 +316,28 @@
         </div>
       </mat-card-content>
     </mat-card>
+
+    <!-- Branch Attachments -->
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>attach_file</mat-icon>
+          Branch Attachments
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-universal-attachments
+          module="branch"
+          [moduleId]="branchId"
+          mode="view">
+        </app-universal-attachments>
+      </mat-card-content>
+    </mat-card>
   </div>
 </div>
 
 <!-- Loading State -->
-<div class="loading-container" *ngIf="isLoading">
+<div class="view-loading-container" *ngIf="isLoading">
   <mat-spinner diameter="50"></mat-spinner>
   <p>Loading branch details...</p>
 </div>

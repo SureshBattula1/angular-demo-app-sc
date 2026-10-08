@@ -1,0 +1,171 @@
+<!-- Loading State -->
+<div class="exams-loading" *ngIf="isLoading">
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading exam information...</p>
+  </div>
+</div>
+
+<!-- Exams Content -->
+<div class="exams-content" *ngIf="!isLoading">
+  <!-- Upcoming Exam Schedules - Grouped by Exam -->
+  <div class="exams-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>event</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Upcoming Exam Schedules</h3>
+        <p>Your upcoming examinations grouped by exam</p>
+      </div>
+      <button mat-stroked-button color="primary" (click)="downloadUpcomingSchedulesPdf()"
+        [disabled]="downloadingSchedulesPdf || upcomingExamsByExam.length === 0">
+        <mat-spinner *ngIf="downloadingSchedulesPdf" diameter="18" class="btn-spinner"></mat-spinner>
+        <mat-icon *ngIf="!downloadingSchedulesPdf">picture_as_pdf</mat-icon>
+        {{ downloadingSchedulesPdf ? 'Generating...' : 'Download PDF' }}
+      </button>
+    </div>
+
+    <div class="exam-groups" *ngIf="upcomingExamsByExam.length > 0">
+      <div class="exam-group-card" *ngFor="let group of upcomingExamsByExam">
+        <div class="exam-group-header">
+          <div class="exam-group-icon">
+            <mat-icon>assignment</mat-icon>
+          </div>
+          <div class="exam-group-title">
+            <h4>
+              <span *ngIf="group.examTermName">{{ group.examTermName }} - </span>{{ group.examName }}
+            </h4>
+            <span class="subject-count">{{ group.schedules.length }} subject{{ group.schedules.length !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="exam-group-status" [ngClass]="getExamStatusClass(group.schedules[0]?.exam_date)">
+            <mat-icon>circle</mat-icon>
+            {{ getExamStatusText(group.schedules[0]?.exam_date) }}
+          </div>
+          <button mat-icon-button (click)="downloadUpcomingGroupPdf(group); $event.stopPropagation()"
+            [disabled]="isDownloadingScheduleGroup(group)" matTooltip="Download PDF"
+            class="group-download-btn">
+            <mat-spinner *ngIf="isDownloadingScheduleGroup(group)" diameter="22"></mat-spinner>
+            <mat-icon *ngIf="!isDownloadingScheduleGroup(group)">picture_as_pdf</mat-icon>
+          </button>
+        </div>
+        <div class="schedule-list">
+          <div class="schedule-row" *ngFor="let schedule of group.schedules">
+            <div class="schedule-subject">
+              <mat-icon>menu_book</mat-icon>
+              <span class="subject-name">{{ schedule.subject_name }}</span>
+            </div>
+            <div class="schedule-details">
+              <span class="detail">
+                <mat-icon>calendar_today</mat-icon>
+                {{ schedule.exam_date | date:'mediumDate' }}
+              </span>
+              <span class="detail">
+                <mat-icon>access_time</mat-icon>
+                {{ schedule.start_time }} - {{ schedule.end_time }}
+              </span>
+              <span class="detail">
+                <mat-icon>schedule</mat-icon>
+                {{ schedule.duration }} min
+              </span>
+              <span class="detail">
+                <mat-icon>room</mat-icon>
+                {{ schedule.room_number || 'TBA' }}
+              </span>
+              <span class="detail" *ngIf="schedule.invigilator_name">
+                <mat-icon>person</mat-icon>
+                {{ schedule.invigilator_name }}
+              </span>
+              <span class="detail">
+                <mat-icon>assessment</mat-icon>
+                {{ schedule.total_marks }} marks
+              </span>
+            </div>
+            <div class="schedule-instructions" *ngIf="schedule.instructions">
+              <mat-icon>info</mat-icon>
+              <span>{{ schedule.instructions }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-exams" *ngIf="upcomingExamsByExam.length === 0">
+      <mat-icon>event_available</mat-icon>
+      <p>No upcoming exams scheduled for you.</p>
+    </div>
+  </div>
+
+  <!-- Exam Results - Grouped by Exam -->
+  <div class="exams-section">
+    <div class="section-header">
+      <div class="section-icon">
+        <mat-icon>bar_chart</mat-icon>
+      </div>
+      <div class="section-title">
+        <h3>Exam Results</h3>
+        <p>Your performance grouped by examination</p>
+      </div>
+      <button mat-stroked-button color="primary" (click)="downloadExamResultsPdf()"
+        [disabled]="downloadingResultsPdf || examResultsByExam.length === 0">
+        <mat-spinner *ngIf="downloadingResultsPdf" diameter="18" class="btn-spinner"></mat-spinner>
+        <mat-icon *ngIf="!downloadingResultsPdf">picture_as_pdf</mat-icon>
+        {{ downloadingResultsPdf ? 'Generating...' : 'Download PDF' }}
+      </button>
+    </div>
+
+    <div class="result-groups" *ngIf="examResultsByExam.length > 0">
+      <div class="result-group-card" *ngFor="let group of examResultsByExam">
+        <div class="result-group-header">
+          <div class="result-group-title">
+            <h4>
+              <span *ngIf="group.examTermName">{{ group.examTermName }} - </span>{{ group.examName }}
+            </h4>
+            <span class="subject-count">{{ group.results.length }} subject{{ group.results.length !== 1 ? 's' : '' }}</span>
+          </div>
+          <button mat-icon-button (click)="downloadExamResultGroupPdf(group); $event.stopPropagation()"
+            [disabled]="isDownloadingResultGroup(group)" matTooltip="Download PDF"
+            class="group-download-btn">
+            <mat-spinner *ngIf="isDownloadingResultGroup(group)" diameter="22"></mat-spinner>
+            <mat-icon *ngIf="!isDownloadingResultGroup(group)">picture_as_pdf</mat-icon>
+          </button>
+        </div>
+        <div class="result-list">
+          <div class="result-row" *ngFor="let result of group.results">
+            <div class="result-subject">
+              <mat-icon>menu_book</mat-icon>
+              <span class="subject-name">{{ result.subject_name }}</span>
+              <span class="result-date">{{ result.exam_date | date:'mediumDate' }}</span>
+            </div>
+            <div class="result-score" [ngClass]="getResultClassForRow(result)">
+              <span class="score-value" *ngIf="!result.is_absent">{{ result.marks_obtained }} / {{ result.total_marks }}</span>
+              <span class="score-value absent-text" *ngIf="result.is_absent">Absent</span>
+            </div>
+            <div class="result-score-pct">
+              <span class="score-pct">{{ getPercentageLabel(result) }}</span>
+            </div>
+            <div class="result-meta">
+              <span class="grade">Grade: <strong>{{ result.is_absent ? '—' : result.grade }}</strong></span>
+              <span
+                class="status"
+                [ngClass]="getExamResultStatusClass(result)"
+                [matTooltip]="getExamResultStatusTooltip(result)"
+                matTooltipPosition="above">
+                {{ getExamResultStatusLabel(result) }}
+              </span>
+            </div>
+            <div class="result-comment" *ngIf="result.remarks">
+              <mat-icon>comment</mat-icon>
+              <span>{{ result.remarks }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-results" *ngIf="examResultsByExam.length === 0">
+      <mat-icon>assessment</mat-icon>
+      <p>No exam results available yet.</p>
+    </div>
+  </div>
+</div>

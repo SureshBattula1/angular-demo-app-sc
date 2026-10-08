@@ -1,7 +1,7 @@
 export interface StudentAttendance {
-  id?: number;
-  student_id: number;
-  branch_id: number;
+  id?: string;
+  student_id: number | string;
+  branch_id: number | string;
   grade_level: string;
   section: string;
   date: string;
@@ -14,16 +14,18 @@ export interface StudentAttendance {
   // Joined fields from API
   first_name?: string;
   last_name?: string;
+  full_name?: string;
   email?: string;
   admission_number?: string;
   grade?: string;
+  grade_label?: string;
   roll_number?: string;
 }
 
 export interface TeacherAttendance {
-  id?: number;
-  teacher_id: number;
-  branch_id: number;
+  id?: string;
+  teacher_id: number | string;
+  branch_id: number | string;
   date: string;
   status: 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'Leave';
   remarks?: string;
@@ -32,13 +34,14 @@ export interface TeacherAttendance {
   // Joined fields from API
   first_name?: string;
   last_name?: string;
+  full_name?: string;
   email?: string;
   employee_id?: string;
 }
 
 export interface AttendanceFilters {
   type?: 'student' | 'teacher';
-  branch_id?: number;
+  branch_id?: number | string;
   date?: string;
   from_date?: string;
   to_date?: string;
@@ -67,7 +70,7 @@ export interface AttendanceReport {
 }
 
 export interface BulkAttendanceItem {
-  id: number;
+  id: string;
   status: 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'Sick Leave' | 'Leave';
   remarks?: string;
   grade_level?: string;
@@ -77,17 +80,19 @@ export interface BulkAttendanceItem {
 export interface BulkAttendanceRequest {
   type: 'student' | 'teacher';
   date: string;
-  branch_id: number;
+  branch_id: number | string;
+  academic_year_id?: number | string;
   academic_year?: string;
   attendance: BulkAttendanceItem[];
 }
 
 export interface AttendanceStudent {
-  id: number;
+  id: string;
   first_name: string;
   last_name: string;
   admission_number: string;
   roll_number: string;
+  phone?: string;
   grade: string;
   section: string;
   status?: 'Present' | 'Absent' | 'Late' | 'Half-Day' | 'Sick Leave' | 'Leave';

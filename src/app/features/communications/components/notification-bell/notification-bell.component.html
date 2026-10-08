@@ -1,0 +1,90 @@
+<button
+  mat-icon-button
+  type="button"
+  aria-label="Notifications"
+  #menuTrigger="matMenuTrigger"
+  [matMenuTriggerFor]="notifMenu"
+  (menuOpened)="onMenuOpened()">
+  <mat-icon
+    [matBadge]="unreadCount > 0 ? unreadCount : null"
+    matBadgeColor="warn"
+    matBadgeSize="small"
+    [matBadgeHidden]="unreadCount <= 0">
+    notifications
+  </mat-icon>
+</button>
+
+<mat-menu #notifMenu="matMenu" class="notif-bell-menu-panel" xPosition="before">
+  <div class="notif-bell-shell" (click)="$event.stopPropagation()">
+    <header class="notif-bell-hero">
+      <div class="notif-bell-hero__left">
+        <div class="notif-bell-hero__icon">
+          <mat-icon>notifications_active</mat-icon>
+        </div>
+        <div class="notif-bell-hero__text">
+          <h3>Notifications</h3>
+          <p *ngIf="unreadCount > 0">{{ unreadCount }} unread</p>
+          <p *ngIf="unreadCount === 0">You’re all caught up</p>
+        </div>
+      </div>
+      <div class="notif-bell-hero__actions">
+        <button
+          *ngIf="unreadCount > 0"
+          mat-icon-button
+          type="button"
+          class="mark-read-btn"
+          matTooltip="Mark all read"
+          (click)="markAllRead($event)">
+          <mat-icon>done_all</mat-icon>
+        </button>
+        <button mat-button type="button" class="header-view-all" (click)="viewAll(menuTrigger)">
+          View all
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <div class="notif-bell-scroll">
+      <div class="notif-bell-loading" *ngIf="loadingPreview">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Loading…</span>
+      </div>
+
+      <div class="notif-bell-empty" *ngIf="!loadingPreview && preview.length === 0">
+        <mat-icon>notifications_none</mat-icon>
+        <strong>No notifications yet</strong>
+        <span>Scheduled messages will appear here.</span>
+        <button mat-stroked-button color="primary" type="button" class="empty-view-all" (click)="viewAll(menuTrigger)">
+          Open inbox
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="notif-bell-item"
+        *ngFor="let item of preview; trackBy: trackById"
+        [class.unread]="isUnread(item)"
+        (click)="openItem(item, menuTrigger)">
+        <span class="notif-bell-item__icon" [attr.data-source]="item.source || 'info'">
+          <mat-icon>{{ sourceIcon(item) }}</mat-icon>
+        </span>
+        <div class="notif-bell-item__body">
+          <div class="notif-bell-item__top">
+            <span class="chip">{{ sourceLabel(item) }}</span>
+            <span class="time">{{ relativeTime(displayDate(item)) }}</span>
+          </div>
+          <strong>{{ item.title }}</strong>
+          <p>{{ previewText(item) }}</p>
+        </div>
+        <span class="unread-dot" *ngIf="isUnread(item)" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <footer class="notif-bell-footer">
+      <button mat-stroked-button color="primary" type="button" class="view-all-btn" (click)="viewAll(menuTrigger)">
+        <mat-icon>inbox</mat-icon>
+        View all notifications
+      </button>
+    </footer>
+  </div>
+</mat-menu>

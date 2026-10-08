@@ -2,7 +2,7 @@
 
 .grade-form-container {
   padding: var(--spacing-lg);
-  max-width: 900px;
+  // max-width: 900px;
   margin: 0 auto;
 }
 
@@ -198,6 +198,16 @@
       &:last-child {
         margin-bottom: 0;
       }
+    }
+  }
+
+  // Warning variant for custom grade tips
+  &.warning {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.05), rgba(255, 152, 0, 0.1));
+    border-left-color: #ff9800;
+
+    .info-header {
+      color: #ff9800;
     }
   }
 }

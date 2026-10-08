@@ -1,0 +1,50 @@
+<div class="subject-page-container">
+  <app-data-table
+    [data]="subjects"
+    [config]="tableConfig"
+    [title]="'Classification Subjects'"
+    [loading]="loading"
+    (actionClicked)="onAction($event)"
+    (paginationChanged)="onPaginationChange($event)"
+    (searchChanged)="onSearch($event)">
+  </app-data-table>
+
+  <!-- Add/Edit Subject Modal -->
+  <div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title-box">
+          <mat-icon color="primary">{{ editItem ? 'edit' : 'label' }}</mat-icon>
+          <h3>{{ editItem ? 'Edit Subject' : 'Add New Subject' }}</h3>
+        </div>
+        <button mat-icon-button (click)="closeModal()" aria-label="Close dialog">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Subject Name *</mat-label>
+          <input matInput [(ngModel)]="formData.name" placeholder="e.g. Artificial Intelligence" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Subject Code</mat-label>
+          <input matInput [(ngModel)]="formData.code" placeholder="e.g. AI-500" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Description</mat-label>
+          <textarea matInput [(ngModel)]="formData.description" placeholder="Subject scope / curriculum details" rows="3"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="modal-footer">
+        <button mat-button (click)="closeModal()">Cancel</button>
+        <button mat-flat-button color="primary" [disabled]="!formData.name" (click)="saveSubject()">
+          <mat-icon>check</mat-icon> Save Subject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
